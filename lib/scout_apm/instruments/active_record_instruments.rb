@@ -75,7 +75,7 @@ rescue
   ScoutApm::Agent.instance.logger.warn "ActiveRecord instrumentation exception: #{$!.message}"
 end
 
-if defined?(::Rails) && ::Rails::VERSION::MAJOR.to_i == 3
+if defined?(::Rails) && ::Rails::VERSION::MAJOR.to_i == 3 && ::Rails.respond_to?(:configuration)
   Rails.configuration.after_initialize do
     ScoutApm::Agent.instance.logger.debug "Adding ActiveRecord instrumentation to a Rails 3 app"
     add_instruments
