@@ -81,7 +81,7 @@ module ScoutApm
           logger.debug "/checkin FAILED: #{response.inspect}"
         end
       rescue Exception
-        logger.debug "Exception sending request to server: #{$!.message}"
+        logger.debug "Exception sending request to server: #{$!.message}\n#{$!.backtrace}"
       ensure
         response
       end
