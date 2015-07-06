@@ -1,7 +1,7 @@
 module ScoutApm
   class Config   
     DEFAULTS =  {
-        'host' => 'data.scoutapp.com',
+        'host' => 'apm.scoutapp.com',
         'log_level' => 'info'
     }
 

@@ -25,7 +25,7 @@ module ScoutApm
           logger.debug "#{config.settings['name']} Delivering total payload [#{payload.size/1024} KB] for #{controller_count} requests and slow transactions [#{slow_transactions_kb} KB] for #{slow_transactions.size} transactions of durations: #{slow_transactions.map(&:total_call_time).join(',')}."        
           response =  post( checkin_uri,
                              payload,
-                             "Content-Type"     => "application/json" )
+                             "Content-Type"     => "application/octet-stream" )
           if response and response.is_a?(Net::HTTPSuccess)
             directives = Marshal.load(response.body)
             self.metric_lookup.merge!(directives[:metric_lookup])
@@ -53,7 +53,7 @@ module ScoutApm
       end
       
       def checkin_uri
-        URI.parse("http://#{config.settings['host']}/app/#{config.settings['key']}/checkin.scout?name=#{CGI.escape(config.settings['name'])}")
+        URI.parse("http://#{config.settings['host']}/apps/checkin.scout?key=#{config.settings['key']}&name=#{CGI.escape(config.settings['name'])}")
       end
 
       def post(url, body, headers = Hash.new)
