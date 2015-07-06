@@ -9,7 +9,7 @@ module ScoutApm
         run_samplers
         payload = layaway.deposit_and_deliver
         metrics = payload[:metrics]
-        samples = payload[:samples]
+        slow_transactions = payload[:slow_transactions]
         if payload.any?
           add_metric_ids(metrics)  
           logger.warn "Some data may be lost - metric size is at limit" if metrics.size == ScoutApm::Store::MAX_SIZE
@@ -20,10 +20,9 @@ module ScoutApm
               controller_count += stats.call_count
             end
           end      
-          sample = store.fetch_and_reset_sample!  
-          payload = Marshal.dump(:metrics => metrics, :sample => sample, :samples => samples)
-          samples_kb = Marshal.dump(samples).size/1024 # just for performance debugging
-          logger.debug "#{config.settings['name']} Delivering total payload [#{payload.size/1024} KB] for #{controller_count} requests and slow transaction samples [#{samples_kb} KB] for #{samples.size} samples of durations: #{samples.map(&:total_call_time).join(',')}."        
+          payload = Marshal.dump(:metrics => metrics, :slow_transactions => slow_transactions)
+          slow_transactions_kb = Marshal.dump(slow_transactions).size/1024 # just for performance debugging
+          logger.debug "#{config.settings['name']} Delivering total payload [#{payload.size/1024} KB] for #{controller_count} requests and slow transactions [#{slow_transactions_kb} KB] for #{slow_transactions.size} transactions of durations: #{slow_transactions.map(&:total_call_time).join(',')}."        
           response =  post( checkin_uri,
                              payload,
                              "Content-Type"     => "application/json" )

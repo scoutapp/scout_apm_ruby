@@ -5,15 +5,14 @@ class ScoutApm::Store
   # Limits the size of the metric hash to prevent a metric explosion. 
   MAX_SIZE = 1000
 
-  # Limit the number of samples that we store metrics with to prevent writing too much data to the layaway file if there are are many processes and many slow samples. 
-  MAX_SAMPLES_TO_STORE_METRICS = 10
+  # Limit the number of slow transactions that we store metrics with to prevent writing too much data to the layaway file if there are are many processes and many slow slow_transactions. 
+  MAX_SLOW_TRANSACTIONS_TO_STORE_METRICS = 10
   
   attr_accessor :metric_hash
   attr_accessor :transaction_hash
   attr_accessor :stack
-  attr_accessor :sample
-  attr_accessor :samples # array of slow transaction samples
-  attr_reader :transaction_sample_lock
+  attr_accessor :slow_transactions # array of slow transaction slow_transactions
+  attr_reader :slow_transaction_lock
   
   def initialize
     @metric_hash = Hash.new
@@ -22,8 +21,8 @@ class ScoutApm::Store
     @transaction_hash = Hash.new
     @stack = Array.new
     # ensure background thread doesn't manipulate transaction sample while the store is.
-    @transaction_sample_lock = Mutex.new
-    @samples = Array.new
+    @slow_transaction_lock = Mutex.new
+    @slow_transactions = Array.new
   end
   
   # Called when the last stack item completes for the current transaction to clear
@@ -50,6 +49,9 @@ class ScoutApm::Store
     item
   end
   
+  # Options:
+  # * :scope - If specified, sets the sub-scope for the metric. We allow additional scope level. This is used
+  # * uri - the request uri
   def stop_recording(sanity_check_item, options={})
     item = stack.pop
     stack_empty = stack.empty?
@@ -72,8 +74,8 @@ class ScoutApm::Store
     meta.scope = nil if stack_empty
     
     # add backtrace for slow calls ... how is exclusive time handled?
-    if duration > ScoutApm::TransactionSample::BACKTRACE_THRESHOLD and !stack_empty
-      meta.extra = {:backtrace => ScoutApm::TransactionSample.backtrace_parser(caller)}
+    if duration > ScoutApm::SlowTransaction::BACKTRACE_THRESHOLD and !stack_empty
+      meta.extra = {:backtrace => ScoutApm::SlowTransaction.backtrace_parser(caller)}
     end
     stat = transaction_hash[meta] || ScoutApm::MetricStats.new(!stack_empty)
     stat.update!(duration,duration-item.children_time)
@@ -82,7 +84,7 @@ class ScoutApm::Store
     # Uses controllers as the entry point for a transaction. Otherwise, stats are ignored.
     if stack_empty and meta.metric_name.match(/\AController\//)
       aggs=aggregate_calls(transaction_hash.dup,meta)
-      store_sample(options[:uri],transaction_hash.dup.merge(aggs),meta,stat)  
+      store_slow(options[:uri],transaction_hash.dup.merge(aggs),meta,stat)  
       # deep duplicate  
       duplicate = aggs.dup
       duplicate.each_pair do |k,v|
@@ -92,12 +94,12 @@ class ScoutApm::Store
     end
   end
   
-  # TODO - Move more logic to TransactionSample
+  # TODO - Move more logic to SlowTransaction
   #
   # Limits the size of the transaction hash to prevent a large transactions. The final item on the stack
   # is allowed to be stored regardless of hash size to wrapup the transaction sample w/the parent metric.
   def store_metric?(stack_empty)
-    transaction_hash.size < ScoutApm::TransactionSample::MAX_SIZE or stack_empty
+    transaction_hash.size < ScoutApm::SlowTransaction::MAX_SIZE or stack_empty
   end
   
   # Returns the top-level category names used in the +metrics+ hash.
@@ -130,28 +132,14 @@ class ScoutApm::Store
     aggregates
   end
   
-  # Stores the slowest transaction. This will be sent to the server.
-  # Includes the legacy single slow transaction and the array of samples.
-  def store_sample(uri,transaction_hash,parent_meta,parent_stat,options = {})    
-    @transaction_sample_lock.synchronize do
-      if parent_stat.total_call_time >= 2 and (@sample.nil? or (@sample and parent_stat.total_call_time > @sample.total_call_time))
-        @sample = ScoutApm::TransactionSample.new(uri,parent_meta.metric_name,parent_stat.total_call_time,transaction_hash.dup)
-      end
+  # Stores slow transactions. This will be sent to the server.
+  def store_slow(uri,transaction_hash,parent_meta,parent_stat,options = {})    
+    @slow_transaction_lock.synchronize do
       # tree map of all slow transactions
       if parent_stat.total_call_time >= 2
-        @samples.push(ScoutApm::TransactionSample.new(uri,parent_meta.metric_name,parent_stat.total_call_time,transaction_hash.dup))
-        ScoutApm::Agent.instance.logger.debug "Slow transaction sample added. Array Size: #{@samples.size}"
-      end
+        @slow_transactions.push(ScoutApm::SlowTransaction.new(uri,parent_meta.metric_name,parent_stat.total_call_time,transaction_hash.dup,ScoutApm::Context.current))
+        ScoutApm::Agent.instance.logger.debug "Slow transaction sample added. [URI: #{uri}] [Context: #{ScoutApm::Context.current.to_hash}] Array Size: #{@slow_transactions.size}"      end
     end
-  end
-
-  # Returns the slow sample and resets the values - used when reporting. 
-  def fetch_and_reset_sample!
-    sample = @sample
-    @transaction_sample_lock.synchronize do
-      self.sample = nil
-    end
-    sample
   end
   
   # Finds or creates the metric w/the given name in the metric_hash, and updates the time. Primarily used to 
@@ -170,7 +158,7 @@ class ScoutApm::Store
   
   # Combines old and current data
   def merge_data(old_data)
-    {:metrics => merge_metrics(old_data[:metrics]), :samples => merge_samples(old_data[:samples])}
+    {:metrics => merge_metrics(old_data[:metrics]), :slow_transactions => merge_slow_transactions(old_data[:slow_transactions])}
   end
   
   # Merges old and current data, clears the current in-memory metric hash, and returns
@@ -179,8 +167,8 @@ class ScoutApm::Store
     merged = merge_data(old_data)
     self.metric_hash =  {}
     # TODO - is this lock needed?
-    @transaction_sample_lock.synchronize do
-      self.samples = []
+    @slow_transaction_lock.synchronize do
+      self.slow_transactions = []
     end
     merged
   end
@@ -196,17 +184,17 @@ class ScoutApm::Store
     metric_hash
   end
 
-  # Merges samples together, removing transaction sample metrics from samples if the > MAX_SAMPLES_TO_STORE_METRICS
-  def merge_samples(old_samples)
+  # Merges slow_transactions together, removing transaction sample metrics from slow_transactions if the > MAX_SLOW_TRANSACTIONS_TO_STORE_METRICS
+  def merge_slow_transactions(old_slow_transactions)
     # need transaction lock here?
-    self.samples += old_samples
-    if trim_samples = self.samples[MAX_SAMPLES_TO_STORE_METRICS..-1]
-      ScoutApm::Agent.instance.logger.debug "Trimming metrics from #{trim_samples.size} samples."
-      i = MAX_SAMPLES_TO_STORE_METRICS
-      trim_samples.each do |sample|
-        self.samples[i] = sample.clear_metrics!
+    self.slow_transactions += old_slow_transactions
+    if trim_slow_transactions = self.slow_transactions[MAX_SLOW_TRANSACTIONS_TO_STORE_METRICS..-1]
+      ScoutApm::Agent.instance.logger.debug "Trimming metrics from #{trim_slow_transactions.size} slow_transactions."
+      i = MAX_SLOW_TRANSACTIONS_TO_STORE_METRICS
+      trim_slow_transactions.each do |sample|
+        self.slow_transactions[i] = sample.clear_metrics!
       end
     end
-    self.samples
+    self.slow_transactions
   end
 end # class Store
