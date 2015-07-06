@@ -28,14 +28,14 @@ class ScoutApm::Store
   # Called when the last stack item completes for the current transaction to clear
   # for the next run.
   def reset_transaction!
-    Thread::current[:ignore_transaction] = nil
-    Thread::current[:scout_scope_name] = nil
+    Thread::current[:scout_apm_ignore_transaction] = nil
+    Thread::current[:scout_apm_scope_name] = nil
     @transaction_hash = Hash.new
     @stack = Array.new
   end
   
   def ignore_transaction!
-    Thread::current[:ignore_transaction] = true
+    Thread::current[:scout_apm_ignore_transaction] = true
   end
   
   # Called at the start of Tracer#instrument:
@@ -56,13 +56,13 @@ class ScoutApm::Store
     item = stack.pop
     stack_empty = stack.empty?
     # if ignoring the transaction, the item is popped but nothing happens. 
-    if Thread::current[:ignore_transaction]
+    if Thread::current[:scout_apm_ignore_transaction]
       return
     end
     # unbalanced stack check - unreproducable cases have seen this occur. when it does, sets a Thread variable 
     # so we ignore further recordings. +Store#reset_transaction!+ resets this. 
     if item != sanity_check_item
-      ScoutApm::Agent.instance.logger.warn "Scope [#{Thread::current[:scout_scope_name]}] Popped off stack: #{item.inspect} Expected: #{sanity_check_item.inspect}. Aborting."
+      ScoutApm::Agent.instance.logger.warn "Scope [#{Thread::current[:scout_apm_scope_name]}] Popped off stack: #{item.inspect} Expected: #{sanity_check_item.inspect}. Aborting."
       ignore_transaction!
       return
     end

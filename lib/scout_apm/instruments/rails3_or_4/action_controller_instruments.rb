@@ -5,14 +5,14 @@ module ScoutApm::Instruments
     def process_action(*args)
       scout_controller_action = "Controller/#{controller_path}/#{action_name}"
       #ScoutApm::Agent.instance.logger.debug "Processing #{scout_controller_action}"
-      self.class.trace(scout_controller_action, :uri => request.fullpath, :ip => request.remote_ip) do
+      self.class.scout_apm_trace(scout_controller_action, :uri => request.fullpath, :ip => request.remote_ip) do
         begin
           super
         rescue Exception => e
           ScoutApm::Agent.instance.store.track!("Errors/Request",1, :scope => nil)
           raise
         ensure
-          Thread::current[:scout_scope_name] = nil
+          Thread::current[:scout_apm_scope_name] = nil
         end
       end
     end

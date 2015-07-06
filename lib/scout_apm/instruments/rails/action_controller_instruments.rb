@@ -16,7 +16,7 @@ module ScoutApm::Instruments
     # specific controller actions.
     def perform_action_with_scout_instruments(*args, &block)
       scout_controller_action = "Controller/#{controller_path}/#{action_name}"
-      self.class.trace(scout_controller_action, :uri => request.request_uri) do
+      self.class.scout_apm_trace(scout_controller_action, :uri => request.request_uri, :ip => request.remote_ip) do
         perform_action_without_scout_instruments(*args, &block)
       end
     end

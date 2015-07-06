@@ -5,7 +5,7 @@
 # * When a code block is finished, #instrument pops the last item off the stack and verifies it's the StackItem
 #   we created earlier. 
 # * Once verified, the metrics for the recording session are merged into the in-memory Store#metric_hash. The current scope
-#   is also set for the metric (if Thread::current[:scout_scope_name] isn't nil).
+#   is also set for the metric (if Thread::current[:scout_apm_scope_name] isn't nil).
 module ScoutApm::Tracer
   def self.included(klass)
     klass.extend ClassMethods
@@ -17,13 +17,13 @@ module ScoutApm::Tracer
     # Options:
     # * uri - the request uri
     # * ip - the remote ip of the user. This is merged into the User context.
-    def trace(metric_name, options = {}, &block)
+    def scout_apm_trace(metric_name, options = {}, &block)
       ScoutApm::Agent.instance.store.reset_transaction!  
       ScoutApm::Context.current.user.merge!(:ip => options[:ip]) if options[:ip]    
       instrument(metric_name, options) do
-        Thread::current[:scout_scope_name] = metric_name
+        Thread::current[:scout_apm_scope_name] = metric_name
         yield
-        Thread::current[:scout_scope_name] = nil
+        Thread::current[:scout_apm_scope_name] = nil
       end
       # The context is cleared after instrumentation (rather than before) as tracing controller-actions doesn't occur until the controller-action is called.
       # It does not trace before filters, which is a likely spot to add context. This means that any context applied during before_filters would be cleared.
@@ -36,17 +36,17 @@ module ScoutApm::Tracer
     # when rendering the transaction tree in the UI. 
     def instrument(metric_name, options={}, &block)
       # don't instrument if (1) NOT inside a transaction and (2) NOT a Controller metric.
-      if !Thread::current[:scout_scope_name] and metric_name !~ /\AController\//
+      if !Thread::current[:scout_apm_scope_name] and metric_name !~ /\AController\//
         return yield
       end
       if options.delete(:scope)
-        Thread::current[:scout_sub_scope] = metric_name 
+        Thread::current[:scout_apm_sub_scope] = metric_name 
       end
       stack_item = ScoutApm::Agent.instance.store.record(metric_name)
       begin
         yield
       ensure
-        Thread::current[:scout_sub_scope] = nil if Thread::current[:scout_sub_scope] == metric_name
+        Thread::current[:scout_apm_sub_scope] = nil if Thread::current[:scout_apm_sub_scope] == metric_name
         ScoutApm::Agent.instance.store.stop_recording(stack_item,options)
       end
     end

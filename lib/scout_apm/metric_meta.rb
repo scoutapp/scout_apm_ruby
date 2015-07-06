@@ -3,7 +3,7 @@ class ScoutApm::MetricMeta
   def initialize(metric_name, options = {})
     @metric_name = metric_name
     @metric_id = nil
-    @scope = Thread::current[:scout_sub_scope] || Thread::current[:scout_scope_name]
+    @scope = Thread::current[:scout_apm_sub_scope] || Thread::current[:scout_apm_scope_name]
     @desc = options[:desc]
     @extra = {}
   end
