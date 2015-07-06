@@ -5,7 +5,7 @@ module ScoutApm::Instruments
     def process_action(*args)
       scout_controller_action = "Controller/#{controller_path}/#{action_name}"
       #ScoutApm::Agent.instance.logger.debug "Processing #{scout_controller_action}"
-      self.class.trace(scout_controller_action, :uri => request.fullpath) do
+      self.class.trace(scout_controller_action, :uri => request.fullpath, :ip => request.remote_ip) do
         begin
           super
         rescue Exception => e

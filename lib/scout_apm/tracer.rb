@@ -14,8 +14,13 @@ module ScoutApm::Tracer
   module ClassMethods
     
     # Use to trace a method call, possibly reporting slow transaction traces to Scout. 
+    # Options:
+    # * uri - the request uri
+    # * ip - the remote ip of the user. This is merged into the User context.
     def trace(metric_name, options = {}, &block)
-      ScoutApm::Agent.instance.store.reset_transaction!      
+      ScoutApm::Agent.instance.store.reset_transaction!  
+      ScoutApm::Context.clear! # reset the context so its clear for the next transaction
+      ScoutApm::Context.current.user.merge!(:ip => options[:ip]) if options[:ip]    
       instrument(metric_name, options) do
         Thread::current[:scout_scope_name] = metric_name
         yield
@@ -24,7 +29,8 @@ module ScoutApm::Tracer
     end
     
     # Options:
-    # - :scope => If specified, sets the sub-scope for the metric. We allow additional scope level. This is used
+    # * :scope - If specified, sets the sub-scope for the metric. We allow additional scope level. This is used
+    # * uri - the request uri
     # when rendering the transaction tree in the UI. 
     def instrument(metric_name, options={}, &block)
       # don't instrument if (1) NOT inside a transaction and (2) NOT a Controller metric.

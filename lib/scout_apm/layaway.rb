@@ -2,7 +2,7 @@
 # 1. A centralized store for multiple Agent processes. This way, only 1 checkin is sent to Scout rather than 1 per-process.
 # 2. Bundling up reports from multiple timeslices to make updates more efficent server-side.
 # 
-# Data is stored in a Hash, where the keys are Time.to_i on the minute. The value is a Hash {:metrics => Hash, :samples => Array}.
+# Data is stored in a Hash, where the keys are Time.to_i on the minute. The value is a Hash {:metrics => Hash, :slow_transactions => Array}.
 # When depositing data, the new data is either merged with an existing time or placed in a new key.
 class ScoutApm::Layaway
   attr_accessor :file
@@ -13,7 +13,7 @@ class ScoutApm::Layaway
   def deposit_and_deliver
     new_metrics = ScoutApm::Agent.instance.store.metric_hash
     log_deposited_metrics(new_metrics)
-    log_deposited_samples(ScoutApm::Agent.instance.store.samples)
+    log_deposited_slow_transactions(ScoutApm::Agent.instance.store.slow_transactions)
     to_deliver = {}
     file.read_and_write do |old_data|
       old_data ||= Hash.new
@@ -38,7 +38,7 @@ class ScoutApm::Layaway
       else
         ScoutApm::Agent.instance.logger.debug "There is no data in the layaway file to deliver."
       end
-      old_data[slot]=ScoutApm::Agent.instance.store.merge_data_and_clear(old_data[slot] || {:metrics => {}, :samples => []})
+      old_data[slot]=ScoutApm::Agent.instance.store.merge_data_and_clear(old_data[slot] || {:metrics => {}, :slow_transactions => []})
       log_saved_data(old_data,new_metrics)
       old_data
     end
@@ -81,8 +81,8 @@ class ScoutApm::Layaway
     ScoutApm::Agent.instance.logger.debug "Depositing #{controller_count} requests into #{Time.at(slot).strftime("%m/%d/%y %H:%M:%S %z")} slot."
   end
 
-  def log_deposited_samples(new_samples)
-    ScoutApm::Agent.instance.logger.debug "Depositing #{new_samples.size} samples into #{Time.at(slot).strftime("%m/%d/%y %H:%M:%S %z")} slot."
+  def log_deposited_slow_transactions(new_slow_transactions)
+    ScoutApm::Agent.instance.logger.debug "Depositing #{new_slow_transactions.size} slow transactions into #{Time.at(slot).strftime("%m/%d/%y %H:%M:%S %z")} slot."
   end
   
   def log_saved_data(old_data,new_metrics)
@@ -94,7 +94,7 @@ class ScoutApm::Layaway
           controller_count += stats.call_count
         end
       end
-      ScoutApm::Agent.instance.logger.debug "#{Time.at(k).strftime("%m/%d/%y %H:%M:%S %z")} => #{controller_count} requests and #{v[:samples].size} samples"
+      ScoutApm::Agent.instance.logger.debug "#{Time.at(k).strftime("%m/%d/%y %H:%M:%S %z")} => #{controller_count} requests and #{v[:slow_transactions].size} slow transactions"
     end
   end
 end
