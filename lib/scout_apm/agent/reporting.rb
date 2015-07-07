@@ -35,11 +35,11 @@ module ScoutApm
             end
             logger.debug "Metric Cache Size: #{metric_lookup.size}"
           elsif response
-            logger.info "Error on checkin to #{checkin_uri.to_s}: #{response.inspect}"
+            logger.warn "Error on checkin to #{checkin_uri.to_s}: #{response.inspect}"
           end
         end
       rescue
-        logger.info "Error on checkin to #{checkin_uri.to_s}"
+        logger.warn "Error on checkin to #{checkin_uri.to_s}"
         logger.info $!.message
         logger.debug $!.backtrace
       end
