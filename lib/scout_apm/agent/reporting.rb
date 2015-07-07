@@ -34,6 +34,8 @@ module ScoutApm
               self.metric_lookup = Hash.new
             end
             logger.debug "Metric Cache Size: #{metric_lookup.size}"
+          elsif response
+            logger.info "Error on checkin to #{checkin_uri.to_s}: #{response.inspect}"
           end
         end
       rescue
