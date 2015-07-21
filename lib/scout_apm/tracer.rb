@@ -19,7 +19,7 @@ module ScoutApm::Tracer
     # * ip - the remote ip of the user. This is merged into the User context.
     def scout_apm_trace(metric_name, options = {}, &block)
       ScoutApm::Agent.instance.store.reset_transaction!  
-      ScoutApm::Context.current.user.merge!(:ip => options[:ip]) if options[:ip]    
+      ScoutApm::Context.current.user(:ip => options[:ip]) if options[:ip]    
       instrument(metric_name, options) do
         Thread::current[:scout_apm_scope_name] = metric_name
         yield
