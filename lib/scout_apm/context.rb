@@ -1,8 +1,8 @@
 # Encapsulates adding context to requests. Context is stored via a simple Hash.
 #
 # There are 2 types of context: User and Extra.
-# For user-specific context, use @Context#user@.
-# For misc context, use @Context#extra@.
+# For user-specific context, use @Context#add_user@.
+# For misc context, use @Context#add@.
 class ScoutApm::Context
 
   def initialize
@@ -24,24 +24,24 @@ class ScoutApm::Context
     Thread.current[:scout_context] = nil
   end
 
-  # Add extra context
-  # ScoutApm::context.extra(account: current_account.name)
-  def extra(hash)
+  # Add context
+  # ScoutApm::Context.add(account: current_account.name)
+  def add(hash)
     update_context(:extra,hash)
   end
 
-  def user(hash)
+  def add_user(hash)
     update_context(:user,hash)
   end
 
-  # Convenience accessor so you can just call @ScoutAPM::Context#extra@
-  def self.extra(hash)
-    self.current.extra(hash)
+  # Convenience accessor so you can just call @ScoutAPM::Context#add@
+  def self.add(hash)
+    self.current.add(hash)
   end
 
-  # Convenience accessor so you can just call @ScoutAPM::Context#user@
-  def self.user(hash)
-    self.current.user(hash)
+  # Convenience accessor so you can just call @ScoutAPM::Context#add_user@
+  def self.add_user(hash)
+    self.current.add_user(hash)
   end
 
   private
@@ -95,8 +95,8 @@ class ScoutApm::Context
       ScoutApm::Agent.instance.logger.warn "The key [#{key}] is not a valid type [#{key.class}]."
       return false
     end
-    # ensure doesn't contain spaces. 
-    if key.to_s.match(/\s/)
+    # only alphanumeric, dash, and underscore allowed.
+    if key.to_s.match(/[^\w-]/)
       ScoutApm::Agent.instance.logger.warn "They key name [#{key}] is not valid."
       return false
     end
