@@ -8,8 +8,8 @@ Gem::Specification.new do |s|
   s.authors     = ["Derek Haynes",'Andre Lewis']
   s.email       = ["support@scoutapp.com"]
   s.homepage    = "https://github.com/scoutapp/scout_apm_ruby"
-  s.summary     = "Rails application performance monitoring"
-  s.description = "Monitors a Ruby on Rails application and reports detailed metrics on performance to Scout."
+  s.summary     = "Ruby application performance monitoring"
+  s.description = "Monitors Ruby apps and reports detailed metrics on performance to Scout."
 
   s.rubyforge_project = "scout_apm"
 
