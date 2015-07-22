@@ -137,8 +137,9 @@ class ScoutApm::Store
     @slow_transaction_lock.synchronize do
       # tree map of all slow transactions
       if parent_stat.total_call_time >= 2
-        @slow_transactions.push(ScoutApm::SlowTransaction.new(uri,parent_meta.metric_name,parent_stat.total_call_time,transaction_hash.dup,ScoutApm::Context.current))
-        ScoutApm::Agent.instance.logger.debug "Slow transaction sample added. [URI: #{uri}] [Context: #{ScoutApm::Context.current.to_hash}] Array Size: #{@slow_transactions.size}"      end
+        @slow_transactions.push(ScoutApm::SlowTransaction.new(uri,parent_meta.metric_name,parent_stat.total_call_time,transaction_hash.dup,ScoutApm::Context.current,Thread::current[:scout_apm_trace_time]))
+        ScoutApm::Agent.instance.logger.debug "Slow transaction sample added. [URI: #{uri}] [Context: #{ScoutApm::Context.current.to_hash}] Array Size: #{@slow_transactions.size}"      
+      end
     end
   end
   

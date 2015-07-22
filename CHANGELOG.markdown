@@ -1,3 +1,7 @@
+# 0.1.1
+
+* Store the start time of slow requests.
+
 # 0.1.0
 
 * Boom.
