@@ -2,6 +2,9 @@
 module ScoutApm
   class Agent
     module Reporting
+      CA_FILE     = File.join( File.dirname(__FILE__), *%w[.. .. .. data cacert.pem] )
+      VERIFY_MODE = OpenSSL::SSL::VERIFY_PEER | OpenSSL::SSL::VERIFY_FAIL_IF_NO_PEER_CERT
+
       # Called in the worker thread. Merges in-memory metrics w/those on disk and reports metrics
       # to the server.
       def process_metrics
@@ -55,14 +58,14 @@ module ScoutApm
       end
       
       def checkin_uri
-        URI.parse("http://#{config.settings['host']}/apps/checkin.scout?key=#{config.settings['key']}&name=#{CGI.escape(config.settings['name'])}")
+        URI.parse("#{config.settings['host']}/apps/checkin.scout?key=#{config.settings['key']}&name=#{CGI.escape(config.settings['name'])}")
       end
 
-      def post(url, body, headers = Hash.new)
+      def post(uri, body, headers = Hash.new)
         response = nil
-        request(url) do |connection|
-          post = Net::HTTP::Post.new( url.path +
-                                      (url.query ? ('?' + url.query) : ''),
+        request(uri) do |connection|
+          post = Net::HTTP::Post.new( uri.path +
+                                      (uri.query ? ('?' + uri.query) : ''),
                                       HTTP_HEADERS.merge(headers) )
           post.body = body
           response=connection.request(post)
@@ -70,9 +73,9 @@ module ScoutApm
         response
       end
 
-      def request(url, &connector)
+      def request(uri, &connector)
         response           = nil
-        response           = http(url).start(&connector)
+        response           = http(uri).start(&connector)
         logger.debug "got response: #{response.inspect}"
         case response
         when Net::HTTPSuccess, Net::HTTPNotModified
@@ -93,7 +96,13 @@ module ScoutApm
       # Net::HTTP::Proxy returns a regular Net::HTTP class if the first argument (host) is nil.
       def http(url)
         proxy_uri = URI.parse(config.settings['proxy'].to_s)
-        Net::HTTP::Proxy(proxy_uri.host,proxy_uri.port,proxy_uri.user,proxy_uri.password).new(url.host, url.port)
+        http = Net::HTTP::Proxy(proxy_uri.host,proxy_uri.port,proxy_uri.user,proxy_uri.password).new(url.host, url.port)
+        if url.is_a?(URI::HTTPS)
+          http.use_ssl = true
+          http.ca_file = CA_FILE
+          http.verify_mode = VERIFY_MODE
+        end
+        http
       end
     end # module Reporting
     include Reporting
