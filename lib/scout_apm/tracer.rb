@@ -18,13 +18,16 @@ module ScoutApm::Tracer
     # * uri - the request uri
     # * ip - the remote ip of the user. This is merged into the User context.
     def scout_apm_trace(metric_name, options = {}, &block)
+      # TODO - wrap a lot of this into a Trace class, store that as a Thread var.
       ScoutApm::Agent.instance.store.reset_transaction!  
       ScoutApm::Context.current.add_user(:ip => options[:ip]) if options[:ip]    
+      Thread::current[:scout_apm_trace_time] = Time.now.utc
       instrument(metric_name, options) do
         Thread::current[:scout_apm_scope_name] = metric_name
         yield
         Thread::current[:scout_apm_scope_name] = nil
       end
+      Thread::current[:scout_apm_trace_time] = nil
       # The context is cleared after instrumentation (rather than before) as tracing controller-actions doesn't occur until the controller-action is called.
       # It does not trace before filters, which is a likely spot to add context. This means that any context applied during before_filters would be cleared.
       ScoutApm::Context.clear!
