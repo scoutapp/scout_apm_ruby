@@ -1,9 +1,10 @@
 # 0.1.2
 
-* Add support for specifying logging to STDOUT
-* Heroku environment detection
+* Adds Heroku support:
+  * Detects Heroku via the 'DYNO' environment variable
+  * Defaults logger to STDOUT
+  * uses the dyno name vs. the hostname as the hostname
 * Environment vars with "SCOUT_" prefix override any settings specified in the config file.
-* If on Heroku uses the dyno name vs. the hostname as the hostname
 
 # 0.1.1
 
