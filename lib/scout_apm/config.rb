@@ -13,6 +13,12 @@ module ScoutApm
       return @settings if @settings
       load_file
     end
+
+    # handle unintential blank settings
+    def value(key)
+      value = settings[key]
+      value.to_s.strip.length.zero? ? nil : value
+    end
     
     def config_path
       @config_path || File.join(ScoutApm::Agent.instance.environment.root,"config","scout_apm.yml")
