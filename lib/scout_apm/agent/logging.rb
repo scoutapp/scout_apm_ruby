@@ -45,7 +45,7 @@ module ScoutApm
       end
 
       def wants_stdout?
-        config.value('log_file_path').to_s.upcase == 'STDOUT'
+        config.value('log_file_path').to_s.upcase == 'STDOUT' || environment.heroku?
       end
     end # module Logging
     include Logging

@@ -1,6 +1,7 @@
 # 0.1.2
 
 * Add support for specifying logging to STDOUT
+* Heroku environment detection
 
 # 0.1.1
 
