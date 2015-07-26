@@ -54,6 +54,10 @@ module ScoutApm
     def heroku?
       ENV['DYNO']      
     end
+
+    def hostname
+      heroku? ? ENV['DYNO'] : Socket.gethostname
+    end
     
     # This needs to be improved. Frequently, multiple app servers gem are present and which
     # ever is checked first becomes the designated app server. 

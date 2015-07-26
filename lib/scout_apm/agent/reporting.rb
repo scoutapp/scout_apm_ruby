@@ -25,7 +25,7 @@ module ScoutApm
           end      
           payload = Marshal.dump(:metrics => metrics, :slow_transactions => slow_transactions)
           slow_transactions_kb = Marshal.dump(slow_transactions).size/1024 # just for performance debugging
-          logger.debug "#{config.settings['name']} Delivering total payload [#{payload.size/1024} KB] for #{controller_count} requests and slow transactions [#{slow_transactions_kb} KB] for #{slow_transactions.size} transactions of durations: #{slow_transactions.map(&:total_call_time).join(',')}."        
+          logger.debug "#{config.value('name')} Delivering total payload [#{payload.size/1024} KB] for #{controller_count} requests and slow transactions [#{slow_transactions_kb} KB] for #{slow_transactions.size} transactions of durations: #{slow_transactions.map(&:total_call_time).join(',')}."        
           response =  post( checkin_uri,
                              payload,
                              "Content-Type"     => "application/octet-stream" )
@@ -58,7 +58,7 @@ module ScoutApm
       end
       
       def checkin_uri
-        URI.parse("#{config.settings['host']}/apps/checkin.scout?key=#{config.settings['key']}&name=#{CGI.escape(config.settings['name'])}")
+        URI.parse("#{config.value('host')}/apps/checkin.scout?key=#{config.value('key')}&name=#{CGI.escape(config.value('name'))}")
       end
 
       def post(uri, body, headers = Hash.new)
@@ -66,7 +66,7 @@ module ScoutApm
         request(uri) do |connection|
           post = Net::HTTP::Post.new( uri.path +
                                       (uri.query ? ('?' + uri.query) : ''),
-                                      HTTP_HEADERS.merge(headers) )
+                                      http_headers.merge(headers) )
           post.body = body
           response=connection.request(post)
         end
@@ -81,7 +81,7 @@ module ScoutApm
         when Net::HTTPSuccess, Net::HTTPNotModified
           logger.debug "/checkin OK"
         when Net::HTTPBadRequest
-          logger.warn "/checkin FAILED: The Account Key [#{config.settings['key']}] is invalid."
+          logger.warn "/checkin FAILED: The Account Key [#{config.value('key')}] is invalid."
         else
           logger.debug "/checkin FAILED: #{response.inspect}"
         end
@@ -91,11 +91,16 @@ module ScoutApm
         response
       end
 
+      # Headers passed up with all API requests.
+      def http_headers
+        @http_headers ||= { "Agent-Hostname" => environment.hostname }
+      end
+
       # Take care of the http proxy, if specified in config.
       # Given a blank string, the proxy_uri URI instance's host/port/user/pass will be nil.
       # Net::HTTP::Proxy returns a regular Net::HTTP class if the first argument (host) is nil.
       def http(url)
-        proxy_uri = URI.parse(config.settings['proxy'].to_s)
+        proxy_uri = URI.parse(config.value('proxy').to_s)
         http = Net::HTTP::Proxy(proxy_uri.host,proxy_uri.port,proxy_uri.user,proxy_uri.password).new(url.host, url.port)
         if url.is_a?(URI::HTTPS)
           http.use_ssl = true
