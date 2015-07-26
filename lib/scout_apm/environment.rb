@@ -52,7 +52,7 @@ module ScoutApm
     end
 
     def heroku?
-      ENV['dyno']      
+      ENV['DYNO']      
     end
     
     # This needs to be improved. Frequently, multiple app servers gem are present and which
