@@ -36,6 +36,7 @@ module ScoutApm
       @metric_lookup = Hash.new
       @process_cpu=ScoutApm::Instruments::Process::ProcessCpu.new(environment.processors)
       @process_memory=ScoutApm::Instruments::Process::ProcessMemory.new
+      @capacity = ScoutApm::Capacity.new
     end
     
     def environment

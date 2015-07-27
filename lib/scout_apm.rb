@@ -24,6 +24,7 @@ require File.expand_path('../scout_apm/store.rb', __FILE__)
 require File.expand_path('../scout_apm/tracer.rb', __FILE__)
 require File.expand_path('../scout_apm/context.rb', __FILE__)
 require File.expand_path('../scout_apm/slow_transaction.rb', __FILE__)
+require File.expand_path('../scout_apm/capacity.rb', __FILE__)
 require File.expand_path('../scout_apm/instruments/process/process_cpu.rb', __FILE__)
 require File.expand_path('../scout_apm/instruments/process/process_memory.rb', __FILE__)
 

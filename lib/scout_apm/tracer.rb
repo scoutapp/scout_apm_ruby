@@ -22,12 +22,14 @@ module ScoutApm::Tracer
       ScoutApm::Agent.instance.store.reset_transaction!  
       ScoutApm::Context.current.add_user(:ip => options[:ip]) if options[:ip]    
       Thread::current[:scout_apm_trace_time] = Time.now.utc
+      ScoutApm::Agent.instance.capacity.start_transaction!
       instrument(metric_name, options) do
         Thread::current[:scout_apm_scope_name] = metric_name
         yield
         Thread::current[:scout_apm_scope_name] = nil
       end
       Thread::current[:scout_apm_trace_time] = nil
+      ScoutApm::Agent.instance.capacity.finish_transaction!
       # The context is cleared after instrumentation (rather than before) as tracing controller-actions doesn't occur until the controller-action is called.
       # It does not trace before filters, which is a likely spot to add context. This means that any context applied during before_filters would be cleared.
       ScoutApm::Context.clear!
