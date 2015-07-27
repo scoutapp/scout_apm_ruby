@@ -29,6 +29,7 @@ module ScoutApm::Tracer
         begin
           yield
         rescue Exception => e
+          ScoutApm::Agent.instance.store.track!("Errors/#{metric_name}",1, :scope => nil)
         end
         Thread::current[:scout_apm_scope_name] = nil
       end

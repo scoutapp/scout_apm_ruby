@@ -2,6 +2,7 @@
 
 * Adds capacity calculation via "Instance/Capacity" metric. 
 * Tweaks tracing to still count a transaction if it results in a 500 error and includes it in accumulated time.
+* Adds per-transaction error tracking (ex: Errors/Controller/widgets/index)
 
 # 0.1.2
 
