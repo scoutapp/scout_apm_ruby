@@ -13,7 +13,7 @@ module ScoutApm
     attr_accessor :layaway
     attr_accessor :config
     attr_accessor :environment
-    
+    attr_accessor :capacity
     attr_accessor :logger
     attr_accessor :log_file # path to the log file
     attr_accessor :options # options passed to the agent when +#start+ is called.

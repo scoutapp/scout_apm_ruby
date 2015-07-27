@@ -1,3 +1,8 @@
+# 0.1.3
+
+* Adds capacity calculation via "Instance/Capacity" metric. 
+* Tweaks tracing to still count a transaction if it results in a 500 error and includes it in accumulated time.
+
 # 0.1.2
 
 * Adds Heroku support:

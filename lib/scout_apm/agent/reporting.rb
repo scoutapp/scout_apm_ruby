@@ -10,6 +10,7 @@ module ScoutApm
       def process_metrics
         logger.debug "Processing metrics"
         run_samplers
+        capacity.process
         payload = layaway.deposit_and_deliver
         metrics = payload[:metrics]
         slow_transactions = payload[:slow_transactions]
