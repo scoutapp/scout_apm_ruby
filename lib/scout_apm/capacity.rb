@@ -20,7 +20,6 @@ class ScoutApm::Capacity
 		@lock.synchronize do
 			@accumulated_time += (Time.now - transaction_entry_time).to_f
 			@transaction_entry_time = nil
-			ScoutApm::Agent.instance.logger.debug "Accumulated time spent process requests: #{accumulated_time}"
 		end
 	end
 
