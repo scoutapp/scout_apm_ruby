@@ -1,7 +1,7 @@
 # Logic for the serialized file access
 class ScoutApm::LayawayFile
   def path
-    "#{ScoutApm::Agent.instance.log_path}/scout_apm.db"
+    "#{ScoutApm::Agent.instance.default_log_path}/scout_apm.db"
   end
 
   def dump(object)

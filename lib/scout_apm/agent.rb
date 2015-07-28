@@ -5,8 +5,6 @@ module ScoutApm
   # The worker thread wakes up every +Agent#period+, merges in-memory metrics w/those saved to disk, 
   # saves tshe merged data to disk, and sends it to the Scout server.
   class Agent
-    # Headers passed up with all API requests.
-    HTTP_HEADERS = { "Agent-Hostname" => Socket.gethostname }
     # see self.instance
     @@instance = nil 
     
@@ -15,7 +13,7 @@ module ScoutApm
     attr_accessor :layaway
     attr_accessor :config
     attr_accessor :environment
-    
+    attr_accessor :capacity
     attr_accessor :logger
     attr_accessor :log_file # path to the log file
     attr_accessor :options # options passed to the agent when +#start+ is called.
@@ -38,6 +36,7 @@ module ScoutApm
       @metric_lookup = Hash.new
       @process_cpu=ScoutApm::Instruments::Process::ProcessCpu.new(environment.processors)
       @process_memory=ScoutApm::Instruments::Process::ProcessMemory.new
+      @capacity = ScoutApm::Capacity.new
     end
     
     def environment
@@ -49,9 +48,12 @@ module ScoutApm
     def start(options = {})
       @options.merge!(options)
       init_logger
-      logger.info "Attempting to start Scout Agent [#{ScoutApm::VERSION}] on [#{Socket.gethostname}]"
-      if !config.settings['monitor'] and !@options[:force]
+      logger.info "Attempting to start Scout Agent [#{ScoutApm::VERSION}] on [#{environment.hostname}]"
+      if !config.value('monitor') and !@options[:force]
         logger.warn "Monitoring isn't enabled for the [#{environment.env}] environment."
+        return false
+      elsif !config.value('name')
+        logger.warn "An application name is required. Specify the :name value in scout_apm.yml. Not starting agent."
         return false
       elsif !environment.app_server
         logger.warn "Couldn't find a supported app server. Not starting agent."
@@ -61,7 +63,7 @@ module ScoutApm
         return false
       end
       @started = true
-      logger.info "Starting monitoring. Framework [#{environment.framework}] App Server [#{environment.app_server}]."
+      logger.info "Starting monitoring for [#{config.value('name')}]. Framework [#{environment.framework}] App Server [#{environment.app_server}]."
       start_instruments
       if !start_background_worker?
         logger.debug "Not starting worker thread"
