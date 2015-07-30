@@ -18,7 +18,11 @@ class ScoutApm::Capacity
 	# Called when a transaction completes to record its time used.
 	def finish_transaction!
 		@lock.synchronize do
-			@accumulated_time += (Time.now - transaction_entry_time).to_f
+			if transaction_entry_time
+				@accumulated_time += (Time.now - transaction_entry_time).to_f
+			else
+				ScoutApm::Agent.instance.logger.warn "No transaction entry time. Not recording capacity metrics for transaction."
+			end
 			@transaction_entry_time = nil
 		end
 	end
