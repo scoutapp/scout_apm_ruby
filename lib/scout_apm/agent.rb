@@ -66,10 +66,11 @@ module ScoutApm
       logger.info "Starting monitoring for [#{config.value('name')}]. Framework [#{environment.framework}] App Server [#{environment.app_server}]."
       start_instruments
       if !start_background_worker?
-        logger.debug "Not starting worker thread"
+        logger.debug "Not starting worker thread. Will start worker loops after forking."
         install_passenger_events if environment.app_server == :passenger
         install_unicorn_worker_loop if environment.app_server == :unicorn
         install_rainbows_worker_loop if environment.app_server == :rainbows
+        install_puma_worker_loop if environment.app_server == :puma
         return
       end
       start_background_worker
@@ -116,11 +117,14 @@ module ScoutApm
     
     # The worker thread will automatically start UNLESS:
     # * A supported application server isn't detected (example: running via Rails console)
-    # * A supported application server is detected, but it forks (Passenger). In this case, 
+    # * A supported application server is detected, but it forks. In this case, 
     #   the agent is started in the forked process.
     def start_background_worker?
-      !environment.forking? or environment.app_server == :thin
+      !environment.forking? or environment.app_server == :thin # clarify why Thin is here but not WEBrick
     end
+
+    ## TODO - Likely possible to unify starting the worker loop in forking servers by listening for the first transaction 
+    ## to start and starting the background worker then in that process.
     
     def install_passenger_events
       PhusionPassenger.on_event(:starting_worker_process) do |forked|
@@ -155,6 +159,15 @@ module ScoutApm
           old.bind(self).call(worker)
         end
       end
+    end
+
+    def install_puma_worker_loop
+      Puma.cli_config.options[:before_worker_boot] << Proc.new do
+        logger.debug "Installing Puma worker loop."
+        ScoutApm::Agent.instance.start_background_worker
+      end
+    rescue
+      logger.warn "Unable to install Puma worker loop: #{$!.message}"
     end    
     
     # Creates the worker thread. The worker thread is a loop that runs continuously. It sleeps for +Agent#period+ and when it wakes,

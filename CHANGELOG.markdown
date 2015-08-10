@@ -1,3 +1,8 @@
+# 0.1.3.1
+
+* Adds Puma support
+* Fix for returning true for unicorn? and rainbows? when they are included in the Gemfile but not actually serving the app.
+
 # 0.1.3
 
 * Adds capacity calculation via "Instance/Capacity" metric. 

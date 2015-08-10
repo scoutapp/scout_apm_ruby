@@ -73,6 +73,7 @@ module ScoutApm
       @app_server ||= if passenger? then :passenger
                     elsif rainbows? then :rainbows
                     elsif unicorn? then :unicorn
+                    elsif puma? then :puma
                     elsif thin? then :thin
                     elsif webrick? then :webrick
                     else nil
@@ -103,6 +104,7 @@ module ScoutApm
     def rainbows?
       if defined?(::Rainbows) && defined?(::Rainbows::HttpServer)
         ObjectSpace.each_object(::Rainbows::HttpServer) { |x| return true }
+        false
       end
     end
     
@@ -110,13 +112,18 @@ module ScoutApm
       if defined?(::Unicorn) && defined?(::Unicorn::HttpServer)
         # Ensure Unicorn is actually initialized. It could just be required and not running.
         ObjectSpace.each_object(::Unicorn::HttpServer) { |x| return true }
+        false
       end
+    end
+
+    def puma?
+      defined?(::Puma) && File.basename($0) == 'puma'
     end
     
     # If forking, don't start worker thread in the master process. Since it's started as a Thread, it won't survive
     # the fork. 
     def forking?
-      passenger? or unicorn? or rainbows?
+      passenger? or unicorn? or rainbows? or puma?
     end
     
     ### ruby checks

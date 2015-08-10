@@ -36,6 +36,8 @@ Your config file should look like:
 * Thin
 * WEBrick
 * Unicorn (make sure to add `preload_app true` to `config/unicorn.rb`)
+* Rainbows
+* Puma
 
 ## Help
 
