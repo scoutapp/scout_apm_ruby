@@ -1,0 +1,25 @@
+common: &defaults
+  name: Scout APM
+  key: 000011110000
+  log_level: debug
+  monitor: true
+
+production:
+  <<: *defaults
+  name: Scout APM (Production)
+
+development:
+  <<: *defaults
+  name: Scout APM (Development)
+  host: http://localhost:3000
+  monitor: true
+
+test:
+  <<: *defaults
+  name: Scout APM (Test)
+  monitor: false
+
+staging:
+  <<: *defaults
+  name: Scout APM (Staging)
+

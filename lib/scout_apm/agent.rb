@@ -6,8 +6,8 @@ module ScoutApm
   # saves tshe merged data to disk, and sends it to the Scout server.
   class Agent
     # see self.instance
-    @@instance = nil 
-    
+    @@instance = nil
+
     # Accessors below are for associated classes
     attr_accessor :store
     attr_accessor :layaway
@@ -18,31 +18,32 @@ module ScoutApm
     attr_accessor :log_file # path to the log file
     attr_accessor :options # options passed to the agent when +#start+ is called.
     attr_accessor :metric_lookup # Hash used to lookup metric ids based on their name and scope
-    
+
     # All access to the agent is thru this class method to ensure multiple Agent instances are not initialized per-Ruby process. 
     def self.instance(options = {})
       @@instance ||= self.new(options)
     end
-    
+
     # Note - this doesn't start instruments or the worker thread. This is handled via +#start+ as we don't 
     # want to start the worker thread or install instrumentation if (1) disabled for this environment (2) a worker thread shouldn't
     # be started (when forking).
     def initialize(options = {})
       @started = false
       @options ||= options
+      @config = ScoutApm::Config.new(options[:config_path])
+
       @store = ScoutApm::Store.new
       @layaway = ScoutApm::Layaway.new
-      @config = ScoutApm::Config.new(options[:config_path])
       @metric_lookup = Hash.new
-      @process_cpu=ScoutApm::Instruments::Process::ProcessCpu.new(environment.processors)
-      @process_memory=ScoutApm::Instruments::Process::ProcessMemory.new
+      @process_cpu = ScoutApm::Instruments::Process::ProcessCpu.new(environment.processors)
+      @process_memory = ScoutApm::Instruments::Process::ProcessMemory.new
       @capacity = ScoutApm::Capacity.new
     end
-    
+
     def environment
       @environment ||= ScoutApm::Environment.new
     end
-    
+
     # This is called via +ScoutApm::Agent.instance.start+ when ScoutApm is required in a Ruby application.
     # It initializes the agent and starts the worker thread (if appropiate).
     def start(options = {})

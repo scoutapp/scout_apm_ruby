@@ -6,11 +6,18 @@ module ScoutApm
       def default_log_path
         "#{environment.root}/log"
       end
-      
+
       def init_logger
-        @log_file = wants_stdout? ? STDOUT : "#{log_file_path}/scout_apm.log"
-        begin 
-          @logger = Logger.new(@log_file) 
+        begin
+          @log_file = wants_stdout? ? STDOUT : "#{log_file_path}/scout_apm.log"
+        rescue => e
+          puts "OHH NO"
+          puts e.message
+          puts e.backtrace.join("\n\t")
+        end
+
+        begin
+          @logger = Logger.new(@log_file)
           @logger.level = log_level
           apply_log_format
         rescue Exception => e
