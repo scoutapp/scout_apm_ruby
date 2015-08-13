@@ -6,20 +6,16 @@ common: &defaults
 
 production:
   <<: *defaults
-  name: Scout APM (Production)
+  name: APM Test Conf (Production)
 
 development:
   <<: *defaults
-  name: Scout APM (Development)
+  name: APM Test Conf (Development)
   host: http://localhost:3000
   monitor: true
 
 test:
   <<: *defaults
-  name: Scout APM (Test)
+  name: APM Test Conf (Test)
   monitor: false
-
-staging:
-  <<: *defaults
-  name: Scout APM (Staging)
 

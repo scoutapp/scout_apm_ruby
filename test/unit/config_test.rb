@@ -2,7 +2,7 @@ require 'test_helper'
 
 require 'scout_apm/config'
 
-class TestConfig < Minitest::Test
+class ConfigTest < Minitest::Test
   def test_initalize_without_a_config
     conf = ScoutApm::Config.new(nil)
 
@@ -23,7 +23,7 @@ class TestConfig < Minitest::Test
     conf = ScoutApm::Config.new(conf_file)
 
     assert_equal "debug", conf.value('log_level')
-    assert_equal "Scout APM (Production)", conf.value('name')
+    assert_equal "APM Test Conf (Production)", conf.value('name')
   end
 end
 
