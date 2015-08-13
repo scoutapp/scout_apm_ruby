@@ -8,7 +8,7 @@ module ScoutApm
     DEFAULTS =  {
         'host' => 'https://apm.scoutapp.com',
         'log_level' => 'info'
-    }
+    }.freeze
 
     def initialize(config_path = nil)
       @config_path = config_path
@@ -53,7 +53,7 @@ module ScoutApm
         logger.warn e.message
         logger.warn e.backtrace
       end
-      settings_hash = DEFAULTS.merge(settings_hash)
+      DEFAULTS.merge(settings_hash)
     end
 
     # if we error out early enough, we don't have access to ScoutApm's logger
@@ -66,6 +66,5 @@ module ScoutApm
         ENV['SCOUT_DEBUG'] ? Logger.new(STDOUT) : ScoutApm::Utils::NullLogger.new
       end
     end
-
-  end # Config
-end # ScoutApm
+  end
+end
