@@ -27,6 +27,26 @@ module ScoutApm
                       end
     end
 
+    def database_engine
+      default = :mysql
+
+      if defined?(ActiveRecord::Base)
+        case ActiveRecord::Base.connection.class.to_s
+        when "ActiveRecord::ConnectionAdapters::MysqlAdapter"
+          :mysql
+        when "ActiveRecord::ConnectionAdapters::PostgreSQLAdapter"
+          :postgres
+        when "ActiveRecord::ConnectionAdapters::SQLite3Adapter"
+          :sqlite
+        else
+          default
+        end
+      else
+        # TODO: detection outside of Rails
+        default
+      end
+    end
+
     def processors
       return @processors if @processors
       unless @processors
