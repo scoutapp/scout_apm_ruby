@@ -5,7 +5,7 @@ require "scout_apm/version"
 Gem::Specification.new do |s|
   s.name        = "scout_apm"
   s.version     = ScoutApm::VERSION
-  s.authors     = ["Derek Haynes",'Andre Lewis']
+  s.authors     = ["Derek Haynes", 'Andre Lewis']
   s.email       = ["support@scoutapp.com"]
   s.homepage    = "https://github.com/scoutapp/scout_apm_ruby"
   s.summary     = "Ruby application performance monitoring"
@@ -20,4 +20,5 @@ Gem::Specification.new do |s|
 
   s.add_development_dependency "minitest"
   s.add_development_dependency "pry"
+  s.add_development_dependency "m"
 end
