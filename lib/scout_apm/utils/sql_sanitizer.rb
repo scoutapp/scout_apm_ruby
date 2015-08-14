@@ -1,3 +1,5 @@
+require 'scout_apm/environment'
+
 # Removes actual values from SQL. Used to both obfuscate the SQL and group
 # similar queries in the UI.
 module ScoutApm
@@ -19,6 +21,8 @@ module ScoutApm
         when :sqlite   then to_s_sqlite
         end
       end
+
+      private
 
       MULTIPLE_SPACES    = %r|\s+|.freeze
       MULTIPLE_QUESTIONS = /\?(,\?)+/.freeze
