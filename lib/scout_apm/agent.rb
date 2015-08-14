@@ -65,7 +65,7 @@ module ScoutApm
       end
       @started = true
       logger.info "Starting monitoring for [#{config.value('name')}]. Framework [#{environment.framework}] App Server [#{environment.app_server}]."
-      start_instruments
+      load_instruments
       if !start_background_worker?
         logger.debug "Not starting worker thread. Will start worker loops after forking."
         install_passenger_events if environment.app_server == :passenger
@@ -169,8 +169,8 @@ module ScoutApm
       end
     rescue
       logger.warn "Unable to install Puma worker loop: #{$!.message}"
-    end    
-    
+    end
+
     # Creates the worker thread. The worker thread is a loop that runs continuously. It sleeps for +Agent#period+ and when it wakes,
     # processes data, either saving it to disk or reporting to Scout.
     def start_background_worker
@@ -181,7 +181,7 @@ module ScoutApm
       end # thread new
       logger.debug "Done creating worker thread."
     end
-    
+
     # Called from #process_metrics, which is run via the background worker. 
     def run_samplers
       begin
@@ -204,9 +204,10 @@ module ScoutApm
         logger.debug e.backtrace.join("\n")
       end
     end
-    
+
     # Loads the instrumention logic.
     def load_instruments
+      logger.debug "Installing instrumentation"
       case environment.framework
       when :rails
         require File.expand_path(File.join(File.dirname(__FILE__),'instruments/rails/action_controller_instruments.rb'))
@@ -222,12 +223,5 @@ module ScoutApm
       logger.warn $!.message
       logger.warn $!.backtrace
     end
-    
-    # Injects instruments into the Ruby application.
-    def start_instruments
-      logger.debug "Installing instrumentation"
-      load_instruments
-    end
-    
   end # class Agent
 end # module ScoutApm
