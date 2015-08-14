@@ -12,14 +12,14 @@ module ScoutApm::Instruments
         end
       end
     end # self.included
-    
+
     def log_with_scout_instruments(*args, &block)
       sql, name = args
-      self.class.instrument(scout_ar_metric_name(sql,name), :desc => scout_sanitize_sql(sql)) do
+      self.class.instrument(scout_ar_metric_name(sql,name), :desc => Utils::SqlSanitizer.new(sql).to_s) do
         log_without_scout_instruments(sql, name, &block)
       end
     end
-    
+
     def scout_ar_metric_name(sql,name)
       # sql: SELECT "places".* FROM "places"  ORDER BY "places"."position" ASC
       # name: Place Load
@@ -43,21 +43,6 @@ module ScoutApm::Instruments
       end
       metric
     end
-    
-    # Removes actual values from SQL. Used to both obfuscate the SQL and group 
-    # similar queries in the UI.
-    def scout_sanitize_sql(sql)
-      return nil if sql.length > 1000 # safeguard - don't sanitize large SQL statements
-      sql = sql.dup
-      sql.gsub!(/\\"/, '') # removing escaping double quotes
-      sql.gsub!(/\\'/, '') # removing escaping single quotes
-      sql.gsub!(/'(?:[^']|'')*'/, '?') # removing strings (single quote)
-      sql.gsub!(/"(?:[^"]|"")*"/, '?') # removing strings (double quote)
-      sql.gsub!(/\b\d+\b/, '?') # removing integers
-      sql.gsub!(/\?(,\?)+/,'?') # replace multiple ? w/a single ?
-      sql
-    end
-    
   end # module ActiveRecordInstruments
 end # module Instruments
 
