@@ -31,6 +31,8 @@ module ScoutApm
       default = :mysql
 
       if defined?(ActiveRecord::Base)
+        return default unless ActiveRecord::Base.connected?
+
         case ActiveRecord::Base.connection.class.to_s
         when "ActiveRecord::ConnectionAdapters::MysqlAdapter"
           :mysql

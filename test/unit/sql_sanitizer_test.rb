@@ -11,14 +11,12 @@ module ScoutApm
         assert_nil SqlSanitizer.new(sql).to_s
       end
 
-      # > User.first
       def test_postgres_simple_select_of_first
         sql = %q|SELECT  "users".* FROM "users"  ORDER BY "users"."id" ASC LIMIT 1|
         ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :postgres }
         assert_equal %q|SELECT "users".* FROM "users" ORDER BY "users"."id" ASC LIMIT 1|, ss.to_s
       end
 
-      # > User.where(name: "Chris")
       def test_postgres_where
         sql = %q|SELECT "users".* FROM "users" WHERE "users"."name" = $1  [["name", "chris"]]|
         ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :postgres }
@@ -59,6 +57,5 @@ module ScoutApm
         assert_equal %q|SELECT `blogs`.* FROM `blogs` WHERE (title = ?)|, ss.to_s
       end
     end
-
   end
 end

@@ -23,7 +23,7 @@ module ScoutApm
             if meta.metric_name =~ /\AController/
               controller_count += stats.call_count
             end
-          end      
+          end
           payload = Marshal.dump(:metrics => metrics, :slow_transactions => slow_transactions)
           slow_transactions_kb = Marshal.dump(slow_transactions).size/1024 # just for performance debugging
           logger.debug "#{config.value('name')} Delivering total payload [#{payload.size/1024} KB] for #{controller_count} requests and slow transactions [#{slow_transactions_kb} KB] for #{slow_transactions.size} transactions of durations: #{slow_transactions.map(&:total_call_time).join(',')}."        
@@ -47,7 +47,7 @@ module ScoutApm
         logger.info $!.message
         logger.debug $!.backtrace
       end
-      
+
       # Before reporting, lookup metric_id for each MetricMeta. This speeds up 
       # reporting on the server-side.
       def add_metric_ids(metrics)
@@ -57,7 +57,7 @@ module ScoutApm
           end
         end
       end
-      
+
       def checkin_uri
         URI.parse("#{config.value('host')}/apps/checkin.scout?key=#{config.value('key')}&name=#{CGI.escape(config.value('name'))}")
       end
