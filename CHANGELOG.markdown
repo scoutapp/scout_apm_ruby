@@ -1,3 +1,8 @@
+# 0.1.4
+
+* Tweaks to Postgres query parsing
+* Fix for missing scout_apm.yml file causing rake commands to fail because of a missing log file.
+
 # 0.1.3.1
 
 * Adds Puma support
