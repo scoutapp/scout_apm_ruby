@@ -1,3 +1,7 @@
+# 0.1.5
+
+* SQL sanitization now collapses IN (?,?,?) to a single (?)
+
 # 0.1.4
 
 * Tweaks to Postgres query parsing
