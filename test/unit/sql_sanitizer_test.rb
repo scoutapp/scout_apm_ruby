@@ -35,6 +35,12 @@ module ScoutApm
         assert_equal %q|SELECT "blogs".* FROM "blogs" WHERE (view_count > ?)|, ss.to_s
       end
 
+      def test_postgres_collapse_in_clause
+        sql = %q|SELECT "blogs".* FROM "blogs" WHERE id IN (?, ?, ?)|
+        ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :postgres }
+        assert_equal %q|SELECT "blogs".* FROM "blogs" WHERE id IN (?)|, ss.to_s
+      end
+
       def test_mysql_where
         sql = %q|SELECT `users`.* FROM `users` WHERE `users`.`name` = ?  [["name", "chris"]]|
         ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :mysql }

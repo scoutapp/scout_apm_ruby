@@ -32,12 +32,14 @@ module ScoutApm
       PSQL_REMOVE_STRINGS = /'(?:[^']|'')*'/.freeze
       PSQL_REMOVE_INTEGERS = /(?<!LIMIT )\b\d+\b/.freeze
       PSQL_PLACEHOLDER = /\$\d+/.freeze
+      PSQL_IN_CLAUSE = /IN\s+\((\s*\?,?\s*)*\)/.freeze
 
       def to_s_postgres
         sql.gsub!(PSQL_PLACEHOLDER, '?')
         sql.gsub!(PSQL_VAR_INTERPOLATION, '')
         sql.gsub!(PSQL_REMOVE_STRINGS, '?')
         sql.gsub!(PSQL_REMOVE_INTEGERS, '?')
+        sql.gsub!(PSQL_IN_CLAUSE, 'IN (?)')
         sql.gsub!(MULTIPLE_SPACES, ' ')
         sql.gsub!(TRAILING_SPACES, '')
         sql
@@ -47,12 +49,14 @@ module ScoutApm
       MYSQL_REMOVE_INTEGERS = /(?<!LIMIT )\b\d+\b/.freeze
       MYSQL_REMOVE_SINGLE_QUOTE_STRINGS = /'(?:[^']|'')*'/.freeze
       MYSQL_REMOVE_DOUBLE_QUOTE_STRINGS = /"(?:[^"]|"")*"/.freeze
+      MYSQL_IN_CLAUSE = /IN\s+\((\s*\?,?\s*)*\)/.freeze
 
       def to_s_mysql
         sql.gsub!(MYSQL_VAR_INTERPOLATION, '')
         sql.gsub!(MYSQL_REMOVE_SINGLE_QUOTE_STRINGS, '?')
         sql.gsub!(MYSQL_REMOVE_DOUBLE_QUOTE_STRINGS, '?')
         sql.gsub!(MYSQL_REMOVE_INTEGERS, '?')
+        sql.gsub!(MYSQL_IN_CLAUSE, '?')
         sql.gsub!(MULTIPLE_QUESTIONS, '?')
         sql.gsub!(TRAILING_SPACES, '')
         sql
