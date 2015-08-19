@@ -44,20 +44,29 @@ module ScoutApm::Tracer
     # Options:
     # * :scope - If specified, sets the sub-scope for the metric. We allow additional scope level. This is used
     # * uri - the request uri
+    # * :ignore_children - will not instrument any method calls beneath this call. Example use case: InfluxDB uses Net::HTTP, which is instrumented. However, we can provide more specific data if we know we're doing an influx call, so we'd rather just instrument the Influx call and ignore Net::HTTP.
     # when rendering the transaction tree in the UI. 
     def instrument(metric_name, options={}, &block)
       # don't instrument if (1) NOT inside a transaction and (2) NOT a Controller metric.
       if !Thread::current[:scout_apm_scope_name] and metric_name !~ /\AController\//
         return yield
+      elsif Thread::current[:scout_ignore_children]
+        return yield
       end
       if options.delete(:scope)
         Thread::current[:scout_apm_sub_scope] = metric_name 
+      end
+      if options[:ignore_children]
+        Thread::current[:scout_ignore_children] = true
       end
       stack_item = ScoutApm::Agent.instance.store.record(metric_name)
       begin
         yield
       ensure
         Thread::current[:scout_apm_sub_scope] = nil if Thread::current[:scout_apm_sub_scope] == metric_name
+        if options[:ignore_children]
+          Thread::current[:scout_ignore_children] = nil
+        end
         ScoutApm::Agent.instance.store.stop_recording(stack_item,options)
       end
     end

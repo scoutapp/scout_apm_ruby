@@ -1,3 +1,7 @@
+# 0.1.6
+
+* Ability to ignore child calls in instrumentation.
+
 # 0.1.5
 
 * SQL sanitization now collapses IN (?,?,?) to a single (?)
