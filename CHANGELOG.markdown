@@ -1,3 +1,7 @@
+# 0.1.6
+
+* Fix issues with Ruby 1.8.7 regexes
+
 # 0.1.5
 
 * SQL sanitization now collapses IN (?,?,?) to a single (?)
