@@ -5,6 +5,13 @@ require 'scout_apm/environment'
 module ScoutApm
   module Utils
     class SqlSanitizer
+      if ScoutApm::Environment.new.ruby_187?
+        require 'scout_apm/utils/sql_sanitizer_regex_1_8_7'
+      else
+        require 'scout_apm/utils/sql_sanitizer_regex'
+      end
+      include ScoutApm::Utils::SqlRegex
+
       attr_reader :sql
       attr_accessor :database_engine
 
@@ -24,16 +31,6 @@ module ScoutApm
 
       private
 
-      MULTIPLE_SPACES    = %r|\s+|.freeze
-      MULTIPLE_QUESTIONS = /\?(,\?)+/.freeze
-      TRAILING_SPACES    = /\s+$/.freeze
-
-      PSQL_VAR_INTERPOLATION = %r|\[\[.*\]\]\s*$|.freeze
-      PSQL_REMOVE_STRINGS = /'(?:[^']|'')*'/.freeze
-      PSQL_REMOVE_INTEGERS = /(?<!LIMIT )\b\d+\b/.freeze
-      PSQL_PLACEHOLDER = /\$\d+/.freeze
-      PSQL_IN_CLAUSE = /IN\s+\((\s*\?,?\s*)*\)/.freeze
-
       def to_s_postgres
         sql.gsub!(PSQL_PLACEHOLDER, '?')
         sql.gsub!(PSQL_VAR_INTERPOLATION, '')
@@ -45,12 +42,6 @@ module ScoutApm
         sql
       end
 
-      MYSQL_VAR_INTERPOLATION = %r|\[\[.*\]\]\s*$|.freeze
-      MYSQL_REMOVE_INTEGERS = /(?<!LIMIT )\b\d+\b/.freeze
-      MYSQL_REMOVE_SINGLE_QUOTE_STRINGS = /'(?:[^']|'')*'/.freeze
-      MYSQL_REMOVE_DOUBLE_QUOTE_STRINGS = /"(?:[^"]|"")*"/.freeze
-      MYSQL_IN_CLAUSE = /IN\s+\((\s*\?,?\s*)*\)/.freeze
-
       def to_s_mysql
         sql.gsub!(MYSQL_VAR_INTERPOLATION, '')
         sql.gsub!(MYSQL_REMOVE_SINGLE_QUOTE_STRINGS, '?')
@@ -61,10 +52,6 @@ module ScoutApm
         sql.gsub!(TRAILING_SPACES, '')
         sql
       end
-
-      SQLITE_VAR_INTERPOLATION = %r|\[\[.*\]\]\s*$|.freeze
-      SQLITE_REMOVE_STRINGS = /'(?:[^']|'')*'/.freeze
-      SQLITE_REMOVE_INTEGERS = /(?<!LIMIT )\b\d+\b/.freeze
 
       def to_s_sqlite
         sql.gsub!(SQLITE_VAR_INTERPOLATION, '')
