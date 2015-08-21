@@ -5,7 +5,7 @@ module ScoutApm
       # Instruments the action and tracks errors.
       def process_action(*args)
         scout_controller_action = "Controller/#{controller_path}/#{action_name}"
-        #ScoutApm::Agent.instance.logger.debug "Processing #{scout_controller_action}"
+
         self.class.scout_apm_trace(scout_controller_action, :uri => request.fullpath, :ip => request.remote_ip) do
           begin
             super
@@ -38,3 +38,4 @@ if defined?(ActionView) && defined?(ActionView::PartialRenderer)
     instrument_method :render_partial, :metric_name => 'View/#{@template.virtual_path}/Rendering', :scope => true
   end
 end
+
