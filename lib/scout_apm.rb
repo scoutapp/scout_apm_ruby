@@ -31,6 +31,11 @@ require 'scout_apm/capacity'
 require 'scout_apm/instruments/process/process_cpu'
 require 'scout_apm/instruments/process/process_memory'
 
+require 'scout_apm/server_integrations/passenger'
+require 'scout_apm/server_integrations/unicorn'
+require 'scout_apm/server_integrations/rainbows'
+require 'scout_apm/server_integrations/puma'
+
 if defined?(Rails) and Rails.respond_to?(:version) and Rails.version >= '3'
   module ScoutApm
     class Railtie < Rails::Railtie

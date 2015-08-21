@@ -12,7 +12,6 @@ module ScoutApm
     attr_accessor :store
     attr_accessor :layaway
     attr_accessor :config
-    attr_accessor :environment
     attr_accessor :capacity
     attr_accessor :logger
     attr_accessor :log_file # path to the log file
@@ -32,12 +31,12 @@ module ScoutApm
       @options ||= options
       @config = ScoutApm::Config.new(options[:config_path])
 
-      @store = ScoutApm::Store.new
-      @layaway = ScoutApm::Layaway.new
-      @metric_lookup = Hash.new
-      @process_cpu = ScoutApm::Instruments::Process::ProcessCpu.new(environment.processors)
+      @store          = ScoutApm::Store.new
+      @layaway        = ScoutApm::Layaway.new
+      @metric_lookup  = Hash.new
+      @process_cpu    = ScoutApm::Instruments::Process::ProcessCpu.new(environment.processors)
       @process_memory = ScoutApm::Instruments::Process::ProcessMemory.new
-      @capacity = ScoutApm::Capacity.new
+      @capacity       = ScoutApm::Capacity.new
     end
 
     def environment
@@ -50,6 +49,7 @@ module ScoutApm
       @options.merge!(options)
       init_logger
       logger.info "Attempting to start Scout Agent [#{ScoutApm::VERSION}] on [#{environment.hostname}]"
+
       if !config.value('monitor') and !@options[:force]
         logger.warn "Monitoring isn't enabled for the [#{environment.env}] environment."
         return false
@@ -64,19 +64,23 @@ module ScoutApm
         return false
       end
       @started = true
+
       logger.info "Starting monitoring for [#{config.value('name')}]. Framework [#{environment.framework}] App Server [#{environment.app_server}]."
+
       load_instruments
-      if !start_background_worker?
+
+      if start_background_worker?
+        start_background_worker
+        handle_exit
+        logger.info "Scout Agent [#{ScoutApm::VERSION}] Initialized"
+      else
         logger.debug "Not starting worker thread. Will start worker loops after forking."
-        install_passenger_events if environment.app_server == :passenger
-        install_unicorn_worker_loop if environment.app_server == :unicorn
-        install_rainbows_worker_loop if environment.app_server == :rainbows
-        install_puma_worker_loop if environment.app_server == :puma
-        return
+        ScoutApm::ServerIntegrations::Passenger.install if environment.app_server == :passenger
+        ScoutApm::ServerIntegrations::Unicorn.install   if environment.app_server == :unicorn
+        ScoutApm::ServerIntegrations::Rainbows.install  if environment.app_server == :rainbows
+        ScoutApm::ServerIntegrations::Puma.install      if environment.app_server == :puma
       end
-      start_background_worker
-      handle_exit
-      logger.info "Scout Agent [#{ScoutApm::VERSION}] Initialized"
+
     end
 
     # at_exit, calls Agent#shutdown to wrapup metric reporting.
@@ -122,53 +126,6 @@ module ScoutApm
     #   the agent is started in the forked process.
     def start_background_worker?
       !environment.forking? or environment.app_server == :thin # clarify why Thin is here but not WEBrick
-    end
-
-    ## TODO - Likely possible to unify starting the worker loop in forking servers by listening for the first transaction
-    ## to start and starting the background worker then in that process.
-
-    def install_passenger_events
-      PhusionPassenger.on_event(:starting_worker_process) do |forked|
-        logger.debug "Passenger is starting a worker process. Starting worker thread."
-        self.class.instance.start_background_worker
-      end
-      # The agent's at_exit hook doesn't run when a Passenger process stops.
-      # This does run when a process stops.
-      PhusionPassenger.on_event(:stopping_worker_process) do
-        logger.debug "Passenger is stopping a worker process, shutting down the agent."
-        ScoutApm::Agent.instance.shutdown
-      end
-    end
-
-    def install_unicorn_worker_loop
-      logger.debug "Installing Unicorn worker loop."
-      Unicorn::HttpServer.class_eval do
-        old = instance_method(:worker_loop)
-        define_method(:worker_loop) do |worker|
-          ScoutApm::Agent.instance.start_background_worker
-          old.bind(self).call(worker)
-        end
-      end
-    end
-
-    def install_rainbows_worker_loop
-      logger.debug "Installing Rainbows worker loop."
-      Rainbows::HttpServer.class_eval do
-        old = instance_method(:worker_loop)
-        define_method(:worker_loop) do |worker|
-          ScoutApm::Agent.instance.start_background_worker
-          old.bind(self).call(worker)
-        end
-      end
-    end
-
-    def install_puma_worker_loop
-      Puma.cli_config.options[:before_worker_boot] << Proc.new do
-        logger.debug "Installing Puma worker loop."
-        ScoutApm::Agent.instance.start_background_worker
-      end
-    rescue
-      logger.warn "Unable to install Puma worker loop: #{$!.message}"
     end
 
     # Creates the worker thread. The worker thread is a loop that runs continuously. It sleeps for +Agent#period+ and when it wakes,
