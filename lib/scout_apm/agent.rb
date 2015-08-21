@@ -116,10 +116,6 @@ module ScoutApm
       @started
     end
 
-    def gem_root
-      File.expand_path(File.join("..","..",".."), __FILE__)
-    end
-
     # The worker thread will automatically start UNLESS:
     # * A supported application server isn't detected (example: running via Rails console)
     # * A supported application server is detected, but it forks. In this case,
