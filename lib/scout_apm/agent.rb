@@ -43,6 +43,32 @@ module ScoutApm
       ScoutApm::Environment.instance
     end
 
+    def apm_enabled?
+      config.value('monitor') and !@options[:force]
+    end
+
+    def preconditions_met?
+      if !apm_enabled?
+        logger.warn "Monitoring isn't enabled for the [#{environment.env}] environment."
+        return false
+      end
+
+      if !config.value('name')
+        logger.warn "An application name is required. Specify the :name value in scout_apm.yml. Not starting agent."
+        return false
+      end
+
+      if !environment.app_server
+        logger.warn "Couldn't find a supported app server. Not starting agent."
+        return false
+      end
+
+      if started?
+        logger.warn "Already started agent."
+        return false
+      end
+    end
+
     # This is called via +ScoutApm::Agent.instance.start+ when ScoutApm is required in a Ruby application.
     # It initializes the agent and starts the worker thread (if appropiate).
     def start(options = {})
@@ -50,19 +76,8 @@ module ScoutApm
       init_logger
       logger.info "Attempting to start Scout Agent [#{ScoutApm::VERSION}] on [#{environment.hostname}]"
 
-      if !config.value('monitor') and !@options[:force]
-        logger.warn "Monitoring isn't enabled for the [#{environment.env}] environment."
-        return false
-      elsif !config.value('name')
-        logger.warn "An application name is required. Specify the :name value in scout_apm.yml. Not starting agent."
-        return false
-      elsif !environment.app_server
-        logger.warn "Couldn't find a supported app server. Not starting agent."
-        return false
-      elsif started?
-        logger.warn "Already started agent."
-        return false
-      end
+      return false unless preconditions_met?
+
       @started = true
 
       logger.info "Starting monitoring for [#{config.value('name')}]. Framework [#{environment.framework}] App Server [#{environment.app_server}]."
@@ -80,26 +95,27 @@ module ScoutApm
         ScoutApm::ServerIntegrations::Rainbows.install  if environment.app_server == :rainbows
         ScoutApm::ServerIntegrations::Puma.install      if environment.app_server == :puma
       end
+    end
 
+    def exit_handler_unsupported?
+      environment.sinatra? || environment.jruby? || environment.rubinius?
     end
 
     # at_exit, calls Agent#shutdown to wrapup metric reporting.
     def handle_exit
-      if environment.sinatra? || environment.jruby? || environment.rubinius?
-        logger.debug "Exit handler not supported"
-      else
-        at_exit do
-          logger.debug "Shutdown!"
-          # MRI 1.9 bug drops exit codes.
-          # http://bugs.ruby-lang.org/issues/5218
-          if environment.ruby_19?
-            status = $!.status if $!.is_a?(SystemExit)
-            shutdown
-            exit status if status
-          else
-            shutdown
-          end
-        end # at_exit
+      logger.debug "Exit handler not supported" and return if exit_handler_unsupported?
+
+      at_exit do
+        logger.debug "Shutdown!"
+        # MRI 1.9 bug drops exit codes.
+        # http://bugs.ruby-lang.org/issues/5218
+        if environment.ruby_19?
+          status = $!.status if $!.is_a?(SystemExit)
+          shutdown
+          exit status if status
+        else
+          shutdown
+        end
       end
     end
 
