@@ -1,18 +1,20 @@
 # Rails 3/4
-module ScoutApm::Instruments
-  module ActionControllerInstruments
-    # Instruments the action and tracks errors.
-    def process_action(*args)
-      scout_controller_action = "Controller/#{controller_path}/#{action_name}"
-      #ScoutApm::Agent.instance.logger.debug "Processing #{scout_controller_action}"
-      self.class.scout_apm_trace(scout_controller_action, :uri => request.fullpath, :ip => request.remote_ip) do
-        begin
-          super
-        rescue Exception
-          ScoutApm::Agent.instance.store.track!("Errors/Request",1, :scope => nil)
-          raise
-        ensure
-          Thread::current[:scout_apm_scope_name] = nil
+module ScoutApm
+  module Instruments
+    module ActionControllerInstruments
+      # Instruments the action and tracks errors.
+      def process_action(*args)
+        scout_controller_action = "Controller/#{controller_path}/#{action_name}"
+        #ScoutApm::Agent.instance.logger.debug "Processing #{scout_controller_action}"
+        self.class.scout_apm_trace(scout_controller_action, :uri => request.fullpath, :ip => request.remote_ip) do
+          begin
+            super
+          rescue Exception
+            ScoutApm::Agent.instance.store.track!("Errors/Request",1, :scope => nil)
+            raise
+          ensure
+            Thread::current[:scout_apm_scope_name] = nil
+          end
         end
       end
     end

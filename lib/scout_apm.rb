@@ -1,32 +1,35 @@
 module ScoutApm
 end
-require 'socket'
-require 'set'
+
+require 'cgi'
+require 'logger'
 require 'net/http'
 require 'openssl'
-require 'logger'
+require 'set'
+require 'socket'
 require 'yaml'
-require 'cgi'
 
-require File.expand_path('../scout_apm/version.rb', __FILE__)
-require File.expand_path('../scout_apm/agent.rb', __FILE__)
-require File.expand_path('../scout_apm/agent/logging.rb', __FILE__)
-require File.expand_path('../scout_apm/agent/reporting.rb', __FILE__)
-require File.expand_path('../scout_apm/layaway.rb', __FILE__)
-require File.expand_path('../scout_apm/layaway_file.rb', __FILE__)
-require File.expand_path('../scout_apm/config.rb', __FILE__)
-require File.expand_path('../scout_apm/background_worker.rb', __FILE__)
-require File.expand_path('../scout_apm/environment.rb', __FILE__)
-require File.expand_path('../scout_apm/metric_meta.rb', __FILE__)
-require File.expand_path('../scout_apm/metric_stats.rb', __FILE__)
-require File.expand_path('../scout_apm/stack_item.rb', __FILE__)
-require File.expand_path('../scout_apm/store.rb', __FILE__)
-require File.expand_path('../scout_apm/tracer.rb', __FILE__)
-require File.expand_path('../scout_apm/context.rb', __FILE__)
-require File.expand_path('../scout_apm/slow_transaction.rb', __FILE__)
-require File.expand_path('../scout_apm/capacity.rb', __FILE__)
-require File.expand_path('../scout_apm/instruments/process/process_cpu.rb', __FILE__)
-require File.expand_path('../scout_apm/instruments/process/process_memory.rb', __FILE__)
+require 'scout_apm/version'
+require 'scout_apm/utils/sql_sanitizer'
+require 'scout_apm/utils/null_logger'
+require 'scout_apm/agent'
+require 'scout_apm/agent/logging'
+require 'scout_apm/agent/reporting'
+require 'scout_apm/layaway'
+require 'scout_apm/layaway_file'
+require 'scout_apm/config'
+require 'scout_apm/background_worker'
+require 'scout_apm/environment'
+require 'scout_apm/metric_meta'
+require 'scout_apm/metric_stats'
+require 'scout_apm/stack_item'
+require 'scout_apm/store'
+require 'scout_apm/tracer'
+require 'scout_apm/context'
+require 'scout_apm/slow_transaction'
+require 'scout_apm/capacity'
+require 'scout_apm/instruments/process/process_cpu'
+require 'scout_apm/instruments/process/process_memory'
 
 if defined?(Rails) and Rails.respond_to?(:version) and Rails.version >= '3'
   module ScoutApm
