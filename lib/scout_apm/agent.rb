@@ -223,5 +223,5 @@ module ScoutApm
       logger.warn $!.message
       logger.warn $!.backtrace
     end
-  end # class Agent
-end # module ScoutApm
+  end
+end
