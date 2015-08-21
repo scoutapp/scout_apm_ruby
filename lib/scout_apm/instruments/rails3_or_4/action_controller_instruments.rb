@@ -8,7 +8,7 @@ module ScoutApm::Instruments
       self.class.scout_apm_trace(scout_controller_action, :uri => request.fullpath, :ip => request.remote_ip) do
         begin
           super
-        rescue Exception => e
+        rescue Exception
           ScoutApm::Agent.instance.store.track!("Errors/Request",1, :scope => nil)
           raise
         ensure

@@ -22,11 +22,11 @@ class ScoutApm::MetricMeta
   end
   
   def hash
-     h = metric_name.downcase.hash
-     h ^= scope.downcase.hash unless scope.nil?
-     h ^= desc.downcase.hash unless desc.nil?
-     h
-   end
+    h = metric_name.downcase.hash
+    h ^= scope.downcase.hash unless scope.nil?
+    h ^= desc.downcase.hash unless desc.nil?
+    h
+  end
 
   def eql?(o)
    self.class == o.class && metric_name.downcase.eql?(o.metric_name.downcase) && scope == o.scope && client_id == o.client_id && desc == o.desc

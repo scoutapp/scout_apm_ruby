@@ -107,7 +107,7 @@ class ScoutApm::Store
     cats = Set.new
     metrics.keys.each do |meta|
       next if meta.scope.nil? # ignore controller
-      if match=meta.metric_name.match(/\A([\w|\d]+)\//)
+      if match=meta.metric_name.match(/\A([\w]+)\//)
         cats << match[1]
       end
     end # metrics.each
