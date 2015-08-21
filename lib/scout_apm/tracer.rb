@@ -1,4 +1,4 @@
-# Contains the methods that instrument blocks of code. 
+# Contains the methods that instrument blocks of code.
 #
 # When a code block is wrapped inside #instrument(metric_name):
 # * The #instrument method pushes a StackItem onto Store#stack
@@ -118,5 +118,5 @@ module ScoutApm::Tracer
     def _sanitize_name(name)
       name.to_s.tr_s('^a-zA-Z0-9', '_')
     end
-  end # ClassMethods
-end # module Tracer
+  end
+end

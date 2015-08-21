@@ -44,7 +44,7 @@ module ScoutApm
       settings_hash = {}
       begin
         if File.exist?(config_file)
-          settings_hash = YAML.load(ERB.new(File.read(config_file)).result(binding))[config_environment] || {} 
+          settings_hash = YAML.load(ERB.new(File.read(config_file)).result(binding))[config_environment] || {}
         else
           logger.warn "No config file found at [#{config_file}]."
         end

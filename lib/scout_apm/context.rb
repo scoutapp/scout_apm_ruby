@@ -10,7 +10,7 @@ class ScoutApm::Context
     @user = {}
   end
 
-  # Generates a hash representation of the Context. 
+  # Generates a hash representation of the Context.
   # Example: {:monthly_spend => 100, :user => {:ip => '127.0.0.1'}}
   def to_hash
     @extra.merge({:user => @user})
@@ -77,7 +77,7 @@ class ScoutApm::Context
 
   # take the entire Hash vs. just the value so the logger output is more helpful on error.
   def value_valid?(key_value)
-    # ensure one of our accepted types. 
+    # ensure one of our accepted types.
     value = key_value.values.last
     if !valid_type?([String, Symbol, Numeric, Time, Date, TrueClass, FalseClass],value)
       ScoutApm::Agent.instance.logger.warn "The value for [#{key_value.keys.first}] is not a valid type [#{value.class}]."

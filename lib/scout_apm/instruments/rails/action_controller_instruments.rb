@@ -10,9 +10,9 @@ module ScoutApm::Instruments
         end
       end
     end # self.included
-    
+
     # In addition to instrumenting actions, this also sets the scope to the controller action name. The scope is later
-    # applied to metrics recorded during this transaction. This lets us associate ActiveRecord calls with 
+    # applied to metrics recorded during this transaction. This lets us associate ActiveRecord calls with
     # specific controller actions.
     def perform_action_with_scout_instruments(*args, &block)
       scout_controller_action = "Controller/#{controller_path}/#{action_name}"

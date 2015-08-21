@@ -60,7 +60,7 @@ module ScoutApm
         end
         if @processors < 1
           @processors = 1
-        end 
+        end
       end
       @processors
     end
@@ -88,10 +88,10 @@ module ScoutApm
     # This needs to be improved. Frequently, multiple app servers gem are present and which
     # ever is checked first becomes the designated app server.
     #
-    # I've put Thin and Webrick last as they are often used in development and included in Gemfiles 
-    # but less likely used in production. 
+    # I've put Thin and Webrick last as they are often used in development and included in Gemfiles
+    # but less likely used in production.
     #
-    # Next step: (1) list out all detected app servers (2) install hooks for those that need it (passenger, rainbows, unicorn). 
+    # Next step: (1) list out all detected app servers (2) install hooks for those that need it (passenger, rainbows, unicorn).
     #
     # Believe the biggest downside is the master process for forking app servers will get a background worker. Not sure how this will
     # impact metrics (it shouldn't process requests).

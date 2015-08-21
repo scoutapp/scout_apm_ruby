@@ -3,7 +3,7 @@ require 'scout_apm/utils/sql_sanitizer'
 module ScoutApm
   module Instruments
     # Contains ActiveRecord instrument, aliasing +ActiveRecord::ConnectionAdapters::AbstractAdapter#log+ calls
-    # to trace calls to the database. 
+    # to trace calls to the database.
     module ActiveRecordInstruments
       def self.included(instrumented_class)
         ScoutApm::Agent.instance.logger.debug "Instrumenting #{instrumented_class.inspect}"

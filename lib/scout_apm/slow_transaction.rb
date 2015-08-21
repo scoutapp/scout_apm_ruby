@@ -3,7 +3,7 @@ class ScoutApm::SlowTransaction
   BACKTRACE_LIMIT = 5 # Max length of callers to display
   MAX_SIZE = 100 # Limits the size of the metric hash to prevent a metric explosion.
   attr_reader :metric_name, :total_call_time, :metrics, :meta, :uri, :context, :time
-  
+
   # Given a call stack, generates a filtered backtrace that:
   # * Limits to the app/models, app/controllers, or app/views directories
   # * Limits to 5 total callers
@@ -18,7 +18,7 @@ class ScoutApm::SlowTransaction
     end
     stack
   end
-  
+
   def initialize(uri,metric_name,total_call_time,metrics,context,time)
     @uri = uri
     @metric_name = metric_name

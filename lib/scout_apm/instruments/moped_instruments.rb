@@ -12,11 +12,11 @@ if defined?(::Moped)
     end
     alias_method :process_without_scout_instruments, :process
     alias_method :process, :process_with_scout_instruments
-    
+
     # replaces values w/ ?
     def scout_sanitize_log(log)
       return nil if log.length > 1000 # safeguard - don't sanitize large SQL statements
-      log.gsub(/(=>")((?:[^"]|"")*)"/) do 
+      log.gsub(/(=>")((?:[^"]|"")*)"/) do
         $1 + '?' + '"'
       end
     end

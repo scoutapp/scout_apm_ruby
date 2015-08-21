@@ -11,16 +11,16 @@ class ScoutApm::MetricMeta
   attr_accessor :scope
   attr_accessor :client_id
   attr_accessor :desc, :extra
-  
+
   # To avoid conflicts with different JSON libaries
   def to_json(*a)
      %Q[{"metric_id":#{metric_id || 'null'},"metric_name":#{metric_name.to_json},"scope":#{scope.to_json || 'null'}}]
   end
-  
+
   def ==(o)
     self.eql?(o)
   end
-  
+
   def hash
     h = metric_name.downcase.hash
     h ^= scope.downcase.hash unless scope.nil?

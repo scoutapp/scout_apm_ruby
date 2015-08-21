@@ -1,21 +1,21 @@
-# Used to run a given task every 60 seconds. 
+# Used to run a given task every 60 seconds.
 class ScoutApm::BackgroundWorker
   # in seconds, time between when the worker thread wakes up and runs.
   PERIOD = 60
-  
+
   def initialize
     @keep_running = true
   end
-  
+
   def stop
     @keep_running = false
   end
-  
+
   # Runs the task passed to +start+ once.
   def run_once
     @task.call if @task
   end
-  
+
   # Starts running the passed block every 60 seconds (starting now).
   def start(&block)
     @task = block

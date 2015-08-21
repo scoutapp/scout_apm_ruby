@@ -15,9 +15,9 @@ module ScoutApm
         metrics = payload[:metrics]
         slow_transactions = payload[:slow_transactions]
         if payload.any?
-          add_metric_ids(metrics)  
+          add_metric_ids(metrics)
           logger.warn "Some data may be lost - metric size is at limit" if metrics.size == ScoutApm::Store::MAX_SIZE
-          # for debugging, count the total number of requests    
+          # for debugging, count the total number of requests
           controller_count = 0
           metrics.each do |meta,stats|
             if meta.metric_name =~ /\AController/
@@ -26,7 +26,7 @@ module ScoutApm
           end
           payload = Marshal.dump(:metrics => metrics, :slow_transactions => slow_transactions)
           slow_transactions_kb = Marshal.dump(slow_transactions).size/1024 # just for performance debugging
-          logger.debug "#{config.value('name')} Delivering total payload [#{payload.size/1024} KB] for #{controller_count} requests and slow transactions [#{slow_transactions_kb} KB] for #{slow_transactions.size} transactions of durations: #{slow_transactions.map(&:total_call_time).join(',')}."        
+          logger.debug "#{config.value('name')} Delivering total payload [#{payload.size/1024} KB] for #{controller_count} requests and slow transactions [#{slow_transactions_kb} KB] for #{slow_transactions.size} transactions of durations: #{slow_transactions.map(&:total_call_time).join(',')}."
           response =  post( checkin_uri,
                              payload,
                              "Content-Type"     => "application/octet-stream" )
@@ -48,7 +48,7 @@ module ScoutApm
         logger.debug $!.backtrace
       end
 
-      # Before reporting, lookup metric_id for each MetricMeta. This speeds up 
+      # Before reporting, lookup metric_id for each MetricMeta. This speeds up
       # reporting on the server-side.
       def add_metric_ids(metrics)
         metrics.each do |meta,stats|
