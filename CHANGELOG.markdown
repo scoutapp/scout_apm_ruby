@@ -1,3 +1,7 @@
+# 0.1.7
+
+* Ability to ignore child calls in instrumentation.
+
 # 0.1.6
 
 * Fix issues with Ruby 1.8.7 regexes
