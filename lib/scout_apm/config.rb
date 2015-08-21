@@ -25,7 +25,7 @@ module ScoutApm
     private
 
     def config_path
-      @config_path || File.join(ScoutApm::Environment.new.root, "config", "scout_apm.yml")
+      @config_path || File.join(ScoutApm::Environment.instance.root, "config", "scout_apm.yml")
     end
 
     def config_file
@@ -37,7 +37,7 @@ module ScoutApm
     end
 
     def config_environment
-      @config_environment ||= ScoutApm::Environment.new.env
+      @config_environment ||= ScoutApm::Environment.instance.env
     end
 
     def load_file

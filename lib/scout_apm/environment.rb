@@ -1,6 +1,10 @@
+require 'singleton'
+
 # Used to retrieve environment information for this application.
 module ScoutApm
   class Environment
+    include Singleton
+
     def env
       @env ||= case framework
                when :rails

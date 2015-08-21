@@ -5,7 +5,7 @@ require 'scout_apm/environment'
 module ScoutApm
   module Utils
     class SqlSanitizer
-      if ScoutApm::Environment.new.ruby_187?
+      if ScoutApm::Environment.instance.ruby_187?
         require 'scout_apm/utils/sql_sanitizer_regex_1_8_7'
       else
         require 'scout_apm/utils/sql_sanitizer_regex'
@@ -17,7 +17,7 @@ module ScoutApm
 
       def initialize(sql)
         @sql = sql.dup
-        @database_engine = ScoutApm::Environment.new.database_engine
+        @database_engine = ScoutApm::Environment.instance.database_engine
       end
 
       def to_s

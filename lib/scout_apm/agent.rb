@@ -41,7 +41,7 @@ module ScoutApm
     end
 
     def environment
-      @environment ||= ScoutApm::Environment.new
+      ScoutApm::Environment.instance
     end
 
     # This is called via +ScoutApm::Agent.instance.start+ when ScoutApm is required in a Ruby application.
