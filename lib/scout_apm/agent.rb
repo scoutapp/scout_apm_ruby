@@ -34,8 +34,7 @@ module ScoutApm
       @store          = ScoutApm::Store.new
       @layaway        = ScoutApm::Layaway.new
       @metric_lookup  = Hash.new
-      @process_cpu    = ScoutApm::Instruments::Process::ProcessCpu.new(environment.processors)
-      @process_memory = ScoutApm::Instruments::Process::ProcessMemory.new
+
       @capacity       = ScoutApm::Capacity.new
     end
 
@@ -67,6 +66,8 @@ module ScoutApm
         logger.warn "Already started agent."
         return false
       end
+
+      true
     end
 
     # This is called via +ScoutApm::Agent.instance.start+ when ScoutApm is required in a Ruby application.
@@ -83,6 +84,10 @@ module ScoutApm
       logger.info "Starting monitoring for [#{config.value('name')}]. Framework [#{environment.framework}] App Server [#{environment.app_server}]."
 
       load_instruments
+      @samplers = [
+        ScoutApm::Instruments::Process::ProcessCpu.new(environment.processors, logger),
+        ScoutApm::Instruments::Process::ProcessMemory.new(logger)
+      ]
 
       if start_background_worker?
         start_background_worker
@@ -90,10 +95,7 @@ module ScoutApm
         logger.info "Scout Agent [#{ScoutApm::VERSION}] Initialized"
       else
         logger.debug "Not starting worker thread. Will start worker loops after forking."
-        ScoutApm::ServerIntegrations::Passenger.install if environment.app_server == :passenger
-        ScoutApm::ServerIntegrations::Unicorn.install   if environment.app_server == :unicorn
-        ScoutApm::ServerIntegrations::Rainbows.install  if environment.app_server == :rainbows
-        ScoutApm::ServerIntegrations::Puma.install      if environment.app_server == :puma
+        environment.app_server_integration.install
       end
     end
 
@@ -137,7 +139,11 @@ module ScoutApm
     # * A supported application server is detected, but it forks. In this case,
     #   the agent is started in the forked process.
     def start_background_worker?
-      !environment.forking? or environment.app_server == :thin # clarify why Thin is here but not WEBrick
+      return true if environment.app_server == :thin
+      return true if environment.app_server == :webrick
+      return false if environment.forking?
+
+      false
     end
 
     # Creates the worker thread. The worker thread is a loop that runs continuously. It sleeps for +Agent#period+ and when it wakes,
@@ -149,29 +155,6 @@ module ScoutApm
         @background_worker.start { process_metrics }
       end # thread new
       logger.debug "Done creating worker thread."
-    end
-
-    # Called from #process_metrics, which is run via the background worker.
-    def run_samplers
-      begin
-        cpu_util=@process_cpu.run # returns a hash
-        logger.debug "Process CPU: #{cpu_util.inspect} [#{environment.processors} CPU(s)]"
-        store.track!("CPU/Utilization",cpu_util,:scope => nil) if cpu_util
-      rescue => e
-        logger.info "Error reading ProcessCpu"
-        logger.debug e.message
-        logger.debug e.backtrace.join("\n")
-      end
-
-      begin
-        mem_usage=@process_memory.run # returns a single number, in MB
-        logger.debug "Process Memory: #{mem_usage}MB"
-        store.track!("Memory/Physical",mem_usage,:scope => nil) if mem_usage
-      rescue => e
-        logger.info "Error reading ProcessMemory"
-        logger.debug e.message
-        logger.debug e.backtrace.join("\n")
-      end
     end
 
     # Loads the instrumention logic.

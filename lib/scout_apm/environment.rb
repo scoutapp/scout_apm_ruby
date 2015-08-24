@@ -5,6 +5,19 @@ module ScoutApm
   class Environment
     include Singleton
 
+    # I've put Thin and Webrick last as they are often used in development and included in Gemfiles
+    # but less likely used in production.
+    SERVER_INTEGRATIONS = [
+      ScoutApm::ServerIntegrations::Passenger.new,
+      ScoutApm::ServerIntegrations::Unicorn.new,
+      ScoutApm::ServerIntegrations::Rainbows.new,
+      ScoutApm::ServerIntegrations::Puma.new,
+      ScoutApm::ServerIntegrations::Thin.new,
+      ScoutApm::ServerIntegrations::Webrick.new,
+      ScoutApm::ServerIntegrations::Null.new, # must be last
+    ]
+
+
     def env
       @env ||= case framework
                when :rails
@@ -54,19 +67,16 @@ module ScoutApm
     end
 
     def processors
-      return @processors if @processors
-      unless @processors
-        proc_file = '/proc/cpuinfo'
-        if !File.exist?(proc_file)
-          @processors = 1
-        elsif `cat #{proc_file} | grep 'model name' | wc -l` =~ /(\d+)/
-          @processors = $1.to_i
-        end
-        if @processors < 1
-          @processors = 1
-        end
-      end
-      @processors
+      @processors ||= begin
+                        proc_file = '/proc/cpuinfo'
+                        if !File.exist?(proc_file)
+                          processors = 1
+                        elsif `cat #{proc_file} | grep 'model name' | wc -l` =~ /(\d+)/
+                          processors = $1.to_i
+                        end
+
+                        [processors, 1].max
+                      end
     end
 
     def root
@@ -86,73 +96,28 @@ module ScoutApm
     end
 
     def hostname
-      heroku? ? ENV['DYNO'] : Socket.gethostname
+      @hostname ||= heroku? ? ENV['DYNO'] : Socket.gethostname
     end
 
+
+    # Returns the whole integration object
     # This needs to be improved. Frequently, multiple app servers gem are present and which
     # ever is checked first becomes the designated app server.
     #
-    # I've put Thin and Webrick last as they are often used in development and included in Gemfiles
-    # but less likely used in production.
-    #
     # Next step: (1) list out all detected app servers (2) install hooks for those that need it (passenger, rainbows, unicorn).
-    #
-    # Believe the biggest downside is the master process for forking app servers will get a background worker. Not sure how this will
-    # impact metrics (it shouldn't process requests).
+    def app_server_integration
+      @app_server = SERVER_INTEGRATIONS.detect{ |integration| integration.present? }
+    end
+
+    # App server's name (symbol)
     def app_server
-      @app_server ||= if passenger? then :passenger
-                    elsif rainbows? then :rainbows
-                    elsif unicorn? then :unicorn
-                    elsif puma? then :puma
-                    elsif thin? then :thin
-                    elsif webrick? then :webrick
-                    else nil
-                    end
+      app_server_integration.name
     end
 
-    ### app server related-checks
-    def thin?
-      if defined?(::Thin) && defined?(::Thin::Server)
-        # Ensure Thin is actually initialized. It could just be required and not running.
-        ObjectSpace.each_object(Thin::Server) { |x| return true }
-        false
-      end
-    end
-
-    # Called via +#forking?+ since Passenger forks. Adds an event listener to start the worker thread
-    # inside the passenger worker process.
-    # Background: http://www.modrails.com/documentation/Users%20guide%20Nginx.html#spawning%5Fmethods%5Fexplained
-    def passenger?
-      (defined?(::Passenger) && defined?(::Passenger::AbstractServer)) || defined?(::PhusionPassenger)
-    end
-
-    def webrick?
-      defined?(::WEBrick) && defined?(::WEBrick::VERSION)
-    end
-
-    def rainbows?
-      if defined?(::Rainbows) && defined?(::Rainbows::HttpServer)
-        ObjectSpace.each_object(::Rainbows::HttpServer) { |x| return true }
-        false
-      end
-    end
-
-    def unicorn?
-      if defined?(::Unicorn) && defined?(::Unicorn::HttpServer)
-        # Ensure Unicorn is actually initialized. It could just be required and not running.
-        ObjectSpace.each_object(::Unicorn::HttpServer) { |x| return true }
-        false
-      end
-    end
-
-    def puma?
-      defined?(::Puma) && File.basename($0) == 'puma'
-    end
-
-    # If forking, don't start worker thread in the master process. Since it's started as a Thread, it won't survive
-    # the fork.
+    # If forking, don't start worker thread in the master process. Since it's
+    # started as a Thread, it won't survive the fork.
     def forking?
-      passenger? or unicorn? or rainbows? or puma?
+      app_server_integration.forking?
     end
 
     ### ruby checks
