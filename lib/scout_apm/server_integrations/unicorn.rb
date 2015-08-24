@@ -22,7 +22,7 @@ module ScoutApm
       end
 
       def install
-        Unicorn::HttpServer.class_eval do
+        ::Unicorn::HttpServer.class_eval do
           old = instance_method(:worker_loop)
           define_method(:worker_loop) do |worker|
             ScoutApm::Agent.instance.start_background_worker
