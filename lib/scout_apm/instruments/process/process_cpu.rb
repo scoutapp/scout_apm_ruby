@@ -2,12 +2,28 @@ module ScoutApm
   module Instruments
     module Process
       class ProcessCpu
-        def initialize(num_processors)
+        attr_reader :logger
+
+        def initialize(num_processors, logger)
           @num_processors = num_processors || 1
+          @logger = logger
+
+          t = ::Process.times
+          @last_run = Time.now
+          @last_utime = t.utime
+          @last_stime = t.stime
+        end
+
+        def metric_name
+          "CPU/Utilization"
+        end
+
+        def human_name
+          "Process CPU"
         end
 
         def run
-          res=nil
+          res = nil
           now = Time.now
           t = ::Process.times
           if @last_run
@@ -21,6 +37,9 @@ module ScoutApm
           @last_utime = t.utime
           @last_stime = t.stime
           @last_run = now
+
+          logger.debug "#{human_name}: #{res.inspect} [#{Environment.instance.processors} CPU(s)]"
+
           return res
         end
       end

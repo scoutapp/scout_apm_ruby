@@ -2,18 +2,31 @@ module ScoutApm
   module Instruments
     module Process
       class ProcessMemory
-        def run
-          res=nil
-          platform = RUBY_PLATFORM.downcase
+        attr_reader :logger
 
-          if platform =~ /linux/
-            res = get_mem_from_procfile
-          elsif platform =~ /darwin9/ # 10.5
-            res = get_mem_from_shell("ps -o rsz")
-          elsif platform =~ /darwin1[01]/ # 10.6 & 10.7
-            res = get_mem_from_shell("ps -o rss")
-          end
-          return res
+        def initialize(logger)
+          @logger = logger
+        end
+
+        def metric_name
+          "Memory/Physical"
+        end
+
+        def human_name
+          "Process Memory"
+        end
+
+        def run
+          case RUBY_PLATFORM.downcase
+          when /linux/
+            get_mem_from_procfile
+          when /darwin9/ # 10.5
+            get_mem_from_shell("ps -o rsz")
+          when /darwin1[0123]/ # 10.6 - 10.10
+            get_mem_from_shell("ps -o rss")
+          else
+            0 # What default? was nil.
+          end.tap { |res| logger.debug "#{human_name}: #{res.inspect}" }
         end
 
         private
