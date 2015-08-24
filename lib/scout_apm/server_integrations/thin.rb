@@ -20,7 +20,7 @@ module ScoutApm
         # This code block detects when thin is run as:
         # `rails server`
         if defined?(::Rails::Server)
-          ObjectSpace.each_object(::Rails::Server) { |x| found_thin ||= (x.instance_variable_get(:@_server) == Rack::Handler::Thin) }
+          ObjectSpace.each_object(::Rails::Server) { |x| found_thin ||= (x.instance_variable_get(:@_server).to_s == "Rack::Handler::Thin") }
         end
 
         found_thin
