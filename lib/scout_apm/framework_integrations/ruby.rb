@@ -1,6 +1,6 @@
 module ScoutApm
   module FrameworkIntegrations
-    class Sinatra
+    class Ruby
       def name
         :ruby
       end
