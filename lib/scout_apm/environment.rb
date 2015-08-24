@@ -8,40 +8,32 @@ module ScoutApm
     # I've put Thin and Webrick last as they are often used in development and included in Gemfiles
     # but less likely used in production.
     SERVER_INTEGRATIONS = [
-      ScoutApm::ServerIntegrations::Passenger.new,
-      ScoutApm::ServerIntegrations::Unicorn.new,
-      ScoutApm::ServerIntegrations::Rainbows.new,
-      ScoutApm::ServerIntegrations::Puma.new,
-      ScoutApm::ServerIntegrations::Thin.new,
-      ScoutApm::ServerIntegrations::Webrick.new,
-      ScoutApm::ServerIntegrations::Null.new, # must be last
+      ScoutApm::ServerIntegrations::Passenger.new(logger),
+      ScoutApm::ServerIntegrations::Unicorn.new(logger),
+      ScoutApm::ServerIntegrations::Rainbows.new(logger),
+      ScoutApm::ServerIntegrations::Puma.new(logger),
+      ScoutApm::ServerIntegrations::Thin.new(logger),
+      ScoutApm::ServerIntegrations::Webrick.new(logger),
+      ScoutApm::ServerIntegrations::Null.new(logger), # must be last
     ]
 
+    FRAMEWORK_INTEGRATIONS = [
+      ScoutApm::FrameworkIntegrations::Rails2.new,
+      ScoutApm::FrameworkIntegrations::Rails3Or4.new,
+      ScoutApm::FrameworkIntegrations::Sinatra.new,
+      ScoutApm::FrameworkIntegrations::Ruby.new, # Fallback if none match
+    ]
 
     def env
-      @env ||= case framework
-               when :rails
-                 RAILS_ENV.dup
-               when :rails3_or_4
-                 Rails.env
-               when :sinatra
-                 ENV['RACK_ENV'] || ENV['RAILS_ENV'] || 'development'
-               when :ruby
-                 ENV['RACK_ENV'] || ENV['RAILS_ENV'] || 'development'
-               end
+      @env ||= framework_integration.env
     end
 
     def framework
-      @framework ||= case
-                      when defined?(::Rails) && defined?(ActionController)
-                        if Rails::VERSION::MAJOR < 3
-                          :rails
-                        else
-                          :rails3_or_4
-                        end
-                      when defined?(::Sinatra) && defined?(::Sinatra::Base) then :sinatra
-                      else :ruby
-                      end
+      framework_integration.name
+    end
+
+    def framework_integration
+      @framework ||= FRAMEWORK_INTEGRATIONS.detect{ |integration| integration.present? }
     end
 
     def database_engine
