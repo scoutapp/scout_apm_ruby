@@ -2,7 +2,7 @@ module ScoutApm
   module FrameworkIntegrations
     class Rails3Or4
       def name
-        :rails_3_or_4
+        :rails3_or_4
       end
 
       def present?
