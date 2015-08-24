@@ -9,6 +9,8 @@ require 'set'
 require 'socket'
 require 'yaml'
 
+require 'scout_apm/version'
+
 require 'scout_apm/server_integrations/passenger'
 require 'scout_apm/server_integrations/puma'
 require 'scout_apm/server_integrations/rainbows'
@@ -17,7 +19,11 @@ require 'scout_apm/server_integrations/unicorn'
 require 'scout_apm/server_integrations/webrick'
 require 'scout_apm/server_integrations/null'
 
-require 'scout_apm/version'
+require 'scout_apm/framework_integrations/rails_2'
+require 'scout_apm/framework_integrations/rails_3_or_4'
+require 'scout_apm/framework_integrations/sinatra'
+require 'scout_apm/framework_integrations/ruby'
+
 require 'scout_apm/utils/sql_sanitizer'
 require 'scout_apm/utils/null_logger'
 require 'scout_apm/config'
