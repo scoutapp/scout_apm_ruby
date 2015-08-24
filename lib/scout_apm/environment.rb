@@ -8,13 +8,13 @@ module ScoutApm
     # I've put Thin and Webrick last as they are often used in development and included in Gemfiles
     # but less likely used in production.
     SERVER_INTEGRATIONS = [
-      ScoutApm::ServerIntegrations::Passenger.new(logger),
-      ScoutApm::ServerIntegrations::Unicorn.new(logger),
-      ScoutApm::ServerIntegrations::Rainbows.new(logger),
-      ScoutApm::ServerIntegrations::Puma.new(logger),
-      ScoutApm::ServerIntegrations::Thin.new(logger),
-      ScoutApm::ServerIntegrations::Webrick.new(logger),
-      ScoutApm::ServerIntegrations::Null.new(logger), # must be last
+      ScoutApm::ServerIntegrations::Passenger.new(Logger.new(STDOUT)),
+      ScoutApm::ServerIntegrations::Unicorn.new(Logger.new(STDOUT)),
+      ScoutApm::ServerIntegrations::Rainbows.new(Logger.new(STDOUT)),
+      ScoutApm::ServerIntegrations::Puma.new(Logger.new(STDOUT)),
+      ScoutApm::ServerIntegrations::Thin.new(Logger.new(STDOUT)),
+      ScoutApm::ServerIntegrations::Webrick.new(Logger.new(STDOUT)),
+      ScoutApm::ServerIntegrations::Null.new(Logger.new(STDOUT)), # must be last
     ]
 
     FRAMEWORK_INTEGRATIONS = [
