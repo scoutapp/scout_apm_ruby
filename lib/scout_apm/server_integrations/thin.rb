@@ -10,7 +10,7 @@ module ScoutApm
       def present?
         if defined?(::Thin) && defined?(::Thin::Server)
           # Ensure Thin is actually initialized. It could just be required and not running.
-          ObjectSpace.each_object(Thin::Server) { |x| return true }
+          ObjectSpace.each_object(::Thin::Server) { |x| return true }
           false
         end
       end
