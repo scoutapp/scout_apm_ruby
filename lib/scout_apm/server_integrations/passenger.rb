@@ -1,7 +1,17 @@
 module ScoutApm
   module ServerIntegrations
     class Passenger
-      def self.install
+      def name
+        :passenger
+      end
+
+      def forking?; true; end
+
+      def present?
+        (defined?(::Passenger) && defined?(::Passenger::AbstractServer)) || defined?(::PhusionPassenger)
+      end
+
+      def install
         PhusionPassenger.on_event(:starting_worker_process) do |forked|
           logger.debug "Passenger is starting a worker process. Starting worker thread."
           ScoutApm::Agent.instance.start_background_worker

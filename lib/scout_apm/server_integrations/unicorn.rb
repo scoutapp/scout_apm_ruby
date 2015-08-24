@@ -1,7 +1,21 @@
 module ScoutApm
   module ServerIntegrations
     class Unicorn
-      def self.install
+      def name
+        :unicorn
+      end
+
+      def forking?; true; end
+
+      def present?
+        if defined?(::Unicorn) && defined?(::Unicorn::HttpServer)
+          # Ensure Unicorn is actually initialized. It could just be required and not running.
+          ObjectSpace.each_object(::Unicorn::HttpServer) { |x| return true }
+          false
+        end
+      end
+
+      def install
         logger.debug "Installing Unicorn worker loop."
 
         Unicorn::HttpServer.class_eval do

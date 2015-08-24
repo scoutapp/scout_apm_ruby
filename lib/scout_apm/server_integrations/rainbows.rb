@@ -1,7 +1,20 @@
 module ScoutApm
   module ServerIntegrations
     class Rainbows
-      def self.install
+      def name
+        :rainbows
+      end
+
+      def forking?; true; end
+
+      def present?
+        if defined?(::Rainbows) && defined?(::Rainbows::HttpServer)
+          ObjectSpace.each_object(::Rainbows::HttpServer) { |x| return true }
+          false
+        end
+      end
+
+      def install
         logger.debug "Installing Rainbows worker loop."
 
         Rainbows::HttpServer.class_eval do
