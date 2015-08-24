@@ -1,6 +1,12 @@
 module ScoutApm
   module ServerIntegrations
     class Unicorn
+      attr_reader :logger
+
+      def initialize(logger)
+        @logger = logger
+      end
+
       def name
         :unicorn
       end
@@ -16,8 +22,6 @@ module ScoutApm
       end
 
       def install
-        logger.debug "Installing Unicorn worker loop."
-
         Unicorn::HttpServer.class_eval do
           old = instance_method(:worker_loop)
           define_method(:worker_loop) do |worker|

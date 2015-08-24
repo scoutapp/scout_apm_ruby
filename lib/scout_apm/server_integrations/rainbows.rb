@@ -1,6 +1,12 @@
 module ScoutApm
   module ServerIntegrations
     class Rainbows
+      attr_reader :logger
+
+      def initialize(logger)
+        @logger = logger
+      end
+
       def name
         :rainbows
       end

@@ -1,6 +1,12 @@
 module ScoutApm
   module ServerIntegrations
     class Puma
+      attr_reader :logger
+
+      def initialize(logger)
+        @logger = logger
+      end
+
       def name
         :puma
       end

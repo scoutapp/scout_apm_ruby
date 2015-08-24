@@ -1,6 +1,12 @@
 module ScoutApm
   module ServerIntegrations
     class Thin
+      attr_reader :logger
+
+      def initialize(logger)
+        @logger = logger
+      end
+
       def name
         :thin
       end

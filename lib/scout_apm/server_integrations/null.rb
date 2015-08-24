@@ -4,6 +4,12 @@
 module ScoutApm
   module ServerIntegrations
     class Null
+      attr_reader :logger
+
+      def initialize(logger)
+        @logger = logger
+      end
+
       def name
         :null
       end
