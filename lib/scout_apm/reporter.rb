@@ -5,19 +5,26 @@ module ScoutApm
 
     attr_reader :config
     attr_reader :logger
+    attr_reader :type
 
-    def initialize(config, logger=NullLogger.new)
+    def initialize(config=Agent.instance.config, logger=Agent.instance.logger, type: :checkin)
       @config = config
       @logger = logger
+      @type = type
     end
 
     # TODO: Parse & return a real response object, not the HTTP Response object
     def report(payload)
-      post(checkin_uri, payload)
+      post(uri, payload)
     end
 
-    def checkin_uri
-      URI.parse("#{config.value('host')}/apps/checkin.scout?key=#{config.value('key')}&name=#{CGI.escape(config.value('name'))}")
+    def uri
+      case type
+      when :checkin
+        URI.parse("#{config.value('host')}/apps/checkin.scout?key=#{config.value('key')}&name=#{CGI.escape(Environment.instance.application_name)}")
+      when :app_server_load
+        URI.parse("#{config.value('host')}/apps/app_server_load.scout?key=#{config.value('key')}&name=#{CGI.escape(Environment.instance.application_name)}")
+      end.tap{|u| logger.debug("Posting to #{u.to_s}")}
     end
 
     private
@@ -40,11 +47,11 @@ module ScoutApm
       logger.debug "got response: #{response.inspect}"
       case response
       when Net::HTTPSuccess, Net::HTTPNotModified
-        logger.debug "/checkin OK"
+        logger.debug "/#{type} OK"
       when Net::HTTPBadRequest
-        logger.warn "/checkin FAILED: The Account Key [#{config.value('key')}] is invalid."
+        logger.warn "/#{type} FAILED: The Account Key [#{config.value('key')}] is invalid."
       else
-        logger.debug "/checkin FAILED: #{response.inspect}"
+        logger.debug "/#{type} FAILED: #{response.inspect}"
       end
     rescue Exception
       logger.debug "Exception sending request to server: #{$!.message}\n#{$!.backtrace}"
