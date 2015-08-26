@@ -6,8 +6,8 @@ require 'scout_apm/environment'
 module ScoutApm
   class Config
     DEFAULTS =  {
-        'host' => 'https://apm.scoutapp.com',
-        'log_level' => 'info'
+        'host'      => 'https://apm.scoutapp.com',
+        'log_level' => 'info',
     }.freeze
 
     def initialize(config_path = nil)

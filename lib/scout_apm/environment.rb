@@ -36,24 +36,27 @@ module ScoutApm
       @framework ||= FRAMEWORK_INTEGRATIONS.detect{ |integration| integration.present? }
     end
 
+    def application_name
+      Agent.instance.config.value("name") || framework_integration.application_name
+    end
+
     def database_engine
       default = :mysql
 
       if defined?(ActiveRecord::Base)
-        return default unless ActiveRecord::Base.connected?
-
-        case ActiveRecord::Base.connection.class.to_s
-        when "ActiveRecord::ConnectionAdapters::MysqlAdapter"
-          :mysql
-        when "ActiveRecord::ConnectionAdapters::PostgreSQLAdapter"
-          :postgres
-        when "ActiveRecord::ConnectionAdapters::SQLite3Adapter"
-          :sqlite
+        config = ActiveRecord::Base.connection_config
+        if config && config[:adapter]
+          case config[:adapter]
+          when "postgres" then :postgres
+          when "sqlite3"  then :sqlite
+          when "mysql"    then :mysql
+          else default
+          end
         else
           default
         end
       else
-        # TODO: detection outside of Rails
+        # TODO: Figure out how to detect outside of Rails context. (sequel, ROM, etc)
         default
       end
     end
@@ -61,13 +64,13 @@ module ScoutApm
     def processors
       @processors ||= begin
                         proc_file = '/proc/cpuinfo'
-                        if !File.exist?(proc_file)
-                          processors = 1
-                        elsif `cat #{proc_file} | grep 'model name' | wc -l` =~ /(\d+)/
-                          processors = $1.to_i
-                        end
-
-                        [processors, 1].max
+                        processors = if !File.exist?(proc_file)
+                                       1
+                                     else
+                                       lines = File.read("/proc/cpuinfo").lines.to_a
+                                       lines.grep(/^processor\s*:/i).size
+                                     end
+                        [processors, 1].compact.max
                       end
     end
 
