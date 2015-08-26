@@ -5,6 +5,10 @@ module ScoutApm
         :rails3_or_4
       end
 
+      def human_name
+        "Rails"
+      end
+
       def version
         Rails::VERSION::STRING
       end

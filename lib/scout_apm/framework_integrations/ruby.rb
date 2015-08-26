@@ -5,6 +5,10 @@ module ScoutApm
         :ruby
       end
 
+      def human_name
+        "Ruby"
+      end
+
       def version
         "Unknown"
       end

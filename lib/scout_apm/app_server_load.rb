@@ -17,7 +17,7 @@ module ScoutApm
 
     def data
       { server_time:       Time.now,
-        framework:         ScoutApm::Environment.instance.framework_integration.name,
+        framework:         ScoutApm::Environment.instance.framework_integration.human_name,
         framework_version: ScoutApm::Environment.instance.framework_integration.version,
         ruby_version:      RUBY_VERSION,
         hostname:          ScoutApm::Environment.instance.hostname,

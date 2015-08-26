@@ -5,6 +5,10 @@ module ScoutApm
         :sinatra
       end
 
+      def human_name
+        "Sinatra"
+      end
+
       def version
         Sinatra::VERSION
       end
