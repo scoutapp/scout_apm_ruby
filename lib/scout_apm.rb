@@ -24,6 +24,8 @@ require 'scout_apm/framework_integrations/rails_3_or_4'
 require 'scout_apm/framework_integrations/sinatra'
 require 'scout_apm/framework_integrations/ruby'
 
+require 'scout_apm/app_server_load'
+
 require 'scout_apm/utils/sql_sanitizer'
 require 'scout_apm/utils/null_logger'
 require 'scout_apm/config'
@@ -46,8 +48,10 @@ require 'scout_apm/capacity'
 require 'scout_apm/instruments/process/process_cpu'
 require 'scout_apm/instruments/process/process_memory'
 
+
 require 'scout_apm/serializers/payload_serializer'
 require 'scout_apm/serializers/directive_serializer'
+require 'scout_apm/serializers/app_server_load_serializer'
 
 if defined?(Rails) and Rails.respond_to?(:version) and Rails.version >= '3'
   module ScoutApm
