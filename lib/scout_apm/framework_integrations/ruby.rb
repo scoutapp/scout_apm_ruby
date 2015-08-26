@@ -5,6 +5,10 @@ module ScoutApm
         :ruby
       end
 
+      def version
+        "Unknown"
+      end
+
       def present?
         true
       end

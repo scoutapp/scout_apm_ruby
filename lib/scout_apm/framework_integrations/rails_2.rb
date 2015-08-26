@@ -5,6 +5,10 @@ module ScoutApm
         :rails
       end
 
+      def version
+        Rails::VERSION::STRING
+      end
+
       def present?
         defined?(::Rails) &&
           defined?(ActionController) &&

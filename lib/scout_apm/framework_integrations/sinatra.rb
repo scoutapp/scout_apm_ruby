@@ -5,6 +5,10 @@ module ScoutApm
         :sinatra
       end
 
+      def version
+        Sinatra::VERSION
+      end
+
       def present?
         defined?(::Sinatra) &&
           defined?(::Sinatra::Base)
