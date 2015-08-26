@@ -52,7 +52,7 @@ module ScoutApm
         return false
       end
 
-      if !config.value('name')
+      if !Environment.instance.application_name
         logger.warn "An application name is required. Specify the :name value in scout_apm.yml. Not starting agent."
         return false
       end
@@ -81,7 +81,7 @@ module ScoutApm
 
       @started = true
 
-      logger.info "Starting monitoring for [#{config.value('name')}]. Framework [#{environment.framework}] App Server [#{environment.app_server}]."
+      logger.info "Starting monitoring for [#{environment.application_name}]. Framework [#{environment.framework}] App Server [#{environment.app_server}]."
 
       load_instruments
       @samplers = [
@@ -89,14 +89,25 @@ module ScoutApm
         ScoutApm::Instruments::Process::ProcessMemory.new(logger)
       ]
 
-      if start_background_worker?
+      app_server_load_hook
+
+      if start_background_worker? # TODO: Clarify name. This is not the path that unicorn workers take....
+        # This branch fires only on non-forking servers, directly starts the
+        # background thread and then requests are served.
         start_background_worker
         handle_exit
         logger.info "Scout Agent [#{ScoutApm::VERSION}] Initialized"
       else
+        # This branch fires on.... master only? of forking servers
         logger.debug "Not starting worker thread. Will start worker loops after forking."
         environment.app_server_integration.install
       end
+    end
+
+    # Sends a ping to APM right away, smoothes out onboarding
+    # Collects up any relevant info (framework, app server, system time, ruby version, etc)
+    def app_server_load_hook
+      AppServerLoad.new.run
     end
 
     def exit_handler_unsupported?
