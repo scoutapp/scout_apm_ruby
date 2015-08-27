@@ -9,7 +9,7 @@ module ScoutApm
     attr_reader :logger
     attr_reader :type
 
-    def initialize(config=Agent.instance.config, logger=Agent.instance.logger, type = :checkin)
+    def initialize(type = :checkin, config=Agent.instance.config, logger=Agent.instance.logger)
       @config = config
       @logger = logger
       @type = type

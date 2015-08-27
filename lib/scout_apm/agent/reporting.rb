@@ -3,7 +3,7 @@ module ScoutApm
   class Agent
     module Reporting
       def reporter
-        @reporter ||= ScoutApm::Reporter.new(config, logger)
+        @reporter ||= ScoutApm::Reporter.new(:checkin, config, logger)
       end
 
       # Called in the worker thread. Merges in-memory metrics w/those on disk and reports metrics
