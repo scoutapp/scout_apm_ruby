@@ -19,6 +19,7 @@ module ScoutApm
       { :server_time        => Time.now,
         :framework          => ScoutApm::Environment.instance.framework_integration.human_name,
         :framework_version  => ScoutApm::Environment.instance.framework_integration.version,
+        :environment        => ScoutApm::Environment.instance.framework_integration.env,
         :ruby_version       => RUBY_VERSION,
         :hostname           => ScoutApm::Environment.instance.hostname,
         :database_engine    => ScoutApm::Environment.instance.database_engine,
