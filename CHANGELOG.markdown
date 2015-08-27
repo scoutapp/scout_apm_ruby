@@ -1,3 +1,8 @@
+# 0.1.8
+
+* Ping APM on Application Load
+* Fix compatibility with Ruby 1.8 and 1.9
+
 # 0.1.7
 
 * Ability to ignore child calls in instrumentation.
