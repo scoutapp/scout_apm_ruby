@@ -1,3 +1,5 @@
+require 'openssl'
+
 module ScoutApm
   class Reporter
     CA_FILE     = File.join( File.dirname(__FILE__), *%w[.. .. data cacert.pem] )
@@ -7,7 +9,7 @@ module ScoutApm
     attr_reader :logger
     attr_reader :type
 
-    def initialize(config=Agent.instance.config, logger=Agent.instance.logger, type: :checkin)
+    def initialize(config=Agent.instance.config, logger=Agent.instance.logger, type = :checkin)
       @config = config
       @logger = logger
       @type = type

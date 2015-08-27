@@ -73,7 +73,7 @@ module ScoutApm
         @samplers.each do |sampler|
           begin
             result = sampler.run
-            store.track!(sampler.metric_name, result, scope: nil) if result
+            store.track!(sampler.metric_name, result, {:scope => nil}) if result
           rescue => e
             logger.info "Error reading #{sampler.human_name}"
             logger.debug e.message

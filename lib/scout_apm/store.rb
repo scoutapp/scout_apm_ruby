@@ -1,3 +1,5 @@
+require 'thread'
+
 # The store encapsolutes the logic that (1) saves instrumented data by Metric name to memory and (2) maintains a stack (just an Array)
 # of instrumented methods that are being called. It's accessed via +ScoutApm::Agent.instance.store+.
 class ScoutApm::Store
@@ -149,7 +151,7 @@ class ScoutApm::Store
   # Options:
   # :scope => If provided, overrides the default scope.
   # :exclusive_time => Sets the exclusive time for the method. If not provided, uses +call_time+.
-  def track!(metric_name,call_time,options = {})
+  def track!(metric_name, call_time, options = {})
      meta = ScoutApm::MetricMeta.new(metric_name)
      meta.scope = options[:scope] if options.has_key?(:scope)
      stat = metric_hash[meta] || ScoutApm::MetricStats.new

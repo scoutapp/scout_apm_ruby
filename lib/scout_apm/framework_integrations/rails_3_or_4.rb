@@ -21,8 +21,8 @@ module ScoutApm
 
       def application_name
         if defined?(::Rails)
-          ::Rails.application.class.to_s
-            .sub(/::Application$/, '')
+          ::Rails.application.class.to_s.
+             sub(/::Application$/, '')
         end
       rescue
         nil
