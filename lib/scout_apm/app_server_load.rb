@@ -24,6 +24,7 @@ module ScoutApm
         :hostname           => ScoutApm::Environment.instance.hostname,
         :database_engine    => ScoutApm::Environment.instance.database_engine,
         :application_name   => ScoutApm::Environment.instance.application_name,
+        :libraries          => ScoutApm::Utils::InstalledGems.new.run,
       }
     end
   end
