@@ -7,10 +7,17 @@ module ScoutApm
     end
 
     def run
-      logger.info("Sending Startup Info: #{data.inspect}")
-      payload = ScoutApm::Serializers::AppServerLoadSerializer.serialize(data)
-      reporter = Reporter.new(:app_server_load)
-      reporter.report(payload)
+      @thread = Thread.new do
+        begin
+          logger.info("Sending Startup Info: #{data.inspect}")
+          payload = ScoutApm::Serializers::AppServerLoadSerializer.serialize(data)
+          reporter = Reporter.new(:app_server_load)
+          reporter.report(payload)
+          logger.info("Finished sending Startup Info")
+        rescue => e
+          logger.debug("Failed Startup Info In Thread - #{e.message} \n\t#{e.backtrace.join("\t\n")}")
+        end
+      end
     rescue => e
       logger.debug("Failed Startup Info - #{e.message} \n\t#{e.backtrace.join("\t\n")}")
     end
