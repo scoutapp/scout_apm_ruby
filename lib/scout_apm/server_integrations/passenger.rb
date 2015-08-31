@@ -30,6 +30,10 @@ module ScoutApm
           ScoutApm::Agent.instance.shutdown
         end
       end
+
+      def found?
+        true
+      end
     end
   end
 end

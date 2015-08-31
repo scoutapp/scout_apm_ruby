@@ -31,6 +31,10 @@ module ScoutApm
           end
         end
       end
+
+      def found?
+        true
+      end
     end
   end
 end

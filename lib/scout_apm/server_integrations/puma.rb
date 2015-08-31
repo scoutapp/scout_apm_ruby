@@ -25,6 +25,10 @@ module ScoutApm
       rescue
         logger.warn "Unable to install Puma worker loop: #{$!.message}"
       end
+
+      def found?
+        true
+      end
     end
   end
 end

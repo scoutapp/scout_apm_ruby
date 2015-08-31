@@ -52,12 +52,12 @@ module ScoutApm
         return false
       end
 
-      if !Environment.instance.application_name
-        logger.warn "An application name is required. Specify the :name value in scout_apm.yml. Not starting agent."
+      if !environment.application_name
+        logger.warn "An application name could not be determined. Specify the :name value in scout_apm.yml. Not starting agent."
         return false
       end
 
-      if !environment.app_server
+      if !environment.app_server_integration.found?
         logger.warn "Couldn't find a supported app server. Not starting agent."
         return false
       end

@@ -25,6 +25,10 @@ module ScoutApm
       def forking?
         false
       end
+
+      def found?
+        false
+      end
     end
   end
 end
