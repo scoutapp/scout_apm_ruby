@@ -3,9 +3,12 @@ module ScoutApm
     module Process
       class ProcessCpu
         attr_reader :logger
+        attr_reader :num_processors
+        attr_accessor :last_run, :last_utime, :last_stime
+
 
         def initialize(num_processors, logger)
-          @num_processors = num_processors || 1
+          @num_processors = [num_processors, 1].compact.max
           @logger = logger
 
           t = ::Process.times
@@ -24,19 +27,31 @@ module ScoutApm
 
         def run
           res = nil
-          now = Time.now
+
           t = ::Process.times
-          if @last_run
-            elapsed_time = now - @last_run
-            if elapsed_time >= 1
-              user_time_since_last_sample = t.utime - @last_utime
-              system_time_since_last_sample = t.stime - @last_stime
-              res = ((user_time_since_last_sample + system_time_since_last_sample)/(elapsed_time * @num_processors))*100
-            end
-          end
-          @last_utime = t.utime
-          @last_stime = t.stime
-          @last_run = now
+          now = Time.now
+          utime = t.utime
+          stime = t.stime
+
+          wall_clock_elapsed  = now - last_run
+
+          utime_elapsed   = utime - last_utime
+          stime_elapsed   = stime - last_stime
+          process_elapsed = utime_elapsed + stime_elapsed
+
+          # Normalized to # of processors
+          normalized_wall_clock_elapsed = wall_clock_elapsed * num_processors
+
+          # If somehow we run for 0 seconds between calls, don't try to divide by 0
+          res = if normalized_wall_clock_elapsed == 0
+                  0
+                else
+                  ( process_elapsed / normalized_wall_clock_elapsed )*100
+                end
+
+          self.last_run = now
+          self.last_utime = t.utime
+          self.last_stime = t.stime
 
           logger.debug "#{human_name}: #{res.inspect} [#{Environment.instance.processors} CPU(s)]"
 
