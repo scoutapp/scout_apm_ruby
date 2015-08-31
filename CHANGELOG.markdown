@@ -1,3 +1,14 @@
+# 0.1.10
+
+* Prevent instrumentation in non-web contexts. Prevents agent running in rails
+  console, sidekiq, and similar contexts.
+* Send active Gems with App Load message
+
+# 0.1.9
+
+* Added environment (production, development, etc) to App Load message
+* Bugfix in Reporter class
+
 # 0.1.8
 
 * Ping APM on Application Load
