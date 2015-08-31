@@ -83,7 +83,8 @@ module ScoutApm
 
       logger.info "Starting monitoring for [#{environment.application_name}]. Framework [#{environment.framework}] App Server [#{environment.app_server}]."
 
-      load_instruments
+      load_instruments if should_load_instruments?
+
       @samplers = [
         ScoutApm::Instruments::Process::ProcessCpu.new(environment.processors, logger),
         ScoutApm::Instruments::Process::ProcessMemory.new(logger)
@@ -168,9 +169,14 @@ module ScoutApm
       logger.debug "Done creating worker thread."
     end
 
+    def should_load_instruments?
+      environment.app_server_integration.found?
+    end
+
     # Loads the instrumention logic.
     def load_instruments
       logger.debug "Installing instrumentation"
+
       case environment.framework
       when :rails
         require File.expand_path(File.join(File.dirname(__FILE__),'instruments/rails/action_controller_instruments.rb'))
