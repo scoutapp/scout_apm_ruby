@@ -47,9 +47,10 @@ module ScoutApm
         config = ActiveRecord::Base.connection_config
         if config && config[:adapter]
           case config[:adapter]
-          when "postgres" then :postgres
-          when "sqlite3"  then :sqlite
-          when "mysql"    then :mysql
+          when "postgres"   then :postgres
+          when "postgresql" then :postgres
+          when "sqlite3"    then :sqlite
+          when "mysql"      then :mysql
           else default
           end
         else
