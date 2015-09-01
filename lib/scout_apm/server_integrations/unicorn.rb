@@ -11,7 +11,14 @@ module ScoutApm
         :unicorn
       end
 
-      def forking?; true; end
+      def forking?
+        return true unless (defined?(::Unicorn) && defined?(::Unicorn::Configurator))
+        ObjectSpace.each_object(::Unicorn::Configurator).first[:preload_app].tap {|x|
+          logger.info "Unicorn is forking? #{x}"
+        }
+      rescue
+        true
+      end
 
       def present?
         if defined?(::Unicorn) && defined?(::Unicorn::HttpServer)
@@ -37,3 +44,4 @@ module ScoutApm
     end
   end
 end
+
