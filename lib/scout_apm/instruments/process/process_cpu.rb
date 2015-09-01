@@ -25,6 +25,7 @@ module ScoutApm
           "Process CPU"
         end
 
+        # TODO: Figure out a good default instead of nil
         def run
           res = nil
 
@@ -34,10 +35,23 @@ module ScoutApm
           stime = t.stime
 
           wall_clock_elapsed  = now - last_run
+          if wall_clock_elapsed < 0
+            save_times(now, utime, stime)
+            logger.warn "#{human_name}: Negative time elapsed.  now: #{now}, last_run: #{last_run}, total time: #{wall_clock_elapsed}"
+            return nil
+          end
 
           utime_elapsed   = utime - last_utime
           stime_elapsed   = stime - last_stime
           process_elapsed = utime_elapsed + stime_elapsed
+
+          # This can happen right after a fork.  This class starts up in
+          # pre-fork, records {u,s}time, then forks. This resets {u,s}time to 0
+          if process_elapsed < 0
+            save_times(now, utime, stime)
+            logger.warn "#{human_name}: Negative process time elapsed.  utime: #{utime_elapsed}, stime: #{stime_elapsed}, total time: #{process_elapsed}"
+            return nil
+          end
 
           # Normalized to # of processors
           normalized_wall_clock_elapsed = wall_clock_elapsed * num_processors
@@ -49,13 +63,23 @@ module ScoutApm
                   ( process_elapsed / normalized_wall_clock_elapsed )*100
                 end
 
-          self.last_run = now
-          self.last_utime = t.utime
-          self.last_stime = t.stime
+          if res < 0
+            save_times(now, utime, stime)
+            logger.warn "#{human_name}: Negative CPU.  #{process_elapsed} / #{normalized_wall_clock_elapsed} * 100 ==> #{res}"
+            return nil
+          end
 
-          logger.debug "#{human_name}: #{res.inspect} [#{Environment.instance.processors} CPU(s)]"
+          save_times(now, utime, stime)
+
+          logger.debug "#{human_name}: #{res.inspect} [#{num_processors} CPU(s)]"
 
           return res
+        end
+
+        def save_times(now, utime, stime)
+          self.last_run = now
+          self.last_utime = utime
+          self.last_stime = stime
         end
       end
     end
