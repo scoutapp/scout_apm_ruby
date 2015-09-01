@@ -1,3 +1,13 @@
+# 0.1.12
+
+* Fix Puma integration. Now detects both branches of preload_app! setting.
+* Enhance Cpu instrumentation
+
+# 0.1.11
+
+* Post on-load application details in a background thread to prevent potential
+  pauses during app boot
+
 # 0.1.10
 
 * Prevent instrumentation in non-web contexts. Prevents agent running in rails
