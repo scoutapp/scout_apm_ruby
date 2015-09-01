@@ -153,9 +153,7 @@ module ScoutApm
     def start_background_worker?
       return true if environment.app_server == :thin
       return true if environment.app_server == :webrick
-      return false if environment.forking?
-
-      false
+      return !environment.forking?
     end
 
     # Creates the worker thread. The worker thread is a loop that runs continuously. It sleeps for +Agent#period+ and when it wakes,
