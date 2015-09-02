@@ -1,9 +1,12 @@
 # Used to run a given task every 60 seconds.
 class ScoutApm::BackgroundWorker
   # in seconds, time between when the worker thread wakes up and runs.
-  PERIOD = 60
+  DEFAULT_PERIOD = 60
 
-  def initialize
+  attr_reader :period
+
+  def initialize(period=DEFAULT_PERIOD)
+    @period = period
     @keep_running = true
   end
 
@@ -20,7 +23,7 @@ class ScoutApm::BackgroundWorker
   def start(&block)
     @task = block
     begin
-      ScoutApm::Agent.instance.logger.debug "Starting Background Worker, running every #{PERIOD} seconds"
+      ScoutApm::Agent.instance.logger.debug "Starting Background Worker, running every #{period} seconds"
       next_time = Time.now
       while @keep_running do
         now = Time.now
@@ -31,7 +34,7 @@ class ScoutApm::BackgroundWorker
         end
         @task.call
         while next_time <= now
-          next_time += PERIOD
+          next_time += period
         end
       end
     rescue
