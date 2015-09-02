@@ -36,7 +36,7 @@ module ScoutApm
           to_deliver = old_data
           old_data = Hash.new
         elsif old_data.any?
-          ScoutApm::Agent.instance.logger.debug "Not yet time to deliver payload for slot [#{Time.at(old_data.keys.sort.last).strftime("%m/%d/%y %H:%M:%S %z")}]"
+          ScoutApm::Agent.instance.logger.debug "Not yet time to deliver payload for slot [#{Utils::Time.to_s(old_data.keys.sort.last)}]"
         else
           ScoutApm::Agent.instance.logger.debug "There is no data in the layaway file to deliver."
         end
@@ -56,7 +56,7 @@ module ScoutApm
       data = data.to_a.sort
       now = Time.now
       if (most_recent = data.first.first) < now.to_i - 2*60
-        ScoutApm::Agent.instance.logger.debug "Local Storage is stale (#{Time.at(most_recent).strftime("%m/%d/%y %H:%M:%S %z")}). Not sending data."
+        ScoutApm::Agent.instance.logger.debug "Local Storage is stale (#{Utils::Time.to_s(most_recent)}). Not sending data."
         {}
       else
         data.first.last
@@ -66,7 +66,8 @@ module ScoutApm
       ScoutApm::Agent.instance.logger.debug $!.backtrace
     end
 
-    # Data is stored under timestamp-keys (without the second).
+    # Data is stored under timestamp-keys, aligned to the beginning of the
+    # current minute
     def slot
       t = Time.now
       t -= t.sec
@@ -74,17 +75,17 @@ module ScoutApm
     end
 
     def log_deposited_metrics(new_metrics)
-      controller_count = 0
-      new_metrics.each do |meta,stats|
-        if meta.metric_name =~ /\AController/
-          controller_count += stats.call_count
-        end
-      end
-      ScoutApm::Agent.instance.logger.debug "Depositing #{controller_count} requests into #{Time.at(slot).strftime("%m/%d/%y %H:%M:%S %z")} slot."
+      request_count = new_metrics.
+        to_a.
+        select    { |meta, stats| meta.metric_name =~ /\AController/ }.
+        map       { |meta, stats| stats.call_count }.
+        inject(0) { |total, i| total + i }
+
+      ScoutApm::Agent.instance.logger.debug "Depositing #{request_count} requests into #{Utils::Time.to_s(slot)} slot."
     end
 
     def log_deposited_slow_transactions(new_slow_transactions)
-      ScoutApm::Agent.instance.logger.debug "Depositing #{new_slow_transactions.size} slow transactions into #{Time.at(slot).strftime("%m/%d/%y %H:%M:%S %z")} slot."
+      ScoutApm::Agent.instance.logger.debug "Depositing #{new_slow_transactions.size} slow transactions into #{Utils::Time.to_s(slot)} slot."
     end
 
     def log_saved_data(old_data,new_metrics)
@@ -96,7 +97,7 @@ module ScoutApm
             controller_count += stats.call_count
           end
         end
-        ScoutApm::Agent.instance.logger.debug "#{Time.at(k).strftime("%m/%d/%y %H:%M:%S %z")} => #{controller_count} requests and #{v[:slow_transactions].size} slow transactions"
+        ScoutApm::Agent.instance.logger.debug "#{Utils::Time.to_s(k)} => #{controller_count} requests and #{v[:slow_transactions].size} slow transactions"
       end
     end
   end

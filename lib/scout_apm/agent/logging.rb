@@ -32,7 +32,7 @@ module ScoutApm
         def logger.format_message(severity, timestamp, progname, msg)
           # since STDOUT isn't exclusive like the scout_apm.log file, apply a prefix.
           prefix = @logdev.dev == STDOUT ? "[Scout] " : ''
-          prefix + "[#{timestamp.strftime("%m/%d/%y %H:%M:%S %z")} #{ScoutApm::Agent.instance.environment.hostname} (#{$$})] #{severity} : #{msg}\n"
+          prefix + "[#{Utils::Time.to_s(timestamp)} #{ScoutApm::Agent.instance.environment.hostname} (#{$$})] #{severity} : #{msg}\n"
         end
       end
 
