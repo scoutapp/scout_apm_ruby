@@ -30,6 +30,8 @@ require 'scout_apm/instruments/mongoid'
 require 'scout_apm/instruments/active_record'
 require 'scout_apm/instruments/action_controller_rails_2'
 require 'scout_apm/instruments/action_controller_rails_3'
+require 'scout_apm/instruments/process/process_cpu'
+require 'scout_apm/instruments/process/process_memory'
 
 require 'scout_apm/app_server_load'
 
@@ -53,9 +55,6 @@ require 'scout_apm/tracer'
 require 'scout_apm/context'
 require 'scout_apm/slow_transaction'
 require 'scout_apm/capacity'
-require 'scout_apm/instruments/process/process_cpu'
-require 'scout_apm/instruments/process/process_memory'
-
 
 require 'scout_apm/serializers/payload_serializer'
 require 'scout_apm/serializers/directive_serializer'
