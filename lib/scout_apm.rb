@@ -24,6 +24,13 @@ require 'scout_apm/framework_integrations/rails_3_or_4'
 require 'scout_apm/framework_integrations/sinatra'
 require 'scout_apm/framework_integrations/ruby'
 
+require 'scout_apm/instruments/net_http'
+require 'scout_apm/instruments/moped'
+require 'scout_apm/instruments/mongoid'
+require 'scout_apm/instruments/active_record'
+require 'scout_apm/instruments/action_controller_rails_2'
+require 'scout_apm/instruments/action_controller_rails_3'
+
 require 'scout_apm/app_server_load'
 
 require 'scout_apm/utils/sql_sanitizer'

@@ -2,6 +2,47 @@ require 'scout_apm/utils/sql_sanitizer'
 
 module ScoutApm
   module Instruments
+    class ActiveRecord
+      attr_reader :logger
+
+      def initalize(logger=ScoutApm::Agent.instance.logger)
+        @logger = logger
+        @installed = false
+      end
+
+      def installed?
+        @installed
+      end
+
+      def install
+        @installed = true
+
+        if defined?(::Rails) && ::Rails::VERSION::MAJOR.to_i == 3 && ::Rails.respond_to?(:configuration)
+          Rails.configuration.after_initialize do
+            ScoutApm::Agent.instance.logger.debug "Adding ActiveRecord instrumentation to a Rails 3 app"
+            add_instruments
+          end
+        else
+          add_instruments
+        end
+      end
+
+      def add_instruments
+        if defined?(::ActiveRecord) && defined?(::ActiveRecord::Base)
+          ::ActiveRecord::ConnectionAdapters::AbstractAdapter.module_eval do
+            include ::ScoutApm::Instruments::ActiveRecordInstruments
+            include ::ScoutApm::Tracer
+          end
+
+          ::ActiveRecord::Base.class_eval do
+            include ::ScoutApm::Tracer
+          end
+        end
+      rescue
+        ScoutApm::Agent.instance.logger.warn "ActiveRecord instrumentation exception: #{$!.message}"
+      end
+    end
+
     # Contains ActiveRecord instrument, aliasing +ActiveRecord::ConnectionAdapters::AbstractAdapter#log+ calls
     # to trace calls to the database.
     module ActiveRecordInstruments
@@ -47,28 +88,8 @@ module ScoutApm
         metric
       end
     end # module ActiveRecordInstruments
-  end # module Instruments
+  end
 end
 
-def add_instruments
-  if defined?(ActiveRecord) && defined?(ActiveRecord::Base)
-    ActiveRecord::ConnectionAdapters::AbstractAdapter.module_eval do
-      include ::ScoutApm::Instruments::ActiveRecordInstruments
-      include ::ScoutApm::Tracer
-    end
-    ActiveRecord::Base.class_eval do
-       include ::ScoutApm::Tracer
-    end
-  end
-rescue
-  ScoutApm::Agent.instance.logger.warn "ActiveRecord instrumentation exception: #{$!.message}"
-end
 
-if defined?(::Rails) && ::Rails::VERSION::MAJOR.to_i == 3 && ::Rails.respond_to?(:configuration)
-  Rails.configuration.after_initialize do
-    ScoutApm::Agent.instance.logger.debug "Adding ActiveRecord instrumentation to a Rails 3 app"
-    add_instruments
-  end
-else
-  add_instruments
-end
+

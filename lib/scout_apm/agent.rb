@@ -36,6 +36,7 @@ module ScoutApm
       @metric_lookup  = Hash.new
 
       @capacity       = ScoutApm::Capacity.new
+      @installed_instruments = []
     end
 
     def environment
@@ -176,19 +177,24 @@ module ScoutApm
       logger.debug "Installing instrumentation"
 
       case environment.framework
-      when :rails
-        require File.expand_path(File.join(File.dirname(__FILE__),'instruments/rails/action_controller_instruments.rb'))
-      when :rails3_or_4
-        require File.expand_path(File.join(File.dirname(__FILE__),'instruments/rails3_or_4/action_controller_instruments.rb'))
+      when :rails       then install_instrument(ScoutApm::Instruments::ActionControllerRails2)
+      when :rails3_or_4 then install_instrument(ScoutApm::Instruments::ActionControllerRails3)
       end
-      require File.expand_path(File.join(File.dirname(__FILE__),'instruments/active_record_instruments.rb'))
-      require File.expand_path(File.join(File.dirname(__FILE__),'instruments/net_http.rb'))
-      require File.expand_path(File.join(File.dirname(__FILE__),'instruments/moped_instruments.rb'))
-      require File.expand_path(File.join(File.dirname(__FILE__),'instruments/mongoid_instruments.rb'))
+
+      install_instrument(ScoutApm::Instruments::ActiveRecord)
+      install_instrument(ScoutApm::Instruments::Moped)
+      install_instrument(ScoutApm::Instruments::Mongoid)
+      install_instrument(ScoutApm::Instruments::NetHttp)
     rescue
       logger.warn "Exception loading instruments:"
       logger.warn $!.message
       logger.warn $!.backtrace
+    end
+
+    def install_instrument(instrument_klass)
+      instance = instrument_klass.new
+      @installed_instruments << instance
+      instance.install
     end
   end
 end
