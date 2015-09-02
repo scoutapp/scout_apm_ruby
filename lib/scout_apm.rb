@@ -8,6 +8,7 @@ require 'openssl'
 require 'set'
 require 'socket'
 require 'yaml'
+require 'thread'
 
 require 'scout_apm/version'
 
