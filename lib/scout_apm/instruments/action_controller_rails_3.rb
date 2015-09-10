@@ -29,14 +29,21 @@ module ScoutApm
           ScoutApm::Agent.instance.logger.debug "Instrumenting ActionView::PartialRenderer"
           ::ActionView::PartialRenderer.class_eval do
             include ScoutApm::Tracer
-            instrument_method :render_partial, :metric_name => 'View/#{@template.virtual_path}/Rendering', :scope => true
-            instrument_method :collection_with_template, :metric_name => 'View/#{@template.virtual_path}/Rendering', :scope => true
+            instrument_method :render_partial,
+              :metric_name => 'View/#{@template.virtual_path rescue "Unknown Partial"}/Rendering',
+              :scope => true
+
+            instrument_method :collection_with_template,
+              :metric_name => 'View/#{@template.virtual_path rescue "Unknown Collection"}/Rendering',
+              :scope => true
           end
 
           ScoutApm::Agent.instance.logger.debug "Instrumenting ActionView::TemplateRenderer"
           ::ActionView::TemplateRenderer.class_eval do
             include ScoutApm::Tracer
-            instrument_method :render_template, :metric_name => 'View/#{args[0].virtual_path}/Rendering', :scope => true
+            instrument_method :render_template,
+              :metric_name => 'View/#{args[0].virtual_path rescue "Unknown"}/Rendering',
+              :scope => true
           end
         end
       end
