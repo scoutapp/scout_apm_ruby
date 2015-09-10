@@ -30,6 +30,8 @@ module ScoutApm
       @time = time
       ScoutApm::Agent.instance.logger.debug("PROF: #{prof}")
       @prof = parse_prof(prof)
+      ScoutApm::Agent.instance.logger.debug("PostProcessed PROF: #{prof}")
+
     end
 
     # Used to remove metrics when the payload will be too large.
@@ -38,7 +40,8 @@ module ScoutApm
       self
     end
 
-    TreeNode = Struct.new(:frame_id, :name, :file, :line, :samples, :children_ids, :children, :parent) do
+    TreeNode = Struct.new(:frame_id, :name, :file, :line, :samples,
+                          :children_edges, :children, :parents) do
       def app?
         file =~ /^#{ScoutApm::Environment.instance.root}/
       end
@@ -50,24 +53,26 @@ module ScoutApm
 
     def parse_prof(data)
       nodes = data[:frames].map do |(frame_id, frame_data)|
-        TreeNode.new(frame_id,
-                    frame_data[:name],
-                    frame_data[:file],
-                    frame_data[:line],
-                    frame_data[:samples],
-                    (frame_data[:edges] || {}).keys,
-                    nil,
-                    nil
+        TreeNode.new(frame_id,                     # frame_id
+                     frame_data[:name],            # name
+                     frame_data[:file],            # file
+                     frame_data[:line],            # line
+                     frame_data[:samples],         # samples
+                     (frame_data[:edges] || {}),   # children_edges [ { id => weight } ]
+                     nil,                          # children [ treenode, ... ]
+                     []                            # parents [ [treenode, int (weight) ], [...] ]
                     )
       end
 
       nodes.each do |node|
-        children = nodes.find_all { |n| node.children_ids.include? n.frame_id }
+        children = nodes.find_all { |n| node.children_edges.keys.include? n.frame_id }
+
+        node.children_edges.each do |(frame_id, weight)|
+          child = children.detect{ |c| c.frame_id == frame_id }
+          child.parents << [node, weight]
+        end
+
         node.children = children
-        children.each { |c|
-          puts "Dupe Parent: #{c.frame_id}" if c.parent
-          c.parent = node
-        }
       end
 
       while true
@@ -77,8 +82,16 @@ module ScoutApm
 
           if ! leaf_node.app?
             number_changed += 1
-            leaf_node.parent.samples += leaf_node.samples
-            leaf_node.parent.children.delete(leaf_node)
+
+            # Allocate to parents
+            total_weight = leaf_node.parents.map{ |p| p[1] }.inject(0){ |sum, weight| sum + weight }
+            leaf_node.parents.each do |(p_node, weight)|
+              relative_weight = weight.to_f / total_weight.to_f
+              p_node.samples += (leaf_node.samples * relative_weight)
+            end
+
+            # Remove this node from the tree structure
+            leaf_node.parents.each {|(p_node, _)| p_node.children.delete(leaf_node) }
             nodes.delete(leaf_node)
           end
         end
