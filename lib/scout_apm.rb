@@ -9,6 +9,7 @@ require 'set'
 require 'socket'
 require 'yaml'
 require 'thread'
+require 'stackprof' rescue nil # Only if they have it, no harm if not
 
 require 'scout_apm/version'
 

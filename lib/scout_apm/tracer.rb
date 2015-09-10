@@ -54,13 +54,16 @@ module ScoutApm
         elsif Thread::current[:scout_ignore_children]
           return yield
         end
+
         if options.delete(:scope)
           Thread::current[:scout_apm_sub_scope] = metric_name
         end
+
         if options[:ignore_children]
           Thread::current[:scout_ignore_children] = true
         end
         stack_item = ScoutApm::Agent.instance.store.record(metric_name)
+
         begin
           yield
         ensure
@@ -68,15 +71,21 @@ module ScoutApm
           if options[:ignore_children]
             Thread::current[:scout_ignore_children] = nil
           end
+
           ScoutApm::Agent.instance.store.stop_recording(stack_item,options)
         end
       end
 
-      def instrument_method(method,options = {})
+      def instrument_method(method, options = {})
         ScoutApm::Agent.instance.logger.info "Instrumenting #{method}"
         metric_name = options[:metric_name] || default_metric_name(method)
         return if !instrumentable?(method) or instrumented?(method,metric_name)
-        class_eval instrumented_method_string(method, {:metric_name => metric_name, :scope => options[:scope]}), __FILE__, __LINE__
+
+        class_eval(instrumented_method_string(
+          method,
+          {:metric_name => metric_name, :scope => options[:scope] }),
+          __FILE__, __LINE__
+        )
 
         alias_method _uninstrumented_method_name(method, metric_name), method
         alias_method method, _instrumented_method_name(method, metric_name)
@@ -86,12 +95,15 @@ module ScoutApm
 
       def instrumented_method_string(method, options)
         klass = (self === Module) ? "self" : "self.class"
-        "def #{_instrumented_method_name(method, options[:metric_name])}(*args, &block)
+        method_str = "def #{_instrumented_method_name(method, options[:metric_name])}(*args, &block)
           result = #{klass}.instrument(\"#{options[:metric_name]}\",{:scope => #{options[:scope] || false}}) do
             #{_uninstrumented_method_name(method, options[:metric_name])}(*args, &block)
           end
           result
         end"
+
+        ScoutApm::Agent.instance.logger.debug "Instrumented Method:\n#{method_str}"
+        method_str
       end
 
       # The method must exist to be instrumented.

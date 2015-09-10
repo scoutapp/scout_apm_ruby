@@ -72,7 +72,7 @@ module ScoutApm
       end
 
       duration = Time.now - item.start_time
-      if last=stack.last
+      if last = stack.last
         last.children_time += duration
       end
 
@@ -90,8 +90,8 @@ module ScoutApm
 
       # Uses controllers as the entry point for a transaction. Otherwise, stats are ignored.
       if stack_empty and meta.metric_name.match(/\AController\//)
-        aggs=aggregate_calls(transaction_hash.dup,meta)
-        store_slow(options[:uri],transaction_hash.dup.merge(aggs),meta,stat)
+        aggs = aggregate_calls(transaction_hash.dup,meta)
+        store_slow(options[:uri], transaction_hash.dup.merge(aggs), meta, stat)
         # deep duplicate
         duplicate = aggs.dup
         duplicate.each_pair do |k,v|
@@ -139,12 +139,20 @@ module ScoutApm
       aggregates
     end
 
+    SLOW_TRANSACTION_THRESHOLD = 2
+
     # Stores slow transactions. This will be sent to the server.
-    def store_slow(uri,transaction_hash,parent_meta,parent_stat,options = {})
+    def store_slow(uri, transaction_hash, parent_meta, parent_stat, options = {})
       @slow_transaction_lock.synchronize do
-        # tree map of all slow transactions
-        if parent_stat.total_call_time >= 2
-          @slow_transactions.push(ScoutApm::SlowTransaction.new(uri,parent_meta.metric_name,parent_stat.total_call_time,transaction_hash.dup,ScoutApm::Context.current,Thread::current[:scout_apm_trace_time]))
+        if parent_stat.total_call_time >= SLOW_TRANSACTION_THRESHOLD
+          slow_transaction = ScoutApm::SlowTransaction.new(uri,
+                                                           parent_meta.metric_name,
+                                                           parent_stat.total_call_time,
+                                                           transaction_hash.dup,
+                                                           ScoutApm::Context.current,
+                                                           Thread::current[:scout_apm_trace_time],
+                                                           Thread::current[:scout_apm_prof])
+          @slow_transactions.push(slow_transaction)
           ScoutApm::Agent.instance.logger.debug "Slow transaction sample added. [URI: #{uri}] [Context: #{ScoutApm::Context.current.to_hash}] Array Size: #{@slow_transactions.size}"
         end
       end

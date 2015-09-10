@@ -27,12 +27,18 @@ module ScoutApm
 
         if defined?(::ActionView) && defined?(::ActionView::PartialRenderer)
           ScoutApm::Agent.instance.logger.debug "Instrumenting ActionView::PartialRenderer"
-          ActionView::PartialRenderer.class_eval do
+          ::ActionView::PartialRenderer.class_eval do
             include ScoutApm::Tracer
             instrument_method :render_partial, :metric_name => 'View/#{@template.virtual_path}/Rendering', :scope => true
+            instrument_method :collection_with_template, :metric_name => 'View/#{@template.virtual_path}/Rendering', :scope => true
+          end
+
+          ScoutApm::Agent.instance.logger.debug "Instrumenting ActionView::TemplateRenderer"
+          ::ActionView::TemplateRenderer.class_eval do
+            include ScoutApm::Tracer
+            instrument_method :render_template, :metric_name => 'View/#{args[0].virtual_path}/Rendering', :scope => true
           end
         end
-
       end
     end
 
@@ -42,6 +48,12 @@ module ScoutApm
         scout_controller_action = "Controller/#{controller_path}/#{action_name}"
 
         self.class.scout_apm_trace(scout_controller_action, :uri => request.fullpath, :ip => request.remote_ip) do
+          Thread::current[:scout_apm_prof] = nil
+          if defined?(StackProf)
+            STDOUT.puts("STARTING Stackprof")
+            StackProf.start(mode: :wall, interval: 1000)
+          end
+
           begin
             super
           rescue Exception
@@ -49,6 +61,13 @@ module ScoutApm
             raise
           ensure
             Thread::current[:scout_apm_scope_name] = nil
+            if defined?(StackProf)
+              STDOUT.puts("STOPPING Stackprof")
+              StackProf.stop
+              Thread::current[:scout_apm_prof] = StackProf.results
+            else
+              Thread::current[:scout_apm_prof] = { "frames" => [] }
+            end
           end
         end
       end
@@ -56,9 +75,3 @@ module ScoutApm
   end
 end
 
-
-# Rails 3/4
-module ScoutApm
-  module Instruments
-  end
-end
