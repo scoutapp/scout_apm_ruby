@@ -58,7 +58,7 @@ module ScoutApm
           Thread::current[:scout_apm_prof] = nil
           if defined?(StackProf)
             STDOUT.puts("STARTING Stackprof")
-            StackProf.start(mode: :wall, interval: 1000)
+            StackProf.start(mode: :wall, interval: 20000)
           end
 
           begin
