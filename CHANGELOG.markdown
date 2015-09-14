@@ -1,3 +1,7 @@
+# 0.1.13
+
+* Fix support for ActiveRecord and ActionController instruments on Rails 2.3
+
 # 0.1.12
 
 * Fix Puma integration. Now detects both branches of preload_app! setting.

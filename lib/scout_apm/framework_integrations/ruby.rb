@@ -25,6 +25,11 @@ module ScoutApm
       def env
         ENV['RACK_ENV'] || ENV['RAILS_ENV'] || 'development'
       end
+
+      # TODO: Figure out how to accomodate odd environments
+      def database_engine
+        :mysql
+      end
     end
   end
 end

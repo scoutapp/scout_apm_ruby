@@ -31,6 +31,30 @@ module ScoutApm
       def env
         RAILS_ENV.dup
       end
+
+      # Attempts to determine the database engine being used
+      def database_engine
+        default = :mysql
+
+        if defined?(ActiveRecord::Base)
+          config = ActiveRecord::Base.configurations[env]
+          if config && config["adapter"]
+            case config["adapter"].to_s
+            when "postgres"   then :postgres
+            when "postgresql" then :postgres
+            when "sqlite3"    then :sqlite
+            when "mysql"      then :mysql
+            else default
+            end
+          else
+            default
+          end
+        else
+          default
+        end
+      rescue
+        default
+      end
     end
   end
 end

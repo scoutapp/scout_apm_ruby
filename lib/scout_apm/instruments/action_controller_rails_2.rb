@@ -18,7 +18,7 @@ module ScoutApm
         if defined?(::ActionController) && defined?(::ActionController::Base)
           ::ActionController::Base.class_eval do
             include ScoutApm::Tracer
-            include ::ScoutApm::Instruments::ActionControllerInstruments
+            include ::ScoutApm::Instruments::ActionControllerRails2Instruments
 
             def rescue_action_with_scout(exception)
               ScoutApm::Agent.instance.store.track!("Errors/Request",1, :scope => nil)

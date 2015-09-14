@@ -41,25 +41,7 @@ module ScoutApm
     end
 
     def database_engine
-      default = :mysql
-
-      if defined?(ActiveRecord::Base)
-        config = ActiveRecord::Base.connection_config
-        if config && config[:adapter]
-          case config[:adapter]
-          when "postgres"   then :postgres
-          when "postgresql" then :postgres
-          when "sqlite3"    then :sqlite
-          when "mysql"      then :mysql
-          else default
-          end
-        else
-          default
-        end
-      else
-        # TODO: Figure out how to detect outside of Rails context. (sequel, ROM, etc)
-        default
-      end
+      framework_integration.database_engine
     end
 
     def processors
