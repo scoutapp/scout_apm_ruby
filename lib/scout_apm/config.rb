@@ -8,6 +8,7 @@ module ScoutApm
     DEFAULTS =  {
         'host'      => 'https://apm.scoutapp.com',
         'log_level' => 'info',
+        'stackprof_interval' => 20000 # microseconds, 1000 = 1 millisecond, so 20k == 20 milliseconds
     }.freeze
 
     def initialize(config_path = nil)
