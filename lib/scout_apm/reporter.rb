@@ -26,6 +26,8 @@ module ScoutApm
         URI.parse("#{config.value('host')}/apps/checkin.scout?key=#{config.value('key')}&name=#{CGI.escape(Environment.instance.application_name)}")
       when :app_server_load
         URI.parse("#{config.value('host')}/apps/app_server_load.scout?key=#{config.value('key')}&name=#{CGI.escape(Environment.instance.application_name)}")
+      when :deploy_hook
+        URI.parse("#{config.value('host')}/apps/deploy.scout?key=#{config.value('key')}&name=#{CGI.escape(config.value('name'))}&revision=#{config.value('revision')}&branch=#{config.value('branch')}&deployed_by=#{config.value('deployed_by')}")
       end.tap{|u| logger.debug("Posting to #{u.to_s}")}
     end
 

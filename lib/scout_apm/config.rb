@@ -10,8 +10,9 @@ module ScoutApm
         'log_level' => 'info',
     }.freeze
 
-    def initialize(config_path = nil)
+    def initialize(config_path = nil, config_environment = nil)
       @config_path = config_path
+      @config_environment = config_environment
     end
 
     # Fetch a config value.
@@ -20,6 +21,11 @@ module ScoutApm
     def value(key)
       value = ENV['SCOUT_'+key.upcase] || settings[key]
       value.to_s.strip.length.zero? ? nil : value
+    end
+
+    def set_value(key, value)
+      @settings ||= settings
+      @settings[key] = value
     end
 
     private

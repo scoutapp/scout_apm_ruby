@@ -1,0 +1,36 @@
+namespace :scout_apm do
+  namespace :deploy do
+    task :starting do
+      # Warn if missign scout apm deploy creds
+    end
+    task :finished do
+      apm_config = fetch(:scout_apm_config)
+      release_roles(:all).first do |host|
+        on host do
+          apm_config.set_value('branch', fetch(:branch))
+          apm_config.set_value('revision', fetch(:current_revision))
+        end
+      end
+      apm_config.value('branch') || apm_config.set_value('branch', fetch(:branch))
+      apm_config.value('revision') || apm_config.set_value('revision', fetch(:revision, `git rev-parse HEAD`.chomp))
+      #puts "Environment: #{fetch(:scout_apm_config_environment)}"
+      #puts "Key: #{apm_config.value('key')}"
+      #puts "App Name: #{apm_config.value('name')}"
+      #puts "Rev: #{apm_config.value('revision')}"
+      #puts "Branch: #{apm_config.value('branch')}"
+      #puts "Deployed_by: #{apm_config.value('deployed_by')}"
+      reporter = ScoutApm::Reporter.new(:deploy_hook, apm_config, Logger.new(STDOUT))
+      reporter.report(nil)
+    end
+  end
+end
+
+after 'deploy:failed', 'scout_apm:deploy:finished'
+
+namespace :load do
+  task :defaults do
+    set :scout_apm_config_path, -> { ENV['SCOUT_APM_CONFIG_PATH'] }
+    set :scout_apm_config_environment, -> { fetch(:rails_env) || fetch(:stage) }
+    set :scout_apm_config, -> { apm_config = ScoutApm::Config.new(fetch(:scout_apm_config_path), fetch(:scout_apm_config_environment)) }
+  end
+end
