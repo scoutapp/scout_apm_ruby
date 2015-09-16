@@ -25,7 +25,7 @@ namespace :scout_apm do
   end
 end
 
-after 'deploy:failed', 'scout_apm:deploy:finished'
+after 'deploy:finished', 'scout_apm:deploy:finished'
 
 namespace :load do
   task :defaults do
