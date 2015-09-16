@@ -56,9 +56,7 @@ module ScoutApm
 
         self.class.scout_apm_trace(scout_controller_action, :uri => request.fullpath, :ip => request.remote_ip) do
           Thread::current[:scout_apm_prof] = nil
-          if defined?(StackProf)
-            StackProf.start(mode: :wall, interval: ScoutApm::Agent.instance.config.value("stackprof_interval"))
-          end
+          StackProf.start(mode: :wall, interval: ScoutApm::Agent.instance.config.value("stackprof_interval"))
 
           begin
             super
@@ -67,12 +65,8 @@ module ScoutApm
             raise
           ensure
             Thread::current[:scout_apm_scope_name] = nil
-            if defined?(StackProf)
-              StackProf.stop
-              Thread::current[:scout_apm_prof] = StackProf.results
-            else
-              Thread::current[:scout_apm_prof] = { "frames" => [] }
-            end
+            StackProf.stop
+            Thread::current[:scout_apm_prof] = StackProf.results
           end
         end
       end

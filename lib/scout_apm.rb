@@ -1,6 +1,9 @@
 module ScoutApm
 end
 
+#####################################
+# Ruby StdLibrary Requires
+#####################################
 require 'cgi'
 require 'logger'
 require 'net/http'
@@ -9,8 +12,19 @@ require 'set'
 require 'socket'
 require 'yaml'
 require 'thread'
-require 'stackprof' rescue nil # Only if they have it, no harm if not
 
+#####################################
+# Gem Requires
+#####################################
+begin
+  require 'stackprof'
+rescue LoadError
+  require 'scout_apm/utils/fake_stack_prof'
+end
+
+#####################################
+# Internal Requires
+#####################################
 require 'scout_apm/version'
 
 require 'scout_apm/server_integrations/passenger'
