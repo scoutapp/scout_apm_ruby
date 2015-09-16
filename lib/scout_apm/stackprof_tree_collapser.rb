@@ -5,6 +5,7 @@ module ScoutApm
 
     def initialize(raw_stackprof)
       @raw_stackprof = raw_stackprof
+      ScoutApm::Agent.instance.logger.info("StackProf - Samples: #{raw_stackprof[:samples]}, GC: #{raw_stackprof[:gc_samples]}, missed: #{raw_stackprof[:missed_samples]}, Interval: #{raw_stackprof[:interval]}")
     end
 
     def call
