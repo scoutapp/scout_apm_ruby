@@ -57,19 +57,17 @@ module ScoutApm
         self.class.scout_apm_trace(scout_controller_action, :uri => request.fullpath, :ip => request.remote_ip) do
           Thread::current[:scout_apm_prof] = nil
           if defined?(StackProf)
-            STDOUT.puts("STARTING Stackprof")
-            StackProf.start(mode: :wall, interval: 20000)
+            StackProf.start(mode: :wall, interval: ScoutApm::Agent.instance.config.value("stackprof_interval"))
           end
 
           begin
             super
           rescue Exception
-            ScoutApm::Agent.instance.store.track!("Errors/Request",1, :scope => nil)
+            ScoutApm::Agent.instance.store.track!("Errors/Request", 1, :scope => nil)
             raise
           ensure
             Thread::current[:scout_apm_scope_name] = nil
             if defined?(StackProf)
-              STDOUT.puts("STOPPING Stackprof")
               StackProf.stop
               Thread::current[:scout_apm_prof] = StackProf.results
             else
