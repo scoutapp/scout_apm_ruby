@@ -1,3 +1,9 @@
+# 0.1.14
+
+* Add new `data_file` option to configuration, to control the location of the
+  temporary data file.  Still defaults to log/scout_apm.db.  The file location
+  must be readable and writeable by the owner of the Ruby process
+
 # 0.1.13
 
 * Fix support for ActiveRecord and ActionController instruments on Rails 2.3
