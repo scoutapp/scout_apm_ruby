@@ -43,12 +43,30 @@ module ScoutApm
       end
 
       def report
-        reporter.report(nil)
+        payload = ScoutApm::Serializers::PayloadSerializer.serialize_deploy(deploy_data)
+        reporter.report(payload, {'Content-Type' => 'application/x-www-form-urlencoded'})
       end
 
       def reporter
         @reporter ||= ScoutApm::Reporter.new(:deploy_hook, ScoutApm::Agent.instance.config, @logger)
       end
+
+      def deploy_data
+        {:revision => current_revision, :branch => branch, :deployed_by => deployed_by}
+      end
+
+      def branch
+        @cap.fetch(:branch)
+      end
+
+      def current_revision
+        @cap.fetch(:current_revision) || `git rev-list --max-count=1 --abbrev-commit --abbrev=12 #{branch}`.chomp
+      end
+
+      def deployed_by
+        ScoutApm::Agent.instance.config.value('deployed_by')
+      end
+
     end
   end
 end

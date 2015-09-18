@@ -6,6 +6,10 @@ module ScoutApm
         Marshal.dump(:metrics => metrics, :slow_transactions => slow_transactions)
       end
 
+      def self.serialize_deploy(data)
+        URI.encode_www_form(data)
+      end
+
       def self.deserialize(data)
         Marshal.load(data)
       end

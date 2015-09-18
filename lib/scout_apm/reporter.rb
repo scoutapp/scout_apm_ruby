@@ -16,8 +16,8 @@ module ScoutApm
     end
 
     # TODO: Parse & return a real response object, not the HTTP Response object
-    def report(payload)
-      post(uri, payload)
+    def report(payload, headers = {})
+      post(uri, payload, headers)
     end
 
     def uri
@@ -27,7 +27,7 @@ module ScoutApm
       when :app_server_load
         URI.parse("#{config.value('host')}/apps/app_server_load.scout?key=#{config.value('key')}&name=#{CGI.escape(Environment.instance.application_name)}")
       when :deploy_hook
-        URI.parse("#{config.value('host')}/apps/deploy.scout?key=#{config.value('key')}&name=#{CGI.escape(config.value('name'))}&revision=#{config.value('revision')}&branch=#{config.value('branch')}&deployed_by=#{config.value('deployed_by')}")
+        URI.parse("#{config.value('host')}/apps/deploy.scout?key=#{config.value('key')}&name=#{CGI.escape(config.value('name'))}")
       end.tap{|u| logger.debug("Posting to #{u.to_s}")}
     end
 
