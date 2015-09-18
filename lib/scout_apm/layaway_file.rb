@@ -2,7 +2,8 @@
 module ScoutApm
   class LayawayFile
     def path
-      "#{ScoutApm::Agent.instance.default_log_path}/scout_apm.db"
+      ScoutApm::Agent.instance.config.value("data_file") ||
+        "#{ScoutApm::Agent.instance.default_log_path}/scout_apm.db"
     end
 
     def dump(object)
@@ -36,7 +37,10 @@ module ScoutApm
         end
       end
     rescue Errno::ENOENT, Exception  => e
-      ScoutApm::Agent.instance.logger.error("Unable to access the layaway file [#{e.message}]. The user running the app must have read+write access.")
+      ScoutApm::Agent.instance.logger.error("Unable to access the layaway file [#{e.message}]. " +
+                                            "The user running the app must have read & write access. " +
+                                            "Change the path by setting the `data_file` key in scout_apm.yml"
+                                           )
       ScoutApm::Agent.instance.logger.debug(e.backtrace.split("\n"))
       # ensure the in-memory metric hash is cleared so data doesn't continue to accumulate.
       ScoutApm::Agent.instance.store.metric_hash = {}
