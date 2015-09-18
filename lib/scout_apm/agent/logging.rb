@@ -11,9 +11,6 @@ module ScoutApm
         begin
           @log_file = wants_stdout? ? STDOUT : "#{log_file_path}/scout_apm.log"
         rescue => e
-          puts "OHH NO"
-          puts e.message
-          puts e.backtrace.join("\n\t")
         end
 
         begin
@@ -23,7 +20,7 @@ module ScoutApm
         rescue Exception => e
           @logger = Logger.new(STDOUT)
           apply_log_format
-          @logger.error "Unable to access log file: #{e.message}"
+          @logger.error "Unable to open log file for writing: #{e.message}. Falling back to STDOUT"
         end
         @logger
       end
