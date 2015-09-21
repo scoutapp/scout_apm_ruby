@@ -19,8 +19,12 @@ module ScoutApm
       end
 
       def present?
-        require 'capistrano/version'
-        return defined?(Capistrano::VERSION) && Gem::Version.new(Capistrano::VERSION).release >= Gem::Version.new('3.0.0')
+        if !@cap.nil? && @cap.is_a?(Capistrano::Application)
+          require 'capistrano/version'
+          return defined?(Capistrano::VERSION) && Gem::Version.new(Capistrano::VERSION).release >= Gem::Version.new('3.0.0')
+        else
+          return false
+        end
       rescue
         return false
       end
