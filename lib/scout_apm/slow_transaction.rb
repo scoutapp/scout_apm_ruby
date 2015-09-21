@@ -29,6 +29,7 @@ module ScoutApm
       @context = context
       @time = time
       @prof = ScoutApm::StackprofTreeCollapser.new(raw_stackprof).call
+      @raw_prof = raw_stackprof # Send whole data up to server
     end
 
     # Used to remove metrics when the payload will be too large.
