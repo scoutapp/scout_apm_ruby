@@ -4,7 +4,15 @@ module ScoutApm
     BACKTRACE_LIMIT = 5 # Max length of callers to display
     MAX_SIZE = 100 # Limits the size of the metric hash to prevent a metric explosion.
 
-    attr_reader :metric_name, :total_call_time, :metrics, :meta, :uri, :context, :time, :prof
+    attr_reader :metric_name
+    attr_reader :total_call_time
+    attr_reader :metrics
+    attr_reader :meta
+    attr_reader :uri
+    attr_reader :context
+    attr_reader :time
+    attr_reader :prof
+    attr_reader :raw_prof
 
     # Given a call stack, generates a filtered backtrace that:
     # * Limits to the app/models, app/controllers, or app/views directories
