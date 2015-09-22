@@ -179,6 +179,7 @@ module ScoutApm
       case environment.framework
       when :rails       then install_instrument(ScoutApm::Instruments::ActionControllerRails2)
       when :rails3_or_4 then install_instrument(ScoutApm::Instruments::ActionControllerRails3)
+      when :sinatra     then install_instrument(ScoutApm::Instruments::SinatraHandlers)
       end
 
       install_instrument(ScoutApm::Instruments::ActiveRecord)
