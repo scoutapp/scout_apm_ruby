@@ -3,6 +3,19 @@ require 'erb'
 
 require 'scout_apm/environment'
 
+# Valid Config Options:
+#
+# application_root - override the detected directory of the application
+# data_file        - override the default temporary storage location. Must be a location in a writable directory
+# key              - the account key with Scout APM. Found in Settings in the Web UI
+# log_file_path    - either a directory or "STDOUT".
+# log_level        - DEBUG / INFO / WARN as usual
+# monitor          - true or false.  False prevents any instrumentation from starting
+# name             - override the name reported to APM. This is the name that shows in the Web UI
+#
+# Any of these config settings can be set with an environment variable prefixed
+# by SCOUT_ and uppercasing the key: SCOUT_LOG_LEVEL for instance.
+
 module ScoutApm
   class Config
     DEFAULTS =  {

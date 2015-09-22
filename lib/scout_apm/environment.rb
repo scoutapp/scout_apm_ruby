@@ -58,6 +58,10 @@ module ScoutApm
     end
 
     def root
+      if override_root = Agent.instance.config.value("application_root")
+        return override_root
+      end
+
       if framework == :rails
         RAILS_ROOT.to_s
       elsif framework == :rails3_or_4
