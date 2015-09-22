@@ -67,7 +67,7 @@ module ScoutApm
       elsif framework == :rails3_or_4
         Rails.root
       elsif framework == :sinatra
-        Sinatra::Application.root
+        Sinatra::Application.root || "."
       else
         '.'
       end
