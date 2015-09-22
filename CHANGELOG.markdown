@@ -1,3 +1,8 @@
+# 0.1.15
+
+* Add new `application_root` option to override the autodetected location of
+  the application.
+
 # 0.1.14
 
 * Add new `data_file` option to configuration, to control the location of the
