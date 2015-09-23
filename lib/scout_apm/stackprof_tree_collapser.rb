@@ -2,6 +2,10 @@
 # require 'json'; p = JSON::parse(File.read("/Users/cschneid/profile_appscontroller.json")); p=p.with_indifferent_access; ScoutApm::StackprofTreeCollapser.new(p).call
 # require 'json'; p = JSON::parse(File.read("/Users/cschneid/profile_elasticsearch.json")); p=p.with_indifferent_access; ScoutApm::StackprofTreeCollapser.new(p).call
 
+# in_app_nodes.map{|n| [n.samples_for_self_and_descendants, n.name, n.file, n.line]}.sort_by {|x| x[0] }
+# in_app_nodes.map{|n| [n.total_samples, n.name] }.sort_by {|x| x[0] }
+
+
 
 module ScoutApm
   class StackprofTreeCollapser
@@ -16,11 +20,7 @@ module ScoutApm
     def call
       build_tree
       connect_children
-      $max_node = nodes.max_by{|n| n.samples }
-      binding.pry
-      # calculate_results
-      # collapse_tree
-      # generate_output
+      total_samples_of_app_nodes
     end
 
     private
@@ -32,12 +32,12 @@ module ScoutApm
                      frame_data[:file],            # file
                      frame_data[:line],            # line
                      frame_data[:samples],         # samples
+                     frame_data[:total_samples],   # total_samples
                      (frame_data[:edges] || {}),   # children_edges [ { id => weight } ]
                      [],                           # children [ treenode, ... ]
                      []                            # parents [ [treenode, int (weight) ], [...] ]
                     )
       end
-
     end
 
     def connect_children
@@ -53,25 +53,28 @@ module ScoutApm
       end
     end
 
-    # @results will be [{name, samples, file, line}]
-    def calculate_results
-      @results = in_app_nodes.map do |node|
-        desc = node.all_descendants
-        total_samples = desc.map(&:samples).sum
-        { desc_count: desc.length, name: node.name, file: node.file, line: node.line, samples: total_samples }
-      end
-    end
-
     def in_app_nodes
       nodes.select {|n| n.app? }
     end
 
+    def total_samples_of_app_nodes
+      in_app_nodes.reject{|n| n.calls_only_app_nodes? && !n.has_samples? }.
+        map{|n| { samples: n.total_samples,
+                  name: n.name,
+                  file: n.file,
+                  line: n.line
+                }
+        }
+    end
 
-
-
-
-
-
+    # @results will be [{name, samples, file, line}]
+#    def calculate_results
+#      @results = in_app_nodes.map do |node|
+#        desc = node.all_descendants
+#        total_samples = desc.map(&:samples).sum
+#        { desc_count: desc.length, name: node.name, file: node.file, line: node.line, samples: total_samples }
+#      end
+#    end
 
 #     def collapse_tree
 #       while true
@@ -115,72 +118,61 @@ module ScoutApm
     ###########################################
     # TreeNode class represents a single node.
     ###########################################
-    TreeNode = Struct.new(:frame_id, :name, :file, :line, :samples,
+    TreeNode = Struct.new(:frame_id, :name, :file, :line, :samples, :total_samples,
                           :children_edges, :children, :parents) do
       def app?
-        # file =~ /^#{ScoutApm::Environment.instance.root}/
-        @is_app ||= file =~ /releases/
+        @is_app ||= file =~ /^#{ScoutApm::Environment.instance.root}/
       end
 
       # My samples, and the weighted samples of all of my children
-      def samples_for_self_and_descendants(seen=Set.new)
-        viable_children = children.reject(&:app?)
-        @samples_for_self_and_descendants ||= samples + viable_children.map{ |c_node|
-          if seen.include? self
-            puts "I've already seen #{self.name}, bailing"
-            return samples # we've already been included, we're looping
-          else
-            seen << self
-            c_node.samples_for_parent(self, seen.dup).tap { |val| puts "Child gave me #{val}" }
-          end
-        }.sum
-      end
+      #def samples_for_self_and_descendants(seen=Set.new)
+      #  viable_children = children.reject(&:app?)
+      #  @samples_for_self_and_descendants ||= samples + viable_children.map{ |c_node|
+      #    if seen.include? self
+      #      puts "I've already seen #{self.name}, bailing"
+      #      return samples # we've already been included, we're looping
+      #    else
+      #      seen << self
+      #      c_node.samples_for_parent(self, seen.dup).tap { |val| puts "Child gave me #{val}" }
+      #    end
+      #  }.sum
+      #end
 
       # For this parent of mine, how many of my samples do they get.
       # is combo of "how many samples do I have, and what's the relative weight of this parent"
-      def samples_for_parent(p_node, seen=Set.new)
-        samples_for_self_and_descendants(seen) * relative_weight_of_parent(p_node)
-      end
+      #def samples_for_parent(p_node, seen=Set.new)
+      #  samples_for_self_and_descendants(seen) * relative_weight_of_parent(p_node)
+      #end
 
-      def relative_weight_of_parent(p_node)
-        total = parents.map{|(_, weight)| weight}.sum
-        p_node_weight = parents.detect(0) {|(this_parent, _)| this_parent == p_node }[1]
-        p_node_weight.to_f / total.to_f
-      end
-
-
-
-
-
-
-
-
-
-
+      #def relative_weight_of_parent(p_node)
+      #  total = parents.map{|(_, weight)| weight}.sum
+      #  p_node_weight = parents.detect(0) {|(this_parent, _)| this_parent == p_node }[1]
+      #  p_node_weight.to_f / total.to_f
+      #end
 
       # Allocate this node's samples to its parents, in relation to the rate at
       # which each parent called this method.  Then clear the child from each of the parents
-      def collapse_to_parent!
-        total_weight = parents.map{ |(_, weight)| weight }.inject(0){ |sum, weight| sum + weight }
-        parents.each do |(p_node, weight)|
-          relative_weight = weight.to_f / total_weight.to_f
-          p_node.samples += (samples * relative_weight)
-        end
+      #def collapse_to_parent!
+      #  total_weight = parents.map{ |(_, weight)| weight }.inject(0){ |sum, weight| sum + weight }
+      #  parents.each do |(p_node, weight)|
+      #    relative_weight = weight.to_f / total_weight.to_f
+      #    p_node.samples += (samples * relative_weight)
+      #  end
 
-        parents.each {|(p_node, _)| p_node.delete_child!(self) }
-      end
+      #  parents.each {|(p_node, _)| p_node.delete_child!(self) }
+      #end
 
-      def delete_child!(node)
-        self.children = self.children.reject {|c| c == node }
-      end
+      #def delete_child!(node)
+      #  self.children = self.children.reject {|c| c == node }
+      #end
 
       # Force object_id to be the equality mechanism, rather than struct's
       # default which delegates to == on each value.  That is wrong because
       # we want to be able to dup a node in the tree construction process and
       # not have those compare equal to each other.
-      # def ==(other)
-        # object_id == other.object_id
-      # end
+      def ==(other)
+        object_id == other.object_id
+      end
 
       def inspect
         "#{frame_id}: #{name} - ##{samples}\n" +
@@ -188,58 +180,39 @@ module ScoutApm
         "  Children: #{children_edges.inspect} \n"
       end
 
-      def all_descendants(max_depth=100)
-        descendants = [self]
-        unchecked_edge = self.children.reject(&:app?)
-        stop = false
+      #def all_descendants(max_depth=100)
+      #  descendants = [self]
+      #  unchecked_edge = self.children.reject(&:app?)
+      #  stop = false
 
-        puts "----------------------------------------"
+      #  puts "----------------------------------------"
 
-        while max_depth > 0 && !stop
-          before_count = descendants.length
+      #  while max_depth > 0 && !stop
+      #    before_count = descendants.length
 
-          descendants = (descendants + unchecked_edge).uniq
-          unchecked_edge = unchecked_edge.map(&:children).flatten.uniq.reject(&:app?)
-          puts "UncheckedEdge Children: #{unchecked_edge.length}"
+      #    descendants = (descendants + unchecked_edge).uniq
+      #    unchecked_edge = unchecked_edge.map(&:children).flatten.uniq.reject(&:app?)
+      #    puts "UncheckedEdge Children: #{unchecked_edge.length}"
 
-          after_count = descendants.length
-          stop = true if before_count == after_count
-          max_depth = max_depth - 1
-        end
+      #    after_count = descendants.length
+      #    stop = true if before_count == after_count
+      #    max_depth = max_depth - 1
+      #  end
 
-        puts "#{name} - Found #{descendants.length} children after #{100 - max_depth} iterations"
+      #  puts "#{name} - Found #{descendants.length} children after #{100 - max_depth} iterations"
 
-        puts "----------------------------------------"
+      #  puts "----------------------------------------"
 
-        descendants
+      #  descendants
+      #end
+
+      def calls_only_app_nodes?
+        children.all?(&:app?)
       end
 
-      #### TreeNode Debug Helpers
-      def cycles?(seen=[])
-        return true if seen.include? self
-        seen << self
-        parents.any? {|(p_node, _)| p_node.cycles?(seen.dup) }
+      def has_samples?
+        samples > 0
       end
-
-      def all_parents_flattened
-        all_of_em = []
-        all_of_em += parents.map{|(p_node, _)| p_node.all_parents_flattened }
-        all_of_em
-      end
-
-      def self_or_parents_in_app?(max_depth=200)
-        return nil if max_depth == 0
-
-        if app?
-          self
-        elsif parents.length > 0
-          self.parents.find { |(p_node, _)| p_node.self_or_parents_in_app?(max_depth - 1) }.try(:first)
-        else
-          nil
-        end
-      end
-      #### </debug helpers>
-
     end
   end
 end
