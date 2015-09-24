@@ -16,8 +16,8 @@ module ScoutApm
     end
 
     # TODO: Parse & return a real response object, not the HTTP Response object
-    def report(payload)
-      post(uri, payload)
+    def report(payload, headers = {})
+      post(uri, payload, headers)
     end
 
     def uri
@@ -26,7 +26,24 @@ module ScoutApm
         URI.parse("#{config.value('host')}/apps/checkin.scout?key=#{config.value('key')}&name=#{CGI.escape(Environment.instance.application_name)}")
       when :app_server_load
         URI.parse("#{config.value('host')}/apps/app_server_load.scout?key=#{config.value('key')}&name=#{CGI.escape(Environment.instance.application_name)}")
+      when :deploy_hook
+        URI.parse("#{config.value('host')}/apps/deploy.scout?key=#{config.value('key')}&name=#{CGI.escape(config.value('name'))}")
       end.tap{|u| logger.debug("Posting to #{u.to_s}")}
+    end
+
+    def can_report?
+      case type
+      when :deploy_hook
+        %w(host key name).each do |k|
+          if config.value(k).nil?
+            logger.warn "/#{type} FAILED: missing required config value for #{k}"
+            return false
+          end
+        end
+        return true
+      else
+        return true
+      end
     end
 
     private
@@ -52,6 +69,8 @@ module ScoutApm
         logger.debug "/#{type} OK"
       when Net::HTTPBadRequest
         logger.warn "/#{type} FAILED: The Account Key [#{config.value('key')}] is invalid."
+      when Net::HTTPUnprocessableEntity
+        logger.warn "/#{type} FAILED: #{response.body}"
       else
         logger.debug "/#{type} FAILED: #{response.inspect}"
       end

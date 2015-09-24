@@ -78,6 +78,11 @@ module ScoutApm
       init_logger
       logger.info "Attempting to start Scout Agent [#{ScoutApm::VERSION}] on [#{environment.hostname}]"
 
+      if environment.deploy_integration
+        logger.info "Starting monitoring for [#{environment.deploy_integration.name}]]."
+        return environment.deploy_integration.install
+      end
+
       return false unless preconditions_met?
 
       @started = true
@@ -196,6 +201,10 @@ module ScoutApm
       instance = instrument_klass.new
       @installed_instruments << instance
       instance.install
+    end
+
+    def deploy_integration
+      environment.deploy_integration
     end
   end
 end
