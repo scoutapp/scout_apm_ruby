@@ -1,6 +1,6 @@
 module ScoutApm
   module Instruments
-    class SinatraHandlers
+    class Sinatra
       attr_reader :logger
 
       def initalize(logger=ScoutApm::Agent.instance.logger)
@@ -15,11 +15,11 @@ module ScoutApm
       def install
         @installed = true
 
-        if defined?(::Sinatra) && defined?(::Sinatra::Base) && Sinatra::Base.private_method_defined?(:dispatch!)
+        if defined?(::Sinatra) && defined?(::Sinatra::Base) && ::Sinatra::Base.private_method_defined?(:dispatch!)
           ScoutApm::Agent.instance.logger.debug "Instrumenting Sinatra"
           ::Sinatra::Base.class_eval do
             include ScoutApm::Tracer
-            include ::ScoutApm::Instruments::SinatraInstruments
+            include ScoutApm::Instruments::SinatraInstruments
             alias dispatch_without_scout_instruments! dispatch!
             alias dispatch! dispatch_with_scout_instruments!
           end

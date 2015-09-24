@@ -10,12 +10,11 @@ module ScoutApm
       end
 
       def version
-        Sinatra::VERSION
+        ::Sinatra::VERSION
       end
 
       def present?
-        defined?(::Sinatra) &&
-          defined?(::Sinatra::Base)
+        defined?(::Sinatra) && defined?(::Sinatra::Base)
       end
 
       # TODO: Fetch the name

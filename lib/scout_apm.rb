@@ -31,6 +31,7 @@ require 'scout_apm/instruments/mongoid'
 require 'scout_apm/instruments/active_record'
 require 'scout_apm/instruments/action_controller_rails_2'
 require 'scout_apm/instruments/action_controller_rails_3'
+require 'scout_apm/instruments/sinatra'
 require 'scout_apm/instruments/process/process_cpu'
 require 'scout_apm/instruments/process/process_memory'
 
