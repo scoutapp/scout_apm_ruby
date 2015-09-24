@@ -7,7 +7,7 @@ module ScoutApm
 
       def initialize(logger)
         @logger = logger
-        @cap = ObjectSpace.each_object(Capistrano::Configuration).map.first rescue nil
+        @cap = defined?(Capistrano::Configuration) ? ObjectSpace.each_object(Capistrano::Configuration).map.first : nil rescue nil
       end
 
       def name
@@ -48,8 +48,14 @@ module ScoutApm
       end
 
       def report
-        payload = ScoutApm::Serializers::PayloadSerializer.serialize_deploy(deploy_data)
-        reporter.report(payload, {'Content-Type' => 'application/x-www-form-urlencoded'})
+        if reporter.can_report?
+          data = deploy_data
+          logger.debug "Sending deploy hook data: #{data}"
+          payload = ScoutApm::Serializers::PayloadSerializer.serialize_deploy(data)
+          reporter.report(payload, {'Content-Type' => 'application/x-www-form-urlencoded'})
+        else
+          logger.warn "Unable to post deploy hook data"
+        end
       end
 
       def reporter

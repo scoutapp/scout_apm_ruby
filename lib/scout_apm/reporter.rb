@@ -31,6 +31,21 @@ module ScoutApm
       end.tap{|u| logger.debug("Posting to #{u.to_s}")}
     end
 
+    def can_report?
+      case type
+      when :deploy_hook
+        %w(host key name).each do |k|
+          if config.value(k).nil?
+            logger.warn "/#{type} FAILED: missing required config value for #{k}"
+            return false
+          end
+        end
+        return true
+      else
+        return true
+      end
+    end
+
     private
 
     def post(uri, body, headers = Hash.new)
