@@ -54,6 +54,8 @@ module ScoutApm
         logger.debug "/#{type} OK"
       when Net::HTTPBadRequest
         logger.warn "/#{type} FAILED: The Account Key [#{config.value('key')}] is invalid."
+      when Net::HTTPUnprocessableEntity
+        logger.warn "/#{type} FAILED: #{response.body}"
       else
         logger.debug "/#{type} FAILED: #{response.inspect}"
       end

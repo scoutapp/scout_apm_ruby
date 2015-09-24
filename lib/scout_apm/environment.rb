@@ -26,6 +26,7 @@ module ScoutApm
 
     DEPLOY_INTEGRATIONS = [
       ScoutApm::DeployIntegrations::Capistrano3.new(Logger.new(STDOUT)),
+      ScoutApm::DeployIntegrations::Capistrano2.new(Logger.new(STDOUT)),
     ]
 
     def env
@@ -112,7 +113,7 @@ module ScoutApm
     end
 
     def deploy_integration?
-      deploy_integration.present?
+      !@deploy_integration.nil?
     end
 
     ### ruby checks

@@ -78,7 +78,7 @@ module ScoutApm
       init_logger
       logger.info "Attempting to start Scout Agent [#{ScoutApm::VERSION}] on [#{environment.hostname}]"
 
-      if environment.deploy_integration.present?
+      if environment.deploy_integration
         logger.info "Starting monitoring for [#{environment.deploy_integration.name}]]."
         return environment.deploy_integration.install
       end
