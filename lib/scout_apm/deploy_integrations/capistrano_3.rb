@@ -50,8 +50,8 @@ module ScoutApm
         if reporter.can_report?
           data = deploy_data
           logger.debug "Sending deploy hook data: #{data}"
-          payload = ScoutApm::Serializers::PayloadSerializer.serialize_deploy(data)
-          reporter.report(payload, {'Content-Type' => 'application/x-www-form-urlencoded'})
+          payload = ScoutApm::Serializers::DeploySerializer.serialize(data)
+          reporter.report(payload, ScoutApm::Serializers::DeploySerializer::HTTP_HEADERS)
         else
           logger.warn "Unable to post deploy hook data"
         end
