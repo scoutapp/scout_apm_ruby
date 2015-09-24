@@ -26,7 +26,7 @@ require 'scout_apm/framework_integrations/sinatra'
 require 'scout_apm/framework_integrations/ruby'
 
 require 'scout_apm/deploy_integrations/capistrano_3'
-require 'scout_apm/deploy_integrations/capistrano_2'
+#require 'scout_apm/deploy_integrations/capistrano_2'
 
 require 'scout_apm/instruments/net_http'
 require 'scout_apm/instruments/moped'
