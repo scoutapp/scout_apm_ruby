@@ -19,6 +19,14 @@ module ScoutApm
 
       # TODO: Fetch the name
       def application_name
+        possible = ObjectSpace.each_object(Class).select { |klass| klass < Sinatra::Base } - [Sinatra::Application]
+        if possible.length == 1
+          possible.first.name
+        else
+          "Sinatra"
+        end
+      rescue => e
+        logger.debug "Failed getting Sinatra Application Name: #{e.message}\n#{e.backtrace.join("\n\t")}"
         "Sinatra"
       end
 
