@@ -1,3 +1,7 @@
+# 0.1.16
+
+* Beta support for Sinatra monitoring.
+
 # 0.1.15
 
 * Add new `application_root` option to override the autodetected location of
