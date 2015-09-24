@@ -32,7 +32,7 @@ module ScoutApm
     # It first attempts to fetch an ENV var prefixed with 'SCOUT_',
     # then from the settings file.
     def value(key)
-      value = ENV['SCOUT_'+key.upcase] || settings[key]
+      value = ENV['SCOUT_'+key.upcase] || setting(key)
       value.to_s.strip.length.zero? ? nil : value
     end
 
@@ -46,8 +46,12 @@ module ScoutApm
       File.expand_path(config_path)
     end
 
-    def settings
-      @settings ||= load_file
+    def setting(key)
+      settings[key] || settings(true)[key]
+    end
+
+    def settings(try_reload=false)
+      (@settings.nil? || try_reload) ? @settings = load_file : @settings
     end
 
     def config_environment

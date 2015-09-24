@@ -24,8 +24,13 @@ module ScoutApm
       ScoutApm::FrameworkIntegrations::Ruby.new, # Fallback if none match
     ]
 
+    DEPLOY_INTEGRATIONS = [
+      ScoutApm::DeployIntegrations::Capistrano3.new(Logger.new(STDOUT)),
+      ScoutApm::DeployIntegrations::Capistrano2.new(Logger.new(STDOUT)),
+    ]
+
     def env
-      @env ||= framework_integration.env
+      @env ||= deploy_integration? ? deploy_integration.env : framework_integration.env
     end
 
     def framework
@@ -58,10 +63,14 @@ module ScoutApm
     end
 
     def root
+      return deploy_integration.root if deploy_integration
+      framework_root
+    end
+
+    def framework_root
       if override_root = Agent.instance.config.value("application_root")
         return override_root
       end
-
       if framework == :rails
         RAILS_ROOT.to_s
       elsif framework == :rails3_or_4
@@ -100,6 +109,14 @@ module ScoutApm
     # started as a Thread, it won't survive the fork.
     def forking?
       app_server_integration.forking?
+    end
+
+    def deploy_integration
+      @deploy_integration ||= DEPLOY_INTEGRATIONS.detect{ |integration| integration.present? }
+    end
+
+    def deploy_integration?
+      !@deploy_integration.nil?
     end
 
     ### ruby checks
