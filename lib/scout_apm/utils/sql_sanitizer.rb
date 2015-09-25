@@ -16,12 +16,11 @@ module ScoutApm
       attr_accessor :database_engine
 
       def initialize(sql)
-        @sql = sql.dup
+        @sql = scrubbed(sql.dup)
         @database_engine = ScoutApm::Environment.instance.database_engine
       end
 
       def to_s
-        return nil if sql.length > 1000 # safeguard - don't sanitize large SQL statements
         case database_engine
         when :postgres then to_s_postgres
         when :mysql    then to_s_mysql
@@ -60,6 +59,25 @@ module ScoutApm
         sql.gsub!(MULTIPLE_SPACES, ' ')
         sql.gsub!(TRAILING_SPACES, '')
       end
+
+      def has_encodings?(encodings=['UTF-8', 'binary'])
+        encodings.all?{|enc| Encoding.find(enc) rescue false}
+      end
+
+      def scrubbed(str)
+        return '' if !str.is_a?(String) || str.length > 1000 # safeguard - don't sanitize or scrub large SQL statements
+        return str if !str.respond_to?(:encode) # Ruby <= 1.8 doesn't have string encoding
+        return str if str.valid_encoding? # Whatever encoding it is, it is valid and we can operate on it
+        ScoutApm::Agent.instance.logger.debug "Scrubbing invalid sql encoding."
+        if str.respond_to?(:scrub) # Prefer to scrub before we have to convert
+          return str.scrub('_')
+        elsif has_encodings?(['UTF-8', 'binary'])
+          return str.encode('UTF-8', 'binary', :invalid => :replace, :undef => :replace, :replace => '_')
+        end
+        ScoutApm::Agent.instance.logger.debug "Unable to scrub invalid sql encoding."
+        ''
+      end
+
     end
   end
 end
