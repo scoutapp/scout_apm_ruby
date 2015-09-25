@@ -2,7 +2,7 @@ class ScoutApm::SlowTransaction
   BACKTRACE_THRESHOLD = 0.5 # the minimum threshold to record the backtrace for a metric.
   BACKTRACE_LIMIT = 5 # Max length of callers to display
   MAX_SIZE = 100 # Limits the size of the metric hash to prevent a metric explosion.
-  attr_reader :metric_name, :total_call_time, :metrics, :meta, :uri, :context, :time
+  attr_reader :metric_name, :total_call_time, :metrics, :meta, :uri, :context, :time, :prof, :raw_prof
 
   # Given a call stack, generates a filtered backtrace that:
   # * Limits to the app/models, app/controllers, or app/views directories
