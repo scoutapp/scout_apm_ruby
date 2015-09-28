@@ -1,3 +1,7 @@
+# 0.1.17
+
+* Scrub sql strings for invalid encoding characters.
+
 # 0.1.16
 
 * Beta support for Sinatra monitoring.
