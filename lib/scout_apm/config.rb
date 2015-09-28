@@ -30,8 +30,16 @@ module ScoutApm
     # Fetch a config value.
     # It first attempts to fetch an ENV var prefixed with 'SCOUT_',
     # then from the settings file.
-    def value(key)
-      value = ENV['SCOUT_'+key.upcase] || settings[key]
+    #
+    # If you set env_only, then it will not attempt to read the config file at
+    # all, and only read off the ENV var this is useful to break a loop during
+    # boot, where we needed an option to set the application root.
+    def value(key, env_only=false)
+      value = ENV['SCOUT_'+key.upcase]
+      if !value && !env_only
+        value = setting(key)
+      end
+
       value.to_s.strip.length.zero? ? nil : value
     end
 

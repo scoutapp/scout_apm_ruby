@@ -58,7 +58,11 @@ module ScoutApm
     end
 
     def root
-      if override_root = Agent.instance.config.value("application_root")
+      framework_root
+    end
+
+    def framework_root
+      if override_root = Agent.instance.config.value("application_root", true)
         return override_root
       end
 
