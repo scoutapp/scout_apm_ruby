@@ -8,7 +8,7 @@ module ScoutApm
       # Too long, and we just bail out to prevent long running instrumentation
       def test_long_sql
         sql = " " * 1001
-        assert_nil SqlSanitizer.new(sql).to_s
+        assert_equal '', SqlSanitizer.new(sql).to_s
       end
 
       def test_postgres_simple_select_of_first
@@ -61,6 +61,16 @@ module ScoutApm
         sql = %q|SELECT `blogs`.* FROM `blogs` WHERE (title = "abc")|
         ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :mysql }
         assert_equal %q|SELECT `blogs`.* FROM `blogs` WHERE (title = ?)|, ss.to_s
+      end
+
+      def test_scrubs_invalid_encoding
+        sql = "SELECT `blogs`.* FROM `blogs` WHERE (title = 'a\255c')".force_encoding('UTF-8')
+        assert_equal false, sql.valid_encoding?
+        ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :mysql }
+        assert_equal %q|SELECT `blogs`.* FROM `blogs` WHERE (title = 'a_c')|, ss.sql
+        assert_nothing_raised do
+          assert_equal %q|SELECT `blogs`.* FROM `blogs` WHERE (title = ?)|, ss.to_s
+        end
       end
     end
   end

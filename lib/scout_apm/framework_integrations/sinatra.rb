@@ -10,16 +10,23 @@ module ScoutApm
       end
 
       def version
-        Sinatra::VERSION
+        ::Sinatra::VERSION
       end
 
       def present?
-        defined?(::Sinatra) &&
-          defined?(::Sinatra::Base)
+        defined?(::Sinatra) && defined?(::Sinatra::Base)
       end
 
       # TODO: Fetch the name
       def application_name
+        possible = ObjectSpace.each_object(Class).select { |klass| klass < Sinatra::Base } - [Sinatra::Application]
+        if possible.length == 1
+          possible.first.name
+        else
+          "Sinatra"
+        end
+      rescue => e
+        logger.debug "Failed getting Sinatra Application Name: #{e.message}\n#{e.backtrace.join("\n\t")}"
         "Sinatra"
       end
 
