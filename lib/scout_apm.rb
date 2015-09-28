@@ -82,6 +82,7 @@ require 'scout_apm/capacity'
 require 'scout_apm/serializers/payload_serializer'
 require 'scout_apm/serializers/directive_serializer'
 require 'scout_apm/serializers/app_server_load_serializer'
+require 'scout_apm/serializers/deploy_serializer'
 
 if defined?(Rails) and Rails.respond_to?(:version) and Rails.version >= '3'
   module ScoutApm
