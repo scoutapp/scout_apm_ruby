@@ -102,7 +102,6 @@ module ScoutApm
           result
         end"
 
-        ScoutApm::Agent.instance.logger.debug "Instrumented Method:\n#{method_str}"
         method_str
       end
 
