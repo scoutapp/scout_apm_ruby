@@ -31,7 +31,7 @@ module ScoutApm
             protected :rescue_action
           end
 
-          ScoutApm::Agent.instance.logger.debug "Instrumenting ActionView::Template"
+          ScoutApm::Agent.instance.logger.info "Instrumenting ActionView::Template"
           ::ActionView::Template.class_eval do
             include ::ScoutApm::Tracer
             instrument_method :render, :metric_name => 'View/#{path[%r{^(/.*/)?(.*)$},2]}/Rendering', :scope => true
@@ -43,7 +43,7 @@ module ScoutApm
 
     module ActionControllerRails2Instruments
       def self.included(instrumented_class)
-        ScoutApm::Agent.instance.logger.debug "Instrumenting #{instrumented_class.inspect}"
+        ScoutApm::Agent.instance.logger.info "Instrumenting #{instrumented_class.inspect}"
         instrumented_class.class_eval do
           unless instrumented_class.method_defined?(:perform_action_without_scout_instruments)
             alias_method :perform_action_without_scout_instruments, :perform_action

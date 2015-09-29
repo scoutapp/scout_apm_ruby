@@ -16,7 +16,7 @@ module ScoutApm
         @installed = true
 
         if defined?(::Sinatra) && defined?(::Sinatra::Base) && ::Sinatra::Base.private_method_defined?(:dispatch!)
-          ScoutApm::Agent.instance.logger.debug "Instrumenting Sinatra"
+          ScoutApm::Agent.instance.logger.info "Instrumenting Sinatra"
           ::Sinatra::Base.class_eval do
             include ScoutApm::Tracer
             include ScoutApm::Instruments::SinatraInstruments

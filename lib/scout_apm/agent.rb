@@ -179,8 +179,6 @@ module ScoutApm
 
     # Loads the instrumention logic.
     def load_instruments
-      logger.debug "Installing instrumentation"
-
       case environment.framework
       when :rails       then install_instrument(ScoutApm::Instruments::ActionControllerRails2)
       when :rails3_or_4 then install_instrument(ScoutApm::Instruments::ActionControllerRails3)

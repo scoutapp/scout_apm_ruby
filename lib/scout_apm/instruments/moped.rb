@@ -16,7 +16,7 @@ module ScoutApm
         @installed = true
 
         if defined?(::Moped)
-          ScoutApm::Agent.instance.logger.debug "Instrumenting Moped"
+          ScoutApm::Agent.instance.logger.info "Instrumenting Moped"
           ::Moped::Node.class_eval do
             include ScoutApm::Tracer
 

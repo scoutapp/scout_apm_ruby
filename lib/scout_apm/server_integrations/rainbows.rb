@@ -21,7 +21,7 @@ module ScoutApm
       end
 
       def install
-        logger.debug "Installing Rainbows worker loop."
+        logger.info "Installing Rainbows worker loop."
 
         Rainbows::HttpServer.class_eval do
           old = instance_method(:worker_loop)

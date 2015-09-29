@@ -29,6 +29,7 @@ module ScoutApm
       end
 
       def install
+        logger.info "Installing Unicorn worker loop."
         ::Unicorn::HttpServer.class_eval do
           old = instance_method(:worker_loop)
           define_method(:worker_loop) do |worker|

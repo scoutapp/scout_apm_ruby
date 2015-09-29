@@ -19,7 +19,6 @@ module ScoutApm
 
         if defined?(::Rails) && ::Rails::VERSION::MAJOR.to_i == 3 && ::Rails.respond_to?(:configuration)
           Rails.configuration.after_initialize do
-            ScoutApm::Agent.instance.logger.debug "Adding ActiveRecord instrumentation to a Rails 3 app"
             add_instruments
           end
         else
@@ -47,7 +46,7 @@ module ScoutApm
     # to trace calls to the database.
     module ActiveRecordInstruments
       def self.included(instrumented_class)
-        ScoutApm::Agent.instance.logger.debug "Instrumenting #{instrumented_class.inspect}"
+        ScoutApm::Agent.instance.logger.info "Instrumenting #{instrumented_class.inspect}"
         instrumented_class.class_eval do
           unless instrumented_class.method_defined?(:log_without_scout_instruments)
             alias_method :log_without_scout_instruments, :log

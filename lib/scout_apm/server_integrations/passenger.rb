@@ -18,6 +18,8 @@ module ScoutApm
       end
 
       def install
+        logger.info "Installing Passenger worker loop."
+
         PhusionPassenger.on_event(:starting_worker_process) do |forked|
           logger.debug "Passenger is starting a worker process. Starting worker thread."
           ScoutApm::Agent.instance.start_background_worker

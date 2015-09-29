@@ -16,7 +16,7 @@ module ScoutApm
         @installed = true
 
         if defined?(::Net) && defined?(::Net::HTTP)
-          ScoutApm::Agent.instance.logger.debug "Instrumenting Net::HTTP"
+          ScoutApm::Agent.instance.logger.info "Instrumenting Net::HTTP"
 
           ::Net::HTTP.class_eval do
             include ScoutApm::Tracer

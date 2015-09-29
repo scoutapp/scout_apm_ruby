@@ -17,7 +17,7 @@ module ScoutApm
 
         # Mongoid versions that use Moped should instrument Moped.
         if defined?(::Mongoid) and !defined?(::Moped)
-          ScoutApm::Agent.instance.logger.debug "Instrumenting Mongoid"
+          ScoutApm::Agent.instance.logger.info "Instrumenting Mongoid"
 
           ::Mongoid::Collection.class_eval do
             include ScoutApm::Tracer

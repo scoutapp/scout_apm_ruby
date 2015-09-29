@@ -18,7 +18,7 @@ module ScoutApm
         # ActionController::Base is a subclass of ActionController::Metal, so this instruments both
         # standard Rails requests + Metal.
         if defined?(::ActionController) && defined?(::ActionController::Metal)
-          ScoutApm::Agent.instance.logger.debug "Instrumenting ActionController::Metal"
+          ScoutApm::Agent.instance.logger.info "Instrumenting ActionController::Metal"
           ::ActionController::Metal.class_eval do
             include ScoutApm::Tracer
             include ScoutApm::Instruments::ActionControllerRails3Instruments
@@ -26,7 +26,7 @@ module ScoutApm
         end
 
         if defined?(::ActionView) && defined?(::ActionView::PartialRenderer)
-          ScoutApm::Agent.instance.logger.debug "Instrumenting ActionView::PartialRenderer"
+          ScoutApm::Agent.instance.logger.info "Instrumenting ActionView::PartialRenderer"
           ::ActionView::PartialRenderer.class_eval do
             include ScoutApm::Tracer
             instrument_method :render_partial,
@@ -38,7 +38,7 @@ module ScoutApm
               :scope => true
           end
 
-          ScoutApm::Agent.instance.logger.debug "Instrumenting ActionView::TemplateRenderer"
+          ScoutApm::Agent.instance.logger.info "Instrumenting ActionView::TemplateRenderer"
           ::ActionView::TemplateRenderer.class_eval do
             include ScoutApm::Tracer
             instrument_method :render_template,
