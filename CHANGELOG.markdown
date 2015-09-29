@@ -1,3 +1,14 @@
+# 0.9.1
+
+Big set of features getting merged in for this release.
+
+* StackProf support!  Get visibility into your Ruby code. On Ruby 2.1+, just
+  add `gem 'stackprof'` to your Gemfile.
+* Deploy tracking! Compare your application's response time, throughput and
+  error rate between different releases.  At the bottom of your Capistrano
+  deploy.rb file, add `require 'scout_apm'` and we do the rest.
+* Log message overhaul. Removed a lot of the noise, clarified messages.
+
 # 0.9.0
 
 * Come out of alpha, and release a beta version.
