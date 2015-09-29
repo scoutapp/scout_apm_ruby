@@ -126,7 +126,7 @@ module ScoutApm
       logger.debug "Exit handler not supported" and return if exit_handler_unsupported?
 
       at_exit do
-        logger.debug "Shutdown!"
+        logger.info "Shutting down Scout Agent"
         # MRI 1.9 bug drops exit codes.
         # http://bugs.ruby-lang.org/issues/5218
         if environment.ruby_19?
