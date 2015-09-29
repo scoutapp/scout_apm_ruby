@@ -33,4 +33,8 @@ class StackProf
       :frames => {},
     }
   end
+
+  def self.fake?
+    true
+  end
 end

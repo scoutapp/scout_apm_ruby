@@ -191,6 +191,10 @@ module ScoutApm
       install_instrument(ScoutApm::Instruments::Moped)
       install_instrument(ScoutApm::Instruments::Mongoid)
       install_instrument(ScoutApm::Instruments::NetHttp)
+
+      if StackProf.respond_to?(:fake?) && StackProf.fake?
+        logger.info 'StackProf not found - add `gem "stackprof"` to your Gemfile to enable request profiling (only for Ruby 2.1+)'
+      end
     rescue
       logger.warn "Exception loading instruments:"
       logger.warn $!.message
