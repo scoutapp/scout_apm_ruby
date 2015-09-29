@@ -1,11 +1,13 @@
 module ScoutApm
   class StackprofTreeCollapser
     attr_reader :raw_stackprof
-    attr_reader :nodes # the current set of nodes under consideration
+    attr_reader :nodes
 
     def initialize(raw_stackprof)
       @raw_stackprof = raw_stackprof
-      ScoutApm::Agent.instance.logger.info("StackProf - Samples: #{raw_stackprof[:samples]}, GC: #{raw_stackprof[:gc_samples]}, missed: #{raw_stackprof[:missed_samples]}, Interval: #{raw_stackprof[:interval]}")
+      unless StackProf.respond_to?(:fake?) && StackProf.fake?
+        ScoutApm::Agent.instance.logger.debug("StackProf - Samples: #{raw_stackprof[:samples]}, GC: #{raw_stackprof[:gc_samples]}, missed: #{raw_stackprof[:missed_samples]}, Interval: #{raw_stackprof[:interval]}")
+      end
     end
 
     def call
