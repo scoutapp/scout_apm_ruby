@@ -37,7 +37,7 @@ module ScoutApm
           wall_clock_elapsed  = now - last_run
           if wall_clock_elapsed < 0
             save_times(now, utime, stime)
-            logger.warn "#{human_name}: Negative time elapsed.  now: #{now}, last_run: #{last_run}, total time: #{wall_clock_elapsed}"
+            logger.info "#{human_name}: Negative time elapsed.  now: #{now}, last_run: #{last_run}, total time: #{wall_clock_elapsed}."
             return nil
           end
 
@@ -49,7 +49,7 @@ module ScoutApm
           # pre-fork, records {u,s}time, then forks. This resets {u,s}time to 0
           if process_elapsed < 0
             save_times(now, utime, stime)
-            logger.warn "#{human_name}: Negative process time elapsed.  utime: #{utime_elapsed}, stime: #{stime_elapsed}, total time: #{process_elapsed}"
+            logger.debug "#{human_name}: Negative process time elapsed.  utime: #{utime_elapsed}, stime: #{stime_elapsed}, total time: #{process_elapsed}. This is normal to see when starting a forking web server."
             return nil
           end
 
@@ -65,7 +65,7 @@ module ScoutApm
 
           if res < 0
             save_times(now, utime, stime)
-            logger.warn "#{human_name}: Negative CPU.  #{process_elapsed} / #{normalized_wall_clock_elapsed} * 100 ==> #{res}"
+            logger.info "#{human_name}: Negative CPU.  #{process_elapsed} / #{normalized_wall_clock_elapsed} * 100 ==> #{res}"
             return nil
           end
 
