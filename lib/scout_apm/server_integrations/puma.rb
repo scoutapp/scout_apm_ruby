@@ -14,7 +14,6 @@ module ScoutApm
       def forking?
         return false unless defined?(::Puma)
         options = ::Puma.cli_config.instance_variable_get(:@options)
-        logger.debug options.inspect
         options[:preload_app]
       rescue
         false
@@ -26,7 +25,7 @@ module ScoutApm
 
       def install
         ::Puma.cli_config.options[:before_worker_boot] << Proc.new do
-          logger.debug "Installing Puma worker loop."
+          logger.info "Installing Puma worker loop."
           ScoutApm::Agent.instance.start_background_worker
         end
       rescue

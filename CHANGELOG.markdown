@@ -1,6 +1,10 @@
+# 0.9.0
+
+* Come out of alpha, and release a beta version.
+
 # 0.1.16
 
-* Beta support for Sinatra monitoring.
+* Initial support for Sinatra monitoring.
 
 # 0.1.15
 

@@ -1,4 +1,4 @@
 module ScoutApm
-  VERSION = "0.1.18.stackprof4"
+  VERSION = "0.9.0.stackprof1"
 end
 
