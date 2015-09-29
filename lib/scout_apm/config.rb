@@ -35,10 +35,11 @@ module ScoutApm
     # all, and only read off the ENV var this is useful to break a loop during
     # boot, where we needed an option to set the application root.
     def value(key, env_only=false)
-      value = ENV['SCOUT_'+key.upcase]
-      if !value && !env_only
-        value = setting(key)
-      end
+      value = if env_only
+                ENV['SCOUT_'+key.upcase]
+              else
+                ENV['SCOUT_'+key.upcase] || settings[key]
+              end
 
       value.to_s.strip.length.zero? ? nil : value
     end
