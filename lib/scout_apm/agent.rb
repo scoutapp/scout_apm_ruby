@@ -98,16 +98,16 @@ module ScoutApm
 
       app_server_load_hook
 
-      if start_background_worker? # TODO: Clarify name. This is not the path that unicorn workers take....
-        # This branch fires only on non-forking servers, directly starts the
-        # background thread and then requests are served.
+      # start_background_worker? is true on non-forking servers, and directly
+      # starts the background worker.  On forking servers, a server-specific
+      # hook is inserted to start the background worker after forking.
+      if start_background_worker?
         start_background_worker
         handle_exit
         logger.info "Scout Agent [#{ScoutApm::VERSION}] Initialized"
       else
-        # This branch fires on.... master only? of forking servers
-        logger.debug "Not starting worker thread. Will start worker loops after forking."
         environment.app_server_integration.install
+        logger.info "Scout Agent [#{ScoutApm::VERSION}] loaded in [#{environment.app_server}] master process. Monitoring will start after server forks its workers."
       end
     end
 
@@ -165,12 +165,11 @@ module ScoutApm
     # Creates the worker thread. The worker thread is a loop that runs continuously. It sleeps for +Agent#period+ and when it wakes,
     # processes data, either saving it to disk or reporting to Scout.
     def start_background_worker
-      logger.debug "Creating worker thread."
+      logger.info "Initializing worker thread."
       @background_worker = ScoutApm::BackgroundWorker.new
       @background_worker_thread = Thread.new do
         @background_worker.start { process_metrics }
-      end # thread new
-      logger.debug "Done creating worker thread."
+      end
     end
 
     def should_load_instruments?
