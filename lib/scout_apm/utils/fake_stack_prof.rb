@@ -8,21 +8,21 @@ class StackProf
     @running = false
   end
 
-  def running?
+  def self.running?
     !!@running
   end
 
-  def run(*args)
+  def self.run(*args)
     start
     yield
     stop
     results
   end
 
-  def sample(*args)
+  def self.sample(*args)
   end
 
-  def results(*args)
+  def self.results(*args)
     {
       :version => 0.0,
       :mode => :wall,
