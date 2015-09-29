@@ -20,13 +20,14 @@ module ScoutApm
         if payload.any?
           add_metric_ids(metrics)
 
-          logger.warn "Some data may be lost - metric size is at limit" if metrics.size == ScoutApm::Store::MAX_SIZE
+          logger.warn "Metric Size is at Limit, truncating" if metrics.size == ScoutApm::Store::MAX_SIZE
+
           # for debugging, count the total number of requests
-          controller_count = 0
+          total_request_count = 0
 
           metrics.each do |meta,stats|
             if meta.metric_name =~ /\AController/
-              controller_count += stats.call_count
+              total_request_count += stats.call_count
             end
           end
 
@@ -35,7 +36,10 @@ module ScoutApm
 
           payload = ScoutApm::Serializers::PayloadSerializer.serialize(metrics, slow_transactions)
           slow_transactions_kb = Marshal.dump(slow_transactions).size/1024 # just for performance debugging
-          logger.debug "#{config.value('name')} Delivering total payload [#{payload.size/1024} KB] for #{controller_count} requests and slow transactions [#{slow_transactions_kb} KB] for #{slow_transactions.size} transactions of durations: #{slow_transactions.map(&:total_call_time).join(',')}."
+
+          logger.info "Delivering #{metrics.length} Metrics for #{total_request_count} requests and #{slow_transactions.length} Slow Transaction Traces"
+
+          logger.debug "Total payload [#{payload.size/1024} KB] for #{total_request_count} requests and Slow Transactions [#{slow_transactions_kb} KB] for #{slow_transactions.size} transactions of durations: #{slow_transactions.map(&:total_call_time).join(',')}."
 
           response = reporter.report(payload)
 
@@ -44,7 +48,7 @@ module ScoutApm
 
             self.metric_lookup.merge!(directives[:metric_lookup])
             if directives[:reset]
-              logger.info "Resetting metric_lookup."
+              logger.debug "Resetting metric_lookup."
               self.metric_lookup = Hash.new
             end
             logger.debug "Metric Cache Size: #{metric_lookup.size}"
