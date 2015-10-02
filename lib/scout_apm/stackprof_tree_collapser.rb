@@ -14,6 +14,8 @@ module ScoutApm
       build_tree
       connect_children
       total_samples_of_app_nodes
+    rescue
+      []
     end
 
     private
