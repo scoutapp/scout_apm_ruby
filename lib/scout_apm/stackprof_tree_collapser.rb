@@ -5,8 +5,14 @@ module ScoutApm
 
     def initialize(raw_stackprof)
       @raw_stackprof = raw_stackprof
+
+      # Log the raw stackprof info
       unless StackProf.respond_to?(:fake?) && StackProf.fake?
-        ScoutApm::Agent.instance.logger.debug("StackProf - Samples: #{raw_stackprof[:samples]}, GC: #{raw_stackprof[:gc_samples]}, missed: #{raw_stackprof[:missed_samples]}, Interval: #{raw_stackprof[:interval]}") rescue nil
+        begin
+          ScoutApm::Agent.instance.logger.debug("StackProf - Samples: #{raw_stackprof[:samples]}, GC: #{raw_stackprof[:gc_samples]}, missed: #{raw_stackprof[:missed_samples]}, Interval: #{raw_stackprof[:interval]}")
+        rescue
+          ScoutApm::Agent.instance.logger.debug("StackProf Raw - #{raw_stackprof.inspect}")
+        end
       end
     end
 
