@@ -1,3 +1,8 @@
+# 0.9.1.1
+
+* Minor change in Stackprof processing code. Any exception that happens there
+  should never propagate out to the application
+
 # 0.9.1
 
 Big set of features getting merged in for this release.
