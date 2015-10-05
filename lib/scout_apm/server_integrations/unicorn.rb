@@ -32,6 +32,7 @@ module ScoutApm
           logger.debug "[UNICORN] - ::Unicorn::HttpServer is defined"
         else
           logger.debug "[UNICORN] - ::Unicorn::HttpServer was not found"
+          return false
         end
 
         # Ensure Unicorn is actually initialized. It could just be required and not running.
