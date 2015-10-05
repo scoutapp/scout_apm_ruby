@@ -21,11 +21,27 @@ module ScoutApm
       end
 
       def present?
-        if defined?(::Unicorn) && defined?(::Unicorn::HttpServer)
-          # Ensure Unicorn is actually initialized. It could just be required and not running.
-          ObjectSpace.each_object(::Unicorn::HttpServer) { |x| return true }
-          false
+        if defined?(::Unicorn)
+          logger.debug "[UNICORN] - ::Unicorn is defined"
+        else
+          logger.debug "[UNICORN] - ::Unicorn was not found"
+          return false
         end
+
+        if defined?(::Unicorn::HttpServer)
+          logger.debug "[UNICORN] - ::Unicorn::HttpServer is defined"
+        else
+          logger.debug "[UNICORN] - ::Unicorn::HttpServer was not found"
+        end
+
+        # Ensure Unicorn is actually initialized. It could just be required and not running.
+        ObjectSpace.each_object(::Unicorn::HttpServer) do |x|
+          logger.debug "[UNICORN] - Running ::Unicorn::HttpServer found."
+          return true
+        end
+
+        logger.debug "[UNICORN] - Running ::Unicorn::HttpServer was not found."
+        false
       end
 
       def install
