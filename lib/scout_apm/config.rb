@@ -19,7 +19,7 @@ require 'scout_apm/environment'
 module ScoutApm
   class Config
     DEFAULTS =  {
-        'host'      => 'https://apm.scoutapp.com',
+        'host'      => 'https://checkin.scoutapp.com',
         'log_level' => 'info',
         'stackprof_interval' => 20000 # microseconds, 1000 = 1 millisecond, so 20k == 20 milliseconds
     }.freeze
