@@ -1,3 +1,7 @@
+# 0.9.2
+
+* Internal changes and bug fixes.
+
 # 0.9.1.1
 
 * Minor change in Stackprof processing code. Any exception that happens there
