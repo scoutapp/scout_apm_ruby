@@ -17,9 +17,8 @@ module ScoutApm
         defined?(::Sinatra) && defined?(::Sinatra::Base)
       end
 
-      # TODO: Fetch the name
       def application_name
-        possible = ObjectSpace.each_object(Class).select { |klass| klass < Sinatra::Base } - [Sinatra::Application]
+        possible = ObjectSpace.each_object(Class).select { |klass| klass < ::Sinatra::Base } - [::Sinatra::Application]
         if possible.length == 1
           possible.first.name
         else
