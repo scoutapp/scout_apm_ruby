@@ -9,7 +9,7 @@ module ScoutApm
     # but less likely used in production.
     STDOUT_LOGGER = begin
                       l = Logger.new(STDOUT)
-                      l.level = Agent.instance.config.value("log_level", true) || Logger::INFO
+                      l.level = ENV["SCOUT_LOG_LEVEL"] || Logger::INFO
                     end
 
     SERVER_INTEGRATIONS = [
