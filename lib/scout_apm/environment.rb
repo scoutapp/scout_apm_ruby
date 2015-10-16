@@ -7,14 +7,19 @@ module ScoutApm
 
     # I've put Thin and Webrick last as they are often used in development and included in Gemfiles
     # but less likely used in production.
+    STDOUT_LOGGER = begin
+                      l = Logger.new(STDOUT)
+                      l.level = Agent.instance.config.value("log_level", true) || Logger::INFO
+                    end
+
     SERVER_INTEGRATIONS = [
-      ScoutApm::ServerIntegrations::Passenger.new(Logger.new(STDOUT)),
-      ScoutApm::ServerIntegrations::Unicorn.new(Logger.new(STDOUT)),
-      ScoutApm::ServerIntegrations::Rainbows.new(Logger.new(STDOUT)),
-      ScoutApm::ServerIntegrations::Puma.new(Logger.new(STDOUT)),
-      ScoutApm::ServerIntegrations::Thin.new(Logger.new(STDOUT)),
-      ScoutApm::ServerIntegrations::Webrick.new(Logger.new(STDOUT)),
-      ScoutApm::ServerIntegrations::Null.new(Logger.new(STDOUT)), # must be last
+      ScoutApm::ServerIntegrations::Passenger.new(STDOUT_LOGGER),
+      ScoutApm::ServerIntegrations::Unicorn.new(STDOUT_LOGGER),
+      ScoutApm::ServerIntegrations::Rainbows.new(STDOUT_LOGGER),
+      ScoutApm::ServerIntegrations::Puma.new(STDOUT_LOGGER),
+      ScoutApm::ServerIntegrations::Thin.new(STDOUT_LOGGER),
+      ScoutApm::ServerIntegrations::Webrick.new(STDOUT_LOGGER),
+      ScoutApm::ServerIntegrations::Null.new(STDOUT_LOGGER), # must be last
     ]
 
     FRAMEWORK_INTEGRATIONS = [
@@ -25,8 +30,8 @@ module ScoutApm
     ]
 
     DEPLOY_INTEGRATIONS = [
-      ScoutApm::DeployIntegrations::Capistrano3.new(Logger.new(STDOUT)),
-      # ScoutApm::DeployIntegrations::Capistrano2.new(Logger.new(STDOUT)),
+      ScoutApm::DeployIntegrations::Capistrano3.new(STDOUT_LOGGER),
+      # ScoutApm::DeployIntegrations::Capistrano2.new(STDOUT_LOGGER),
     ]
 
     def env
