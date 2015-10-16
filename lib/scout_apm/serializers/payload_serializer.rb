@@ -2,8 +2,8 @@
 module ScoutApm
   module Serializers
     class PayloadSerializer
-      def self.serialize(metrics, slow_transactions)
-        Marshal.dump(:metrics => metrics, :slow_transactions => slow_transactions)
+      def self.serialize(metadata, metrics, slow_transactions)
+        Marshal.dump(:metadata => metadata, :metrics => metrics, :slow_transactions => slow_transactions)
       end
 
       def self.deserialize(data)

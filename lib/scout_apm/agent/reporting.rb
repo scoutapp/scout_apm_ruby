@@ -33,8 +33,12 @@ module ScoutApm
 
           logger.debug("Metrics: #{metrics}")
           logger.debug("SlowTrans: #{slow_transactions}")
+          metadata = {
+            app_root: ScoutApm::Environment.instance.root,
+            unique_id: ScoutApm::Utils::UniqueId.simple
+          }
 
-          payload = ScoutApm::Serializers::PayloadSerializer.serialize(metrics, slow_transactions)
+          payload = ScoutApm::Serializers::PayloadSerializer.serialize(metadata, metrics, slow_transactions)
           slow_transactions_kb = Marshal.dump(slow_transactions).size/1024 # just for performance debugging
 
           logger.info "Delivering #{metrics.length} Metrics for #{total_request_count} requests and #{slow_transactions.length} Slow Transaction Traces"
