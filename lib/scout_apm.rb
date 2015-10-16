@@ -59,6 +59,7 @@ require 'scout_apm/utils/sql_sanitizer'
 require 'scout_apm/utils/null_logger'
 require 'scout_apm/utils/installed_gems'
 require 'scout_apm/utils/time'
+require 'scout_apm/utils/unique_id'
 
 require 'scout_apm/config'
 require 'scout_apm/environment'
