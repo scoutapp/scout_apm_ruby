@@ -10,6 +10,7 @@ module ScoutApm
     STDOUT_LOGGER = begin
                       l = Logger.new(STDOUT)
                       l.level = ENV["SCOUT_LOG_LEVEL"] || Logger::INFO
+                      l
                     end
 
     SERVER_INTEGRATIONS = [
