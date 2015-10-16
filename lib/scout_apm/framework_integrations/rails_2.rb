@@ -42,6 +42,7 @@ module ScoutApm
             case config["adapter"].to_s
             when "postgres"   then :postgres
             when "postgresql" then :postgres
+            when "postgis"    then :postgres
             when "sqlite3"    then :sqlite
             when "mysql"      then :mysql
             else default
