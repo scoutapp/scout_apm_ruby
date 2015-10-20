@@ -41,7 +41,7 @@ module ScoutApm
                                             "The user running the app must have read & write access. " +
                                             "Change the path by setting the `data_file` key in scout_apm.yml"
                                            )
-      ScoutApm::Agent.instance.logger.debug(e.backtrace.split("\n"))
+      ScoutApm::Agent.instance.logger.debug(e.backtrace.join("\n\t"))
       # ensure the in-memory metric hash is cleared so data doesn't continue to accumulate.
       ScoutApm::Agent.instance.store.metric_hash = {}
     end
