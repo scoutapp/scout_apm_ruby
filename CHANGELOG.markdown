@@ -1,3 +1,10 @@
+# 0.9.3
+
+* Parse SQL correctly when using PostGIS
+* Quiet overly aggressive logging during startup.
+  You can still turn up logging by setting the SCOUT_LOG_LEVEL environment variable to 'DEBUG'
+* Various minor bug fixes and clarification of log messages
+
 # 0.9.2
 
 * Internal changes and bug fixes.
