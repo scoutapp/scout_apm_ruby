@@ -199,6 +199,8 @@ module ScoutApm
     end
 
     def install_instrument(instrument_klass)
+      # Don't attempt to install the same instrument twice
+      return if @installed_instruments.any? { |already_installed_instrument| instrument_klass === already_installed_instrument }
       instance = instrument_klass.new
       @installed_instruments << instance
       instance.install

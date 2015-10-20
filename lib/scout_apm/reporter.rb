@@ -55,7 +55,7 @@ module ScoutApm
                                     (uri.query ? ('?' + uri.query) : ''),
                                     default_http_headers.merge(headers) )
         post.body = body
-        response=connection.request(post)
+        response = connection.request(post)
       end
       response
     end
