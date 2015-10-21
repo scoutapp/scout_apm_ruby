@@ -68,6 +68,11 @@ module ScoutApm
         return false
       end
 
+      if defined?(::ScoutRails)
+        logger.warn "ScoutAPM is incompatible with the old Scout Rails plugin. Please remove scout_rails from your Gemfile"
+        return false
+      end
+
       true
     end
 
