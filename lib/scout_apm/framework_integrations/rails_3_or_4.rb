@@ -36,23 +36,30 @@ module ScoutApm
         default = :mysql
 
         if defined?(ActiveRecord::Base)
-          config = ActiveRecord::Base.connection_config
-          if config && config[:adapter]
-            case config[:adapter].to_s
-            when "postgres"   then :postgres
-            when "postgresql" then :postgres
-            when "postgis"    then :postgres
-            when "sqlite3"    then :sqlite
-            when "mysql"      then :mysql
-            else default
-            end
-          else
-            default
+          adapter = getDatabaseAdapter # can be nil
+
+          case adapter.to_s
+          when "postgres"   then :postgres
+          when "postgresql" then :postgres
+          when "postgis"    then :postgres
+          when "sqlite3"    then :sqlite
+          when "mysql"      then :mysql
+          else default
           end
         else
           # TODO: Figure out how to detect outside of Rails context. (sequel, ROM, etc)
           default
         end
+      end
+
+      def getDatabaseAdapter
+        if ActiveRecord::Base.respond_to?(:connection_config)
+          ActiveRecord::Base.connection_config[:adapter]
+        elsif ActiveRecord::Base.respond_to?(:configurations)
+          ActiveRecord::Base.configurations[env]["adapter"]
+        end
+      rescue
+        nil
       end
     end
   end
