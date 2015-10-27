@@ -1,3 +1,9 @@
+# 0.9.4
+
+* Detect database connection correctly on Rails 3.0.x
+* Detect and warn if the old ScoutRails plugin is installed, since it causes an
+  conflict.
+
 # 0.9.3
 
 * Parse SQL correctly when using PostGIS
