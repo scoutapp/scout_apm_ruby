@@ -1,3 +1,7 @@
+# 0.9.6
+
+* Fix more 1.8.7 syntax errors
+
 # 0.9.5
 
 * Fix 1.8.7 syntax error
