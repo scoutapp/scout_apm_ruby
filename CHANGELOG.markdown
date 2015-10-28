@@ -1,3 +1,7 @@
+# 0.9.5
+
+* Fix 1.8.7 syntax error
+
 # 0.9.4
 
 * Detect database connection correctly on Rails 3.0.x
