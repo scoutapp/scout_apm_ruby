@@ -60,10 +60,10 @@ module ScoutApm
 
     def total_samples_of_app_nodes
       in_app_nodes.reject{|n| n.calls_only_app_nodes? && !n.has_samples? }.
-        map{|n| { samples: n.total_samples,
-                  name: n.name,
-                  file: n.file,
-                  line: n.line
+        map{|n| { :samples => n.total_samples,
+                  :name => n.name,
+                  :file => n.file,
+                  :line => n.line
                 }
         }
     end

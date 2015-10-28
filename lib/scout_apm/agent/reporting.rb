@@ -32,8 +32,8 @@ module ScoutApm
           end
 
           metadata = {
-            app_root: ScoutApm::Environment.instance.root.to_s,
-            unique_id: ScoutApm::Utils::UniqueId.simple
+            :app_root => ScoutApm::Environment.instance.root.to_s,
+            :unique_id => ScoutApm::Utils::UniqueId.simple
           }
 
           logger.debug("Metrics: #{metrics}")
