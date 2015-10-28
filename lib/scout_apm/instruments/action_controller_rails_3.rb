@@ -56,7 +56,7 @@ module ScoutApm
 
         self.class.scout_apm_trace(scout_controller_action, :uri => request.fullpath, :ip => request.remote_ip) do
           Thread::current[:scout_apm_prof] = nil
-          StackProf.start(mode: :wall, interval: ScoutApm::Agent.instance.config.value("stackprof_interval"))
+          StackProf.start(:mode => :wall, :interval => ScoutApm::Agent.instance.config.value("stackprof_interval"))
 
           begin
             super
