@@ -85,11 +85,19 @@ require 'scout_apm/serializers/directive_serializer'
 require 'scout_apm/serializers/app_server_load_serializer'
 require 'scout_apm/serializers/deploy_serializer'
 
-if defined?(Rails) and Rails.respond_to?(:version) and Rails.version >= '3'
+require 'scout_apm/middleware'
+
+if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR) && Rails::VERSION::MAJOR >= 3
   module ScoutApm
     class Railtie < Rails::Railtie
       initializer "scout_apm.start" do |app|
+        # Attempt to start right away, this will work best for preloading apps, Unicorn & Puma & similar
         ScoutApm::Agent.instance.start
+
+        # And attempt to start on first-request, which is a good catch-all for
+        # Webrick, and Passenger and similar, where we can't detect the running app server
+        # until actual requests come in.
+        app.middleware.use ScoutApm::Middleware
       end
     end
   end

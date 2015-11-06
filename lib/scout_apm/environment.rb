@@ -102,8 +102,9 @@ module ScoutApm
     # ever is checked first becomes the designated app server.
     #
     # Next step: (1) list out all detected app servers (2) install hooks for those that need it (passenger, rainbows, unicorn).
-    def app_server_integration
-      @app_server = SERVER_INTEGRATIONS.detect{ |integration| integration.present? }
+    def app_server_integration(force=false)
+      @app_server = nil if force
+      @app_server ||= SERVER_INTEGRATIONS.detect{ |integration| integration.present? }
     end
 
     # App server's name (symbol)

@@ -47,7 +47,7 @@ module ScoutApm
       config.value('monitor') and !@options[:force]
     end
 
-    def preconditions_met?
+    def preconditions_met?(options={})
       if !apm_enabled?
         logger.warn "Monitoring isn't enabled for the [#{environment.env}] environment."
         return false
@@ -58,7 +58,7 @@ module ScoutApm
         return false
       end
 
-      if !environment.app_server_integration.found?
+      if !environment.app_server_integration(true).found? && !options[:skip_app_server_check]
         logger.warn "Couldn't find a supported app server. Not starting agent."
         return false
       end
@@ -88,7 +88,7 @@ module ScoutApm
         return environment.deploy_integration.install
       end
 
-      return false unless preconditions_met?
+      return false unless preconditions_met?(options)
 
       @started = true
 
