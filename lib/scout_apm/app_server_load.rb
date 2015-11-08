@@ -37,6 +37,7 @@ module ScoutApm
         :database_engine    => ScoutApm::Environment.instance.database_engine,
         :application_name   => ScoutApm::Environment.instance.application_name,
         :libraries          => ScoutApm::Utils::InstalledGems.new.run,
+        :paas               => ScoutApm::Environment.instance.pass
       }
     end
   end

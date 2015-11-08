@@ -92,8 +92,20 @@ module ScoutApm
       ENV['DYNO']
     end
 
+    def cloud_foundry?
+      ENV['VCAP_APPLICATION']
+    end
+
+    def paas
+      if heroku?
+        'Heroku'
+      elsif cloud_foundry?
+        'Cloud Foundry'
+      end
+    end
+
     def hostname
-      @hostname ||= heroku? ? ENV['DYNO'] : Socket.gethostname
+      @hostname ||= heroku? ? ENV['DYNO'] : Agent.instance.config.value("hostname")
     end
 
 
