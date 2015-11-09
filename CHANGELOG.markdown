@@ -3,6 +3,9 @@
 * Added Cloud Foundry detection
 * Added hostname config option
 * Reporting PaaS in app server load (Heroku or Cloud Foundry).
+* Fallback to a middleware to launch the agent if we can't detect the
+  application server for any reason
+* Added agent version to checkin data
 
 # 0.9.6
 
