@@ -21,6 +21,7 @@ module ScoutApm
     DEFAULTS =  {
         'host'      => 'https://checkin.scoutapp.com',
         'log_level' => 'info',
+        'hostname' => Socket.gethostname,
         'stackprof_interval' => 20000 # microseconds, 1000 = 1 millisecond, so 20k == 20 milliseconds
     }.freeze
 

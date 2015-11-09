@@ -1,3 +1,9 @@
+# 0.9.7
+
+* Added Cloud Foundry detection
+* Added hostname config option
+* Reporting PaaS in app server load (Heroku or Cloud Foundry).
+
 # 0.9.6
 
 * Fix more 1.8.7 syntax errors
