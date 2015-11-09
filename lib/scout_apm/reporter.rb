@@ -83,7 +83,8 @@ module ScoutApm
     # Headers passed up with all API requests.
     def default_http_headers
       { "Agent-Hostname" => ScoutApm::Environment.instance.hostname,
-        "Content-Type"   => "application/octet-stream"
+        "Content-Type"   => "application/octet-stream",
+        "Agent-Version"  => ScoutApm::VERSION,
       }
     end
 

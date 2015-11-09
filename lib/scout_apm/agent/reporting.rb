@@ -33,7 +33,8 @@ module ScoutApm
 
           metadata = {
             :app_root => ScoutApm::Environment.instance.root.to_s,
-            :unique_id => ScoutApm::Utils::UniqueId.simple
+            :unique_id => ScoutApm::Utils::UniqueId.simple,
+            :agent_version => ScoutApm::VERSION,
           }
 
           logger.debug("Metrics: #{metrics}")
