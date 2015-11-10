@@ -2,7 +2,6 @@
 module ScoutApm
   class Agent
     module Logging
-
       def default_log_path
         "#{environment.root}/log"
       end
@@ -49,9 +48,10 @@ module ScoutApm
       end
 
       def wants_stdout?
-        config.value('log_file_path').to_s.upcase == 'STDOUT' || environment.heroku?
+        config.value('log_file_path').to_s.upcase == 'STDOUT' || environment.platform_integration.log_to_stdout?
       end
-    end # module Logging
+    end
     include Logging
-  end # class Agent
-end # moudle ScoutApm
+  end
+end
+

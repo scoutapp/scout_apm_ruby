@@ -40,6 +40,10 @@ require 'scout_apm/framework_integrations/rails_3_or_4'
 require 'scout_apm/framework_integrations/sinatra'
 require 'scout_apm/framework_integrations/ruby'
 
+require 'scout_apm/platform_integrations/heroku'
+require 'scout_apm/platform_integrations/cloud_foundry'
+require 'scout_apm/platform_integrations/server'
+
 require 'scout_apm/deploy_integrations/capistrano_3'
 #require 'scout_apm/deploy_integrations/capistrano_2'
 

@@ -5,14 +5,14 @@ module ScoutApm
   class Environment
     include Singleton
 
-    # I've put Thin and Webrick last as they are often used in development and included in Gemfiles
-    # but less likely used in production.
     STDOUT_LOGGER = begin
                       l = Logger.new(STDOUT)
                       l.level = ENV["SCOUT_LOG_LEVEL"] || Logger::INFO
                       l
                     end
 
+    # I've put Thin and Webrick last as they are often used in development and included in Gemfiles
+    # but less likely used in production.
     SERVER_INTEGRATIONS = [
       ScoutApm::ServerIntegrations::Passenger.new(STDOUT_LOGGER),
       ScoutApm::ServerIntegrations::Unicorn.new(STDOUT_LOGGER),
@@ -30,6 +30,12 @@ module ScoutApm
       ScoutApm::FrameworkIntegrations::Ruby.new, # Fallback if none match
     ]
 
+    PLATFORM_INTEGRATIONS = [
+      ScoutApm::PlatformIntegrations::Heroku.new,
+      ScoutApm::PlatformIntegrations::CloudFoundry.new,
+      ScoutApm::PlatformIntegrations::Server.new,
+    ]
+
     DEPLOY_INTEGRATIONS = [
       ScoutApm::DeployIntegrations::Capistrano3.new(STDOUT_LOGGER),
       # ScoutApm::DeployIntegrations::Capistrano2.new(STDOUT_LOGGER),
@@ -45,6 +51,10 @@ module ScoutApm
 
     def framework_integration
       @framework ||= FRAMEWORK_INTEGRATIONS.detect{ |integration| integration.present? }
+    end
+
+    def platform_integration
+      @platform ||= PLATFORM_INTEGRATIONS.detect{ |integration| integration.present? }
     end
 
     def application_name
@@ -88,26 +98,9 @@ module ScoutApm
       end
     end
 
-    def heroku?
-      ENV['DYNO']
-    end
-
-    def cloud_foundry?
-      ENV['VCAP_APPLICATION']
-    end
-
-    def paas
-      if heroku?
-        'Heroku'
-      elsif cloud_foundry?
-        'Cloud Foundry'
-      end
-    end
-
     def hostname
-      @hostname ||= heroku? ? ENV['DYNO'] : Agent.instance.config.value("hostname")
+      @hostname ||= Agent.instance.config.value("hostname") || platform_integration.hostname
     end
-
 
     # Returns the whole integration object
     # This needs to be improved. Frequently, multiple app servers gem are present and which

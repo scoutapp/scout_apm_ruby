@@ -7,6 +7,7 @@ require 'scout_apm/environment'
 #
 # application_root - override the detected directory of the application
 # data_file        - override the default temporary storage location. Must be a location in a writable directory
+# hostname         - override the default hostname detection. Default varies by environment - either system hostname, or PAAS hostname
 # key              - the account key with Scout APM. Found in Settings in the Web UI
 # log_file_path    - either a directory or "STDOUT".
 # log_level        - DEBUG / INFO / WARN as usual
@@ -21,7 +22,6 @@ module ScoutApm
     DEFAULTS =  {
         'host'      => 'https://checkin.scoutapp.com',
         'log_level' => 'info',
-        'hostname' => Socket.gethostname,
         'stackprof_interval' => 20000 # microseconds, 1000 = 1 millisecond, so 20k == 20 milliseconds
     }.freeze
 
