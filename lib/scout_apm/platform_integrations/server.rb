@@ -12,6 +12,10 @@ module ScoutApm
         "Server"
       end
 
+      def log_to_stdout?
+        false
+      end
+
       def hostname
         Socket.gethostname
       end

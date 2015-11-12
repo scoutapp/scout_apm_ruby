@@ -94,7 +94,7 @@ module ScoutApm
 
       logger.info "Starting monitoring for [#{environment.application_name}]. Framework [#{environment.framework}] App Server [#{environment.app_server}]."
 
-      load_instruments if should_load_instruments?
+      load_instruments if should_load_instruments?(options)
 
       @samplers = [
         ScoutApm::Instruments::Process::ProcessCpu.new(environment.processors, logger),
@@ -177,7 +177,9 @@ module ScoutApm
       end
     end
 
-    def should_load_instruments?
+    # If we want to skip the app_server_check, then we must load it.
+    def should_load_instruments?(options={})
+      return true if options[:skip_app_server_check]
       environment.app_server_integration.found?
     end
 

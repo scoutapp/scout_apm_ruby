@@ -9,6 +9,10 @@ module ScoutApm
         "Heroku"
       end
 
+      def log_to_stdout?
+        true
+      end
+
       def hostname
         ENV['DYNO']
       end
