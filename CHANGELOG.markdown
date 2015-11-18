@@ -1,3 +1,8 @@
+# 1.0.0
+
+* General Availability
+* More robust Application Server detection
+
 # 0.9.7
 
 * Added Cloud Foundry detection
