@@ -3,7 +3,11 @@ module ScoutApm
   module Serializers
     class PayloadSerializer
       def self.serialize(metadata, metrics, slow_transactions)
-        Marshal.dump(:metadata => metadata, :metrics => metrics, :slow_transactions => slow_transactions)
+        if ScoutApm::Agent.instance.config.value("report_format") == 'json'
+          ScoutApm::Serializers::PayloadSerializerToJson.serialize(metadata, metrics, slow_transactions)
+        else
+          Marshal.dump(:metadata => metadata, :metrics => metrics, :slow_transactions => slow_transactions)
+        end
       end
 
       def self.deserialize(data)
