@@ -150,7 +150,7 @@ module ScoutApm
                                                            parent_stat.total_call_time,
                                                            transaction_hash.dup,
                                                            ScoutApm::Context.current,
-                                                           Thread::current[:scout_apm_trace_time],
+                                                           Time.now,
                                                            Thread::current[:scout_apm_prof])
           @slow_transactions.push(slow_transaction)
           ScoutApm::Agent.instance.logger.debug "Slow transaction sample added. [URI: #{uri}] [Context: #{ScoutApm::Context.current.to_hash}] Array Size: #{@slow_transactions.size}"
