@@ -58,8 +58,8 @@ module ScoutApm
         return false
       end
 
-      if !environment.app_server_integration(true).found? && !options[:skip_app_server_check]
-        logger.warn "Couldn't find a supported app server. Not starting agent."
+      if app_server_missing? && background_job_missing?
+        logger.warn "Couldn't find a supported app server or background job framework. Not starting agent."
         return false
       end
 
@@ -92,7 +92,7 @@ module ScoutApm
 
       @started = true
 
-      logger.info "Starting monitoring for [#{environment.application_name}]. Framework [#{environment.framework}] App Server [#{environment.app_server}]."
+      logger.info "Starting monitoring for [#{environment.application_name}]. Framework [#{environment.framework}] App Server [#{environment.app_server}] Background Job Framework [#{environment.background_job_name}]."
 
       load_instruments if should_load_instruments?(options)
 
@@ -180,15 +180,22 @@ module ScoutApm
     # If we want to skip the app_server_check, then we must load it.
     def should_load_instruments?(options={})
       return true if options[:skip_app_server_check]
-      environment.app_server_integration.found?
+      environment.app_server_integration.found? || !background_job_missing?
     end
 
     # Loads the instrumention logic.
     def load_instruments
-      case environment.framework
-      when :rails       then install_instrument(ScoutApm::Instruments::ActionControllerRails2)
-      when :rails3_or_4 then install_instrument(ScoutApm::Instruments::ActionControllerRails3)
-      when :sinatra     then install_instrument(ScoutApm::Instruments::Sinatra)
+      if !background_job_missing?
+        case environment.background_job_name
+        when :sidekiq
+          install_instrument(ScoutApm::Instruments::Sidekiq)
+        end
+      else
+        case environment.framework
+        when :rails       then install_instrument(ScoutApm::Instruments::ActionControllerRails2)
+        when :rails3_or_4 then install_instrument(ScoutApm::Instruments::ActionControllerRails3)
+        when :sinatra     then install_instrument(ScoutApm::Instruments::Sinatra)
+        end
       end
 
       install_instrument(ScoutApm::Instruments::ActiveRecord)
@@ -215,6 +222,14 @@ module ScoutApm
 
     def deploy_integration
       environment.deploy_integration
+    end
+
+    def app_server_missing?
+      !environment.app_server_integration(true).found? && !options[:skip_app_server_check]
+    end
+
+    def background_job_missing?
+      environment.background_job_integration.nil?
     end
   end
 end
