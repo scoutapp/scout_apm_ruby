@@ -81,7 +81,7 @@ module ScoutApm
       value = key_value.values.last
       if !valid_type?([String, Symbol, Numeric, Time, Date, TrueClass, FalseClass],value)
         ScoutApm::Agent.instance.logger.warn "The value for [#{key_value.keys.first}] is not a valid type [#{value.class}]."
-      false
+        false
       else
         true
       end
