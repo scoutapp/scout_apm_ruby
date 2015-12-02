@@ -49,7 +49,13 @@ module ScoutApm
 
           logger.debug "Total payload [#{payload.size/1024} KB] for #{total_request_count} requests and Slow Transactions [#{slow_transactions_kb} KB] for #{slow_transactions.size} transactions of durations: #{slow_transactions.map(&:total_call_time).join(',')}."
 
-          response = reporter.report(payload)
+          if ScoutApm::Agent.instance.config.value("report_format") == 'json'
+            headers = {'Content-Type' => 'application/json'}
+          else
+            headers = {}
+          end
+
+          response = reporter.report(payload, headers)
 
           if response and response.is_a?(Net::HTTPSuccess)
             directives = ScoutApm::Serializers::DirectiveSerializer.deserialize(response.body)

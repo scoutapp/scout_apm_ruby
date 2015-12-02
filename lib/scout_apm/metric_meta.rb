@@ -1,5 +1,7 @@
 # Contains the meta information associated with a metric. Used to lookup Metrics in to Store's metric_hash.
 class ScoutApm::MetricMeta
+  include ScoutApm::BucketNameSplitter
+
   def initialize(metric_name, options = {})
     @metric_name = metric_name
     @metric_id = nil
@@ -30,5 +32,11 @@ class ScoutApm::MetricMeta
 
   def eql?(o)
    self.class == o.class && metric_name.downcase.eql?(o.metric_name.downcase) && scope == o.scope && client_id == o.client_id && desc == o.desc
+  end
+
+  def as_json
+    json_attributes = [:bucket, :name, :desc, :extra, [:scope, :scope_hash]]
+    # query, stack_trace
+    ScoutApm::AttributeArranger.call(self, json_attributes)
   end
 end # class MetricMeta

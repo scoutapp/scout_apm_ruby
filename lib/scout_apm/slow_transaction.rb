@@ -1,5 +1,7 @@
 module ScoutApm
   class SlowTransaction
+    include ScoutApm::BucketNameSplitter
+
     BACKTRACE_THRESHOLD = 0.5 # the minimum threshold to record the backtrace for a metric.
     BACKTRACE_LIMIT = 5 # Max length of callers to display
     MAX_SIZE = 100 # Limits the size of the metric hash to prevent a metric explosion.
@@ -44,6 +46,15 @@ module ScoutApm
     def clear_metrics!
       @metrics = nil
       self
+    end
+
+    def as_json
+      json_attributes = [:key, :time, :total_call_time, :uri, [:context, :context_hash], :prof]
+      ScoutApm::AttributeArranger.call(self, json_attributes)
+    end
+
+    def context_hash
+      context.to_hash
     end
   end
 end
