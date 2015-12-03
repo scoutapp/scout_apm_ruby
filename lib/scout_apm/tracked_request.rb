@@ -3,7 +3,7 @@
 # root layer off to be recorded
 #
 # It also manages a Context object for this request.
-# (ie, which user, what is their email/ip, what plan are they on, what locale are they using)
+# (ie, which user, what is their email/ip, what plan are they on, what locale are they using, etc)
 
 module ScoutApm
   class TrackedRequest
@@ -12,9 +12,11 @@ module ScoutApm
     def initialize
       @layers = []
       @context = Context.new
+      @annotations = {}
     end
 
     def start_layer(layer)
+      ScoutApm::Agent.instance.logger.info("Starting Layer: #{layer.to_s}")
       @layers[-1].add_child(layer) if @layers.any?
       @layers.push(layer)
     end
@@ -22,10 +24,21 @@ module ScoutApm
     def stop_layer
       layer = @layers.pop
       layer.record_stop_time!
+      ScoutApm::Agent.instance.logger.info("Stopping Layer: #{layer.to_s}")
 
       if finalized?
+        ScoutApm::Agent.instance.logger.info("Request Finished")
         record!(layer)
       end
+    end
+
+    # As we learn things about this request, we can add data here.
+    # For instance, when we know where Rails routed this request to, we can store that scope info.
+    # Or as soon as we know which URI it was directed at, we can store that.
+    #
+    # This data is internal to ScoutApm, to add custom information, use the Context api.
+    def annotate_request(hsh)
+      @annotations.merge!(hsh)
     end
 
     # Delegate an annotation into the currently running layer
