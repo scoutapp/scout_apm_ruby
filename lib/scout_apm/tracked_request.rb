@@ -27,7 +27,6 @@ module ScoutApm
       ScoutApm::Agent.instance.logger.info("Stopping Layer: #{layer.to_s}")
 
       if finalized?
-        ScoutApm::Agent.instance.logger.info("Request Finished")
         record!(layer)
       end
     end
@@ -54,6 +53,7 @@ module ScoutApm
     # TODO: Which object translates a request obj into a recorded & merged set of objects
     def record!(root_layer)
       @recorded = true
+      ScoutApm::Agent.instance.logger.info("Recording Layer: #{root_layer}")
     end
 
     def finished?

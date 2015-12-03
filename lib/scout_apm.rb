@@ -57,6 +57,7 @@ require 'scout_apm/instruments/mongoid'
 require 'scout_apm/instruments/active_record'
 require 'scout_apm/instruments/action_controller_rails_2'
 require 'scout_apm/instruments/action_controller_rails_3'
+require 'scout_apm/instruments/middleware'
 require 'scout_apm/instruments/sinatra'
 require 'scout_apm/instruments/process/process_cpu'
 require 'scout_apm/instruments/process/process_memory'
@@ -102,13 +103,14 @@ if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR
   module ScoutApm
     class Railtie < Rails::Railtie
       initializer "scout_apm.start" do |app|
+        # attempt to start on first-request if not otherwise started, which is
+        # a good catch-all for Webrick, and Passenger and similar, where we
+        # can't detect the running app server until actual requests come in.
+        app.middleware.use ScoutApm::Middleware
+
         # Attempt to start right away, this will work best for preloading apps, Unicorn & Puma & similar
         ScoutApm::Agent.instance.start
 
-        # And attempt to start on first-request, which is a good catch-all for
-        # Webrick, and Passenger and similar, where we can't detect the running app server
-        # until actual requests come in.
-        app.middleware.use ScoutApm::Middleware
       end
     end
   end
