@@ -22,7 +22,7 @@ module ScoutApm
             include ScoutApm::Tracer
 
             def request_with_scout_instruments(*args,&block)
-              self.class.instrument("HTTP/request", :desc => "#{(@address+args.first.path.split('?').first)[0..99]}") do
+              self.class.instrument("HTTP", "request", :annotate_layer => { :url => "#{(@address+args.first.path.split('?').first)[0..99]}" } ) do
                 request_without_scout_instruments(*args,&block)
               end
             end
@@ -30,7 +30,6 @@ module ScoutApm
             alias request request_with_scout_instruments
           end
         end
-
       end
     end
   end

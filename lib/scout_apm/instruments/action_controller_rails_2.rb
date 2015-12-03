@@ -34,7 +34,7 @@ module ScoutApm
           ScoutApm::Agent.instance.logger.info "Instrumenting ActionView::Template"
           ::ActionView::Template.class_eval do
             include ::ScoutApm::Tracer
-            instrument_method :render, :metric_name => 'View/#{path[%r{^(/.*/)?(.*)$},2]}/Rendering', :scope => true
+            instrument_method :render, :type => "View", :name => '#{path[%r{^(/.*/)?(.*)$},2]}/Rendering', :scope => true
           end
         end
 
@@ -57,9 +57,15 @@ module ScoutApm
       # applied to metrics recorded during this transaction. This lets us associate ActiveRecord calls with
       # specific controller actions.
       def perform_action_with_scout_instruments(*args, &block)
-        scout_controller_action = "Controller/#{controller_path}/#{action_name}"
-        self.class.scout_apm_trace(scout_controller_action, :uri => request.request_uri, :ip => request.remote_ip) do
+        req = ScoutApm::RequestManager.lookup
+        req.annotate_request(:uri => request.fullpath)
+        req.context.add_user(:ip => request.remote_ip)
+        req.start_layer( ScoutApm::Layer.new("Controller", "#{controller_path}/#{action_name}") )
+
+        begin
           perform_action_without_scout_instruments(*args, &block)
+        ensure
+          req.stop_layer
         end
       end
     end

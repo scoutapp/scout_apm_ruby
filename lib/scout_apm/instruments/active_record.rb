@@ -58,12 +58,12 @@ module ScoutApm
 
       def log_with_scout_instruments(*args, &block)
         sql, name = args
-        self.class.instrument(scout_ar_metric_name(sql,name), :desc => Utils::SqlSanitizer.new(sql).to_s) do
+        self.class.instrument("ActiveRecord", scout_ar_metric_name(sql,name), :annotate_layer => { :sql => Utils::SqlSanitizer.new(sql).to_s } ) do
           log_without_scout_instruments(sql, name, &block)
         end
       end
 
-      def scout_ar_metric_name(sql,name)
+      def scout_ar_metric_name(sql, name)
         # sql: SELECT "places".* FROM "places"  ORDER BY "places"."position" ASC
         # name: Place Load
         if name && (parts = name.split " ") && parts.size == 2
@@ -79,10 +79,10 @@ module ScoutApm
                             operation
                           end
                         end
-          metric = "ActiveRecord/#{model}/#{metric_name}" if metric_name
-          metric = "ActiveRecord/SQL/other" if metric.nil?
+          metric = "#{model}/#{metric_name}" if metric_name
+          metric = "SQL/other" if metric.nil?
         else
-          metric = "ActiveRecord/SQL/Unknown"
+          metric = "SQL/Unknown"
         end
         metric
       end
