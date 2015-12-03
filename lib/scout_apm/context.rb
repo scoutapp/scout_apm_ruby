@@ -20,10 +20,6 @@ module ScoutApm
       RequestManager.lookup.context
     end
 
-    def self.clear!
-      Thread.current[:scout_context] = nil
-    end
-
     # Add context
     # ScoutApm::Context.add(account: current_account.name)
     def add(hash)

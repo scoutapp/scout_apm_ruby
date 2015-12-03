@@ -34,9 +34,6 @@ module ScoutApm
           Thread::current[:scout_apm_scope_name] = nil
         end
         ScoutApm::Agent.instance.capacity.finish_transaction!
-        # The context is cleared after instrumentation (rather than before) as tracing controller-actions doesn't occur until the controller-action is called.
-        # It does not trace before filters, which is a likely spot to add context. This means that any context applied during before_filters would be cleared.
-        ScoutApm::Context.clear!
         raise e if e
       end
 
