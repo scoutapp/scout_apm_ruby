@@ -7,16 +7,18 @@ module ScoutApm
       find || create
     end
 
+    # Get the current Thread local, and detecting, and not returning a stale request
     def self.find
       req = Thread.current[:scout_request]
 
-      if req.finished?
+      if req && req.finished?
         nil
       else
         req
       end
     end
 
+    # Create a new TrackedRequest object for this thread
     def self.create
       Thread.current[:scout_request] = TrackedRequest.new
     end
