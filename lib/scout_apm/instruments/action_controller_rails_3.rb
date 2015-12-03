@@ -54,11 +54,11 @@ module ScoutApm
     end
 
     module ActionControllerRails3Instruments
-      # TODO: Rewire stackprof
       def process_action(*args)
         req = ScoutApm::RequestManager.lookup
         req.annotate_request(:uri => request.fullpath)
         req.context.add_user(:ip => request.remote_ip)
+        req.controller_reached!
 
         req.start_layer( ScoutApm::Layer.new("Controller", "#{controller_path}/#{action_name}") )
         begin

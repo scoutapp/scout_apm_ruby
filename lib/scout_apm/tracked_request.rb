@@ -14,6 +14,7 @@ module ScoutApm
       @layers = []
       @annotations = {}
       @ignoring_children = false
+      @controller_reached = false
       @context = Context.new
     end
 
@@ -73,11 +74,26 @@ module ScoutApm
     # TODO: Which object translates a request obj into a recorded & merged set of objects
     def record!(root_layer)
       @recorded = true
-      ScoutApm::Agent.instance.logger.info("Finished Request, Recording Root Layer: #{root_layer}")
+      if controller_reached?
+        ScoutApm::Agent.instance.logger.info("Finished Request, Recording Root Layer: #{root_layer}")
+      else
+        ScoutApm::Agent.instance.logger.info("Finished Request, Skipping Recording, no controller")
+      end
     end
 
     def recorded?
       @recorded
+    end
+
+    # Allow us to skip this request if it didn't actually hit a controller at
+    # any point (for instance if it was initiated from booting rails, or other
+    # uses of ActiveRecord and such
+    def controller_reached!
+      @controller_reached = true
+    end
+
+    def controller_reached?
+      @controller_reached
     end
 
     ###################################
