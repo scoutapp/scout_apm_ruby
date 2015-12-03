@@ -39,12 +39,27 @@ module ScoutApm
       @children << child
     end
 
-    def record_stop_time(stop_time = Time.now)
+    def record_stop_time!(stop_time = Time.now)
       @stop_time = stop_time
     end
 
     def annotate_layer(new_annotations={})
       @annotations.merge!(new_annotations)
+    end
+
+    ######################################
+    # Debugging Helpers
+    ######################################
+
+    # May not be safe to call in every rails app.
+    def to_s
+      name_clause = "#{type}/#{name}"
+      total_string = total_call_time == 0 ? "" : "[Total: #{total_call_time}]"
+      time_clause = "(Start: #{start_time.iso8601} / Stop: #{stop_time.try(:iso8601)} #{total_string})"
+      annotations_clause = "Annotations: #{annotations.inspect}"
+      children_clause = "Children: #{children.length}"
+
+      "<Layer: #{name_clause} #{time_clause} #{annotations_clause} #{children_clause}>"
     end
 
     ######################################
