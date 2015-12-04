@@ -54,8 +54,11 @@ module ScoutApm
     # May not be safe to call in every rails app.
     def to_s
       name_clause = "#{type}/#{name}"
-      total_string = total_call_time == 0 ? "" : "[Total: #{total_call_time}]"
-      time_clause = "(Start: #{start_time.iso8601} / Stop: #{stop_time.try(:iso8601)} #{total_string})"
+
+      total_string = total_call_time == 0 ? "" : "Total: #{total_call_time}"
+      self_string = total_exclusive_time == 0 ? "" : "Self: #{total_exclusive_time}"
+
+      time_clause = "(Start: #{start_time.iso8601} / Stop: #{stop_time.try(:iso8601)} [#{total_string}, #{self_string}])"
       annotations_clause = "Annotations: #{annotations.inspect}"
       children_clause = "Children: #{children.length}"
 
