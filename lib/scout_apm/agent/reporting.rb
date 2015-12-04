@@ -26,7 +26,7 @@ module ScoutApm
           total_request_count = 0
 
           metrics.each do |meta,stats|
-            if meta.metric_name =~ /\AController/
+            if meta.key_metric?
               total_request_count += stats.call_count
             end
           end

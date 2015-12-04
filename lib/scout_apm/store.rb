@@ -89,7 +89,7 @@ module ScoutApm
       transaction_hash[meta] = stat if store_metric?(stack_empty)
 
       # Uses controllers as the entry point for a transaction. Otherwise, stats are ignored.
-      if stack_empty and meta.metric_name.match(/\AController\//)
+      if stack_empty and meta.key_metric?
         aggs = aggregate_calls(transaction_hash.dup,meta)
         store_slow(options[:uri], transaction_hash.dup.merge(aggs), meta, stat)
         # deep duplicate

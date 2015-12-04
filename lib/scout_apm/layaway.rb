@@ -77,7 +77,7 @@ module ScoutApm
     def log_deposited_metrics(new_metrics)
       request_count = new_metrics.
         to_a.
-        select    { |meta, stats| meta.metric_name =~ /\AController/ }.
+        select    { |meta, stats| meta.key_metric? }.
         map       { |meta, stats| stats.call_count }.
         inject(0) { |total, i| total + i }
 
@@ -93,7 +93,7 @@ module ScoutApm
       old_data.each do |k,v|
         controller_count = 0
         new_metrics.each do |meta,stats|
-          if meta.metric_name =~ /\AController/
+          if meta.key_metric?
             controller_count += stats.call_count
           end
         end

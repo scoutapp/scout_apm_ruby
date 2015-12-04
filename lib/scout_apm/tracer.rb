@@ -49,7 +49,7 @@ module ScoutApm
       # when rendering the transaction tree in the UI.
       def instrument(metric_name, options={}, &block)
         # don't instrument if (1) NOT inside a transaction and (2) NOT a Controller metric.
-        if !Thread::current[:scout_apm_scope_name] and metric_name !~ /\AController\//
+        if !Thread::current[:scout_apm_scope_name] and metric_name !~ /\A(Controller|Job)\//
           return yield
         elsif Thread::current[:scout_ignore_children]
           return yield

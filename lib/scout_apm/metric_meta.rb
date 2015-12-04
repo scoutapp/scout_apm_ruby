@@ -31,4 +31,8 @@ class ScoutApm::MetricMeta
   def eql?(o)
    self.class == o.class && metric_name.downcase.eql?(o.metric_name.downcase) && scope == o.scope && client_id == o.client_id && desc == o.desc
   end
+
+  def key_metric?
+    !!(metric_name =~ /\A(Controller|Job)\//)
+  end
 end # class MetricMeta
