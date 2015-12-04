@@ -1,11 +1,11 @@
-# Contains the methods that instrument blocks of code.
+# Provides helpers to wrap sections of code in instrumentation
 #
-# When a code block is wrapped inside #instrument(metric_name):
-# * The #instrument method pushes a StackItem onto Store#stack
-# * When a code block is finished, #instrument pops the last item off the stack and verifies it's the StackItem
-#   we created earlier.
-# * Once verified, the metrics for the recording session are merged into the in-memory Store#metric_hash. The current scope
-#   is also set for the metric (if Thread::current[:scout_apm_scope_name] isn't nil).
+# The manual approach is to wrap your code in a call like:
+#     `instrument("View", "users/index") do ... end`
+#
+# The monkey-patching approach does this for you:
+#     `instrument_method(:my_render, :type => "View", :name => "users/index)`
+
 module ScoutApm
   module Tracer
     def self.included(klass)
