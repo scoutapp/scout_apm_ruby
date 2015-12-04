@@ -1,5 +1,6 @@
 # Stats that are associated with each instrumented method.
-class ScoutApm::MetricStats
+module ScoutApm
+class MetricStats
   attr_accessor :call_count
   attr_accessor :min_call_time
   attr_accessor :max_call_time
@@ -52,4 +53,5 @@ class ScoutApm::MetricStats
     # uri, context
     ScoutApm::AttributeArranger.call(self, json_attributes)
   end
-end # class MetricStats
+end
+end
