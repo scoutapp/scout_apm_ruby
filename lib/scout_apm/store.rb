@@ -89,7 +89,7 @@ module ScoutApm
       # Uses controllers as the entry point for a transaction. Otherwise, stats are ignored.
       if stack_empty and meta.key_metric?
         aggs = aggregate_calls(transaction_hash.dup,meta)
-        store_slow(options[:uri], transaction_hash.dup.merge(aggs), meta, stat)
+        store_slow(options[:uri], transaction_hash.dup.merge(aggs), meta, stat) unless meta.metric_name =~ /\AJob\// # no slow transactions for background jobs
         # deep duplicate
         duplicate = aggs.dup
         duplicate.each_pair do |k,v|

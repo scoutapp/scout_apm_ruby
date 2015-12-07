@@ -25,6 +25,7 @@ module ScoutApm
             chain.add ScoutApm::SidekiqMiddleware
           end
         end
+        require 'sidekiq/processor' # sidekiq v4 has not loaded this file by this point
         ::Sidekiq::Processor.class_eval do
           old = instance_method(:initialize)
           define_method(:initialize) do |boss|
