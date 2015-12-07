@@ -190,8 +190,6 @@ module ScoutApm
     def load_instruments
       if !background_job_missing?
         case environment.background_job_name
-        when :sidekiq
-          install_instrument(ScoutApm::Instruments::Sidekiq)
         when :delayed_job
           install_instrument(ScoutApm::Instruments::DelayedJob)
         end

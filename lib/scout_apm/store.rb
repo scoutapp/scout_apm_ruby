@@ -168,7 +168,7 @@ module ScoutApm
       meta = ScoutApm::MetricMeta.new(metric_name)
       meta.scope = options[:scope] if options.has_key?(:scope)
       stat = metric_hash[meta] || ScoutApm::MetricStats.new
-      stat.update!(call_time,options[:exclusive_time] || call_time)
+      stat.update!(call_time,(options[:exclusive_time] || call_time),(options[:extra_metrics] || {}))
       metric_hash[meta] = stat
     end
 
