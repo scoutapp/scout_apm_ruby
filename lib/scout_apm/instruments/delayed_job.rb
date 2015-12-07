@@ -27,15 +27,18 @@ module ScoutApm
 
     module DelayedJobInstruments
       def run_with_scout_instruments(job)
-        job_handler = YAML.load(job.handler)
-        klass = job_handler.object.name
-        method = job_handler.method_name
-        scout_method_name = "Job/#{klass}##{method}"
+        scout_method_name = method_from_handler(job.handler)
         queue = job.queue
-        puts "########################### #{scout_method_name} - #{queue}"
-        self.class.scout_apm_trace(scout_method_name) do
+        self.class.scout_apm_trace(scout_method_name, {:extra_metrics => {:queue => queue}}) do
           run_without_scout_instruments(job)
         end
+      end
+
+      def method_from_handler(handler)
+        job_handler = YAML.load(handler)
+        klass = job_handler.object.name
+        method = job_handler.method_name
+        "Job/#{klass}##{method}"
       end
     end
   end

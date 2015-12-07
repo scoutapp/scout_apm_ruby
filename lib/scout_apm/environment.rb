@@ -125,7 +125,7 @@ module ScoutApm
     # If forking, don't start worker thread in the master process. Since it's
     # started as a Thread, it won't survive the fork.
     def forking?
-      app_server_integration.forking?
+      app_server_integration.forking? || (background_job_integration && background_job_integration.forking?)
     end
 
     def background_job_integration

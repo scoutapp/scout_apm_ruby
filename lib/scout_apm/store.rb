@@ -85,7 +85,7 @@ module ScoutApm
       end
 
       stat = transaction_hash[meta] || ScoutApm::MetricStats.new(!stack_empty)
-      stat.update!(duration,duration-item.children_time)
+      stat.update!(duration,duration-item.children_time,options[:extra_metrics])
       transaction_hash[meta] = stat if store_metric?(stack_empty)
 
       # Uses controllers as the entry point for a transaction. Otherwise, stats are ignored.

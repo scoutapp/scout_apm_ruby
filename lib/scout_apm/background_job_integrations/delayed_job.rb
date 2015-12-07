@@ -10,6 +10,10 @@ module ScoutApm
       def present?
         defined?(::Delayed::Job) && (File.basename($0) =~ /\Adelayed_job/)
       end
+
+      def forking?
+        false
+      end
     end
   end
 end

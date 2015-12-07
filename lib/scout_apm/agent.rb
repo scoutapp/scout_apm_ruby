@@ -110,6 +110,9 @@ module ScoutApm
         start_background_worker
         handle_exit
         logger.info "Scout Agent [#{ScoutApm::VERSION}] Initialized"
+      elsif environment.background_job_integration
+        environment.background_job_integration.install
+        logger.info "Scout Agent [#{ScoutApm::VERSION}] loaded in [#{environment.background_job_name}] master process. Monitoring will start after background job framework forks its workers."
       else
         environment.app_server_integration.install
         logger.info "Scout Agent [#{ScoutApm::VERSION}] loaded in [#{environment.app_server}] master process. Monitoring will start after server forks its workers."

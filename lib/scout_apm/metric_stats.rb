@@ -6,6 +6,7 @@ class ScoutApm::MetricStats
   attr_accessor :total_call_time
   attr_accessor :total_exclusive_time
   attr_accessor :sum_of_squares
+  attr_accessor :queue
 
   def initialize(scoped = false)
     @scoped = scoped
@@ -17,7 +18,7 @@ class ScoutApm::MetricStats
     self.sum_of_squares = 0.0
   end
 
-  def update!(call_time,exclusive_time)
+  def update!(call_time,exclusive_time,extra_metrics={})
     # If this metric is scoped inside another, use exclusive time for min/max and sum_of_squares. Non-scoped metrics
     # (like controller actions) track the total call time.
     t = (@scoped ? exclusive_time : call_time)
@@ -27,6 +28,9 @@ class ScoutApm::MetricStats
     self.total_call_time += call_time
     self.total_exclusive_time += exclusive_time
     self.sum_of_squares += (t * t)
+    if extra_metrics and extra_metrics[:queue]
+      self.queue = extra_metrics[:queue]
+    end
     self
   end
 
