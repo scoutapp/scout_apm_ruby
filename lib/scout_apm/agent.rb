@@ -173,7 +173,14 @@ module ScoutApm
       logger.info "Initializing worker thread."
       @background_worker = ScoutApm::BackgroundWorker.new
       @background_worker_thread = Thread.new do
-        @background_worker.start { process_metrics }
+        @background_worker.start {
+          # First, run periodic samplers. These should run once a minute,
+          # rather than per-request. "CPU Load" and similar.
+          run_samplers
+          capacity.process
+
+          ScoutApm::Agent.instance.process_metrics
+        }
       end
     end
 
@@ -217,6 +224,20 @@ module ScoutApm
 
     def deploy_integration
       environment.deploy_integration
+    end
+
+    # TODO: Extract a proper class / registery for these. They don't really belong here
+    def run_samplers
+      @samplers.each do |sampler|
+        begin
+          result = sampler.run
+          store.track_one!(sampler.metric_type, sampler.metric_name, result) if result
+        rescue => e
+          logger.info "Error reading #{sampler.human_name}"
+          logger.debug e.message
+          logger.debug e.backtrace.join("\n")
+        end
+      end
     end
   end
 end

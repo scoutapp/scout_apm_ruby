@@ -48,7 +48,8 @@ module ScoutApm
         window = 1.0 if window <= 0.0 # prevent divide-by-zero if clock adjusted.
         capacity = time_spent / window
         ScoutApm::Agent.instance.logger.debug "Instance/Capacity: #{capacity}"
-        ScoutApm::Agent.instance.store.track!("Instance/Capacity",capacity,:scope => nil)
+        ScoutApm::Agent.instance.store.track_one!("Instance", "Capacity", capacity)
+
         @processing_start_time = process_time
       end
     end

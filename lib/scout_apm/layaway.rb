@@ -12,6 +12,39 @@ module ScoutApm
       @file = ScoutApm::LayawayFile.new
     end
 
+    def add_reporting_period(time, reporting_period)
+      file.read_and_write do |existing_data|
+        existing_data ||= Hash.new
+        existing_data.merge!(time => reporting_period) {|key, old_val, new_val|
+          old_val.merge_metrics!(new_val.metrics).merge_slow_transactions!(new_val.slow_transactions)
+        }
+      end
+    end
+
+    REPORTING_INTERVAL = 60 # seconds
+
+    def periods_ready_for_delivery
+      ready_for_delivery = []
+
+      file.read_and_write do |existing_data|
+        existing_data ||= {}
+        # Existing Data is:
+        # {
+        #   time(now-1m) => reporting period,
+        #   time(now-2m) => reporting period,
+        #   time(now-3m) => reporting period,
+        # }
+
+        # And I want the -2m, and -1m
+        ready_for_delivery = existing_data.select {|time, _| time < Store.new.current_timestamp - REPORTING_INTERVAL }.values
+
+        # Rewrite anything not plucked out.
+        existing_data.reject {|k,v| ready_for_delivery.include? k }
+      end
+
+      return ready_for_delivery
+    end
+
     def deposit_and_deliver
       new_metrics = ScoutApm::Agent.instance.store.metric_hash
       log_deposited_metrics(new_metrics)

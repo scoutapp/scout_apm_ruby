@@ -5,10 +5,15 @@
 
 module ScoutApm
   class TrackedRequest
-    # Context is application defined extra information.
-    # (ie, which user, what is their email/ip, what plan are they on, what locale are they using, etc)
-    # See documentation for examples on how to set this from a before_filter
+    # Context is application defined extra information.  (ie, which user, what
+    # is their email/ip, what plan are they on, what locale are they using,
+    # etc) See documentation for examples on how to set this from a
+    # before_filter
     attr_reader :context
+
+    # The first layer registered with this request. All other layers will be
+    # children of this layer.
+    attr_reader :root_layer
 
     def initialize
       @layers = []
@@ -16,10 +21,11 @@ module ScoutApm
       @ignoring_children = false
       @controller_reached = false
       @context = Context.new
+      @root_layer = nil
     end
 
     def start_layer(layer)
-      return if @ignoring_children
+      @root_layer = layer unless @root_layer # capture root layer
 
       ScoutApm::Agent.instance.logger.info("Starting Layer: #{layer.to_s}")
       @layers[-1].add_child(layer) if @layers.any?
@@ -32,7 +38,7 @@ module ScoutApm
       ScoutApm::Agent.instance.logger.info("Stopping Layer: #{layer.to_s}")
 
       if finalized?
-        record!(layer)
+        record!
       end
     end
 
@@ -57,7 +63,6 @@ module ScoutApm
       @layers[-1].annotate_layer(*args)
     end
 
-
     ###################################
     # Persist the Request
     ###################################
@@ -72,15 +77,18 @@ module ScoutApm
     end
 
     # TODO: Which object translates a request obj into a recorded & merged set of objects
-    def record!(root_layer)
+    def record!
       @recorded = true
-      if controller_reached?
-        ScoutApm::Agent.instance.logger.info("Finished Request, Recording Root Layer: #{root_layer}")
-      else
-        ScoutApm::Agent.instance.logger.info("Finished Request, Skipping Recording, no controller")
-      end
+      metrics = LayerMetricConverter.new(self).call
+      ScoutApm::Agent.instance.store.track!(metrics)
+
+      # require 'pp'
+      # ScoutApm::Agent.instance.logger.info("Finished Request, Metrics: #{metrics.pretty_inspect}")
+
+      # slow_requests = LayerConverter.new()
     end
 
+    # Have we already persisted this request?
     def recorded?
       @recorded
     end

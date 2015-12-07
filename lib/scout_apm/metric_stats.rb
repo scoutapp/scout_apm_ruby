@@ -18,13 +18,13 @@ class MetricStats
     self.sum_of_squares = 0.0
   end
 
-  def update!(call_time,exclusive_time)
+  def update!(call_time, exclusive_time=call_time)
     # If this metric is scoped inside another, use exclusive time for min/max and sum_of_squares. Non-scoped metrics
     # (like controller actions) track the total call time.
     t = (@scoped ? exclusive_time : call_time)
     self.min_call_time = t if self.call_count == 0 or t < min_call_time
     self.max_call_time = t if self.call_count == 0 or t > max_call_time
-    self.call_count +=1
+    self.call_count += 1
     self.total_call_time += call_time
     self.total_exclusive_time += exclusive_time
     self.sum_of_squares += (t * t)

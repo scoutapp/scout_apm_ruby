@@ -8,8 +8,12 @@ module ScoutApm
           @logger = logger
         end
 
+        def metric_type
+          "Memory"
+        end
+
         def metric_name
-          "Memory/Physical"
+          "Physical"
         end
 
         def human_name

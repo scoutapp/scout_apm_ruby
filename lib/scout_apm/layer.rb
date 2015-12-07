@@ -47,18 +47,26 @@ module ScoutApm
       @annotations.merge!(new_annotations)
     end
 
+    # This is the old style name. This function is used for now, but should be
+    # removed, and the new type & name split should be enforced through the
+    # app.
+    def legacy_metric_name
+      "#{type}/#{name}"
+    end
+
     ######################################
     # Debugging Helpers
     ######################################
 
-    # May not be safe to call in every rails app.
+    # May not be safe to call in every rails app, relies on Time#iso8601
     def to_s
       name_clause = "#{type}/#{name}"
 
-      total_string = total_call_time == 0 ? "" : "Total: #{total_call_time}"
-      self_string = total_exclusive_time == 0 ? "" : "Self: #{total_exclusive_time}"
+      total_string = total_call_time == 0 ? nil : "Total: #{total_call_time}"
+      self_string = total_exclusive_time == 0 ? nil : "Self: #{total_exclusive_time}"
+      timing_string = [total_string, self_string].compact.join(", ")
 
-      time_clause = "(Start: #{start_time.iso8601} / Stop: #{stop_time.try(:iso8601)} [#{total_string}, #{self_string}])"
+      time_clause = "(Start: #{start_time.iso8601} / Stop: #{stop_time.try(:iso8601)} [#{timing_string}])"
       annotations_clause = "Annotations: #{annotations.inspect}"
       children_clause = "Children: #{children.length}"
 
