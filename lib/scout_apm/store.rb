@@ -12,7 +12,6 @@ module ScoutApm
 
     attr_accessor :metric_hash
     attr_accessor :transaction_hash
-    attr_accessor :stack
     attr_accessor :slow_transactions # array of slow transaction slow_transactions
     attr_reader :slow_transaction_lock
 
@@ -21,7 +20,6 @@ module ScoutApm
       # Stores aggregate metrics for the current transaction. When the transaction is finished, metrics
       # are merged with the +metric_hash+.
       @transaction_hash = Hash.new
-      @stack = Array.new
       # ensure background thread doesn't manipulate transaction sample while the store is.
       @slow_transaction_lock = Mutex.new
       @slow_transactions = Array.new
@@ -33,7 +31,7 @@ module ScoutApm
       Thread::current[:scout_apm_ignore_transaction] = nil
       Thread::current[:scout_apm_scope_name] = nil
       @transaction_hash = Hash.new
-      @stack = Array.new
+      reset_stack
     end
 
     def ignore_transaction!
@@ -215,6 +213,14 @@ module ScoutApm
         end
       end
       self.slow_transactions
+    end
+
+    def stack
+      Thread.current[:scout_apm_stack]
+    end
+
+    def reset_stack
+      Thread.current[:scout_apm_stack] = Array.new
     end
   end # class Store
 end
