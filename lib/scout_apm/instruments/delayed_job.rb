@@ -29,6 +29,8 @@ module ScoutApm
       def run_with_scout_instruments(job)
         scout_method_name = method_from_handler(job.handler)
         queue = job.queue
+        latency = (Time.now.to_f - job.created_at.to_f) * 1000
+        self.class.track!("Queue/#{queue}",0,{:extra_metrics => {:latency => latency}})
         self.class.scout_apm_trace(scout_method_name, {:extra_metrics => {:queue => queue}}) do
           run_without_scout_instruments(job)
         end

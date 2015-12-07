@@ -41,7 +41,7 @@ module ScoutApm
       msg_args = msg["args"].first
       job_class = msg_args["job_class"]
       scout_method_name = "Job/#{job_class}"
-      latency = Time.now.to_f - (msg['enqueued_at'] || msg['created_at'])
+      latency = (Time.now.to_f - (msg['enqueued_at'] || msg['created_at'])) * 1000
 
       self.class.track!("Queue/#{queue}",0,{:extra_metrics => {:latency => latency}})
       self.class.scout_apm_trace(scout_method_name, {:extra_metrics => {:queue => queue}}) do
