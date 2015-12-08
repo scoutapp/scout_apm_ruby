@@ -23,6 +23,7 @@ module ScoutApm
 
     REPORTING_INTERVAL = 60 # seconds
 
+    # Returns an array of ReportingPeriod objects that are ready to be pushed to the server
     def periods_ready_for_delivery
       ready_for_delivery = []
 

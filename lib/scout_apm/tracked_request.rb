@@ -1,7 +1,8 @@
-# A TrackedRequest is a stack of layers, where completed layers (go into, the
-# come out of a layer) are forgotten at this level. When finished it hands the
-# root layer off to be recorded
-#
+# A TrackedRequest is a stack of layers, where completed layers (go into, then
+# come out of a layer) are forgotten as they finish. Layers are attached to
+# their children as the process goes, building a tree structure within the
+# layer objects. When the last layer is finished (hence the whole request is
+# finished) it hands the root layer off to be recorded.
 
 module ScoutApm
   class TrackedRequest

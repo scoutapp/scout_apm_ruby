@@ -61,7 +61,7 @@ module ScoutApm
           inject(0) {|sum, (_, stat)| sum + stat.call_count }
 
         logger.info "Delivering #{metrics.length} Metrics for #{total_request_count} requests and #{slow_transactions.length} Slow Transaction Traces"
-        logger.debug("Metrics: #{metrics}\nSlowTrans: #{slow_transactions}\nMetadata: #{metadata.inspect}")
+        logger.debug("Metrics: #{metrics.pretty_inspect}\nSlowTrans: #{slow_transactions.pretty_inspect}\nMetadata: #{metadata.inspect.pretty_inspect}")
       end
 
       # TODO: Move this into PayloadSerializer?

@@ -55,7 +55,8 @@ module ScoutApm
     end
 
     # Do this w/o using recursion, since it's prone to stack overflows
-    def walk(&block)
+    # Takes a block to run over each layer
+    def walk
       # Queue, shift of front, push on back
       layer_queue = [root_layer]
 
