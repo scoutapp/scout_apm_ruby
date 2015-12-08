@@ -47,6 +47,11 @@ module ScoutApm
       layer = @layers.pop
       layer.record_stop_time!
 
+      # Do this here, rather than in the layer because we need this caller. Maybe able to move it?
+      if layer.total_exclusive_time > ScoutApm::SlowTransaction::BACKTRACE_THRESHOLD
+        layer.store_backtrace(ScoutApm::SlowTransaction.backtrace_parser(caller))
+      end
+
       if finalized?
         stop_request
       end

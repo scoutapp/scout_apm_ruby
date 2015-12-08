@@ -16,6 +16,9 @@ module ScoutApm
     attr_reader :prof
     attr_reader :raw_prof
 
+    # TODO: Move this out of SlowTransaction, it doesn't have much to do w/
+    # slow trans other than being a piece of data that ends up in it.
+    #
     # Given a call stack, generates a filtered backtrace that:
     # * Limits to the app/models, app/controllers, or app/views directories
     # * Limits to 5 total callers

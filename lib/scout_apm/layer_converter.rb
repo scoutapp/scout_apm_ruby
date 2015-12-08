@@ -39,6 +39,7 @@ module ScoutApm
         meta_options.merge!(:desc => layer.desc) if layer.desc
 
         meta = MetricMeta.new(layer.legacy_metric_name, meta_options)
+        meta.extra.merge!(:backtrace => layer.backtrace) if layer.backtrace
         metric_hash[meta] ||= MetricStats.new(scope_name == layer.legacy_metric_name)
 
         stat = metric_hash[meta]

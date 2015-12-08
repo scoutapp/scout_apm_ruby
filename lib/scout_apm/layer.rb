@@ -20,11 +20,16 @@ module ScoutApm
     # Time objects recording the start & stop times of this layer
     attr_reader :start_time, :stop_time
 
-    # The description of this layer.  Will contain additional detail specific to the type of layer.
+    # The description of this layer.  Will contain additional details specific to the type of layer.
     # For an ActiveRecord metric, it will contain the SQL run
     # For an outoing HTTP call, it will contain the remote URL accessed
     # Leave blank if there is nothing to note
     attr_reader :desc
+
+    # If this layer took longer than a fixed amount of time, store the
+    # backtrace of where it occurred.
+    attr_reader :backtrace
+
 
     def initialize(type, name, start_time = Time.now)
       @type = type
@@ -51,6 +56,10 @@ module ScoutApm
     # app.
     def legacy_metric_name
       "#{type}/#{name}"
+    end
+
+    def store_backtrace(bt)
+      @backtrace = bt
     end
 
     ######################################
