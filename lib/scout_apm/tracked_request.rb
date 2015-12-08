@@ -16,19 +16,29 @@ module ScoutApm
     # children of this layer.
     attr_reader :root_layer
 
+    # As we go through a request, instrumentation can mark more general data into the Request
+    # Known Keys:
+    #   :uri - the full URI requested by the user
+    attr_reader :annotations
+
+    # Nil until the request is finalized, at which point it will hold the
+    # entire raw stackprof output for this request
+    attr_reader :stackprof
+
     def initialize
       @layers = []
       @annotations = {}
       @ignoring_children = false
-      @controller_reached = false
       @context = Context.new
       @root_layer = nil
+      @stackprof = nil
+      @error = false
     end
 
     def start_layer(layer)
-      @root_layer = layer unless @root_layer # capture root layer
+      start_request(layer) unless @layer
 
-      ScoutApm::Agent.instance.logger.info("Starting Layer: #{layer.to_s}")
+      # ScoutApm::Agent.instance.logger.info("Starting Layer: #{layer.to_s}")
       @layers[-1].add_child(layer) if @layers.any?
       @layers.push(layer)
     end
@@ -36,11 +46,40 @@ module ScoutApm
     def stop_layer
       layer = @layers.pop
       layer.record_stop_time!
-      ScoutApm::Agent.instance.logger.info("Stopping Layer: #{layer.to_s}")
 
       if finalized?
-        record!
+        stop_request
       end
+    end
+
+    ###################################
+    # Request Lifecycle
+    ###################################
+
+    # Are we finished with this request?
+    # We're done if we have no layers left after popping one off
+    def finalized?
+      @layers.none?
+    end
+
+    # Run at the beginning of the whole request
+    #
+    # * Capture the first layer as the root_layer
+    # * Start Stackprof
+    def start_request(layer)
+      @root_layer = layer unless @root_layer # capture root layer
+      StackProf.start(:mode => :wall, :interval => ScoutApm::Agent.instance.config.value("stackprof_interval"))
+    end
+
+    # Run at the end of the whole request
+    #
+    # * Collect stackprof info
+    # * Send the request off to be stored
+    def stop_request
+      StackProf.stop
+      @stackprof = StackProf.results
+
+      record!
     end
 
     ###################################
@@ -56,53 +95,39 @@ module ScoutApm
       @annotations.merge!(hsh)
     end
 
-    # Delegate an annotation into the currently running layer
-    #
-    # Store specific information about the specific layer here.
-    # For instance, {:sql => "SELECT * FROM users"} in an ActiveRecord layer
-    def annotate_layer(*args)
-      @layers[-1].annotate_layer(*args)
+    # This request had an exception.  Mark it down as an error
+    def error!
+      @error = true
+    end
+
+    def error?
+      @error
     end
 
     ###################################
     # Persist the Request
     ###################################
 
-    # After finishishing a request, it needs to be persisted, and combined with
-    # other requests, eventually to be sent up to ScoutApm's server.
-
-    # Are we finished with this request?
-    # We're done if we have no layers left after popping one off
-    def finalized?
-      @layers.none?
-    end
-
-    # TODO: Which object translates a request obj into a recorded & merged set of objects
+    # Convert this request to the appropriate structure, then report it into
+    # the peristent Store object
     def record!
       @recorded = true
+
       metrics = LayerMetricConverter.new(self).call
       ScoutApm::Agent.instance.store.track!(metrics)
 
-      # require 'pp'
-      # ScoutApm::Agent.instance.logger.info("Finished Request, Metrics: #{metrics.pretty_inspect}")
+      slow = LayerSlowTransactionConverter.new(self).call
+      ScoutApm::Agent.instance.store.track_slow_transaction!(slow)
 
-      # slow_requests = LayerConverter.new()
+      error_metrics = LayerErrorConverter.new(self).call
+      ScoutApm::Agent.instance.store.track!(error_metrics)
     end
 
     # Have we already persisted this request?
+    # Used to know when we should just create a new one (don't attempt to add
+    # data to an already-recorded request). See RequestManager
     def recorded?
       @recorded
-    end
-
-    # Allow us to skip this request if it didn't actually hit a controller at
-    # any point (for instance if it was initiated from booting rails, or other
-    # uses of ActiveRecord and such
-    def controller_reached!
-      @controller_reached = true
-    end
-
-    def controller_reached?
-      @controller_reached
     end
 
     ###################################

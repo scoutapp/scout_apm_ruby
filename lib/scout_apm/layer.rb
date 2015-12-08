@@ -20,19 +20,18 @@ module ScoutApm
     # Time objects recording the start & stop times of this layer
     attr_reader :start_time, :stop_time
 
-    # A hash of annotations about this layer
-    #   Examples:
-    #     :sql => "SELECT * FROM users WHERE id = ?"
-    #     :stacktrace => "...."
-    #     :url => "http://..."
-    attr_reader :annotations
+    # The description of this layer.  Will contain additional detail specific to the type of layer.
+    # For an ActiveRecord metric, it will contain the SQL run
+    # For an outoing HTTP call, it will contain the remote URL accessed
+    # Leave blank if there is nothing to note
+    attr_reader :desc
 
     def initialize(type, name, start_time = Time.now)
       @type = type
       @name = name
       @start_time = start_time
       @children = [] # In order of calls
-      @annotations = {}
+      @desc = nil
     end
 
     def add_child(child)
@@ -43,8 +42,8 @@ module ScoutApm
       @stop_time = stop_time
     end
 
-    def annotate_layer(new_annotations={})
-      @annotations.merge!(new_annotations)
+    def desc=(desc)
+      @desc = desc
     end
 
     # This is the old style name. This function is used for now, but should be
@@ -67,10 +66,10 @@ module ScoutApm
       timing_string = [total_string, self_string].compact.join(", ")
 
       time_clause = "(Start: #{start_time.iso8601} / Stop: #{stop_time.try(:iso8601)} [#{timing_string}])"
-      annotations_clause = "Annotations: #{annotations.inspect}"
+      desc_clause = "Description: #{desc.inspect}"
       children_clause = "Children: #{children.length}"
 
-      "<Layer: #{name_clause} #{time_clause} #{annotations_clause} #{children_clause}>"
+      "<Layer: #{name_clause} #{time_clause} #{desc_clause} #{children_clause}>"
     end
 
     ######################################

@@ -60,11 +60,13 @@ module ScoutApm
         req = ScoutApm::RequestManager.lookup
         req.annotate_request(:uri => request.fullpath)
         req.context.add_user(:ip => request.remote_ip)
-        req.controller_reached!
         req.start_layer( ScoutApm::Layer.new("Controller", "#{controller_path}/#{action_name}") )
 
         begin
           perform_action_without_scout_instruments(*args, &block)
+        rescue
+          req.error!
+          raise
         ensure
           req.stop_layer
         end

@@ -35,7 +35,7 @@ module ScoutApm
     end
 
     # Save a new slow transaction
-    def save_slow_transaction!(slow_transaction)
+    def track_slow_transaction!(slow_transaction)
       reporting_periods[current_timestamp].merge_slow_transactions!(slow_transaction)
     end
 
@@ -91,8 +91,7 @@ module ScoutApm
     # Retrieve Metrics for reporting
     #################################
     def metrics_payload
-      @metrics
-      # .merge(aggregate_metrics) # I'm unsure if the agent is responsible for aggregating metrics into a /all attribute?
+      aggregate_metrics
     end
 
     def slow_transactions_payload
@@ -101,8 +100,9 @@ module ScoutApm
 
     private
 
-    # We don't attempt to aggregate some types
-    EXCLUDED_AGGREGATES = ["Controller"]
+    # We can't aggregate CPU, Memory, Capacity, or Controller, so pass through these metrics directly
+    # TODO: Figure out a way to not have this duplicate what's in Samplers, and also on server's ingest
+    PASSTHROUGH_METRICS = ["CPU", "Memory", "Instance", "Controller"]
 
     # Calculate any aggregate metrics necessary.
     #
@@ -113,9 +113,17 @@ module ScoutApm
       hsh = Hash.new {|h,k| h[k] = MetricStats.new }
 
       @metrics.inject(hsh) do |result, (meta, stat)|
-        next if EXCLUDED_AGGREGATES.include?(meta.type)
-        agg_meta = MetricMeta.new("#{meta.type}/all")
-        hsh[agg_meta].combine!(stat)
+        if PASSTHROUGH_METRICS.include?(meta.type) # Leave as-is, don't attempt to combine
+          hsh[meta] = stat
+        elsif meta.type == "Errors" # Sadly special cased, we want both raw and aggregate values
+          hsh[meta] = stat
+          agg_meta = MetricMeta.new("Errors/Request", :scope => meta.scope)
+          hsh[agg_meta].combine!(stat)
+        else # Combine down to a single /all key
+          agg_meta = MetricMeta.new("#{meta.type}/all", :scope => meta.scope)
+          hsh[agg_meta].combine!(stat)
+        end
+
         hsh
       end
     end

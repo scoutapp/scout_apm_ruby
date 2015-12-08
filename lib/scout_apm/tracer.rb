@@ -18,18 +18,14 @@ module ScoutApm
       # A Block: The code to be instrumented
       #
       # Options:
-      # * :scope - If specified, sets the sub-scope for the metric. We allow additional scope level.
-      # * uri - the request uri
       # * :ignore_children - will not instrument any method calls beneath this call. Example use case: InfluxDB uses Net::HTTP, which is instrumented. However, we can provide more specific data if we know we're doing an influx call, so we'd rather just instrument the Influx call and ignore Net::HTTP.
       #   when rendering the transaction tree in the UI.
+      # * :desc - Additional capture, SQL, or HTTP url or similar
       def instrument(type, name, options={}) # Takes a block
-        # if options.delete(:scope)
-          # Thread::current[:scout_apm_sub_scope] = metric_name
-        # end
-
         req = ScoutApm::RequestManager.lookup
-        req.start_layer(ScoutApm::Layer.new(type, name))
-        req.annotate_layer(options[:annotate_layer]) if options[:annotate_layer]
+        layer = ScoutApm::Layer.new(type, name)
+        req.start_layer(layer)
+        layer.desc = options[:desc] if options[:desc]
         req.ignore_children! if options[:ignore_children]
 
         begin
@@ -38,7 +34,6 @@ module ScoutApm
           req.stop_layer
           req.acknowledge_children! if options[:ignore_children]
 
-          # Thread::current[:scout_apm_sub_scope] = nil if Thread::current[:scout_apm_sub_scope] == metric_name
         end
       end
 

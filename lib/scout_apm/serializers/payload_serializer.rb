@@ -6,7 +6,14 @@ module ScoutApm
         if ScoutApm::Agent.instance.config.value("report_format") == 'json'
           ScoutApm::Serializers::PayloadSerializerToJson.serialize(metadata, metrics, slow_transactions)
         else
-          Marshal.dump(:metadata => metadata, :metrics => metrics, :slow_transactions => slow_transactions)
+          metadata = metadata.dup
+          metadata.default_proc = nil
+
+          metrics = metrics.dup
+          metrics.default_proc = nil
+          Marshal.dump(:metadata          => metadata,
+                       :metrics           => metrics,
+                       :slow_transactions => slow_transactions)
         end
       end
 
