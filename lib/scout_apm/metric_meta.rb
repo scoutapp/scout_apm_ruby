@@ -33,6 +33,10 @@ class ScoutApm::MetricMeta
   end
 
   def key_metric?
+    self.class.key_metric?(metric_name)
+  end
+
+  def self.key_metric?(metric_name)
     !!(metric_name =~ /\A(Controller|Job)\//)
   end
 end # class MetricMeta
