@@ -5,6 +5,7 @@ module ScoutApm
         def serialize(metadata, metrics, slow_transactions)
           rearranged_metrics = rearrange_the_metrics(metrics)
           rearranged_slow_transactions = rearrange_the_slow_transactions(slow_transactions)
+          metadata.merge!({:payload_version => 2})
           jsonify_hash({:metadata => metadata, :metrics => rearranged_metrics, :slow_transactions => rearranged_slow_transactions})
         end
 
