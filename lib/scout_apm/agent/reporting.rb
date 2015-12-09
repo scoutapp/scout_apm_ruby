@@ -27,7 +27,6 @@ module ScoutApm
       # In a running app, one process will get one period ready for delivery, the others will see 0.
       def report_to_server
         reporting_periods = layaway.periods_ready_for_delivery
-        logger.info "REPORTING PERIODS: #{reporting_periods.inspect}"
         reporting_periods.each do |rp|
           deliver_period(rp)
         end

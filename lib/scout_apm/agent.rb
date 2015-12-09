@@ -90,9 +90,15 @@ module ScoutApm
 
       return false unless preconditions_met?(options)
 
+
       @started = true
 
       logger.info "Starting monitoring for [#{environment.application_name}]. Framework [#{environment.framework}] App Server [#{environment.app_server}]."
+
+      # We need agent initialized to do this, so do it here instead.
+      # Clean up any old data in the layaway file, allows us to change the file
+      # structure / contents without worrying.
+      layaway.verify_layaway_file_contents
 
       load_instruments if should_load_instruments?(options)
 
