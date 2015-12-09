@@ -58,7 +58,7 @@ module ScoutApm
         return false
       end
 
-      if app_server_missing? && background_job_missing?
+      if app_server_missing?(options) && background_job_missing?
         logger.warn "Couldn't find a supported app server or background job framework. Not starting agent."
         return false
       end
@@ -227,7 +227,7 @@ module ScoutApm
       environment.deploy_integration
     end
 
-    def app_server_missing?
+    def app_server_missing?(options)
       !environment.app_server_integration(true).found? && !options[:skip_app_server_check]
     end
 
