@@ -88,6 +88,13 @@ module ScoutApm
       stat.update!(duration,duration-item.children_time)
       transaction_hash[meta] = stat if store_metric?(stack_empty)
 
+      # Add request queue time
+      if queue_time = request_queue_time(item.start_time)
+        queue_stat = ScoutApm::MetricStats.new(false)
+        queue_stat.update!(queue_time,queue_time)
+        transaction_hash['RequestQueue'] = queue_stat
+      end
+
       # Uses controllers as the entry point for a transaction. Otherwise, stats are ignored.
       if stack_empty and meta.metric_name.match(/\AController\//)
         aggs = aggregate_calls(transaction_hash.dup,meta)
@@ -201,6 +208,23 @@ module ScoutApm
         end
       end
       metric_hash
+    end
+
+    # Returns a float of seconds since the request has been in a proxy/load balancer queue
+    # Uses the X-Queue-Start or X-Request-Start headers from the front-end server to calculate the time
+    # entry_point_time is a Time object used to calculate the time since X-Queue-Start
+    def request_queue_time(entry_point_time)
+      epoch_str = nil
+      %w(X-Queue-Start X-Request-Start X-QUEUE-START X-REQUEST-START x-queue-start x-request-start).each do |header|
+        if !ENV[header].nil?
+          epoch_str = ENV[header].to_s.gsub(/(t=|\.)/, '')
+          break
+        end
+      end # do header
+      queue_start = "#{epoch_str[0,10]}.#{epoch_str[10,13]}".to_f
+      queue_time = entry_point_time.to_f - queue_start
+      queue_time = 0.000 if queue_time < 0.000
+      queue_time
     end
 
     # Merges slow_transactions together, removing transaction sample metrics from slow_transactions if the > MAX_SLOW_TRANSACTIONS_TO_STORE_METRICS
