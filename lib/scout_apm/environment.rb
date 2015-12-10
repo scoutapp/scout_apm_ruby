@@ -23,6 +23,11 @@ module ScoutApm
       ScoutApm::ServerIntegrations::Null.new(STDOUT_LOGGER), # must be last
     ]
 
+    BACKGROUND_JOB_INTEGRATIONS = [
+      ScoutApm::BackgroundJobIntegrations::Sidekiq.new,
+      ScoutApm::BackgroundJobIntegrations::DelayedJob.new
+    ]
+
     FRAMEWORK_INTEGRATIONS = [
       ScoutApm::FrameworkIntegrations::Rails2.new,
       ScoutApm::FrameworkIntegrations::Rails3Or4.new,
@@ -120,7 +125,15 @@ module ScoutApm
     # If forking, don't start worker thread in the master process. Since it's
     # started as a Thread, it won't survive the fork.
     def forking?
-      app_server_integration.forking?
+      app_server_integration.forking? || (background_job_integration && background_job_integration.forking?)
+    end
+
+    def background_job_integration
+      @background_job_integration ||= BACKGROUND_JOB_INTEGRATIONS.detect {|integration| integration.present?}
+    end
+
+    def background_job_name
+      background_job_integration && background_job_integration.name
     end
 
     def deploy_integration

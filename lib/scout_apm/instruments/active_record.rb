@@ -89,6 +89,3 @@ module ScoutApm
     end # module ActiveRecordInstruments
   end
 end
-
-
-

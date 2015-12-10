@@ -60,6 +60,9 @@ module ScoutApm
         alias_method method, _instrumented_method_name(method, type, name)
       end
 
+      def track!(metric_name, call_time, options={})
+        ScoutApm::Agent.instance.store.track!(metric_name, call_time, options)
+      end
       private
 
       def instrumented_method_string(method, type, name, options={})

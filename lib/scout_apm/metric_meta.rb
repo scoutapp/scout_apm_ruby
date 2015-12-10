@@ -20,6 +20,15 @@ class MetricMeta
     bucket
   end
 
+  # A key metric is the "core" of a request - either the Rails controller reached, or the background Job executed
+  def key_metric?
+    self.class.key_metric?(metric_name)
+  end
+
+  def self.key_metric?(metric_name)
+    !!(metric_name =~ /\A(Controller|Job)\//)
+  end
+
   # To avoid conflicts with different JSON libaries
   def to_json(*a)
      %Q[{"metric_id":#{metric_id || 'null'},"metric_name":#{metric_name.to_json},"scope":#{scope.to_json || 'null'}}]

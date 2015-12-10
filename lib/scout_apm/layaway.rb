@@ -51,7 +51,6 @@ module ScoutApm
     end
 
     # We just want to send anything older than X
-
     def should_send?(reporting_period)
       reporting_period.timestamp.age_in_seconds > REPORTING_INTERVAL
     end
