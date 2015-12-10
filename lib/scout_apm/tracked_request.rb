@@ -25,6 +25,10 @@ module ScoutApm
     # entire raw stackprof output for this request
     attr_reader :stackprof
 
+    # Headers as recorded by rails
+    # Can be nil if we never reach a Rails Controller
+    attr_reader :headers
+
     def initialize
       @layers = []
       @annotations = {}
@@ -109,6 +113,10 @@ module ScoutApm
       @error
     end
 
+    def set_headers(headers)
+      @headers = headers
+    end
+
     ###################################
     # Persist the Request
     ###################################
@@ -126,6 +134,9 @@ module ScoutApm
 
       error_metrics = LayerErrorConverter.new(self).call
       ScoutApm::Agent.instance.store.track!(error_metrics)
+
+      queue_time_metrics = RequestQueueTime.new(self).call
+      ScoutApm::Agent.instance.store.track!(queue_time_metrics)
     end
 
     # Have we already persisted this request?
