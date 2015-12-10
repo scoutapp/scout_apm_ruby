@@ -130,6 +130,8 @@ module ScoutApm
 
     def background_job_integration
       @background_job_integration ||= BACKGROUND_JOB_INTEGRATIONS.detect {|integration| integration.present?}
+      #### Temporary Disable
+      nil
     end
 
     def background_job_name
