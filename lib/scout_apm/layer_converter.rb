@@ -177,6 +177,7 @@ module ScoutApm
         walk(child, &block)
         @after_block.call(child) if @after_block
       end
+      nil
     end
 
     # Do this w/o using recursion, since it's prone to stack overflows

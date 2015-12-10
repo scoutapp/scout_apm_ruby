@@ -23,7 +23,7 @@ module ScoutApm
       meta = MetricMeta.new("#{type}/#{name}")
       stat = MetricStats.new(false)
       stat.update!(value)
-      track!({meta => stat})
+      track!({meta => stat}, options)
     end
 
     # Save a new slow transaction

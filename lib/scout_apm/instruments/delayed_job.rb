@@ -30,9 +30,18 @@ module ScoutApm
         scout_method_name = method_from_handler(job.handler)
         queue = job.queue
         latency = (Time.now.to_f - job.created_at.to_f) * 1000
-        self.class.track!("Queue/#{queue}",0,{:extra_metrics => {:latency => latency}})
-        self.class.scout_apm_trace(scout_method_name, {:extra_metrics => {:queue => queue}}) do
+
+        ScoutApm::Agent.instance.store.track_one!("Queue", queue, 0, {:extra_metrics => {:latency => latency}})
+        req = ScoutApm::RequestManager.lookup
+        req.start_layer( ScoutApm::Layer.new("Job", scout_method_name) )
+
+        begin
           run_without_scout_instruments(job)
+        rescue
+          req.error!
+          raise
+        ensure
+          req.stop_layer
         end
       end
 
@@ -40,7 +49,7 @@ module ScoutApm
         job_handler = YAML.load(handler)
         klass = job_handler.object.name
         method = job_handler.method_name
-        "Job/#{klass}##{method}"
+        "#{klass}##{method}"
       end
     end
   end
