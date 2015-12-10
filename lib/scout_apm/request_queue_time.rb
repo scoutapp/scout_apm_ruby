@@ -20,16 +20,15 @@ module ScoutApm
       request_start = root_layer.start_time
       queue_time = (request_start - parsed_start).to_f
 
-      meta = MetricMeta.new("Request/QueueTime", {:scope => scope_layer.legacy_metric_name})
+      meta = MetricMeta.new("QueueTime/Request", {:scope => scope_layer.legacy_metric_name})
       stat = MetricStats.new(true)
-      stat.update(queue_time)
+      stat.update!(queue_time)
 
       { meta => stat }
     end
 
     private
 
-    attr_reader :request
     attr_reader :headers
 
     # Looks through the possible headers with this data, and extracts the raw
@@ -38,8 +37,9 @@ module ScoutApm
     def locate_timestamp
       return nil unless headers
 
-      data = HEADERS.find { |candidate| headers[candidate] }
-      if data
+      header = HEADERS.find { |candidate| headers[candidate] }
+      if header
+        data = headers[header]
         data.to_s.gsub(/(t=|\.)/, '')
       else
         nil

@@ -117,14 +117,12 @@ module ScoutApm
 
       walker.before do |layer|
         if layer.subscopable?
-          STDOUT.puts "SCOPABLE PUSH: #{layer.legacy_metric_name}"
           subscope_layers.push(layer)
         end
       end
 
       walker.after do |layer|
         if layer.subscopable?
-          STDOUT.puts "SCOPABLE POP: #{layer.legacy_metric_name}"
           subscope_layers.pop
         end
       end
@@ -132,7 +130,6 @@ module ScoutApm
       walker.walk do |layer|
         meta_options = if subscope_layers.first && layer != subscope_layers.first # Don't scope under ourself.
                          subscope_name = subscope_layers.first.legacy_metric_name
-                         STDOUT.puts "SCOPABLE used: #{subscope_name}"
                          {:scope => subscope_name}
                        elsif layer == scope_layer # We don't scope the controller under itself
                          {}
