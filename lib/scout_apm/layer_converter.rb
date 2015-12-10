@@ -25,29 +25,6 @@ module ScoutApm
       end
     end
 
-    # Full metrics from this request. These get aggregated in Store for the
-    # overview metrics, or stored permanently in a SlowTransaction
-    # Some merging of metrics will happen here, so if a request calls the same
-    # ActiveRecord or View repeatedly, it'll get merged.
-    def create_metrics
-      metric_hash = Hash.new
-
-      scope_name = scope_layer.legacy_metric_name
-
-      walker.walk do |layer|
-        meta_options = (scope_name == layer.legacy_metric_name) ? {} : {:scope => scope_name}
-        meta_options.merge!(:desc => layer.desc) if layer.desc
-
-        meta = MetricMeta.new(layer.legacy_metric_name, meta_options)
-        meta.extra.merge!(:backtrace => layer.backtrace) if layer.backtrace
-        metric_hash[meta] ||= MetricStats.new(scope_name == layer.legacy_metric_name)
-
-        stat = metric_hash[meta]
-        stat.update!(layer.total_call_time, layer.total_exclusive_time)
-      end
-
-      metric_hash
-    end
   end
 
   # Take a TrackedRequest and turn it into a hash of:
@@ -62,6 +39,33 @@ module ScoutApm
       return {} unless scope
 
       create_metrics
+    end
+
+    # Full metrics from this request. These get aggregated in Store for the
+    # overview metrics, or stored permanently in a SlowTransaction
+    # Some merging of metrics will happen here, so if a request calls the same
+    # ActiveRecord or View repeatedly, it'll get merged.
+    def create_metrics
+      metric_hash = Hash.new
+
+      walker.walk do |layer|
+        meta_options = if layer == scope_layer # We don't scope the controller under itself
+                         {}
+                       else
+                         {:scope => scope_layer.legacy_metric_name}
+                       end
+
+        meta_options.merge!(:desc => layer.desc) if layer.desc
+
+        meta = MetricMeta.new(layer.legacy_metric_name, meta_options)
+        meta.extra.merge!(:backtrace => layer.backtrace) if layer.backtrace
+        metric_hash[meta] ||= MetricStats.new( meta_options.has_key?(:scope) )
+
+        stat = metric_hash[meta]
+        stat.update!(layer.total_call_time, layer.total_exclusive_time)
+      end
+
+      metric_hash
     end
   end
 
@@ -102,29 +106,55 @@ module ScoutApm
                           request.stackprof)
     end
 
+    # Full metrics from this request. These get aggregated in Store for the
+    # overview metrics, or stored permanently in a SlowTransaction
+    # Some merging of metrics will happen here, so if a request calls the same
+    # ActiveRecord or View repeatedly, it'll get merged.
+    def create_metrics
+      metric_hash = Hash.new
+
+      subscope_layers = []
+
+      walker.before do |layer|
+        if layer.subscopable?
+          STDOUT.puts "SCOPABLE PUSH: #{layer.legacy_metric_name}"
+          subscope_layers.push(layer)
+        end
+      end
+
+      walker.after do |layer|
+        if layer.subscopable?
+          STDOUT.puts "SCOPABLE POP: #{layer.legacy_metric_name}"
+          subscope_layers.pop
+        end
+      end
+
+      walker.walk do |layer|
+        meta_options = if subscope_layers.first && layer != subscope_layers.first # Don't scope under ourself.
+                         subscope_name = subscope_layers.first.legacy_metric_name
+                         STDOUT.puts "SCOPABLE used: #{subscope_name}"
+                         {:scope => subscope_name}
+                       elsif layer == scope_layer # We don't scope the controller under itself
+                         {}
+                       else
+                         {:scope => scope_layer.legacy_metric_name}
+                       end
+
+        meta_options.merge!(:desc => layer.desc) if layer.desc
+
+        meta = MetricMeta.new(layer.legacy_metric_name, meta_options)
+        meta.extra.merge!(:backtrace => layer.backtrace) if layer.backtrace
+        metric_hash[meta] ||= MetricStats.new( meta_options.has_key?(:scope) )
+
+        stat = metric_hash[meta]
+        stat.update!(layer.total_call_time, layer.total_exclusive_time)
+      end
+
+      metric_hash
+    end
+
     def should_capture_slow_request?
       root_layer.total_call_time > SLOW_REQUEST_TIME_THRESHOLD
-    end
-  end
-
-  class LayerBreadthFirstWalker
-    attr_reader :root_layer
-
-    def initialize(root_layer)
-      @root_layer = root_layer
-    end
-
-    # Do this w/o using recursion, since it's prone to stack overflows
-    # Takes a block to run over each layer
-    def walk
-      # Queue, shift of front, push on back
-      layer_queue = [root_layer]
-
-      while layer_queue.any?
-        current_layer = layer_queue.shift
-        current_layer.children.each { |child| layer_queue.push(child) }
-        yield current_layer
-      end
     end
   end
 
@@ -135,16 +165,34 @@ module ScoutApm
       @root_layer = root_layer
     end
 
-    # Do this w/o using recursion, since it's prone to stack overflows
-    # Takes a block to run over each layer
-    def walk
-      layer_stack = [root_layer]
+    def before(&block)
+      @before_block = block
+    end
 
-      while layer_stack.any?
-        current_layer = layer_stack.pop
-        current_layer.children.reverse.each { |child| layer_stack.push(child) }
-        yield current_layer
+    def after(&block)
+      @after_block = block
+    end
+
+    def walk(layer=root_layer, &block)
+      layer.children.each do |child|
+        @before_block.call(child) if @before_block
+        yield child
+        walk(child, &block)
+        @after_block.call(child) if @after_block
       end
     end
+
+    # Do this w/o using recursion, since it's prone to stack overflows
+    # Takes a block to run over each layer
+    # def walk
+      # layer_stack = [root_layer]
+
+      # while layer_stack.any?
+        # current_layer = layer_stack.pop
+        # current_layer.children.reverse.each { |child| layer_stack.push(child) }
+
+        # yield current_layer
+      # end
+    # end
   end
 end

@@ -14,7 +14,8 @@ module ScoutApm
     def verify_layaway_file_contents
       file.read_and_write do |existing_data|
         existing_data ||= {}
-        if existing_data.values.all? {|v| v.is_a? StoreReportingPeriod }
+        if existing_data.keys.all?{|k| k.is_a? StoreReportingPeriodTimestamp } &&
+            existing_data.values.all? {|v| v.is_a? StoreReportingPeriod }
           existing_data
         else
           {}
@@ -37,29 +38,22 @@ module ScoutApm
     # Returns an array of ReportingPeriod objects that are ready to be pushed to the server
     def periods_ready_for_delivery
       ready_for_delivery = []
-      current_timestamp = ScoutApm::Agent.instance.store.current_timestamp
 
       file.read_and_write do |existing_data|
         existing_data ||= {}
-
-        # Existing Data is:
-        # {
-        #   time(now-1m) => reporting period,
-        #   time(now-2m) => reporting period,
-        #   time(now-3m) => reporting period,
-        # }
-        # I want the -2m, and -1m, but not too old of data.
-        # So get all data *before* this time, and *after* this time
-        before = current_timestamp - REPORTING_INTERVAL
-        # after  = current_timestamp - (MAX_INTERVALS * REPORTING_INTERVAL)
-        # existing_data      = existing_data.select {|time, _| after < time } # Prune too-old data
-        ready_for_delivery = existing_data.select {|time, _| time < before } # Select off the values we want
+        ready_for_delivery = existing_data.select {|time, rp| should_send?(rp) } # Select off the values we want
 
         # Rewrite anything not plucked out back to the file
         existing_data.reject {|k, v| ready_for_delivery.keys.include?(k) }
       end
 
       return ready_for_delivery.values
+    end
+
+    # We just want to send anything older than X
+
+    def should_send?(reporting_period)
+      reporting_period.timestamp.age_in_seconds > REPORTING_INTERVAL
     end
   end
 end

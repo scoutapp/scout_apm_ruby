@@ -36,9 +36,10 @@ module ScoutApm
         metrics = reporting_period.metrics_payload
         slow_transactions = reporting_period.slow_transactions_payload
         metadata = {
-          :app_root => ScoutApm::Environment.instance.root.to_s,
-          :unique_id => ScoutApm::Utils::UniqueId.simple,
+          :app_root      => ScoutApm::Environment.instance.root.to_s,
+          :unique_id     => ScoutApm::Utils::UniqueId.simple,
           :agent_version => ScoutApm::VERSION,
+          :agent_time    => reporting_period.timestamp.to_s,
         }
 
         log_deliver(metrics, slow_transactions, metadata)

@@ -3,23 +3,15 @@
 # the layaway file for cross-process aggregation.
 module ScoutApm
   class Store
-    # A hash of reporting periods. { timestamp => StoreReportingPeriod }
-    # where the timestamp is the integer value at the beginning of the minute
-    # See #timestamp_for
+    # A hash of reporting periods. { StoreReportingPeriodTimestamp => StoreReportingPeriod }
     attr_reader :reporting_periods
 
     def initialize
       @reporting_periods = Hash.new { |h,k| h[k] = StoreReportingPeriod.new(k) }
     end
 
-    # A simple way to calculate beginning of the minute
-    def timestamp_for(time)
-      time.to_i - time.sec
-    end
-
-    # What is the timestamp for right now.
     def current_timestamp
-      timestamp_for(Time.now)
+      StoreReportingPeriodTimestamp.new
     end
 
     # Save newly collected metrics
@@ -41,11 +33,38 @@ module ScoutApm
 
     # Take each completed reporting_period, and write it to the layaway passed
     def write_to_layaway(layaway)
-      reporting_periods.select { |time, rp| time < current_timestamp }.
+      reporting_periods.select { |time, rp| time.timestamp < current_timestamp.timestamp}.
                         each { |time, reporting_period|
                                layaway.add_reporting_period(time, reporting_period)
                                reporting_periods.delete(time)
                              }
+    end
+  end
+
+  # A timestamp, normalized to the beginning of a minute. Used as a hash key to
+  # bucket metrics into per-minute groups
+  class StoreReportingPeriodTimestamp
+    attr_reader :timestamp
+
+    def initialize(time=Time.now)
+      @raw_time = time.utc # The actual time passed in. Store it so we can to_s it without reparsing a timestamp
+      @timestamp = @raw_time.to_i - @raw_time.sec # The normalized time (integer) to compare by
+    end
+
+    def to_s
+      @raw_time.iso8601
+    end
+
+    def eql?(o)
+      timestamp.eql?(o.timestamp)
+    end
+
+    def hash
+      timestamp.hash
+    end
+
+    def age_in_seconds
+      Time.now.to_i - timestamp
     end
   end
 
@@ -65,7 +84,8 @@ module ScoutApm
     # An array of SlowTransaction objects
     attr_reader :slow_transactions
 
-    # Which minute is this StoreReportingPeriod for?
+    # A StoreReportingPeriodTimestamp representing the time that this
+    # collection of metrics is for
     attr_reader :timestamp
 
     def initialize(timestamp)

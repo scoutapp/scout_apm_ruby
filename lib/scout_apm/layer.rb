@@ -51,6 +51,14 @@ module ScoutApm
       @desc = desc
     end
 
+    def subscopable!
+      @subscopable = true
+    end
+
+    def subscopable?
+      @subscopable
+    end
+
     # This is the old style name. This function is used for now, but should be
     # removed, and the new type & name split should be enforced through the
     # app.

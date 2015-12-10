@@ -21,11 +21,14 @@ module ScoutApm
       # * :ignore_children - will not instrument any method calls beneath this call. Example use case: InfluxDB uses Net::HTTP, which is instrumented. However, we can provide more specific data if we know we're doing an influx call, so we'd rather just instrument the Influx call and ignore Net::HTTP.
       #   when rendering the transaction tree in the UI.
       # * :desc - Additional capture, SQL, or HTTP url or similar
+      # * :scope - set to true if you want to make this layer a subscope
       def instrument(type, name, options={}) # Takes a block
-        req = ScoutApm::RequestManager.lookup
         layer = ScoutApm::Layer.new(type, name)
-        req.start_layer(layer)
         layer.desc = options[:desc] if options[:desc]
+        layer.subscopable!          if options[:scope]
+
+        req = ScoutApm::RequestManager.lookup
+        req.start_layer(layer)
         req.ignore_children! if options[:ignore_children]
 
         begin
@@ -33,7 +36,6 @@ module ScoutApm
         ensure
           req.stop_layer
           req.acknowledge_children! if options[:ignore_children]
-
         end
       end
 
