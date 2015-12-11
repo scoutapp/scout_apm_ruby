@@ -27,10 +27,7 @@ module ScoutApm
       file.read_and_write do |existing_data|
         existing_data ||= Hash.new
         existing_data.merge(time => reporting_period) {|key, old_val, new_val|
-          ScoutApm::Agent.instance.logger.debug("Merging Layaway - Time: #{key.to_s}, OldMetrics: #{old_val.metrics.length}, OldSlowTrans: #{old_val.slow_transactions.length}, NewMetrics: #{new_val.metrics.length}, NewSlowTrans: #{new_val.slow_transactions.length}" )
-          result = old_val.merge_metrics!(new_val.metrics).merge_slow_transactions!(new_val.slow_transactions)
-          ScoutApm::Agent.instance.logger.debug("Result - Metrics: #{result.metrics.length}, SlowTrans: #{result.slow_transactions.length}" )
-          result
+          old_val.merge_metrics!(new_val.metrics).merge_slow_transactions!(new_val.slow_transactions)
         }
       end
     end
