@@ -7,6 +7,7 @@ module ScoutApm
     attr_reader :reporting_periods
 
     def initialize
+      @mutex = Mutex.new
       @reporting_periods = Hash.new { |h,k| h[k] = StoreReportingPeriod.new(k) }
     end
 
@@ -16,7 +17,9 @@ module ScoutApm
 
     # Save newly collected metrics
     def track!(metrics, options={})
-      reporting_periods[current_timestamp].merge_metrics!(metrics)
+      @mutex.synchronize {
+        reporting_periods[current_timestamp].merge_metrics!(metrics)
+      }
     end
 
     def track_one!(type, name, value, options={})
@@ -28,16 +31,20 @@ module ScoutApm
 
     # Save a new slow transaction
     def track_slow_transaction!(slow_transaction)
-      reporting_periods[current_timestamp].merge_slow_transactions!(slow_transaction)
+      @mutex.synchronize {
+        reporting_periods[current_timestamp].merge_slow_transactions!(slow_transaction)
+      }
     end
 
     # Take each completed reporting_period, and write it to the layaway passed
     def write_to_layaway(layaway)
-      reporting_periods.select { |time, rp| time.timestamp < current_timestamp.timestamp}.
-                        each { |time, reporting_period|
-                               layaway.add_reporting_period(time, reporting_period)
-                               reporting_periods.delete(time)
-                             }
+      @mutex.synchronize {
+        reporting_periods.select { |time, rp| time.timestamp < current_timestamp.timestamp}.
+                          each { |time, reporting_period|
+                                layaway.add_reporting_period(time, reporting_period)
+                                reporting_periods.delete(time)
+                              }
+      }
     end
   end
 
