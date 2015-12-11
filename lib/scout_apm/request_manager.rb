@@ -14,12 +14,14 @@ module ScoutApm
       if req && req.recorded?
         nil
       else
+        ScoutApm::Agent.instance.logger.info("Found Existing Request")
         req
       end
     end
 
     # Create a new TrackedRequest object for this thread
     def self.create
+      ScoutApm::Agent.instance.logger.info("Starting a new Request")
       Thread.current[:scout_request] = TrackedRequest.new
     end
   end

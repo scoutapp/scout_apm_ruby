@@ -85,6 +85,7 @@ module ScoutApm
     # * Collect stackprof info
     # * Send the request off to be stored
     def stop_request
+      ScoutApm::Agent.instance.logger.debug("stop_request: #{annotations[:uri]}" )
       StackProf.stop
       @stackprof = StackProf.results
 
