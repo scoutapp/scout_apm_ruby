@@ -58,7 +58,7 @@ module ScoutApm
 
       def log_with_scout_instruments(*args, &block)
         sql, name = args
-        self.class.instrument("ActiveRecord", scout_ar_metric_name(sql,name), :desc => Utils::SqlSanitizer.new(sql).to_s ) do
+        self.class.instrument("ActiveRecord", scout_ar_metric_name(sql, name), :desc => Utils::SqlSanitizer.new(sql).to_s ) do
           log_without_scout_instruments(sql, name, &block)
         end
       end
@@ -66,7 +66,7 @@ module ScoutApm
       def scout_ar_metric_name(sql, name)
         # sql: SELECT "places".* FROM "places"  ORDER BY "places"."position" ASC
         # name: Place Load
-        if name && (parts = name.split " ") && parts.size == 2
+        if name && (parts = name.split(" ")) && parts.size == 2
           model = parts.first
           operation = parts.last.downcase
           metric_name = case operation

@@ -113,6 +113,9 @@ module ScoutApm
     def create_metrics
       metric_hash = Hash.new
 
+      # Keep a list of subscopes, but only ever use the front one.  The rest
+      # get pushed/popped in cases when we have many levels of subscopable
+      # layers.  This lets us push/pop without otherwise keeping track very closely.
       subscope_layers = []
 
       walker.before do |layer|
