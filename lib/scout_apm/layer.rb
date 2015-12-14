@@ -67,6 +67,8 @@ module ScoutApm
     end
 
     def store_backtrace(bt)
+      return unless bt.is_a? Array
+      return unless bt.length > 0
       @backtrace = bt
     end
 
