@@ -150,7 +150,7 @@ module ScoutApm
         stat.update!(layer.total_call_time, layer.total_exclusive_time)
 
         # Merged Metric (no specifics, just sum up by type
-        meta = MetricMeta.new("#{layer.type}/#{all}")
+        meta = MetricMeta.new("#{layer.type}/all")
         metric_hash[meta] ||= MetricStats.new(false)
         stat = metric_hash[meta]
         stat.update!(layer.total_call_time, layer.total_exclusive_time)
