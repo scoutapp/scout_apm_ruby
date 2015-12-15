@@ -212,6 +212,7 @@ module ScoutApm
         when :rails3_or_4 then
           install_instrument(ScoutApm::Instruments::ActionControllerRails3)
           install_instrument(ScoutApm::Instruments::Middleware)
+          install_instrument(ScoutApm::Instruments::RailsRouter)
         when :sinatra     then install_instrument(ScoutApm::Instruments::Sinatra)
         end
       end
