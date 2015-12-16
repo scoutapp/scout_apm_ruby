@@ -20,6 +20,9 @@ module ScoutApm
       request_start = root_layer.start_time
       queue_time = (request_start - parsed_start).to_f
 
+      # If we end up with a negative value, just bail out and don't report anything
+      return {} if queue_time < 0
+
       meta = MetricMeta.new("QueueTime/Request", {:scope => scope_layer.legacy_metric_name})
       stat = MetricStats.new(true)
       stat.update!(queue_time)
