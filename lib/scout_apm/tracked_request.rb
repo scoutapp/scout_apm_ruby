@@ -40,7 +40,7 @@ module ScoutApm
     end
 
     def start_layer(layer)
-      start_request(layer) unless @layer
+      start_request(layer) unless @root_layer
 
       # ScoutApm::Agent.instance.logger.info("Starting Layer: #{layer.to_s}")
       @layers[-1].add_child(layer) if @layers.any?
