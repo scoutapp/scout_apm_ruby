@@ -7,10 +7,10 @@ module ScoutApm
           ScoutApm::Serializers::PayloadSerializerToJson.serialize(metadata, metrics, slow_transactions)
         else
           metadata = metadata.dup
-          metadata.default_proc = nil
+          metadata.default = nil
 
           metrics = metrics.dup
-          metrics.default_proc = nil
+          metrics.default = nil
           Marshal.dump(:metadata          => metadata,
                        :metrics           => metrics,
                        :slow_transactions => slow_transactions)
