@@ -11,13 +11,13 @@ module ScoutApm
 
         def rearrange_the_metrics(metrics)
           metrics.to_a.map do |meta, stats|
-            stats.as_json.merge(key: meta.as_json)
+            stats.as_json.merge(:key => meta.as_json)
           end
         end
 
         def rearrange_the_slow_transactions(slow_transactions)
           slow_transactions.to_a.map do |slow_t|
-            slow_t.as_json.merge(metrics: rearrange_the_metrics(slow_t.metrics))
+            slow_t.as_json.merge(:metrics => rearrange_the_metrics(slow_t.metrics))
           end
         end
 
