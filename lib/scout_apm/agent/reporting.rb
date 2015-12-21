@@ -43,6 +43,7 @@ module ScoutApm
           :unique_id     => ScoutApm::Utils::UniqueId.simple,
           :agent_version => ScoutApm::VERSION,
           :agent_time    => reporting_period.timestamp.to_s,
+          :agent_pid     => Process.pid,
         }
 
         log_deliver(metrics, slow_transactions, metadata)
