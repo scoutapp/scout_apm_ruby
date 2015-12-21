@@ -33,7 +33,6 @@ module ScoutApm
     end
 
     REPORTING_INTERVAL = 60 # seconds
-    MAX_INTERVALS = 5
 
     # Returns an array of ReportingPeriod objects that are ready to be pushed to the server
     def periods_ready_for_delivery
