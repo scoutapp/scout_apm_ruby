@@ -41,7 +41,7 @@ module ScoutApm
       @mutex.synchronize {
         reporting_periods.select { |time, rp| time.timestamp < current_timestamp.timestamp}.
                           each   { |time, rp|
-                                   layaway.add_reporting_period(time, reporting_period)
+                                   layaway.add_reporting_period(time, rp)
                                    reporting_periods.delete(time)
                                  }
       }
