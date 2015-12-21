@@ -24,9 +24,9 @@ module ScoutApm
         report_to_server
       end
 
-      # In a running app, one process will get one period ready for delivery, the others will see 0.
-      MAX_AGE_TO_REPORT = 10.minutes
+      MAX_AGE_TO_REPORT = (10 * 60) # ten minutes as seconds
 
+      # In a running app, one process will get one period ready for delivery, the others will see 0.
       def report_to_server
         reporting_periods = layaway.periods_ready_for_delivery
         reporting_periods.reject! {|rp| rp.timestamp.age_in_seconds > MAX_AGE_TO_REPORT }
