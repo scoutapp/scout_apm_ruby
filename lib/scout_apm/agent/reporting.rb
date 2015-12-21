@@ -29,7 +29,7 @@ module ScoutApm
 
       def report_to_server
         reporting_periods = layaway.periods_ready_for_delivery
-        reporting_periods.reject_if {|rp| rp.timestamp.age_in_seconds > MAX_AGE_TO_REPORT }
+        reporting_periods.reject! {|rp| rp.timestamp.age_in_seconds > MAX_AGE_TO_REPORT }
         reporting_periods.each do |rp|
           deliver_period(rp)
         end
