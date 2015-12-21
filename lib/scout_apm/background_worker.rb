@@ -39,7 +39,7 @@ module ScoutApm
           end
         end
       rescue
-        ScoutApm::Agent.instance.logger.debug "Background Worker Exception!!!!!!!"
+        ScoutApm::Agent.instance.logger.debug "Background Worker Exception!"
         ScoutApm::Agent.instance.logger.debug $!.message
         ScoutApm::Agent.instance.logger.debug $!.backtrace
       end
