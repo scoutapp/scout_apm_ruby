@@ -77,17 +77,6 @@ module ScoutApm
 
   # One period of Storage. Typically 1 minute
   class StoreReportingPeriod
-    # A hash of { MetricMeta => MetricStat }
-    # This holds metrics for specific parts of the application.
-    # "Controller/user/index", "ActiveRecord/SQL/users/find", "View/users/_gravatar" and similar.
-    #
-    # If over the course of a minute a metric is called more than once (very likely), it will be
-    # combined with the others of the same type, and summed/calculated.  The merging logic is in
-    # MetricStats
-    #
-    # Use the accessor function `metrics_payload` for most uses. It includes the calculated aggregate values
-    attr_reader :metrics
-
     # An array of SlowTransaction objects
     attr_reader :slow_transactions
 
@@ -96,16 +85,17 @@ module ScoutApm
     attr_reader :timestamp
 
     def initialize(timestamp)
-      @metrics = Hash.new
-      @slow_transactions = Array.new
       @timestamp = timestamp
+
+      @slow_transactions = Array.new
+      @aggregate_metrics = Hash.new
     end
 
     #################################
     # Add metrics as they are recorded
     #################################
     def merge_metrics!(metrics)
-      @metrics.merge!(metrics) { |key, old_stat, new_stat| old_stat.combine!(new_stat) }
+      metrics.each { |metric| absorb(metric) }
       self
     end
 
@@ -118,7 +108,7 @@ module ScoutApm
     # Retrieve Metrics for reporting
     #################################
     def metrics_payload
-      aggregate_metrics
+      @aggregate_metrics
     end
 
     def slow_transactions_payload
@@ -136,22 +126,20 @@ module ScoutApm
     # A hash of { MetricMeta => MetricStat }
     # This represents the aggregate metrics over the course of the minute.
     # "ActiveRecord/all", "View/all", "HTTP/all" and similar
-    def aggregate_metrics
-      hsh = Hash.new {|h,k| h[k] = MetricStats.new }
+    def absorb(metric)
+      meta, stat = metric
 
-      @metrics.inject(hsh) do |result, (meta, stat)|
-        if PASSTHROUGH_METRICS.include?(meta.type) # Leave as-is, don't attempt to combine
-          hsh[meta] = stat
-        elsif meta.type == "Errors" # Sadly special cased, we want both raw and aggregate values
-          hsh[meta] = stat
-          agg_meta = MetricMeta.new("Errors/Request", :scope => meta.scope)
-          hsh[agg_meta].combine!(stat)
-        else # Combine down to a single /all key
-          agg_meta = MetricMeta.new("#{meta.type}/all", :scope => meta.scope)
-          hsh[agg_meta].combine!(stat)
-        end
-
-        hsh
+      if PASSTHROUGH_METRICS.include?(meta.type) # Leave as-is, don't attempt to combine
+        @aggregate_metrics[meta] = stat
+      elsif meta.type == "Errors" # Sadly special cased, we want both raw and aggregate values
+        @aggregate_metrics[meta] = stat
+        agg_meta = MetricMeta.new("Errors/Request", :scope => meta.scope)
+        @aggregate_metrics[agg_meta] ||= MetricStats.new
+        @aggregate_metrics[agg_meta].combine!(stat)
+      else # Combine down to a single /all key
+        agg_meta = MetricMeta.new("#{meta.type}/all", :scope => meta.scope)
+        @aggregate_metrics[agg_meta] ||= MetricStats.new
+        @aggregate_metrics[agg_meta].combine!(stat)
       end
     end
   end
