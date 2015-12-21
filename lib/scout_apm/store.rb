@@ -40,10 +40,10 @@ module ScoutApm
     def write_to_layaway(layaway)
       @mutex.synchronize {
         reporting_periods.select { |time, rp| time.timestamp < current_timestamp.timestamp}.
-                          each { |time, reporting_period|
-                                layaway.add_reporting_period(time, reporting_period)
-                                reporting_periods.delete(time)
-                              }
+                          each   { |time, rp|
+                                   layaway.add_reporting_period(time, reporting_period)
+                                   reporting_periods.delete(time)
+                                 }
       }
     end
   end
