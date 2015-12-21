@@ -27,7 +27,7 @@ module ScoutApm
       file.read_and_write do |existing_data|
         existing_data ||= Hash.new
         existing_data.merge(time => reporting_period) {|key, old_val, new_val|
-          old_val.merge_metrics!(new_val.metrics).merge_slow_transactions!(new_val.slow_transactions)
+          old_val.merge_metrics!(new_val.metrics_payload).merge_slow_transactions!(new_val.slow_transactions)
         }
       end
     end
