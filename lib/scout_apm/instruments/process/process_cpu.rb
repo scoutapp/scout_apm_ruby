@@ -17,8 +17,12 @@ module ScoutApm
           @last_stime = t.stime
         end
 
+        def metric_type
+          "CPU"
+        end
+
         def metric_name
-          "CPU/Utilization"
+          "Utilization"
         end
 
         def human_name

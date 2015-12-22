@@ -17,11 +17,7 @@ module ScoutApm
     end
 
     def self.current
-      Thread.current[:scout_context] ||= new
-    end
-
-    def self.clear!
-      Thread.current[:scout_context] = nil
+      RequestManager.lookup.context
     end
 
     # Add context

@@ -1,3 +1,9 @@
+# 1.2.0
+
+* Middleware tracing - Track time in the Rack middleware that Rails sets up
+* Queue Time tracking - Track how much time is spent in the load balancer
+* Major refactor of internals to allow more flexibility for future features
+
 # 1.0.0
 
 * General Availability

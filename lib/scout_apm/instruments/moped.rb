@@ -23,8 +23,8 @@ module ScoutApm
             def process_with_scout_instruments(operation, &callback)
               if operation.respond_to?(:collection)
                 collection = operation.collection
-                self.class.instrument("MongoDB/Process/#{collection}/#{operation.class.to_s.split('::').last}",
-                                      :desc => scout_sanitize_log(operation.log_inspect)) do
+                name = "Process/#{collection}/#{operation.class.to_s.split('::').last}"
+                self.class.instrument("MongoDB", name, :annotate_layer => { :query => scout_sanitize_log(operation.log_inspect) }) do
                   process_without_scout_instruments(operation, &callback)
                 end
               end

@@ -29,9 +29,21 @@ module ScoutApm
 
     module SinatraInstruments
       def dispatch_with_scout_instruments!
-        scout_controller_action = "Controller/Sinatra/#{scout_sinatra_controller_name(@request)}"
-        self.class.scout_apm_trace(scout_controller_action, :uri => @request.path_info, :ip => @request.ip) do
+        scout_controller_action = "Sinatra/#{scout_sinatra_controller_name(@request)}"
+
+        req = ScoutApm::RequestManager.lookup
+        req.annotate_request(:uri => @request.path_info)
+        req.context.add_user(:ip => @request.ip)
+        req.set_headers(request.headers)
+
+        req.start_layer( ScoutApm::Layer.new("Controller", scout_controller_action) )
+        begin
           dispatch_without_scout_instruments!
+        rescue
+          req.error!
+          raise
+        ensure
+          req.stop_layer
         end
       end
 

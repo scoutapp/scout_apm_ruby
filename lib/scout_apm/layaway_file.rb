@@ -42,8 +42,9 @@ module ScoutApm
                                             "Change the path by setting the `data_file` key in scout_apm.yml"
                                            )
       ScoutApm::Agent.instance.logger.debug(e.backtrace.join("\n\t"))
+
       # ensure the in-memory metric hash is cleared so data doesn't continue to accumulate.
-      ScoutApm::Agent.instance.store.metric_hash = {}
+      # ScoutApm::Agent.instance.store.metric_hash = {}
     end
 
     def get_data(f)

@@ -2,7 +2,7 @@ module ScoutApm
   class SlowTransaction
     include ScoutApm::BucketNameSplitter
 
-    BACKTRACE_THRESHOLD = 0.5 # the minimum threshold to record the backtrace for a metric.
+    BACKTRACE_THRESHOLD = 0.1 # the minimum threshold to record the backtrace for a metric.
     BACKTRACE_LIMIT = 5 # Max length of callers to display
     MAX_SIZE = 100 # Limits the size of the metric hash to prevent a metric explosion.
 
@@ -16,6 +16,9 @@ module ScoutApm
     attr_reader :prof
     attr_reader :raw_prof
 
+    # TODO: Move this out of SlowTransaction, it doesn't have much to do w/
+    # slow trans other than being a piece of data that ends up in it.
+    #
     # Given a call stack, generates a filtered backtrace that:
     # * Limits to the app/models, app/controllers, or app/views directories
     # * Limits to 5 total callers

@@ -13,8 +13,8 @@ module ScoutApm
     end
 
     private
-    def split_metric_name(name)
-      name.to_s.split(/\//, 2)
+    def split_metric_name(metric_name)
+      metric_name.to_s.split(/\//, 2)
     end
 
     def scope_hash
