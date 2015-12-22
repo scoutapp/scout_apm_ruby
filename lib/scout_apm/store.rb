@@ -130,12 +130,16 @@ module ScoutApm
       meta, stat = metric
 
       if PASSTHROUGH_METRICS.include?(meta.type) # Leave as-is, don't attempt to combine
-        @aggregate_metrics[meta] = stat
+        @aggregate_metrics[meta] ||= MetricStats.new
+        @aggregate_metrics[meta].combine!(stat)
+
       elsif meta.type == "Errors" # Sadly special cased, we want both raw and aggregate values
-        @aggregate_metrics[meta] = stat
+        @aggregate_metrics[meta] ||= MetricStats.new
+        @aggregate_metrics[meta].combine!(stat)
         agg_meta = MetricMeta.new("Errors/Request", :scope => meta.scope)
         @aggregate_metrics[agg_meta] ||= MetricStats.new
         @aggregate_metrics[agg_meta].combine!(stat)
+
       else # Combine down to a single /all key
         agg_meta = MetricMeta.new("#{meta.type}/all", :scope => meta.scope)
         @aggregate_metrics[agg_meta] ||= MetricStats.new
