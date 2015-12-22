@@ -104,7 +104,8 @@ module ScoutApm
     end
 
     def hostname
-      @hostname ||= Agent.instance.config.value("hostname") || platform_integration.hostname
+      config_hostname = Agent.instance.config.value("hostname", !Agent.instance.config.config_file_exists?)
+      @hostname ||= config_hostname || platform_integration.hostname
     end
 
     # Returns the whole integration object

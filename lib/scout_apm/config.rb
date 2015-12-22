@@ -29,6 +29,10 @@ module ScoutApm
       @config_path = config_path
     end
 
+    def config_file_exists?
+      File.exist?(config_path)
+    end
+
     # Fetch a config value.
     # It first attempts to fetch an ENV var prefixed with 'SCOUT_',
     # then from the settings file.
