@@ -2,7 +2,9 @@
 
 * Middleware tracing - Track time in the Rack middleware that Rails sets up
 * Queue Time tracking - Track how much time is spent in the load balancer
+* Solidify support for threaded app servers (such as Puma or Thin)
 * Major refactor of internals to allow more flexibility for future features
+* Several bug fixes
 
 # 1.0.0
 
