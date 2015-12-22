@@ -121,11 +121,7 @@ module ScoutApm
     # TODO: Figure out a way to not have this duplicate what's in Samplers, and also on server's ingest
     PASSTHROUGH_METRICS = ["CPU", "Memory", "Instance", "Controller"]
 
-    # Calculate any aggregate metrics necessary.
-    #
-    # A hash of { MetricMeta => MetricStat }
-    # This represents the aggregate metrics over the course of the minute.
-    # "ActiveRecord/all", "View/all", "HTTP/all" and similar
+    # Absorbs a single new metric into the aggregates
     def absorb(metric)
       meta, stat = metric
 
