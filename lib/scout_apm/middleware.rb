@@ -5,7 +5,7 @@ module ScoutApm
     def initialize(app)
       @app = app
       @attempts = 0
-      @started = ScoutApm::Agent.instance.started?
+      @started = ScoutApm::Agent.instance.started? && ScoutApm::Agent.instance.background_worker_running?
     end
 
     # If we get a web request in, then we know we're running in some sort of app server
@@ -21,7 +21,8 @@ module ScoutApm
     def attempt_to_start_agent
       @attempts += 1
       ScoutApm::Agent.instance.start(:skip_app_server_check => true)
-      @started = ScoutApm::Agent.instance.started?
+      ScoutApm::Agent.instance.start_background_worker
+      @started = ScoutApm::Agent.instance.started? && ScoutApm::Agent.instance.background_worker_running?
     rescue => e
       # Can't be sure of any logging here, so fall back to ENV var and STDOUT
       if ENV["SCOUT_LOG_LEVEL"] == "debug"

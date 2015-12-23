@@ -90,7 +90,6 @@ module ScoutApm
 
       return false unless preconditions_met?(options)
 
-
       @started = true
 
       logger.info "Starting monitoring for [#{environment.application_name}]. Framework [#{environment.framework}] App Server [#{environment.app_server}] Background Job Framework [#{environment.background_job_name}]."
@@ -176,9 +175,14 @@ module ScoutApm
       return !environment.forking?
     end
 
+    def background_worker_running?
+      !! @background_worker_thread
+    end
+
     # Creates the worker thread. The worker thread is a loop that runs continuously. It sleeps for +Agent#period+ and when it wakes,
     # processes data, either saving it to disk or reporting to Scout.
     def start_background_worker
+      logger.info "Not starting background worker, already started" and return if background_worker_running?
       logger.info "Initializing worker thread."
       @background_worker = ScoutApm::BackgroundWorker.new
       @background_worker_thread = Thread.new do
