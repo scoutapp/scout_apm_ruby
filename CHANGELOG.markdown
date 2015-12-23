@@ -1,3 +1,8 @@
+# 1.2.1
+
+* Fix a small issue where the middleware that attempts to start the agent could
+  mistakenly detect that the agent was running when in fact it wasn't.
+
 # 1.2.0
 
 * Middleware tracing - Track time in the Rack middleware that Rails sets up
