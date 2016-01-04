@@ -5,6 +5,10 @@ require 'scout_apm/utils/sql_sanitizer'
 module ScoutApm
   module Utils
     class SqlSanitizerTest < Minitest::Test
+      def setup
+        ScoutApm::Agent.instance.init_logger
+      end
+
       # Too long, and we just bail out to prevent long running instrumentation
       def test_long_sql
         sql = " " * 1001
@@ -68,9 +72,7 @@ module ScoutApm
         assert_equal false, sql.valid_encoding?
         ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :mysql }
         assert_equal %q|SELECT `blogs`.* FROM `blogs` WHERE (title = 'a_c')|, ss.sql
-        assert_nothing_raised do
-          assert_equal %q|SELECT `blogs`.* FROM `blogs` WHERE (title = ?)|, ss.to_s
-        end
+        assert_equal %q|SELECT `blogs`.* FROM `blogs` WHERE (title = ?)|, ss.to_s
       end
     end
   end

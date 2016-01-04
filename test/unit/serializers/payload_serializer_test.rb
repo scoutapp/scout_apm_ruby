@@ -13,17 +13,17 @@ require 'ostruct'
 require 'json' # to deserialize what has been manually serialized by the production code
 
 # stub the report_format value
-class ScoutApm::Agent
-  module Config
-    def self.value(key)
-      'json'
-    end
-  end
+# class ScoutApm::Agent
+  # module Config
+    # def self.value(key)
+      # 'json'
+    # end
+  # end
 
-  def self.instance
-    OpenStruct.new(:config => Config)
-  end
-end
+  # def self.instance
+    # OpenStruct.new(:config => Config)
+  # end
+# end
 
 class PayloadSerializerTest < Minitest::Test
 
@@ -33,13 +33,14 @@ class PayloadSerializerTest < Minitest::Test
       :unique_id => "unique_idz",
       :agent_version => 123
     }
-    payload = ScoutApm::Serializers::PayloadSerializer.serialize(metadata, {}, {})
+    payload = ScoutApm::Serializers::PayloadSerializerToJson.serialize(metadata, {}, {})
 
     # symbol keys turn to strings
     formatted_metadata = {
       "app_root" => "/srv/app/rootz",
       "unique_id" => "unique_idz",
-      "agent_version" => 123
+      "agent_version" => 123,
+      "payload_version" => 2
     }
     assert_equal formatted_metadata, JSON.parse(payload)["metadata"]
   end
@@ -73,7 +74,7 @@ class PayloadSerializerTest < Minitest::Test
         stats.total_exclusive_time = 0.07813208899999999
       }
     }
-    payload = ScoutApm::Serializers::PayloadSerializer.serialize({}, metrics, {})
+    payload = ScoutApm::Serializers::PayloadSerializerToJson.serialize({}, metrics, {})
     formatted_metrics = [
       {
         "key" => {
@@ -145,7 +146,7 @@ class PayloadSerializerTest < Minitest::Test
     context.add({"this" => "that"})
     context.add_user({"hello" => "goodbye"})
     slow_t = ScoutApm::SlowTransaction.new("http://example.com/blabla", "Buckethead/something/else", 1.23, slow_transaction_metrics, context, Time.at(1448198788), StackProf.new)
-    payload = ScoutApm::Serializers::PayloadSerializer.serialize({}, {}, [slow_t])
+    payload = ScoutApm::Serializers::PayloadSerializerToJson.serialize({}, {}, [slow_t])
     formatted_slow_transactions = [
       {
         "key" => {
@@ -200,12 +201,14 @@ class PayloadSerializerTest < Minitest::Test
   def test_escapes_json_quotes
     metadata = {
       :quotie => "here are some \"quotes\"",
+      :payload_version => 2,
     }
-    payload = ScoutApm::Serializers::PayloadSerializer.serialize(metadata, {}, {})
+    payload = ScoutApm::Serializers::PayloadSerializerToJson.serialize(metadata, {}, {})
 
     # symbol keys turn to strings
     formatted_metadata = {
-      "quotie" => "here are some \"quotes\""
+      "quotie" => "here are some \"quotes\"",
+      "payload_version" => 2
     }
     assert_equal formatted_metadata, JSON.parse(payload)["metadata"]
   end

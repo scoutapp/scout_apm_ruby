@@ -18,7 +18,8 @@ class ConfigTest < Minitest::Test
   end
 
   def test_loading_a_file
-    ENV['RACK_ENV'] = "production"
+    set_rack_env("production")
+
     conf_file = File.expand_path("../../data/config_test_1.yml", __FILE__)
     conf = ScoutApm::Config.new(conf_file)
 

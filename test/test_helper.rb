@@ -5,6 +5,8 @@ require 'minitest/pride'
 
 require 'pry'
 
+require 'scout_apm'
+
 Kernel.module_eval do
   # Unset a constant without private access.
   def self.const_unset(const)
@@ -12,5 +14,11 @@ Kernel.module_eval do
   end
 end
 
-# require 'scout_apm'
 
+# Helpers available to all tests
+class Minitest::Test
+  def set_rack_env(env)
+    ENV['RACK_ENV'] = "production"
+    ScoutApm::Environment.instance.instance_variable_set("@env", nil)
+  end
+end
