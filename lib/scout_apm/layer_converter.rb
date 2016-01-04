@@ -122,6 +122,7 @@ module ScoutApm
                           request.context,
                           root_layer.stop_time,
                           stackprof)
+
     end
 
     # Full metrics from this request. These get aggregated in Store for the
@@ -179,8 +180,10 @@ module ScoutApm
     end
 
     SKIP_SPECIFICS = ["Middleware"]
+    # For metrics that are known to be of sort duration (Middleware right now), we don't record specifics on each call to eliminate a metric explosion.
+    # There can be many Middlewares in an app.
     def record_specific_metric?(name)
-      SKIP_SPECIFICS.include?(name)
+      !SKIP_SPECIFICS.include?(name)
     end
   end
 
