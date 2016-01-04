@@ -8,12 +8,12 @@ module ScoutApm
 
       def init_logger
         begin
-          @log_file = wants_stdout? ? STDOUT : "#{log_file_path}/scout_apm.log"
+          @log_file ||= wants_stdout? ? STDOUT : "#{log_file_path}/scout_apm.log"
         rescue => e
         end
 
         begin
-          @logger = Logger.new(@log_file)
+          @logger ||= Logger.new(@log_file)
           @logger.level = log_level
           apply_log_format
         rescue Exception => e
