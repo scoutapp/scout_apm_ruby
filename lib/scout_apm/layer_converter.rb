@@ -88,22 +88,40 @@ module ScoutApm
 
   # Take a TrackedRequest and turn it into either nil, or a SlowTransaction record
   class LayerSlowTransactionConverter < LayerConverterBase
-    SLOW_REQUEST_TIME_THRESHOLD = 2 # seconds
-
     def call
-      return nil unless should_capture_slow_request?
+      policy = ScoutApm::Agent.instance.slow_request_policy.capture_type(root_layer.total_call_time)
+
+      if policy == ScoutApm::SlowRequestPolicy::CAPTURE_NONE
+        return nil
+      end
+
 
       scope = scope_layer
       return nil unless scope
-
       uri = request.annotations[:uri] || ""
+
+      metrics = case policy
+                when ScoutApm::SlowRequestPolicy::CAPTURE_SUMMARY
+                  {}
+                when ScoutApm::SlowRequestPolicy::CAPTURE_DETAIL
+                  create_metrics
+                end
+
+      stackprof = case policy
+                  when ScoutApm::SlowRequestPolicy::CAPTURE_SUMMARY
+                    []
+                  when ScoutApm::SlowRequestPolicy::CAPTURE_DETAIL
+                    # Disable stackprof output for now
+                    [] # request.stackprof
+                  end
+
       SlowTransaction.new(uri,
                           scope.legacy_metric_name,
                           root_layer.total_call_time,
-                          create_metrics,
+                          metrics,
                           request.context,
                           root_layer.stop_time,
-                          request.stackprof)
+                          stackprof)
     end
 
     # Full metrics from this request. These get aggregated in Store for the
@@ -140,7 +158,6 @@ module ScoutApm
                          {:scope => scope_layer.legacy_metric_name}
                        end
 
-
         # Specific Metric
         if record_specific_metric?(layer.type)
           meta_options.merge!(:desc => layer.desc) if layer.desc
@@ -164,10 +181,6 @@ module ScoutApm
     SKIP_SPECIFICS = ["Middleware"]
     def record_specific_metric?(name)
       SKIP_SPECIFICS.include?(name)
-    end
-
-    def should_capture_slow_request?
-      root_layer.total_call_time > SLOW_REQUEST_TIME_THRESHOLD
     end
   end
 
