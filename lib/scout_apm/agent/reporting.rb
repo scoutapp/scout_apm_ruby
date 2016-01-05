@@ -44,6 +44,7 @@ module ScoutApm
           :agent_version => ScoutApm::VERSION,
           :agent_time    => reporting_period.timestamp.to_s,
           :agent_pid     => Process.pid,
+          :platform      => "ruby",
         }
 
         log_deliver(metrics, slow_transactions, metadata)
