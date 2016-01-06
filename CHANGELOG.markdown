@@ -1,3 +1,9 @@
+# 1.2.2
+
+* Collapse middleware recordings to minimize payload size
+* Limit slow transactions recorded in full detail each minute to prevent
+  overloading payload.
+
 # 1.2.1
 
 * Fix a small issue where the middleware that attempts to start the agent could
