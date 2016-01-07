@@ -1,3 +1,7 @@
+# 1.2.3
+
+* Trimming metrics from slow requests if there are more than 10.
+
 # 1.2.2
 
 * Collapse middleware recordings to minimize payload size
