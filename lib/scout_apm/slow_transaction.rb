@@ -51,6 +51,10 @@ module ScoutApm
       self
     end
 
+    def has_metrics?
+      metrics and metrics.any?
+    end
+
     def as_json
       json_attributes = [:key, :time, :total_call_time, :uri, [:context, :context_hash], :prof]
       ScoutApm::AttributeArranger.call(self, json_attributes)
