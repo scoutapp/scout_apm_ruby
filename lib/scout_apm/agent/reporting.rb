@@ -65,7 +65,17 @@ module ScoutApm
           select { |meta,stats| meta.metric_name =~ /\AController/ }.
           inject(0) {|sum, (_, stat)| sum + stat.call_count }
 
-        logger.info "Delivering #{metrics.length} Metrics for #{total_request_count} requests and #{slow_transactions.length} Slow Transaction Traces"
+        memory_stat = metrics.
+          find {|meta,stats| meta.metric_name =~ /\AMemory/ }.
+          last
+        process_log_str = if memory_stat
+                            "Recorded from #{memory_stat.call_count} processes"
+                          else
+                            "Recorded across (unknown) processes"
+                          end
+
+
+        logger.info "Delivering #{metrics.length} Metrics for #{total_request_count} requests and #{slow_transactions.length} Slow Transaction Traces, #{process_log_str}"
         logger.debug("Metrics: #{metrics.pretty_inspect}\nSlowTrans: #{slow_transactions.pretty_inspect}\nMetadata: #{metadata.inspect.pretty_inspect}")
       end
 
