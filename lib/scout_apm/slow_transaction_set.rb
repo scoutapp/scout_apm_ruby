@@ -9,6 +9,8 @@
 #  * If there isn't an open spot, and nobody is valid to evict, drop the
 #    incoming SlowTransaction without adding.
 #
+# There is no way to remove SlowTransactions from this set, create a new object
+# for each reporting period.
 module ScoutApm
   class SlowTransactionSet
     include Enumerable
