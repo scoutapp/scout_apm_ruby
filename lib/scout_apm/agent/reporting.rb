@@ -65,7 +65,7 @@ module ScoutApm
           select { |meta,stats| meta.metric_name =~ /\AController/ }.
           inject(0) {|sum, (_, stat)| sum + stat.call_count }
 
-        logger.info "Delivering #{metrics.length} Metrics for #{total_request_count} requests and #{slow_transactions.length} Slow Transaction Traces"
+        logger.info "[#{Time.parse(metadata[:agent_time]).strftime("%H:%M")}] Delivering #{metrics.length} Metrics for #{total_request_count} requests and #{slow_transactions.length} Slow Transaction Traces"
         logger.debug("Metrics: #{metrics.pretty_inspect}\nSlowTrans: #{slow_transactions.pretty_inspect}\nMetadata: #{metadata.inspect.pretty_inspect}")
       end
 

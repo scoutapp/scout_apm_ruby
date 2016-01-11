@@ -7,10 +7,9 @@ require 'scout_apm/store'
 
 class LayawayTest < Minitest::Test
   def test_verifying_old_file_format
-    old = {1452533280 => {:metrics => {}, :slow_transactions => {}} }
     ScoutApm::Agent.instance.start
     data = ScoutApm::Layaway.new
-    assert_equal({}, data.verify_layaway_file_contents(old))
+    assert_equal({}, data.verify_layaway_file_contents(OLD_FORMAT))
   end
 
   def test_verifying_current_format
