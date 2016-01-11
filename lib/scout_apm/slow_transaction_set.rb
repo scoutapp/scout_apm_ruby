@@ -1,3 +1,14 @@
+# In order to keep load down, only record a sample of Slow Transactions.  In
+# order to make that sampling as fair as possible, follow a basic algorithm:
+#
+# When adding a new SlowTransaction:
+#  * Just add it if there is an open spot
+#  * If there isn't an open spot, attempt to remove an over-represented
+#    endpoint instead ("attempt_to_evict"). Overrepresented is simply "has more
+#    than @fair number of SlowTransactions for that end point"
+#  * If there isn't an open spot, and nobody is valid to evict, drop the
+#    incoming SlowTransaction without adding.
+#
 module ScoutApm
   class SlowTransactionSet
     include Enumerable
