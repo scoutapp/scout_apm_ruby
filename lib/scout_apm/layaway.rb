@@ -8,24 +8,22 @@ module ScoutApm
       @file = ScoutApm::LayawayFile.new
     end
 
-    # We're changing the format, so detect if we're loading an old formatted
+    # The layaway file format changed in 1.2.0, so detect if we're loading an old formatted
     # file, and just drop it if so. There's no important data there, since it's
     # used mostly for just syncronizing between processes
-    def verify_layaway_file_contents
-      file.read_and_write do |existing_data|
-        existing_data ||= {}
-        if existing_data.keys.all?{|k| k.is_a? StoreReportingPeriodTimestamp } &&
-            existing_data.values.all? {|v| v.is_a? StoreReportingPeriod }
-          existing_data
-        else
-          {}
-        end
+    def verify_layaway_file_contents(data)
+      if data.keys.any? and data.keys.any? { |k| !k.is_a? StoreReportingPeriodTimestamp }
+        ScoutApm::Agent.instance.logger.debug "Layaway file is in the pre 1.2 format. Resetting."
+        {}
+      else
+        data
       end
     end
 
     def add_reporting_period(time, reporting_period)
       file.read_and_write do |existing_data|
         existing_data ||= Hash.new
+        existing_data = verify_layaway_file_contents(existing_data)
         existing_data.merge(time => reporting_period) {|key, old_val, new_val|
           old_val.merge_metrics!(new_val.metrics_payload).merge_slow_transactions!(new_val.slow_transactions)
         }
@@ -37,7 +35,6 @@ module ScoutApm
     # Returns an array of ReportingPeriod objects that are ready to be pushed to the server
     def periods_ready_for_delivery
       ready_for_delivery = []
-
       file.read_and_write do |existing_data|
         existing_data ||= {}
         ready_for_delivery = existing_data.select {|time, rp| should_send?(rp) } # Select off the values we want

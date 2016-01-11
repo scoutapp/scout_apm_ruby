@@ -47,23 +47,28 @@ module ScoutApm
     end
 
     def apm_enabled?
-      config.value('monitor') and !@options[:force]
+      config.value('monitor')
+    end
+
+    # If true, the agent will start regardless of safety checks. Currently just used for testing.
+    def force?
+      @options[:force]
     end
 
     def preconditions_met?(options={})
       if !apm_enabled?
-        logger.warn "Monitoring isn't enabled for the [#{environment.env}] environment."
-        return false
+        logger.warn "Monitoring isn't enabled for the [#{environment.env}] environment. #{force? ? 'Forcing agent to start' : 'Not starting agent'}"
+        return false unless force?
       end
 
       if !environment.application_name
-        logger.warn "An application name could not be determined. Specify the :name value in scout_apm.yml. Not starting agent."
-        return false
+        logger.warn "An application name could not be determined. Specify the :name value in scout_apm.yml. #{force? ? 'Forcing agent to start' : 'Not starting agent'}."
+        return false unless force?
       end
 
       if app_server_missing?(options) && background_job_missing?
-        logger.warn "Couldn't find a supported app server or background job framework. Not starting agent."
-        return false
+        logger.warn "Couldn't find a supported app server or background job framework. #{force? ? 'Forcing agent to start' : 'Not starting agent'}."
+        return false unless force?
       end
 
       if started?
@@ -90,17 +95,9 @@ module ScoutApm
         logger.info "Starting monitoring for [#{environment.deploy_integration.name}]]."
         return environment.deploy_integration.install
       end
-
       return false unless preconditions_met?(options)
-
       @started = true
-
       logger.info "Starting monitoring for [#{environment.application_name}]. Framework [#{environment.framework}] App Server [#{environment.app_server}] Background Job Framework [#{environment.background_job_name}]."
-
-      # We need agent initialized to do this, so do it here instead.
-      # Clean up any old data in the layaway file, allows us to change the file
-      # structure / contents without worrying.
-      layaway.verify_layaway_file_contents
 
       load_instruments if should_load_instruments?(options)
 
@@ -160,8 +157,10 @@ module ScoutApm
     # in-memory metrics would be lost and a gap would appear on restarts.
     def shutdown
       return if !started?
-      @background_worker.stop
-      @background_worker.run_once
+      if @background_worker
+        @background_worker.stop
+        @background_worker.run_once
+      end
     end
 
     def started?
@@ -175,6 +174,7 @@ module ScoutApm
     def start_background_worker?
       return true if environment.app_server == :thin
       return true if environment.app_server == :webrick
+      return true if force?
       return !environment.forking?
     end
 
@@ -264,12 +264,12 @@ module ScoutApm
       end
     end
 
-    def app_server_missing?(options)
+    def app_server_missing?(options = {})
       !environment.app_server_integration(true).found? && !options[:skip_app_server_check]
     end
 
-    def background_job_missing?
-      environment.background_job_integration.nil?
+    def background_job_missing?(options = {})
+      environment.background_job_integration.nil? && !options[:skip_background_job_check]
     end
   end
 end

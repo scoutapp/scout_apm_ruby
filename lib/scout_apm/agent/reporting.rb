@@ -15,10 +15,10 @@ module ScoutApm
       #
       # At any given point, there is data in each of those steps, moving its way through the process
       def process_metrics
-        # First we write the previous minute's data to the shared-across-process layaway file.
+        # Write the previous minute's data to the shared-across-process layaway file.
         store.write_to_layaway(layaway)
 
-        # Then attempt to send 2 minutes ago's data up to the server.  This
+        # Attempt to send 2 minutes ago's data up to the server.  This
         # only acctually occurs if this process is the first to wake up this
         # minute.
         report_to_server
