@@ -86,42 +86,42 @@ module ScoutApm
     end
   end
 
-  # Take a TrackedRequest and turn it into either nil, or a SlowTransaction record
+  # Take a TrackedRequest and turn it into a slow transaction if needed
+  # return a 2 element array, [ Slow Transaction or Nil ,  Hash of metrics to store ]
   class LayerSlowTransactionConverter < LayerConverterBase
     def call
       policy = ScoutApm::Agent.instance.slow_request_policy.capture_type(root_layer.total_call_time)
 
-      if policy == ScoutApm::SlowRequestPolicy::CAPTURE_NONE
-        return nil
+      case policy
+      when ScoutApm::SlowRequestPolicy::CAPTURE_SUMMARY
+        return [nil, {}]
+      when ScoutApm::SlowRequestPolicy::CAPTURE_NONE
+        return [nil, {}]
       end
 
-
       scope = scope_layer
-      return nil unless scope
+      return [nil, {}] unless scope
+
       uri = request.annotations[:uri] || ""
 
-      metrics = case policy
-                when ScoutApm::SlowRequestPolicy::CAPTURE_SUMMARY
-                  {}
-                when ScoutApm::SlowRequestPolicy::CAPTURE_DETAIL
-                  create_metrics
-                end
+      metrics = create_metrics
+      # Disable stackprof output for now
+      stackprof = [] # request.stackprof
 
-      stackprof = case policy
-                  when ScoutApm::SlowRequestPolicy::CAPTURE_SUMMARY
-                    []
-                  when ScoutApm::SlowRequestPolicy::CAPTURE_DETAIL
-                    # Disable stackprof output for now
-                    [] # request.stackprof
-                  end
+      meta = MetricMeta.new("SlowTransactions/all")
+      stat = MetricStats.new
+      stat.update!(1)
 
-      SlowTransaction.new(uri,
-                          scope.legacy_metric_name,
-                          root_layer.total_call_time,
-                          metrics,
-                          request.context,
-                          root_layer.stop_time,
-                          stackprof)
+      [
+        SlowTransaction.new(uri,
+                            scope.legacy_metric_name,
+                            root_layer.total_call_time,
+                            metrics,
+                            request.context,
+                            root_layer.stop_time,
+                            stackprof),
+        { meta => stat }
+      ]
 
     end
 

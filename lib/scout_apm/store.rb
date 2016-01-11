@@ -31,6 +31,7 @@ module ScoutApm
 
     # Save a new slow transaction
     def track_slow_transaction!(slow_transaction)
+      return unless slow_transaction
       @mutex.synchronize {
         reporting_periods[current_timestamp].merge_slow_transactions!(slow_transaction)
       }
@@ -87,7 +88,7 @@ module ScoutApm
     def initialize(timestamp)
       @timestamp = timestamp
 
-      @slow_transactions = Array.new
+      @slow_transactions = SlowTransactionSet.new
       @aggregate_metrics = Hash.new
     end
 
@@ -100,8 +101,7 @@ module ScoutApm
     end
 
     def merge_slow_transactions!(slow_transactions)
-      @slow_transactions += Array(slow_transactions)
-      trim_slow_transaction_metrics
+      @slow_transactions << slow_transaction
       self
     end
 
@@ -113,7 +113,7 @@ module ScoutApm
     end
 
     def slow_transactions_payload
-      @slow_transactions
+      @slow_transactions.to_a
     end
 
     private
