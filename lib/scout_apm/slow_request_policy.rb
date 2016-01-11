@@ -46,7 +46,6 @@ module ScoutApm
       else
         return CAPTURE_SUMMARY
       end
-
     end
 
     private

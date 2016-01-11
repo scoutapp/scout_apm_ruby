@@ -100,8 +100,11 @@ module ScoutApm
       self
     end
 
-    def merge_slow_transactions!(slow_transactions)
-      @slow_transactions << slow_transaction
+    def merge_slow_transactions!(new_transactions)
+      Array(new_transactions).each do |one_transaction|
+        @slow_transactions << one_transaction
+      end
+
       self
     end
 

@@ -98,6 +98,7 @@ require 'scout_apm/context'
 require 'scout_apm/stackprof_tree_collapser'
 require 'scout_apm/slow_transaction'
 require 'scout_apm/slow_request_policy'
+require 'scout_apm/slow_transaction_set'
 require 'scout_apm/capacity'
 require 'scout_apm/attribute_arranger'
 

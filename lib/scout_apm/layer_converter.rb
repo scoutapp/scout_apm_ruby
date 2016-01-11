@@ -108,7 +108,7 @@ module ScoutApm
       # Disable stackprof output for now
       stackprof = [] # request.stackprof
 
-      meta = MetricMeta.new("SlowTransactions/all")
+      meta = MetricMeta.new("SlowTransaction/#{scope_layer.legacy_metric_name}")
       stat = MetricStats.new
       stat.update!(1)
 

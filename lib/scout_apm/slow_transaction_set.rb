@@ -17,9 +17,6 @@ module ScoutApm
       @slow_transactions.each { |s| yield s }
     end
 
-    def to_a
-    end
-
     def <<(slow_transaction)
       return if attempt_append(slow_transaction)
       attempt_to_evict
@@ -40,6 +37,8 @@ module ScoutApm
     end
 
     def attempt_to_evict
+      return if @slow_transactions.length == 0
+
       overrepresented = @slow_transactions.
         group_by { |st| st.metric_name }.
         to_a.
