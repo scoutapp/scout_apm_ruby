@@ -138,7 +138,7 @@ module ScoutApm
 
     # We can't aggregate CPU, Memory, Capacity, or Controller, so pass through these metrics directly
     # TODO: Figure out a way to not have this duplicate what's in Samplers, and also on server's ingest
-    PASSTHROUGH_METRICS = ["CPU", "Memory", "Instance", "Controller"]
+    PASSTHROUGH_METRICS = ["CPU", "Memory", "Instance", "Controller", "SlowTransaction"]
 
     # Absorbs a single new metric into the aggregates
     def absorb(metric)
