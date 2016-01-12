@@ -29,5 +29,24 @@ class AgentTest < Minitest::Test
     assert no_timeout, "Agent took >= 3s to start. Possible file lock issue."
   end
 
+  def test_reset_file_with_old_format
+    File.open(DATA_FILE_PATH, 'w') { |file| file.write(Marshal.dump(OLD_FORMAT)) }
+    begin
+      ScoutApm::Agent.instance(force: true).process_metrics
+    rescue NoMethodError
+      # The agent will raise an exception the first time metrics are processed for scout_apm < 1.2.
+      #
+      #  NoMethodError: undefined method `values' for []:Array
+      # /Users/dlite/projects/scout_apm_ruby/lib/scout_apm/layaway.rb:46:in `periods_ready_for_delivery'
+      # /Users/dlite/projects/scout_apm_ruby/lib/scout_apm/agent/reporting.rb:31:in `report_to_server'
+      # /Users/dlite/projects/scout_apm_ruby/lib/scout_apm/agent/reporting.rb:24:in `process_metrics'
+      # /Users/dlite/projects/scout_apm_ruby/test/unit/layaway_test.rb:27:in `test_reset_file_with_old_format'
+    end
+    # Data will be fine the next go-around
+    ScoutApm::Agent.instance(force: true).process_metrics
+  end
+
   ## TODO - adds tests to ensure other potentially long-running things don't sneak in, like HTTP calls.
+
+  OLD_FORMAT = {1452533280 => {:metrics => {}, :slow_transactions => {}} } # Pre 1.2 agents used a different file format to store data. 
 end

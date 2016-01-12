@@ -6,29 +6,6 @@ require 'scout_apm/context'
 require 'scout_apm/store'
 
 class LayawayTest < Minitest::Test
-  def test_verifying_old_file_format
-    ScoutApm::Agent.instance.start
-    data = ScoutApm::Layaway.new
-    assert_equal({}, data.verify_layaway_file_contents(OLD_FORMAT))
-  end
-
-  def test_verifying_current_format
-    t = ScoutApm::StoreReportingPeriodTimestamp.new
-    old = {t => ScoutApm::StoreReportingPeriod.new(t) }
-    ScoutApm::Agent.instance.start
-    data = ScoutApm::Layaway.new
-    assert_equal old, data.verify_layaway_file_contents(old)
-  end
-
-  def test_add_reporting_period_to_old_data_file
-    File.open(DATA_FILE_PATH, 'w') { |file| file.write(Marshal.dump(OLD_FORMAT)) }
-    ScoutApm::Agent.instance(force: true)
-    data = ScoutApm::Layaway.new
-    t = ScoutApm::StoreReportingPeriodTimestamp.new
-    data.add_reporting_period(t,ScoutApm::StoreReportingPeriod.new(t))
-    assert_equal [t], Marshal.load(File.read(DATA_FILE_PATH)).keys
-  end
-
   def test_add_reporting_period
     File.open(DATA_FILE_PATH, 'w') { |file| file.write(Marshal.dump(NEW_FORMAT)) }
     ScoutApm::Agent.instance.start
@@ -39,9 +16,17 @@ class LayawayTest < Minitest::Test
     assert_equal [TIMESTAMP,t], Marshal.load(File.read(DATA_FILE_PATH)).keys
   end
 
-  DATA_FILE_PATH = File.dirname(__FILE__) + '/../tmp/scout_apm.db' 
-  OLD_FORMAT = {1452533280 => {:metrics => {}, :slow_transactions => {}} } # Pre 1.2 agents used a different file format to store data. 
+  def test_merge_reporting_period
+    File.open(DATA_FILE_PATH, 'w') { |file| file.write(Marshal.dump(NEW_FORMAT)) }
+    ScoutApm::Agent.instance.start
+
+    data = ScoutApm::Layaway.new
+    t = ScoutApm::StoreReportingPeriodTimestamp.new
+    data.add_reporting_period(TIMESTAMP,ScoutApm::StoreReportingPeriod.new(TIMESTAMP))
+    assert_equal [TIMESTAMP], Marshal.load(File.read(DATA_FILE_PATH)).keys
+    # TODO - add tests to verify metrics+slow transactions are merged
+  end
+
   TIMESTAMP = ScoutApm::StoreReportingPeriodTimestamp.new(Time.parse("2015-01-01"))
   NEW_FORMAT = {TIMESTAMP => ScoutApm::StoreReportingPeriod.new(TIMESTAMP)} # Format for 1.2+ agents
-
 end
