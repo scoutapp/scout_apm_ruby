@@ -31,6 +31,7 @@ module ScoutApm
 
     # Save a new slow transaction
     def track_slow_transaction!(slow_transaction)
+      return unless slow_transaction
       @mutex.synchronize {
         reporting_periods[current_timestamp].merge_slow_transactions!(slow_transaction)
       }
@@ -87,7 +88,7 @@ module ScoutApm
     def initialize(timestamp)
       @timestamp = timestamp
 
-      @slow_transactions = Array.new
+      @slow_transactions = SlowTransactionSet.new
       @aggregate_metrics = Hash.new
     end
 
@@ -99,9 +100,11 @@ module ScoutApm
       self
     end
 
-    def merge_slow_transactions!(slow_transactions)
-      @slow_transactions += Array(slow_transactions)
-      trim_slow_transaction_metrics
+    def merge_slow_transactions!(new_transactions)
+      Array(new_transactions).each do |one_transaction|
+        @slow_transactions << one_transaction
+      end
+
       self
     end
 
@@ -113,7 +116,7 @@ module ScoutApm
     end
 
     def slow_transactions_payload
-      @slow_transactions
+      @slow_transactions.to_a
     end
 
     private
@@ -135,7 +138,7 @@ module ScoutApm
 
     # We can't aggregate CPU, Memory, Capacity, or Controller, so pass through these metrics directly
     # TODO: Figure out a way to not have this duplicate what's in Samplers, and also on server's ingest
-    PASSTHROUGH_METRICS = ["CPU", "Memory", "Instance", "Controller"]
+    PASSTHROUGH_METRICS = ["CPU", "Memory", "Instance", "Controller", "SlowTransaction"]
 
     # Absorbs a single new metric into the aggregates
     def absorb(metric)
