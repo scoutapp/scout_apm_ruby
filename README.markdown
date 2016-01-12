@@ -1,8 +1,6 @@
-__Rails application monitoring is avaiable by invite-only @ Scout.__
-
 # ScoutApm
 
-A Ruby gem for detailed Rails application performance analysis. Metrics are reported to [Scout](https://scoutapp.com), a hosted server and application monitoring service. 
+A Ruby gem for detailed Rails application performance analysis. Metrics are reported to [Scout](https://scoutapp.com), a hosted application monitoring service. 
 
 ## Getting Started
 
