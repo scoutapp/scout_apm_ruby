@@ -1,3 +1,7 @@
+# 1.2.4.1
+
+* Reverting backtrace parser threshold back to 0.5 (same as < v1.2 agents)
+
 # 1.2.4
 
 * Removing layaway file validation in main thread
