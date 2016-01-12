@@ -11,7 +11,8 @@ module ScoutApm
         begin
           ScoutApm::Agent.instance.logger.debug("StackProf - Samples: #{raw_stackprof[:samples]}, GC: #{raw_stackprof[:gc_samples]}, missed: #{raw_stackprof[:missed_samples]}, Interval: #{raw_stackprof[:interval]}")
         rescue
-          ScoutApm::Agent.instance.logger.debug("StackProf Raw - #{raw_stackprof.inspect}")
+          # Not a useful log message, currently stackprof is disabled
+          # ScoutApm::Agent.instance.logger.debug("StackProf Raw - #{raw_stackprof.inspect}")
         end
       end
     end
