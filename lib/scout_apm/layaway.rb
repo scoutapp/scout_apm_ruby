@@ -27,7 +27,7 @@ module ScoutApm
         ready_for_delivery = existing_data.to_a.select {|time, rp| should_send?(rp) } # Select off the values we want. to_a is needed for compatibility with Ruby 1.8.7.
 
         # Rewrite anything not plucked out back to the file
-        existing_data.reject {|k, v| ready_for_delivery.keys.include?(k) }
+        existing_data.reject {|k, v| ready_for_delivery.map(&:first).include?(k) }
       end
 
       return ready_for_delivery.map(&:last)
