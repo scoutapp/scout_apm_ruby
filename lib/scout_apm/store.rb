@@ -63,7 +63,11 @@ module ScoutApm
     end
 
     def eql?(o)
-      timestamp.eql?(o.timestamp)
+      self.class == o.class && timestamp.eql?(o.timestamp)
+    end
+
+    def ==(o)
+      self.eql?(o)
     end
 
     def hash

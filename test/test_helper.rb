@@ -19,6 +19,12 @@ end
 class Minitest::Test
   def setup
     reopen_logger
+    ENV['SCOUT_DATA_FILE'] = DATA_FILE_PATH
+  end
+
+  def teardown
+    ScoutApm::Agent.instance.shutdown
+    File.delete(DATA_FILE_PATH) if File.exist?(DATA_FILE_PATH)
   end
 
   def set_rack_env(env)
@@ -31,4 +37,6 @@ class Minitest::Test
     @logger = Logger.new(@log_contents)
     ScoutApm::Agent.instance.instance_variable_set("@logger", @logger)
   end
+
+  DATA_FILE_PATH = File.dirname(__FILE__) + '/tmp/scout_apm.db' 
 end
