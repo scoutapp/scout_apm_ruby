@@ -13,7 +13,7 @@ class LayawayTest < Minitest::Test
     data = ScoutApm::Layaway.new
     t = ScoutApm::StoreReportingPeriodTimestamp.new
     data.add_reporting_period(t,ScoutApm::StoreReportingPeriod.new(t))
-    assert_equal [TIMESTAMP,t], Marshal.load(File.read(DATA_FILE_PATH)).keys
+    assert_equal [TIMESTAMP,t].sort_by(&:timestamp), Marshal.load(File.read(DATA_FILE_PATH)).keys.sort_by(&:timestamp)
   end
 
   def test_merge_reporting_period
