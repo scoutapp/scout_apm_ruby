@@ -49,7 +49,7 @@ class PayloadSerializerTest < Minitest::Test
     metrics = {
       ScoutApm::MetricMeta.new('ActiveRecord/all').tap { |meta|
         meta.desc = "SELECT * from users where filter=?"
-        meta.extra = {user: 'cooluser'}
+        meta.extra = {:user => 'cooluser'}
         meta.metric_id = nil
         meta.scope = "Controller/apps/checkin"
       } => ScoutApm::MetricStats.new.tap { |stats|
@@ -117,7 +117,7 @@ class PayloadSerializerTest < Minitest::Test
     slow_transaction_metrics = {
       ScoutApm::MetricMeta.new('ActiveRecord/all').tap { |meta|
         meta.desc = "SELECT * from users where filter=?"
-        meta.extra = {user: 'cooluser'}
+        meta.extra = {:user => 'cooluser'}
         meta.metric_id = nil
         meta.scope = "Controller/apps/checkin"
       } => ScoutApm::MetricStats.new.tap { |stats|

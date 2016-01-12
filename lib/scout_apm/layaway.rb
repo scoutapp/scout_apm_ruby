@@ -24,13 +24,13 @@ module ScoutApm
       ready_for_delivery = []
       file.read_and_write do |existing_data|
         existing_data ||= {}
-        ready_for_delivery = existing_data.select {|time, rp| should_send?(rp) } # Select off the values we want
+        ready_for_delivery = existing_data.to_a.select {|time, rp| should_send?(rp) } # Select off the values we want
 
         # Rewrite anything not plucked out back to the file
         existing_data.reject {|k, v| ready_for_delivery.keys.include?(k) }
       end
 
-      return ready_for_delivery.values
+      return ready_for_delivery.map(&:last)
     end
 
     # We just want to send anything older than X

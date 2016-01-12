@@ -43,7 +43,13 @@ class AgentTest < Minitest::Test
       # /Users/dlite/projects/scout_apm_ruby/test/unit/layaway_test.rb:27:in `test_reset_file_with_old_format'
     end
     # Data will be fine the next go-around
-    ScoutApm::Agent.instance(:force => true).process_metrics
+    no_error = true
+    begin
+      ScoutApm::Agent.instance(:force => true).process_metrics
+    rescue Exception => e
+      no_error = false
+    end
+    assert no_error, "Error trying to process metrics after upgrading from < 1.2 data format: #{e.message if e}"
   end
 
   ## TODO - adds tests to ensure other potentially long-running things don't sneak in, like HTTP calls.
