@@ -32,7 +32,7 @@ class AgentTest < Minitest::Test
   def test_reset_file_with_old_format
     File.open(DATA_FILE_PATH, 'w') { |file| file.write(Marshal.dump(OLD_FORMAT)) }
     begin
-      ScoutApm::Agent.instance(force: true).process_metrics
+      ScoutApm::Agent.instance(:force => true).process_metrics
     rescue NoMethodError
       # The agent will raise an exception the first time metrics are processed for scout_apm < 1.2.
       #
@@ -43,7 +43,7 @@ class AgentTest < Minitest::Test
       # /Users/dlite/projects/scout_apm_ruby/test/unit/layaway_test.rb:27:in `test_reset_file_with_old_format'
     end
     # Data will be fine the next go-around
-    ScoutApm::Agent.instance(force: true).process_metrics
+    ScoutApm::Agent.instance(:force => true).process_metrics
   end
 
   ## TODO - adds tests to ensure other potentially long-running things don't sneak in, like HTTP calls.
