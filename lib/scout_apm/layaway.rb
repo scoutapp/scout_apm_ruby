@@ -8,21 +8,6 @@ module ScoutApm
       @file = ScoutApm::LayawayFile.new
     end
 
-    # We're changing the format, so detect if we're loading an old formatted
-    # file, and just drop it if so. There's no important data there, since it's
-    # used mostly for just syncronizing between processes
-    def verify_layaway_file_contents
-      file.read_and_write do |existing_data|
-        existing_data ||= {}
-        if existing_data.keys.all?{|k| k.is_a? StoreReportingPeriodTimestamp } &&
-            existing_data.values.all? {|v| v.is_a? StoreReportingPeriod }
-          existing_data
-        else
-          {}
-        end
-      end
-    end
-
     def add_reporting_period(time, reporting_period)
       file.read_and_write do |existing_data|
         existing_data ||= Hash.new
@@ -37,16 +22,15 @@ module ScoutApm
     # Returns an array of ReportingPeriod objects that are ready to be pushed to the server
     def periods_ready_for_delivery
       ready_for_delivery = []
-
       file.read_and_write do |existing_data|
         existing_data ||= {}
-        ready_for_delivery = existing_data.select {|time, rp| should_send?(rp) } # Select off the values we want
+        ready_for_delivery = existing_data.to_a.select {|time, rp| should_send?(rp) } # Select off the values we want. to_a is needed for compatibility with Ruby 1.8.7.
 
         # Rewrite anything not plucked out back to the file
-        existing_data.reject {|k, v| ready_for_delivery.keys.include?(k) }
+        existing_data.reject {|k, v| ready_for_delivery.map(&:first).include?(k) }
       end
 
-      return ready_for_delivery.values
+      return ready_for_delivery.map(&:last)
     end
 
     # We just want to send anything older than X

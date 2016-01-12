@@ -1,3 +1,9 @@
+# 1.2.4
+
+* Removing layaway file validation in main thread
+* Fixing :force so agent will start in tests
+* Rate-limiting slow transactions to 10 per-reporting period
+
 # 1.2.3
 
 * Trimming metrics from slow requests if there are more than 10.

@@ -15,10 +15,10 @@ module ScoutApm
       #
       # At any given point, there is data in each of those steps, moving its way through the process
       def process_metrics
-        # First we write the previous minute's data to the shared-across-process layaway file.
+        # Write the previous minute's data to the shared-across-process layaway file.
         store.write_to_layaway(layaway)
 
-        # Then attempt to send 2 minutes ago's data up to the server.  This
+        # Attempt to send 2 minutes ago's data up to the server.  This
         # only acctually occurs if this process is the first to wake up this
         # minute.
         report_to_server
@@ -65,7 +65,15 @@ module ScoutApm
           select { |meta,stats| meta.metric_name =~ /\AController/ }.
           inject(0) {|sum, (_, stat)| sum + stat.call_count }
 
-        logger.info "Delivering #{metrics.length} Metrics for #{total_request_count} requests and #{slow_transactions.length} Slow Transaction Traces"
+        memory = metrics.
+          find {|meta,stats| meta.metric_name =~ /\AMemory/ }
+        process_log_str = if memory
+                            "Recorded from #{memory.last.call_count} processes"
+                          else
+                            "Recorded across (unknown) processes"
+                          end
+
+        logger.info "[#{Time.parse(metadata[:agent_time]).strftime("%H:%M")}] Delivering #{metrics.length} Metrics for #{total_request_count} requests and #{slow_transactions.length} Slow Transaction Traces, #{process_log_str}."
         logger.debug("Metrics: #{metrics.pretty_inspect}\nSlowTrans: #{slow_transactions.pretty_inspect}\nMetadata: #{metadata.inspect.pretty_inspect}")
       end
 
