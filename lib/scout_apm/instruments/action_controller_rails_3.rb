@@ -15,11 +15,13 @@ module ScoutApm
       def install
         @installed = true
 
-        # ActionController::Base is a subclass of ActionController::Metal, so this instruments both
-        # standard Rails requests + Metal.
-        if defined?(::ActionController) && defined?(::ActionController::Metal)
-          ScoutApm::Agent.instance.logger.info "Instrumenting ActionController::Metal"
-          ::ActionController::Metal.class_eval do
+        # We previously instrumented ActionController::Metal, which missed
+        # before and after filter timing. Instrumenting Base includes those
+        # filters, at the expense of missing out on controllers that don't use
+        # the full Rails stack.
+        if defined?(::ActionController) && defined?(::ActionController::Base)
+          ScoutApm::Agent.instance.logger.info "Instrumenting ActionController::Base"
+          ::ActionController::Base.class_eval do
             # include ScoutApm::Tracer
             include ScoutApm::Instruments::ActionControllerRails3Instruments
           end
