@@ -1,3 +1,10 @@
+# 1.2.5
+
+* Instrument ActionController::Base instead of ::Metal.  This allows us to
+  track time spent in before and after filters, and requests that return early
+  from before filters.
+* Avoid parsing backtraces for requests that don't end up as Slow Transactions
+
 # 1.2.4.1
 
 * Reverting backtrace parser threshold back to 0.5 (same as < v1.2 agents)
