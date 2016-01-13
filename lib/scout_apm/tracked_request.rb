@@ -53,7 +53,7 @@ module ScoutApm
 
       # Do this here, rather than in the layer because we need this caller. Maybe able to move it?
       if layer.total_exclusive_time > ScoutApm::SlowTransaction::BACKTRACE_THRESHOLD
-        layer.store_backtrace(ScoutApm::SlowTransaction.backtrace_parser(caller))
+        layer.store_backtrace(caller)
       end
 
       if finalized?

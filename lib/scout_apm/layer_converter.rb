@@ -163,7 +163,7 @@ module ScoutApm
         if record_specific_metric?(layer.type)
           meta_options.merge!(:desc => layer.desc) if layer.desc
           meta = MetricMeta.new(layer.legacy_metric_name, meta_options)
-          meta.extra.merge!(:backtrace => layer.backtrace) if layer.backtrace
+          meta.extra.merge!(:backtrace => ScoutApm::SlowTransaction.backtrace_parser(layer.backtrace)) if layer.backtrace
           metric_hash[meta] ||= MetricStats.new( meta_options.has_key?(:scope) )
           stat = metric_hash[meta]
           stat.update!(layer.total_call_time, layer.total_exclusive_time)
