@@ -38,4 +38,21 @@ class ActiveRecordMetricNameTest < Minitest::Test
     mn = ScoutApm::Utils::ActiveRecordMetricName.new(sql, name)
     assert_equal "User/find", mn.metric_name
   end
+
+  def test_without_name
+    sql = %q|SELECT "users".* FROM "users" /*application:Testapp,controller:public,action:index*/|
+    name = nil
+
+    mn = ScoutApm::Utils::ActiveRecordMetricName.new(sql, name)
+    assert_equal "SQL/Unknown", mn.metric_name
+  end
+
+  # TODO: Determine if there should be a distinction between Unknown and Other.
+  def test_with_custom_name
+    sql = %q|SELECT "users".* FROM "users" /*application:Testapp,controller:public,action:index*/|
+    name = "A whole sentance describing what's what"
+
+    mn = ScoutApm::Utils::ActiveRecordMetricName.new(sql, name)
+    assert_equal "SQL/other", mn.metric_name
+  end
 end
