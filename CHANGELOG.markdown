@@ -1,3 +1,7 @@
+# 1.2.6
+
+* Fix a bug when determining the name of metrics for ActiveRecord queries
+
 # 1.2.5
 
 * Instrument ActionController::Base instead of ::Metal.  This allows us to
