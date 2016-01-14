@@ -58,33 +58,11 @@ module ScoutApm
 
       def log_with_scout_instruments(*args, &block)
         sql, name = args
-        self.class.instrument("ActiveRecord", scout_ar_metric_name(sql, name), :desc => Utils::SqlSanitizer.new(sql).to_s ) do
+        self.class.instrument("ActiveRecord",
+                              Utils::ActiveRecordMetricName.new(sql, name).metric_name,
+                              :desc => Utils::SqlSanitizer.new(sql).to_s ) do
           log_without_scout_instruments(sql, name, &block)
         end
-      end
-
-      def scout_ar_metric_name(sql, name)
-        # sql: SELECT "places".* FROM "places"  ORDER BY "places"."position" ASC
-        # name: Place Load
-        if name && (parts = name.split(" ")) && parts.size == 2
-          model = parts.first
-          operation = parts.last.downcase
-          metric_name = case operation
-                        when 'load' then 'find'
-                        when 'indexes', 'columns' then nil # not under developer control
-                        when 'destroy', 'find', 'save', 'create', 'exists' then operation
-                        when 'update' then 'save'
-                        else
-                          if model == 'Join'
-                            operation
-                          end
-                        end
-          metric = "#{model}/#{metric_name}" if metric_name
-          metric = "SQL/other" if metric.nil?
-        else
-          metric = "SQL/Unknown"
-        end
-        metric
       end
     end # module ActiveRecordInstruments
   end
