@@ -12,14 +12,14 @@ class AgentTest < Minitest::Test
   def test_start_with_lock_on_layaway_file
     # setup the file, putting a lock on it.
     File.open(DATA_FILE_PATH, "w") {}
-    f=File.open(DATA_FILE_PATH, File::RDWR | File::CREAT)
+    f = File.open(DATA_FILE_PATH, File::RDWR | File::CREAT)
     f.flock(File::LOCK_EX)
 
     agent = ScoutApm::Agent.instance
 
     no_timeout = true
     begin
-      Timeout::timeout(3) { agent.start({:monitor => true,:force => true}) }
+      Timeout::timeout(3) { agent.start({:monitor => true, :force => true}) }
     rescue Timeout::Error
       no_timeout = false
     ensure

@@ -19,6 +19,7 @@ end
 class Minitest::Test
   def setup
     reopen_logger
+    FileUtils.mkdir_p(DATA_FILE_DIR)
     ENV['SCOUT_DATA_FILE'] = DATA_FILE_PATH
   end
 
@@ -38,5 +39,6 @@ class Minitest::Test
     ScoutApm::Agent.instance.instance_variable_set("@logger", @logger)
   end
 
-  DATA_FILE_PATH = File.dirname(__FILE__) + '/tmp/scout_apm.db' 
+  DATA_FILE_DIR = File.dirname(__FILE__) + '/tmp'
+  DATA_FILE_PATH = "#{DATA_FILE_DIR}/scout_apm.db"
 end
