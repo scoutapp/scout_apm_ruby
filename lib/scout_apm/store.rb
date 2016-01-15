@@ -39,6 +39,7 @@ module ScoutApm
 
     # Take each completed reporting_period, and write it to the layaway passed
     def write_to_layaway(layaway)
+      ScoutApm::Agent.instance.logger.debug("Writing to layaway")
       @mutex.synchronize {
         reporting_periods.select { |time, rp| time.timestamp < current_timestamp.timestamp}.
                           each   { |time, rp|
@@ -60,7 +61,7 @@ module ScoutApm
     end
 
     def to_s
-      @raw_time.iso8601
+      Time.at(@timestamp).iso8601
     end
 
     def eql?(o)

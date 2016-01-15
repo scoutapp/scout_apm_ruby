@@ -12,6 +12,14 @@ module ScoutApm
       file.read_and_write do |existing_data|
         existing_data ||= Hash.new
         existing_data.merge(time => reporting_period) {|key, old_val, new_val|
+          old_req = old_val.metrics_payload.
+            select { |meta,stats| meta.metric_name =~ /\AController/ }.
+            inject(0) {|sum, (_, stat)| sum + stat.call_count }
+          new_req = new_val.metrics_payload.
+            select { |meta,stats| meta.metric_name =~ /\AController/ }.
+            inject(0) {|sum, (_, stat)| sum + stat.call_count }
+          ScoutApm::Agent.instance.logger.debug("Merging Two reporting periods (#{old_val.timestamp.to_s}, #{new_val.timestamp.to_s}): old req #{old_req}, new req #{new_req}")
+
           old_val.merge_metrics!(new_val.metrics_payload).merge_slow_transactions!(new_val.slow_transactions)
         }
       end

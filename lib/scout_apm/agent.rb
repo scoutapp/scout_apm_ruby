@@ -159,7 +159,7 @@ module ScoutApm
       return if !started?
       if @background_worker
         @background_worker.stop
-        @background_worker.run_once
+        store.write_to_layaway(layaway)
       end
     end
 
@@ -187,6 +187,7 @@ module ScoutApm
     def start_background_worker
       logger.info "Not starting background worker, already started" and return if background_worker_running?
       logger.info "Initializing worker thread."
+
       @background_worker = ScoutApm::BackgroundWorker.new
       @background_worker_thread = Thread.new do
         @background_worker.start {
@@ -198,6 +199,8 @@ module ScoutApm
           ScoutApm::Agent.instance.process_metrics
         }
       end
+
+      logger.debug "Background worker thread started with ObjectId: #{@background_worker_thread.object_id}"
     end
 
     # If we want to skip the app_server_check, then we must load it.
