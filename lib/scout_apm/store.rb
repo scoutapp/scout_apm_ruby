@@ -38,6 +38,10 @@ module ScoutApm
     end
 
     # Take each completed reporting_period, and write it to the layaway passed
+    #
+    # force - a boolean argument that forces this function to write
+    # current-minute metrics.  Useful when we are shutting down the agent
+    # during a restart.
     def write_to_layaway(layaway, force=false)
       ScoutApm::Agent.instance.logger.debug("Writing to layaway#{" (Forced)" if force}")
 
