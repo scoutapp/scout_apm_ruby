@@ -1,3 +1,8 @@
+# 1.2.8
+
+* Enhance shutdown code to be sure we save current-minute metrics and minimize
+  the amount of work necessary.
+
 # 1.2.7
 
 * Clarifying that Rails3 instrumentation also supports Rails4
