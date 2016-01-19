@@ -1,3 +1,7 @@
+# 1.2.6.1
+
+* Clarifying that Rails3 instrumentation also supports Rails4
+
 # 1.2.6
 
 * Fix a bug when determining the name of metrics for ActiveRecord queries
