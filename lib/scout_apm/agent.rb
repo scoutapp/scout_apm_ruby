@@ -152,15 +152,21 @@ module ScoutApm
       end
     end
 
-    # Called via an at_exit handler, it (1) stops the background worker and (2) runs it a final time.
-    # The final run ensures metrics are stored locally to the layaway / reported to scoutapp.com. Otherwise,
-    # in-memory metrics would be lost and a gap would appear on restarts.
+    # Called via an at_exit handler, it:
+    # (1) Stops the background worker
+    # (2) Stores metrics locally (forcing current-minute metrics to be written)
+    # It does not attempt to actually report metrics.
     def shutdown
+      logger.info "Shutting down ScoutApm"
       return if !started?
       if @background_worker
         @background_worker.stop
-        @background_worker.run_once
+        store.write_to_layaway(layaway, :force)
       end
+
+      # Make sure we don't exit the process while the background worker is running its task.
+      logger.debug "Joining background worker thread"
+      @background_worker_thread.join if @background_worker_thread
     end
 
     def started?

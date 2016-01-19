@@ -38,14 +38,21 @@ module ScoutApm
     end
 
     # Take each completed reporting_period, and write it to the layaway passed
-    def write_to_layaway(layaway)
+    #
+    # force - a boolean argument that forces this function to write
+    # current-minute metrics.  Useful when we are shutting down the agent
+    # during a restart.
+    def write_to_layaway(layaway, force=false)
+      ScoutApm::Agent.instance.logger.debug("Writing to layaway#{" (Forced)" if force}")
+
       @mutex.synchronize {
-        reporting_periods.select { |time, rp| time.timestamp < current_timestamp.timestamp}.
+        reporting_periods.select { |time, rp| force || time.timestamp < current_timestamp.timestamp}.
                           each   { |time, rp|
                                    layaway.add_reporting_period(time, rp)
                                    reporting_periods.delete(time)
                                  }
       }
+      ScoutApm::Agent.instance.logger.debug("Finished writing to layaway")
     end
   end
 
@@ -60,7 +67,7 @@ module ScoutApm
     end
 
     def to_s
-      @raw_time.iso8601
+      Time.at(@timestamp).iso8601
     end
 
     def eql?(o)
@@ -121,6 +128,16 @@ module ScoutApm
 
     def slow_transactions_payload
       @slow_transactions.to_a
+    end
+
+    #################################
+    # Debug Helpers
+    #################################
+
+    def request_count
+      metrics_payload.
+        select { |meta,stats| meta.metric_name =~ /\AController/ }.
+        inject(0) {|sum, (_, stat)| sum + stat.call_count }
     end
 
     private
