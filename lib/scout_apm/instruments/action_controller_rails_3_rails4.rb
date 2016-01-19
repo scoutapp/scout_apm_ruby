@@ -1,6 +1,7 @@
 module ScoutApm
   module Instruments
-    class ActionControllerRails3
+    # instrumentation for Rails 3 and Rails 4 is the same.
+    class ActionControllerRails3Rails4
       attr_reader :logger
 
       def initalize(logger=ScoutApm::Agent.instance.logger)
@@ -23,7 +24,7 @@ module ScoutApm
           ScoutApm::Agent.instance.logger.info "Instrumenting ActionController::Base"
           ::ActionController::Base.class_eval do
             # include ScoutApm::Tracer
-            include ScoutApm::Instruments::ActionControllerRails3Instruments
+            include ScoutApm::Instruments::ActionControllerRails3Rails4Instruments
           end
         end
 
@@ -55,7 +56,7 @@ module ScoutApm
       end
     end
 
-    module ActionControllerRails3Instruments
+    module ActionControllerRails3Rails4Instruments
       def process_action(*args)
         req = ScoutApm::RequestManager.lookup
         req.annotate_request(:uri => request.fullpath)
