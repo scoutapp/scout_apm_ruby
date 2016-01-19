@@ -1,4 +1,4 @@
-# 1.2.6.1
+# 1.2.7
 
 * Clarifying that Rails3 instrumentation also supports Rails4
 
