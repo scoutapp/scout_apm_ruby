@@ -156,11 +156,15 @@ module ScoutApm
     # The final run ensures metrics are stored locally to the layaway / reported to scoutapp.com. Otherwise,
     # in-memory metrics would be lost and a gap would appear on restarts.
     def shutdown
+      logger.info "In Shutdown, have we started? #{started?}"
       return if !started?
       if @background_worker
         @background_worker.stop
-        store.write_to_layaway(layaway)
+        store.write_to_layaway(layaway, :force)
       end
+
+      logger.debug "Joining background worker thread"
+      @background_worker_thread.join if @background_worker_thread
     end
 
     def started?
@@ -187,7 +191,6 @@ module ScoutApm
     def start_background_worker
       logger.info "Not starting background worker, already started" and return if background_worker_running?
       logger.info "Initializing worker thread."
-
       @background_worker = ScoutApm::BackgroundWorker.new
       @background_worker_thread = Thread.new do
         @background_worker.start {
@@ -199,8 +202,6 @@ module ScoutApm
           ScoutApm::Agent.instance.process_metrics
         }
       end
-
-      logger.debug "Background worker thread started with ObjectId: #{@background_worker_thread.object_id}"
     end
 
     # If we want to skip the app_server_check, then we must load it.

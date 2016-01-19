@@ -11,17 +11,18 @@ module ScoutApm
     def add_reporting_period(time, reporting_period)
       file.read_and_write do |existing_data|
         existing_data ||= Hash.new
-        existing_data.merge(time => reporting_period) {|key, old_val, new_val|
-          old_req = old_val.metrics_payload.
-            select { |meta,stats| meta.metric_name =~ /\AController/ }.
-            inject(0) {|sum, (_, stat)| sum + stat.call_count }
-          new_req = new_val.metrics_payload.
-            select { |meta,stats| meta.metric_name =~ /\AController/ }.
-            inject(0) {|sum, (_, stat)| sum + stat.call_count }
+        ScoutApm::Agent.instance.logger.debug("AddReportingPeriod: Adding a reporting_period with timestamp: #{reporting_period.timestamp.to_s}, and #{reporting_period.request_count} requests")
+
+        existing_data = existing_data.merge(time => reporting_period) {|key, old_val, new_val|
+          old_req = old_val.request_count
+          new_req = new_val.request_count
           ScoutApm::Agent.instance.logger.debug("Merging Two reporting periods (#{old_val.timestamp.to_s}, #{new_val.timestamp.to_s}): old req #{old_req}, new req #{new_req}")
 
           old_val.merge_metrics!(new_val.metrics_payload).merge_slow_transactions!(new_val.slow_transactions)
         }
+
+        ScoutApm::Agent.instance.logger.debug("AddReportingPeriod: AfterMerge Timestamps: #{existing_data.keys.map(&:to_s).inspect}")
+        existing_data
       end
     end
 
@@ -32,6 +33,9 @@ module ScoutApm
       ready_for_delivery = []
       file.read_and_write do |existing_data|
         existing_data ||= {}
+
+        ScoutApm::Agent.instance.logger.debug("PeriodsReadyForDeliver: All Timestamps: #{existing_data.keys.map(&:to_s).inspect}")
+
         ready_for_delivery = existing_data.to_a.select {|time, rp| should_send?(rp) } # Select off the values we want. to_a is needed for compatibility with Ruby 1.8.7.
 
         # Rewrite anything not plucked out back to the file

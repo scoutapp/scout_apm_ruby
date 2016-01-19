@@ -140,7 +140,7 @@ module ScoutApm
       queue_time_metrics = RequestQueueTime.new(self).call
       ScoutApm::Agent.instance.store.track!(queue_time_metrics)
 
-      ScoutApm::Agent.instance.logger.debug("Finished recording request") if metrics.any?
+      # ScoutApm::Agent.instance.logger.debug("Finished recording request") if metrics.any?
     end
 
     # Have we already persisted this request?
