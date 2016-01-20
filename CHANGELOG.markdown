@@ -1,3 +1,7 @@
+# 1.2.9
+
+* Uses ActiveRecord::Base.configurations to access database adapter across all versions of Rails 3.0+.
+
 # 1.2.8
 
 * Enhance shutdown code to be sure we save current-minute metrics and minimize
