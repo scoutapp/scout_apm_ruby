@@ -1,3 +1,7 @@
+# 1.2.10
+
+* Improve exit handler. It wasn't being run during shutdown in some cases.
+
 # 1.2.9
 
 * Uses ActiveRecord::Base.configurations to access database adapter across all versions of Rails 3.0+.
