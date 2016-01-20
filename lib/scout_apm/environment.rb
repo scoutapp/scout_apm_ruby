@@ -168,7 +168,7 @@ module ScoutApm
     ### framework checks
 
     def sinatra?
-      defined?(Sinatra::Application)
+      framework_integration.name == :sinatra
     end
 
   end # class Environemnt

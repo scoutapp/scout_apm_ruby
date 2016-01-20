@@ -113,7 +113,6 @@ module ScoutApm
       # hook is inserted to start the background worker after forking.
       if start_background_worker?
         start_background_worker
-        handle_exit
         logger.info "Scout Agent [#{ScoutApm::VERSION}] Initialized"
       elsif environment.background_job_integration
         environment.background_job_integration.install
@@ -130,13 +129,25 @@ module ScoutApm
       AppServerLoad.new.run
     end
 
-    def exit_handler_unsupported?
-      environment.sinatra? || environment.jruby? || environment.rubinius?
+    def exit_handler_supported?
+      if environment.sinatra?
+        logger.debug "Exit handler not supported for Sinatra"
+        false
+      elsif environment.jruby?
+        logger.debug "Exit handler not supported for JRuby"
+        false
+      elsif environment.rubinius?
+        logger.debug "Exit handler not supported for Rubinius"
+        false
+      else
+        true
+      end
     end
 
     # at_exit, calls Agent#shutdown to wrapup metric reporting.
-    def handle_exit
-      logger.debug "Exit handler not supported" and return if exit_handler_unsupported?
+    def install_exit_handler
+      logger.debug "Shutdown handler not supported" and return unless exit_handler_supported?
+      logger.debug "Installing Shutdown Handler"
 
       at_exit do
         logger.info "Shutting down Scout Agent"
@@ -193,6 +204,9 @@ module ScoutApm
     def start_background_worker
       logger.info "Not starting background worker, already started" and return if background_worker_running?
       logger.info "Initializing worker thread."
+
+      install_exit_handler
+
       @background_worker = ScoutApm::BackgroundWorker.new
       @background_worker_thread = Thread.new do
         @background_worker.start {
