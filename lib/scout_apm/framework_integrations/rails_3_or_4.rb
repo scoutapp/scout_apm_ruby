@@ -54,7 +54,7 @@ module ScoutApm
 
       def get_database_adapter
         ActiveRecord::Base.configurations[env]["adapter"]
-      rescue # don't believe this should throw an exception in real-world as only called from #database_engine which checks to see if ActiveRecord::Base is defined.
+      rescue # this would throw an exception if ActiveRecord::Base is defined but no configuration exists.
         nil
       end
     end
