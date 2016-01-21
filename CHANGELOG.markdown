@@ -1,3 +1,7 @@
+# 1.2.11
+
+* Summarizing middleware instrumentation into a single metric for lower overhead.
+
 # 1.2.10
 
 * Improve exit handler. It wasn't being run during shutdown in some cases.
