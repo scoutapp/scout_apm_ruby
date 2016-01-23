@@ -1,7 +1,9 @@
 # 1.2.11
 
 * Summarizing middleware instrumentation into a single metric for lower overhead.
-* Don't install ScoutApm::Middleware if monitoring isn't enabled.
+* If monitoring isn't enabled:
+  * Don't install ScoutApm::Middleware
+  * Don't start background worker
 
 # 1.2.10
 
