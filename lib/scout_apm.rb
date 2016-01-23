@@ -119,7 +119,7 @@ if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR
         # attempt to start on first-request if not otherwise started, which is
         # a good catch-all for Webrick, and Passenger and similar, where we
         # can't detect the running app server until actual requests come in.
-        app.middleware.use ScoutApm::Middleware
+        app.middleware.use ScoutApm::Middleware if ScoutApm::Agent.instance.apm_enabled?
 
         # Attempt to start right away, this will work best for preloading apps, Unicorn & Puma & similar
         ScoutApm::Agent.instance.start
