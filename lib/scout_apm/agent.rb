@@ -202,6 +202,10 @@ module ScoutApm
     # Creates the worker thread. The worker thread is a loop that runs continuously. It sleeps for +Agent#period+ and when it wakes,
     # processes data, either saving it to disk or reporting to Scout.
     def start_background_worker
+      if !apm_enabled?
+        logger.debug "Not starting background worker as monitoring isn't enabled."
+        return false
+      end
       logger.info "Not starting background worker, already started" and return if background_worker_running?
       logger.info "Initializing worker thread."
 
