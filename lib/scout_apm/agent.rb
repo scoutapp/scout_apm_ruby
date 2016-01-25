@@ -28,6 +28,8 @@ module ScoutApm
     # want to start the worker thread or install instrumentation if (1) disabled for this environment (2) a worker thread shouldn't
     # be started (when forking).
     def initialize(options = {})
+      # To start, we log to STDOUT. Once the agent is started, we use the logging settings provided in the config file. This ensures we always have a logger available.
+      @logger = Logger.new(STDOUT)
       @started = false
       @options ||= options
       @config = ScoutApm::Config.new(options[:config_path])

@@ -8,6 +8,19 @@ require 'scout_apm/store'
 
 class AgentTest < Minitest::Test
 
+  # Ensure a bad config file doesn't prevent the agent from starting.
+  def test_start_with_bad_config
+    ScoutApm::Agent.class_variable_set("@@instance",nil) # need to reset this so we're ready with a new agent
+    agent = ScoutApm::Agent.instance(:config_path => File.expand_path("../../data/bad_config.yml", __FILE__))
+    no_error = true
+    begin
+      agent.start
+    rescue Exception => e
+      no_error = false
+    end
+    assert no_error, "Error starting agent w/bad config file: #{e.message if e}"
+  end
+
   # Safeguard to ensure the main agent thread doesn't have any interaction with the layaway file. Contention on file locks can cause delays.
   def test_start_with_lock_on_layaway_file
     # setup the file, putting a lock on it.

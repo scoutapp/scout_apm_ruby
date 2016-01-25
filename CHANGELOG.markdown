@@ -4,6 +4,7 @@
 * If monitoring isn't enabled:
   * Don't install ScoutApm::Middleware
   * Don't start background worker
+* Preventing infinte loop (and app crash on startup) if the config file is malformed.
 
 # 1.2.10
 

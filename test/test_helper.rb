@@ -18,14 +18,15 @@ end
 # Helpers available to all tests
 class Minitest::Test
   def setup
-    reopen_logger
+    # reopen_logger
     FileUtils.mkdir_p(DATA_FILE_DIR)
     ENV['SCOUT_DATA_FILE'] = DATA_FILE_PATH
   end
 
   def teardown
-    ScoutApm::Agent.instance.shutdown
+    ScoutApm::Agent.instance.shutdown if ScoutApm::Agent.instance.started?
     File.delete(DATA_FILE_PATH) if File.exist?(DATA_FILE_PATH)
+    ScoutApm::Agent.class_variable_set("@@instance",nil)
   end
 
   def set_rack_env(env)

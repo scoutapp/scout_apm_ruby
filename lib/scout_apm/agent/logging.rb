@@ -13,7 +13,7 @@ module ScoutApm
         end
 
         begin
-          @logger ||= Logger.new(@log_file)
+          @logger = Logger.new(@log_file)
           @logger.level = log_level
           apply_log_format
         rescue Exception => e
