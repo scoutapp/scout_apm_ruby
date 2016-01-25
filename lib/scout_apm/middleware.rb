@@ -5,12 +5,13 @@ module ScoutApm
     def initialize(app)
       @app = app
       @attempts = 0
+      @enabled = ScoutApm::Agent.instance.apm_enabled?
       @started = ScoutApm::Agent.instance.started? && ScoutApm::Agent.instance.background_worker_running?
     end
 
     # If we get a web request in, then we know we're running in some sort of app server
     def call(env)
-      if @started || @attempts > MAX_ATTEMPTS
+      if !@enabled || @started || @attempts > MAX_ATTEMPTS
         @app.call(env)
       else
         attempt_to_start_agent

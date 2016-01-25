@@ -202,6 +202,10 @@ module ScoutApm
     # Creates the worker thread. The worker thread is a loop that runs continuously. It sleeps for +Agent#period+ and when it wakes,
     # processes data, either saving it to disk or reporting to Scout.
     def start_background_worker
+      if !apm_enabled?
+        logger.debug "Not starting background worker as monitoring isn't enabled."
+        return false
+      end
       logger.info "Not starting background worker, already started" and return if background_worker_running?
       logger.info "Initializing worker thread."
 
@@ -238,7 +242,7 @@ module ScoutApm
         when :rails       then install_instrument(ScoutApm::Instruments::ActionControllerRails2)
         when :rails3_or_4 then
           install_instrument(ScoutApm::Instruments::ActionControllerRails3Rails4)
-          install_instrument(ScoutApm::Instruments::Middleware)
+          install_instrument(ScoutApm::Instruments::MiddlewareSummary)
           install_instrument(ScoutApm::Instruments::RailsRouter)
         when :sinatra     then install_instrument(ScoutApm::Instruments::Sinatra)
         end

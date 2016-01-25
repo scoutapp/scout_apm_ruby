@@ -1,3 +1,10 @@
+# 1.2.11
+
+* Summarizing middleware instrumentation into a single metric for lower overhead.
+* If monitoring isn't enabled:
+  * In ScoutApm::Middleware, don't start the agent
+  * Don't start background worker
+
 # 1.2.10
 
 * Improve exit handler. It wasn't being run during shutdown in some cases.

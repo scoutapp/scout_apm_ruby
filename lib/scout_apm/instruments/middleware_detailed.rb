@@ -1,6 +1,16 @@
+# Inserts a new middleware between each actual middleware in the application,
+# so as to trace the time for each one.
+#
+# Currently disabled due to the overhead of this approach (~10-15ms per request
+# in practice).  Instead, middleware as a whole are instrumented via the
+# MiddlewareSummary class.
+#
+# There will likely be a configuration flag to turn this on in favor of the
+# summary tracing in a future version of the agent, but this is not yet
+# implemented.
 module ScoutApm
   module Instruments
-    class Middleware
+    class MiddlewareDetailed
       def initalize(logger=ScoutApm::Agent.instance.logger)
         @logger = logger
         @installed = false

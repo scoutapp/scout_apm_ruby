@@ -159,14 +159,12 @@ module ScoutApm
                        end
 
         # Specific Metric
-        if record_specific_metric?(layer.type)
-          meta_options.merge!(:desc => layer.desc) if layer.desc
-          meta = MetricMeta.new(layer.legacy_metric_name, meta_options)
-          meta.extra.merge!(:backtrace => ScoutApm::SlowTransaction.backtrace_parser(layer.backtrace)) if layer.backtrace
-          metric_hash[meta] ||= MetricStats.new( meta_options.has_key?(:scope) )
-          stat = metric_hash[meta]
-          stat.update!(layer.total_call_time, layer.total_exclusive_time)
-        end
+        meta_options.merge!(:desc => layer.desc) if layer.desc
+        meta = MetricMeta.new(layer.legacy_metric_name, meta_options)
+        meta.extra.merge!(:backtrace => ScoutApm::SlowTransaction.backtrace_parser(layer.backtrace)) if layer.backtrace
+        metric_hash[meta] ||= MetricStats.new( meta_options.has_key?(:scope) )
+        stat = metric_hash[meta]
+        stat.update!(layer.total_call_time, layer.total_exclusive_time)
 
         # Merged Metric (no specifics, just sum up by type)
         meta = MetricMeta.new("#{layer.type}/all")
@@ -176,13 +174,6 @@ module ScoutApm
       end
 
       metric_hash
-    end
-
-    SKIP_SPECIFICS = ["Middleware"]
-    # For metrics that are known to be of sort duration (Middleware right now), we don't record specifics on each call to eliminate a metric explosion.
-    # There can be many Middlewares in an app.
-    def record_specific_metric?(name)
-      !SKIP_SPECIFICS.include?(name)
     end
   end
 
@@ -202,6 +193,13 @@ module ScoutApm
     end
 
     def walk(layer=root_layer, &block)
+      # Need to run this for the root layer the first time through.
+      if layer == root_layer
+        @before_block.call(layer) if @before_block
+        yield layer
+        @after_block.call(layer) if @after_block
+      end
+
       layer.children.each do |child|
         @before_block.call(child) if @before_block
         yield child
