@@ -50,10 +50,6 @@ module ScoutApm
       value.to_s.strip.length.zero? ? nil : value
     end
 
-    def load_error?
-      @load_error
-    end
-
     private
 
     def config_path

@@ -18,7 +18,7 @@ end
 # Helpers available to all tests
 class Minitest::Test
   def setup
-    # reopen_logger
+    reopen_logger
     FileUtils.mkdir_p(DATA_FILE_DIR)
     ENV['SCOUT_DATA_FILE'] = DATA_FILE_PATH
   end
