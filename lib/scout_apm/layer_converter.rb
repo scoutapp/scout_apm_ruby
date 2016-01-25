@@ -24,7 +24,6 @@ module ScoutApm
         end
       end
     end
-
   end
 
   # Take a TrackedRequest and turn it into a hash of:
@@ -54,8 +53,6 @@ module ScoutApm
                        else
                          {:scope => scope_layer.legacy_metric_name}
                        end
-
-        meta_options.merge!(:desc => layer.desc) if layer.desc
 
         meta = MetricMeta.new(layer.legacy_metric_name, meta_options)
         metric_hash[meta] ||= MetricStats.new( meta_options.has_key?(:scope) )
@@ -159,7 +156,7 @@ module ScoutApm
                        end
 
         # Specific Metric
-        meta_options.merge!(:desc => layer.desc) if layer.desc
+        meta_options.merge!(:desc => layer.desc.to_s) if layer.desc
         meta = MetricMeta.new(layer.legacy_metric_name, meta_options)
         meta.extra.merge!(:backtrace => ScoutApm::SlowTransaction.backtrace_parser(layer.backtrace)) if layer.backtrace
         metric_hash[meta] ||= MetricStats.new( meta_options.has_key?(:scope) )
