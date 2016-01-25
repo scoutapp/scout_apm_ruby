@@ -1,0 +1,2 @@
+# A bad config file that will result in an error when loaded (invalid ERB syntax below)
+<%=

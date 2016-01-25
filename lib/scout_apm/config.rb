@@ -74,16 +74,28 @@ module ScoutApm
 
     def load_file
       settings_hash = {}
-      begin
-        if File.exist?(config_file)
-          settings_hash = YAML.load(ERB.new(File.read(config_file)).result(binding))[config_environment] || {}
-        else
-          logger.warn "No config file found at [#{config_file}]."
+      # only attempt to load the file if a load error hasn't already occured. otherwise, an infinite loop can result when we try to apply the hostname to the 
+      # log formatter, which accesses this file.
+      if !@load_error
+        begin
+          if File.exist?(config_file)
+            erb = ERB.new(File.read(config_file)).result(binding)
+            yaml = YAML.load(erb)
+            settings_hash = if !yaml
+              logger.warn "The config file is not valid YAML and could not be read. Please check the file formatting:\n#{File.read(config_file)}"
+              {}
+            else
+              yaml[config_environment] || {}
+            end
+          else
+            logger.warn "No config file found at [#{config_file}]."
+          end
+        rescue Exception => e
+          @load_error = true
+          logger.warn "Unable to load the config file."
+          logger.warn e.message
+          logger.warn e.backtrace
         end
-      rescue Exception => e
-        logger.warn "Unable to load the config file."
-        logger.warn e.message
-        logger.warn e.backtrace
       end
       DEFAULTS.merge(settings_hash)
     end
