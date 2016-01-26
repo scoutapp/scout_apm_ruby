@@ -33,9 +33,10 @@ module ScoutApm
       end
 
       def database_engine
+        return @database_engine if @database_engine
         default = :mysql
 
-        if defined?(ActiveRecord::Base)
+        @database_engine = if defined?(ActiveRecord::Base)
           adapter = get_database_adapter # can be nil
 
           case adapter.to_s
