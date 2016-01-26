@@ -12,12 +12,15 @@ module ScoutApm
       end
       include ScoutApm::Utils::SqlRegex
 
-      attr_reader :sql
       attr_accessor :database_engine
 
       def initialize(sql)
-        @sql = scrubbed(sql.dup)
+        @raw_sql = sql
         @database_engine = ScoutApm::Environment.instance.database_engine
+      end
+
+      def sql
+        @sql ||= scrubbed(@raw_sql.dup) # don't do this in initialize as it is extra work that isn't needed unless we have a slow transaction.
       end
 
       def to_s
