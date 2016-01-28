@@ -7,7 +7,11 @@ module ScoutApm
 
       def initialize(sql, name)
         @sql = sql
-        @name = name.to_s
+        @name = name
+      end
+
+      def name
+        @name.to_s # @name might be nil
       end
 
       # Converts an SQL string and the name (typically assigned automatically
@@ -17,7 +21,7 @@ module ScoutApm
       # name: Place Load
       # metric_name: Place/find
       def to_s
-        return DEFAULT_METRIC unless name
+        return DEFAULT_METRIC unless @name
         return DEFAULT_METRIC unless model && operation
 
         if parsed = parse_operation
