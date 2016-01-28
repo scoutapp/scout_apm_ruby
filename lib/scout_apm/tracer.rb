@@ -14,7 +14,7 @@ module ScoutApm
 
     module ClassMethods
       # Type: the Layer type - "View" or similar
-      # Name: specific name - "users/_gravatar"
+      # Name: specific name - "users/_gravatar". The object must respond to "#to_s". This allows us to be more efficient - in most cases, the metric name isn't needed unless we are processing a slow transaction.
       # A Block: The code to be instrumented
       #
       # Options:

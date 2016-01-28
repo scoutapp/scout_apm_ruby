@@ -54,13 +54,16 @@ module ScoutApm
                          {:scope => scope_layer.legacy_metric_name}
                        end
 
-        meta = MetricMeta.new(layer.legacy_metric_name, meta_options)
+        # we don't need to use the full metric name for scoped metrics as we only display metrics aggregrated
+        # by type.
+        metric_name = meta_options.has_key?(:scope) ? layer.type : layer.legacy_metric_name
+
+        meta = MetricMeta.new(metric_name, meta_options)
         metric_hash[meta] ||= MetricStats.new( meta_options.has_key?(:scope) )
 
         stat = metric_hash[meta]
         stat.update!(layer.total_call_time, layer.total_exclusive_time)
       end
-
       metric_hash
     end
   end

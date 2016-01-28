@@ -59,7 +59,7 @@ module ScoutApm
       def log_with_scout_instruments(*args, &block)
         sql, name = args
         self.class.instrument("ActiveRecord",
-                              Utils::ActiveRecordMetricName.new(sql, name).metric_name,
+                              Utils::ActiveRecordMetricName.new(sql, name),
                               :desc => Utils::SqlSanitizer.new(sql) ) do
           log_without_scout_instruments(sql, name, &block)
         end
