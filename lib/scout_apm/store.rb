@@ -107,10 +107,6 @@ module ScoutApm
       @aggregate_metrics = Hash.new
     end
 
-    def allow_more_slow_transactions?
-      slow_transactions.size <= 10
-    end
-
     #################################
     # Add metrics as they are recorded
     #################################

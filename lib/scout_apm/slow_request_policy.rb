@@ -15,10 +15,13 @@ module ScoutApm
     # It's not slow unless it's at least this slow
     SLOW_REQUEST_TIME_THRESHOLD = 2.0 # seconds
 
+    # Don't attempt to store more that this in memory
+    SLOW_REQUEST_COUNT_THRESHOLD = 5
+
     def capture_type(time)
       if !slow_enough?(time)
         CAPTURE_NONE
-      elsif ScoutApm::Agent.instance.store.current_period.allow_more_slow_transactions?
+      elsif ScoutApm::Agent.instance.store.current_period.slow_transactions.size <= SLOW_REQUEST_COUNT_THRESHOLD
         CAPTURE_DETAIL
       else
         CAPTURE_COUNT
