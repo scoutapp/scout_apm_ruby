@@ -90,12 +90,18 @@ module ScoutApm
   class LayerSlowTransactionConverter < LayerConverterBase
     def call
       policy = ScoutApm::Agent.instance.slow_request_policy.capture_type(root_layer.total_call_time)
+      if policy == ScoutApm::SlowRequestPolicy::CAPTURE_NONE
+        return [nil, {}] 
+      end
 
-      case policy
-      when ScoutApm::SlowRequestPolicy::CAPTURE_SUMMARY
-        return [nil, {}]
-      when ScoutApm::SlowRequestPolicy::CAPTURE_NONE
-        return [nil, {}]
+      # increment the slow transaction count if this is a slow transaction.
+      meta = MetricMeta.new("SlowTransaction/#{scope_layer.legacy_metric_name}")
+      stat = MetricStats.new
+      stat.update!(1)
+
+      if policy == ScoutApm::SlowRequestPolicy::CAPTURE_COUNT
+        ScoutApm::Agent.instance.logger.debug "Not recording full transaction details as slow request policy is CAPTURE_COUNT."
+        return [nil, { meta => stat }] 
       end
 
       scope = scope_layer
@@ -106,10 +112,6 @@ module ScoutApm
       metrics = create_metrics
       # Disable stackprof output for now
       stackprof = [] # request.stackprof
-
-      meta = MetricMeta.new("SlowTransaction/#{scope_layer.legacy_metric_name}")
-      stat = MetricStats.new
-      stat.update!(1)
 
       [
         SlowTransaction.new(uri,

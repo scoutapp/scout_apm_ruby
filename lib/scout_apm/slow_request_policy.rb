@@ -8,7 +8,7 @@ module ScoutApm
   class SlowRequestPolicy
     CAPTURE_TYPES = [
       CAPTURE_DETAIL  = "capture_detail",
-      CAPTURE_SUMMARY = "capture_summary",
+      CAPTURE_COUNT   = "capture_count",
       CAPTURE_NONE    = "capture_none",
     ]
 
@@ -16,8 +16,13 @@ module ScoutApm
     SLOW_REQUEST_TIME_THRESHOLD = 2.0 # seconds
 
     def capture_type(time)
-      return CAPTURE_NONE unless slow_enough?(time)
-      return CAPTURE_DETAIL
+      if !slow_enough?(time)
+        CAPTURE_NONE
+      elsif ScoutApm::Agent.instance.store.current_period.allow_more_slow_transactions?
+        CAPTURE_DETAIL
+      else
+        CAPTURE_COUNT
+      end
     end
 
     private

@@ -26,6 +26,10 @@ module ScoutApm
       @slow_transactions = []
     end
 
+    def size
+      @slow_transactions.size
+    end
+
     def each
       @slow_transactions.each { |s| yield s }
     end
