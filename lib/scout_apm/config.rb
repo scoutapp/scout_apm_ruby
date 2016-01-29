@@ -13,6 +13,7 @@ require 'scout_apm/environment'
 # log_level        - DEBUG / INFO / WARN as usual
 # monitor          - true or false.  False prevents any instrumentation from starting
 # name             - override the name reported to APM. This is the name that shows in the Web UI
+# uri_reporting    - 'path' or 'full_path' default is 'full_path', which reports URL params as well as the path.
 #
 # Any of these config settings can be set with an environment variable prefixed
 # by SCOUT_ and uppercasing the key: SCOUT_LOG_LEVEL for instance.
@@ -22,7 +23,8 @@ module ScoutApm
     DEFAULTS =  {
         'host'      => 'https://checkin.scoutapp.com',
         'log_level' => 'info',
-        'stackprof_interval' => 20000 # microseconds, 1000 = 1 millisecond, so 20k == 20 milliseconds
+        'stackprof_interval' => 20000, # microseconds, 1000 = 1 millisecond, so 20k == 20 milliseconds
+        'uri_reporting' => 'full_path'
     }.freeze
 
     def initialize(config_path = nil)
