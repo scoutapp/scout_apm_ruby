@@ -1,3 +1,7 @@
+# 1.2.12
+
+* add uri_reporting option to report bare path (as opposed to fullpath). Default is 'fullpath'; set to 'path' to avoid exposing URL parameters.  
+
 # 1.2.11
 
 * Summarizing middleware instrumentation into a single metric for lower overhead.
