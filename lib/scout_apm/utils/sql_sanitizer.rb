@@ -12,12 +12,15 @@ module ScoutApm
       end
       include ScoutApm::Utils::SqlRegex
 
-      attr_reader :sql
       attr_accessor :database_engine
 
       def initialize(sql)
-        @sql = scrubbed(sql.dup)
+        @raw_sql = sql
         @database_engine = ScoutApm::Environment.instance.database_engine
+      end
+
+      def sql
+        @sql ||= scrubbed(@raw_sql.dup) # don't do this in initialize as it is extra work that isn't needed unless we have a slow transaction.
       end
 
       def to_s
@@ -37,7 +40,7 @@ module ScoutApm
         sql.gsub!(PSQL_REMOVE_INTEGERS, '?')
         sql.gsub!(PSQL_IN_CLAUSE, 'IN (?)')
         sql.gsub!(MULTIPLE_SPACES, ' ')
-        sql.gsub!(TRAILING_SPACES, '')
+        sql.strip!
         sql
       end
 
@@ -48,7 +51,7 @@ module ScoutApm
         sql.gsub!(MYSQL_REMOVE_INTEGERS, '?')
         sql.gsub!(MYSQL_IN_CLAUSE, '?')
         sql.gsub!(MULTIPLE_QUESTIONS, '?')
-        sql.gsub!(TRAILING_SPACES, '')
+        sql.strip!
         sql
       end
 
@@ -57,7 +60,8 @@ module ScoutApm
         sql.gsub!(SQLITE_REMOVE_STRINGS, '?')
         sql.gsub!(SQLITE_REMOVE_INTEGERS, '?')
         sql.gsub!(MULTIPLE_SPACES, ' ')
-        sql.gsub!(TRAILING_SPACES, '')
+        sql.strip!
+        sql
       end
 
       def has_encodings?(encodings=['UTF-8', 'binary'])

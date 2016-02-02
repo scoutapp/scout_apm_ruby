@@ -4,7 +4,6 @@ module ScoutApm
     module SqlRegex
       MULTIPLE_SPACES    = %r|\s+|.freeze
       MULTIPLE_QUESTIONS = /\?(,\?)+/.freeze
-      TRAILING_SPACES    = /\s+$/.freeze
 
       PSQL_VAR_INTERPOLATION = %r|\[\[.*\]\]\s*$|.freeze
       PSQL_REMOVE_STRINGS = /'(?:[^']|'')*'/.freeze
