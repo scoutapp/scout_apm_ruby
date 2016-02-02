@@ -1,9 +1,13 @@
-# 1.2.12
+# 1.2.13
 
 * SQL Sanitation-Related performance improvements:
   * Lazy sanitation of SQL queries: only running when needed (a slow transaction is recorded)
   * An SQL sanitation performance improvement (strip! vs. gsub!)
   * Removing the TRAILING_SPACES regex - not used across all db engines and adds a bit more overhead
+
+# 1.2.12
+
+* Add uri_reporting option to report bare path (as opposed to fullpath). Default is 'fullpath'; set to 'path' to avoid exposing URL parameters.  
 
 # 1.2.11
 

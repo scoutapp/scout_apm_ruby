@@ -58,7 +58,8 @@ module ScoutApm
       # specific controller actions.
       def perform_action_with_scout_instruments(*args, &block)
         req = ScoutApm::RequestManager.lookup
-        req.annotate_request(:uri => request.fullpath)
+        path = ScoutApm::Agent.instance.config.value("uri_reporting") == 'path' ? request.path : request.fullpath
+        req.annotate_request(:uri => path)
         req.context.add_user(:ip => request.remote_ip)
         req.set_headers(request.headers)
         req.start_layer( ScoutApm::Layer.new("Controller", "#{controller_path}/#{action_name}") )
