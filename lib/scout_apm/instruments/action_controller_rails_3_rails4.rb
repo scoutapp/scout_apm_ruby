@@ -59,7 +59,8 @@ module ScoutApm
     module ActionControllerRails3Rails4Instruments
       def process_action(*args)
         req = ScoutApm::RequestManager.lookup
-        req.annotate_request(:uri => request.fullpath)
+        path = ScoutApm::Agent.instance.config.value("uri_reporting") == 'path' ? request.path : request.fullpath
+        req.annotate_request(:uri => path)
         req.context.add_user(:ip => request.remote_ip)
         req.set_headers(request.headers)
 
