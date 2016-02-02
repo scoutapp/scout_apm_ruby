@@ -1,3 +1,10 @@
+# 1.2.12
+
+* SQL Sanitation-Related performance improvements:
+  * Lazy sanitation of SQL queries: only running when needed (a slow transaction is recorded)
+  * An SQL sanitation performance improvement (strip! vs. gsub!)
+  * Removing the TRAILING_SPACES regex - not used across all db engines and adds a bit more overhead
+
 # 1.2.11
 
 * Summarizing middleware instrumentation into a single metric for lower overhead.
