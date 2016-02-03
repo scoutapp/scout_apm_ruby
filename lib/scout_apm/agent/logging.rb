@@ -8,7 +8,7 @@ module ScoutApm
 
       def init_logger
         begin
-          @log_file ||= wants_stdout? ? STDOUT : "#{log_file_path}/scout_apm.log"
+          @log_file ||= determine_log_destination
         rescue => e
         end
 
@@ -43,12 +43,24 @@ module ScoutApm
         end
       end
 
-      def log_file_path
-        config.value('log_file_path') || default_log_path
+      def determine_log_destination
+        case true
+        when wants_stdout? then STDOUT
+        when wants_stderr? then STDERR
+        else "#{log_file_path}/scout_apm.log"
+        end
       end
 
       def wants_stdout?
         config.value('log_file_path').to_s.upcase == 'STDOUT' || environment.platform_integration.log_to_stdout?
+      end
+
+      def wants_stderr?
+        config.value('log_file_path').to_s.upcase == 'STDERR'
+      end
+
+      def log_file_path
+        config.value('log_file_path') || default_log_path
       end
     end
     include Logging
