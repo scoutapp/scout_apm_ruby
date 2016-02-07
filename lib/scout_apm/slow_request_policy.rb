@@ -8,15 +8,11 @@ module ScoutApm
   class SlowRequestPolicy
     CAPTURE_TYPES = [
       CAPTURE_DETAIL  = "capture_detail",
-      CAPTURE_COUNT   = "capture_count",
       CAPTURE_NONE    = "capture_none",
     ]
 
     # It's not slow unless it's at least this slow
     SLOW_REQUEST_TIME_THRESHOLD = 2.0 # seconds
-
-    # Don't attempt to store more that this in memory
-    SLOW_REQUEST_COUNT_THRESHOLD = 5
 
     def capture_type(time)
       if !slow_enough?(time)

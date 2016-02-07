@@ -99,11 +99,6 @@ module ScoutApm
       stat = MetricStats.new
       stat.update!(1)
 
-      if policy == ScoutApm::SlowRequestPolicy::CAPTURE_COUNT
-        ScoutApm::Agent.instance.logger.debug "Not recording full transaction details as slow request policy is CAPTURE_COUNT."
-        return [nil, { meta => stat }] 
-      end
-
       scope = scope_layer
       return [nil, {}] unless scope
 
