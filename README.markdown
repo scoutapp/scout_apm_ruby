@@ -26,7 +26,7 @@ Your config file should look like:
 
 ## Supported Rubies
 
-* Ruby 1.8.7 through Ruby 2.1.2
+* Ruby 1.8.7 through Ruby 2.3
 
 ## Supported Application Servers
 
