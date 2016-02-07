@@ -21,10 +21,8 @@ module ScoutApm
     def capture_type(time)
       if !slow_enough?(time)
         CAPTURE_NONE
-      elsif ScoutApm::Agent.instance.store.current_period.slow_transactions.size <= SLOW_REQUEST_COUNT_THRESHOLD
-        CAPTURE_DETAIL
       else
-        CAPTURE_COUNT
+        CAPTURE_DETAIL
       end
     end
 
