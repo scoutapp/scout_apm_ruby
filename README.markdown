@@ -39,4 +39,4 @@ Your config file should look like:
 
 ## Help
 
-Email support@scoutapp.com if you need a hand.
+See our [help site](http://help.apm.scoutapp.com/) or email support@scoutapp.com if you need a hand.
