@@ -26,7 +26,7 @@ Your config file should look like:
 
 ## Supported Rubies
 
-* Ruby 1.8.7 through Ruby 2.1.2
+* Ruby 1.8.7 through Ruby 2.3
 
 ## Supported Application Servers
 
@@ -39,4 +39,4 @@ Your config file should look like:
 
 ## Help
 
-Email support@scoutapp.com if you need a hand.
+See our [help site](http://help.apm.scoutapp.com/) or email support@scoutapp.com if you need a hand.
