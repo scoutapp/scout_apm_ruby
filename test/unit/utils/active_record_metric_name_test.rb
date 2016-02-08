@@ -9,7 +9,7 @@ class ActiveRecordMetricNameTest < Minitest::Test
     name = :skip_logging
 
     mn = ScoutApm::Utils::ActiveRecordMetricName.new(sql, name)
-    assert_equal "SQL/Unknown", mn.metric_name
+    assert_equal "SQL/Unknown", mn.to_s
   end
 
   def test_postgres_column_lookup
@@ -27,7 +27,7 @@ class ActiveRecordMetricNameTest < Minitest::Test
     name = "SCHEMA"
 
     mn = ScoutApm::Utils::ActiveRecordMetricName.new(sql, name)
-    assert_equal "SQL/Unknown", mn.metric_name
+    assert_equal "SQL/Unknown", mn.to_s
   end
 
 
@@ -36,7 +36,7 @@ class ActiveRecordMetricNameTest < Minitest::Test
     name = "User Load"
 
     mn = ScoutApm::Utils::ActiveRecordMetricName.new(sql, name)
-    assert_equal "User/find", mn.metric_name
+    assert_equal "User/find", mn.to_s
   end
 
   def test_without_name
@@ -44,7 +44,7 @@ class ActiveRecordMetricNameTest < Minitest::Test
     name = nil
 
     mn = ScoutApm::Utils::ActiveRecordMetricName.new(sql, name)
-    assert_equal "SQL/Unknown", mn.metric_name
+    assert_equal "SQL/Unknown", mn.to_s
   end
 
   # TODO: Determine if there should be a distinction between Unknown and Other.
@@ -53,6 +53,6 @@ class ActiveRecordMetricNameTest < Minitest::Test
     name = "A whole sentance describing what's what"
 
     mn = ScoutApm::Utils::ActiveRecordMetricName.new(sql, name)
-    assert_equal "SQL/other", mn.metric_name
+    assert_equal "SQL/other", mn.to_s
   end
 end

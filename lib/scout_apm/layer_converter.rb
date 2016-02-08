@@ -54,13 +54,16 @@ module ScoutApm
                          {:scope => scope_layer.legacy_metric_name}
                        end
 
-        meta = MetricMeta.new(layer.legacy_metric_name, meta_options)
+        # we don't need to use the full metric name for scoped metrics as we only display metrics aggregrated
+        # by type.
+        metric_name = meta_options.has_key?(:scope) ? layer.type : layer.legacy_metric_name
+
+        meta = MetricMeta.new(metric_name, meta_options)
         metric_hash[meta] ||= MetricStats.new( meta_options.has_key?(:scope) )
 
         stat = metric_hash[meta]
         stat.update!(layer.total_call_time, layer.total_exclusive_time)
       end
-
       metric_hash
     end
   end
@@ -87,13 +90,14 @@ module ScoutApm
   class LayerSlowTransactionConverter < LayerConverterBase
     def call
       policy = ScoutApm::Agent.instance.slow_request_policy.capture_type(root_layer.total_call_time)
-
-      case policy
-      when ScoutApm::SlowRequestPolicy::CAPTURE_SUMMARY
-        return [nil, {}]
-      when ScoutApm::SlowRequestPolicy::CAPTURE_NONE
-        return [nil, {}]
+      if policy == ScoutApm::SlowRequestPolicy::CAPTURE_NONE
+        return [nil, {}] 
       end
+
+      # increment the slow transaction count if this is a slow transaction.
+      meta = MetricMeta.new("SlowTransaction/#{scope_layer.legacy_metric_name}")
+      stat = MetricStats.new
+      stat.update!(1)
 
       scope = scope_layer
       return [nil, {}] unless scope
@@ -103,10 +107,6 @@ module ScoutApm
       metrics = create_metrics
       # Disable stackprof output for now
       stackprof = [] # request.stackprof
-
-      meta = MetricMeta.new("SlowTransaction/#{scope_layer.legacy_metric_name}")
-      stat = MetricStats.new
-      stat.update!(1)
 
       [
         SlowTransaction.new(uri,

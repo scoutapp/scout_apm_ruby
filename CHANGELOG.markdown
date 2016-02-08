@@ -1,3 +1,7 @@
+# 1.3.0
+
+* Lazy metric naming for ActiveRecord calls
+
 # 1.2.13
 
 * SQL Sanitation-Related performance improvements:

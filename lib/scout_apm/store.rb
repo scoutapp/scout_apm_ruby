@@ -15,10 +15,14 @@ module ScoutApm
       StoreReportingPeriodTimestamp.new
     end
 
+    def current_period
+      reporting_periods[current_timestamp]
+    end
+
     # Save newly collected metrics
     def track!(metrics, options={})
       @mutex.synchronize {
-        reporting_periods[current_timestamp].merge_metrics!(metrics)
+        current_period.merge_metrics!(metrics)
       }
     end
 
@@ -33,7 +37,7 @@ module ScoutApm
     def track_slow_transaction!(slow_transaction)
       return unless slow_transaction
       @mutex.synchronize {
-        reporting_periods[current_timestamp].merge_slow_transactions!(slow_transaction)
+        current_period.merge_slow_transactions!(slow_transaction)
       }
     end
 
@@ -89,7 +93,7 @@ module ScoutApm
 
   # One period of Storage. Typically 1 minute
   class StoreReportingPeriod
-    # An array of SlowTransaction objects
+    # A SlowTransactionSet object. 
     attr_reader :slow_transactions
 
     # A StoreReportingPeriodTimestamp representing the time that this
@@ -141,21 +145,6 @@ module ScoutApm
     end
 
     private
-
-    # Removes payloads from slow transactions that exceed +SlowRequestPolicy::MAX_DETAIL_PER_MINUTE+ to avoid
-    # bloating the layaway file.
-    def trim_slow_transaction_metrics
-      count_with_metrics = 0
-      @slow_transactions.each do |s|
-
-        if s.has_metrics?
-          count_with_metrics += 1
-          if count_with_metrics > SlowRequestPolicy::MAX_DETAIL_PER_MINUTE
-            s.clear_metrics!
-          end
-        end
-      end
-    end
 
     # We can't aggregate CPU, Memory, Capacity, or Controller, so pass through these metrics directly
     # TODO: Figure out a way to not have this duplicate what's in Samplers, and also on server's ingest

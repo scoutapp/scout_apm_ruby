@@ -16,7 +16,7 @@ module ScoutApm
       # sql: SELECT "places".* FROM "places"  ORDER BY "places"."position" ASC
       # name: Place Load
       # metric_name: Place/find
-      def metric_name
+      def to_s
         return DEFAULT_METRIC unless name
         return DEFAULT_METRIC unless model && operation
 
