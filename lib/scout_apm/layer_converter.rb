@@ -89,18 +89,18 @@ module ScoutApm
   # return a 2 element array, [ Slow Transaction or Nil ,  Hash of metrics to store ]
   class LayerSlowTransactionConverter < LayerConverterBase
     def call
+      scope = scope_layer
+      return [nil, {}] unless scope
+
       policy = ScoutApm::Agent.instance.slow_request_policy.capture_type(root_layer.total_call_time)
       if policy == ScoutApm::SlowRequestPolicy::CAPTURE_NONE
         return [nil, {}] 
       end
 
       # increment the slow transaction count if this is a slow transaction.
-      meta = MetricMeta.new("SlowTransaction/#{scope_layer.legacy_metric_name}")
+      meta = MetricMeta.new("SlowTransaction/#{scope.legacy_metric_name}")
       stat = MetricStats.new
       stat.update!(1)
-
-      scope = scope_layer
-      return [nil, {}] unless scope
 
       uri = request.annotations[:uri] || ""
 

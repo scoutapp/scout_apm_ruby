@@ -1,3 +1,7 @@
+# 1.3.1
+
+* Handling nil scope in LayerSlowTransactionConverter
+
 # 1.3.0
 
 * Lazy metric naming for ActiveRecord calls
