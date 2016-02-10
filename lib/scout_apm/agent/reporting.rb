@@ -86,13 +86,6 @@ module ScoutApm
         end
       end
 
-      # def process_metrics
-      # rescue
-        # logger.warn "Error on checkin to #{reporter.uri.to_s}"
-        # logger.info $!.message
-        # logger.debug $!.backtrace
-      # end
-
       # Before reporting, lookup metric_id for each MetricMeta. This speeds up
       # reporting on the server-side.
       def add_metric_ids(metrics)
