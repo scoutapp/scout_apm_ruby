@@ -14,6 +14,7 @@ require 'scout_apm/environment'
 # monitor          - true or false.  False prevents any instrumentation from starting
 # name             - override the name reported to APM. This is the name that shows in the Web UI
 # uri_reporting    - 'path' or 'full_path' default is 'full_path', which reports URL params as well as the path.
+# report_format    - 'json' or 'marshal'. Marshal was default pre 1.3.2, Json is default 1.3.2 and onward.
 #
 # Any of these config settings can be set with an environment variable prefixed
 # by SCOUT_ and uppercasing the key: SCOUT_LOG_LEVEL for instance.
@@ -24,7 +25,8 @@ module ScoutApm
         'host'      => 'https://checkin.scoutapp.com',
         'log_level' => 'info',
         'stackprof_interval' => 20000, # microseconds, 1000 = 1 millisecond, so 20k == 20 milliseconds
-        'uri_reporting' => 'full_path'
+        'uri_reporting' => 'full_path',
+        'report_format' => 'json'
     }.freeze
 
     def initialize(config_path = nil)
