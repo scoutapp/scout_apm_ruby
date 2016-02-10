@@ -1,8 +1,4 @@
-# 1.3.2
-
-* Switch reporting payload version over to JSON
-
-# 1.3.1
+# 1.3.3
 
 * Handling nil scope in LayerSlowTransactionConverter
 
