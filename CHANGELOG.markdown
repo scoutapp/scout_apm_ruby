@@ -1,3 +1,7 @@
+# 1.4.0
+
+* Release JSON reporting
+
 # 1.3.4
 
 * Fix backtracking issue with on of the SQL sanitization regexes
