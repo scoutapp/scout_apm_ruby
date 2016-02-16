@@ -11,7 +11,7 @@ module ScoutApm
       PSQL_REMOVE_INTEGERS = /(?<!LIMIT )\b\d+\b/.freeze
 
       PSQL_PLACEHOLDER = /\$\d+/.freeze
-      PSQL_IN_CLAUSE = /IN\s+\((\s*\?,?\s*)*\)/.freeze
+      PSQL_IN_CLAUSE = /IN\s+\(\?[^\)]*\)/.freeze
 
       MYSQL_VAR_INTERPOLATION = %r|\[\[.*\]\]\s*$|.freeze
       MYSQL_REMOVE_INTEGERS = /(?<!LIMIT )\b\d+\b/.freeze
