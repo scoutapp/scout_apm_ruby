@@ -66,6 +66,15 @@ module ScoutApm
         assert_equal %q|SELECT  `blogs`.* FROM `blogs`  ORDER BY `blogs`.`id` ASC LIMIT 1|, ss.to_s
       end
 
+      def test_mysql_collpase_in_clause_performance
+        sql = 'SELECT `users`.* FROM `users` WHERE `users`.`id` IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?)'
+        ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :mysql }
+
+        assert_faster_than(0.01) do
+          assert_equal %q|SELECT `users`.* FROM `users` WHERE `users`.`id` IN (?)|, ss.to_s
+        end
+      end
+
       def test_mysql_literals
         sql = %q|SELECT `blogs`.* FROM `blogs` WHERE (title = 'abc')|
         ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :mysql }
