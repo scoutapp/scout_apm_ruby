@@ -127,14 +127,14 @@ module ScoutApm
     def record!
       @recorded = true
 
-      metrics = LayerMetricConverter.new(self).call
+      metrics = LayerConverters::MetricConverter.new(self).call
       ScoutApm::Agent.instance.store.track!(metrics)
 
-      slow, slow_metrics = LayerSlowTransactionConverter.new(self).call
+      slow, slow_metrics = LayerConverters::SlowTransactionConverter.new(self).call
       ScoutApm::Agent.instance.store.track_slow_transaction!(slow)
       ScoutApm::Agent.instance.store.track!(slow_metrics)
 
-      error_metrics = LayerErrorConverter.new(self).call
+      error_metrics = LayerConverters::ErrorConverter.new(self).call
       ScoutApm::Agent.instance.store.track!(error_metrics)
 
       queue_time_metrics = RequestQueueTime.new(self).call

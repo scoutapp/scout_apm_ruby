@@ -32,7 +32,14 @@ require 'scout_apm/version'
 require 'scout_apm/tracked_request'
 require 'scout_apm/layer'
 require 'scout_apm/request_manager'
-require 'scout_apm/layer_converter'
+
+require 'scout_apm/layer_converters/converter_base'
+require 'scout_apm/layer_converters/depth_first_walker'
+require 'scout_apm/layer_converters/error_converter'
+require 'scout_apm/layer_converters/job_converter'
+require 'scout_apm/layer_converters/metric_converter'
+require 'scout_apm/layer_converters/slow_transaction_converter'
+
 require 'scout_apm/request_queue_time'
 
 require 'scout_apm/server_integrations/passenger'
