@@ -39,8 +39,7 @@ require 'scout_apm/layer_converters/error_converter'
 require 'scout_apm/layer_converters/job_converter'
 require 'scout_apm/layer_converters/metric_converter'
 require 'scout_apm/layer_converters/slow_transaction_converter'
-
-require 'scout_apm/request_queue_time'
+require 'scout_apm/layer_converters/request_queue_time_converter'
 
 require 'scout_apm/server_integrations/passenger'
 require 'scout_apm/server_integrations/puma'
