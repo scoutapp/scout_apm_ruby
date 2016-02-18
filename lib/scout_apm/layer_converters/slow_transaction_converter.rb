@@ -1,6 +1,6 @@
 module ScoutApm
   module LayerConverters
-    class SlowTransactionConverter < BaseConverter
+    class SlowTransactionConverter < ConverterBase
       def call
         scope = scope_layer
         return [nil, {}] unless scope
