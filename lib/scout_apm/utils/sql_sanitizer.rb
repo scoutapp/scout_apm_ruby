@@ -49,7 +49,7 @@ module ScoutApm
         sql.gsub!(MYSQL_REMOVE_SINGLE_QUOTE_STRINGS, '?')
         sql.gsub!(MYSQL_REMOVE_DOUBLE_QUOTE_STRINGS, '?')
         sql.gsub!(MYSQL_REMOVE_INTEGERS, '?')
-        sql.gsub!(MYSQL_IN_CLAUSE, '?')
+        sql.gsub!(MYSQL_IN_CLAUSE, 'IN (?)')
         sql.gsub!(MULTIPLE_QUESTIONS, '?')
         sql.strip!
         sql

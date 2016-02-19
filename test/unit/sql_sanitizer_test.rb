@@ -45,6 +45,15 @@ module ScoutApm
         assert_equal %q|SELECT "blogs".* FROM "blogs" WHERE id IN (?)|, ss.to_s
       end
 
+      def test_postgres_collapse_in_clause_performacne
+        sql = 'SELECT "users".* FROM "users" WHERE "users"."id" IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?)'
+        ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :postgres }
+
+        assert_faster_than(0.01) do
+          assert_equal %q|SELECT "users".* FROM "users" WHERE "users"."id" IN (?)|, ss.to_s
+        end
+      end
+
       def test_mysql_where
         sql = %q|SELECT `users`.* FROM `users` WHERE `users`.`name` = ?  [["name", "chris"]]|
         ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :mysql }
@@ -55,6 +64,15 @@ module ScoutApm
         sql = %q|SELECT  `blogs`.* FROM `blogs`  ORDER BY `blogs`.`id` ASC LIMIT 1|
         ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :mysql }
         assert_equal %q|SELECT  `blogs`.* FROM `blogs`  ORDER BY `blogs`.`id` ASC LIMIT 1|, ss.to_s
+      end
+
+      def test_mysql_collpase_in_clause_performance
+        sql = 'SELECT `users`.* FROM `users` WHERE `users`.`id` IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?)'
+        ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :mysql }
+
+        assert_faster_than(0.01) do
+          assert_equal %q|SELECT `users`.* FROM `users` WHERE `users`.`id` IN (?)|, ss.to_s
+        end
       end
 
       def test_mysql_literals
@@ -73,6 +91,15 @@ module ScoutApm
         ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :mysql }
         assert_equal %q|SELECT `blogs`.* FROM `blogs` WHERE (title = 'a_c')|, ss.sql
         assert_equal %q|SELECT `blogs`.* FROM `blogs` WHERE (title = ?)|, ss.to_s
+      end
+
+      def assert_faster_than(target_seconds)
+        t1 = ::Time.now
+        yield
+        t2 = ::Time.now
+
+        actual_time = t2.to_f - t1.to_f
+        assert (actual_time < target_seconds), "Code took too long to execute, expected time: #{target_seconds}, actual time: #{actual_time}}"
       end
     end
   end
