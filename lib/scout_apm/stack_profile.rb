@@ -6,5 +6,5 @@ class StackProfile
   end
 end
 
-ScoutApm.after_gc_start_hook = proc { p StackProfile.getstack }
+ScoutApm.after_gc_start_hook = proc { p "GC START" ; p GC.stat ; p StackProfile.getstack }
 
