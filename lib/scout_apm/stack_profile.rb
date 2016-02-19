@@ -1,4 +1,4 @@
-require 'stack_profile/stack_profile'
+require 'stack_profile'
 
 class StackProfile
   def self.hello
@@ -7,3 +7,4 @@ class StackProfile
 end
 
 ScoutApm.after_gc_start_hook = proc { p StackProfile.getstack }
+
