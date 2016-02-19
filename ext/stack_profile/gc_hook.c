@@ -76,7 +76,7 @@ set_after_gc_start(VALUE module, VALUE proc)
 static VALUE
 set_after_gc_end(VALUE module, VALUE proc)
 {
-    return set_gc_hook(module, proc, RUBY_INTERNAL_EVENT_GC_END,
+    return set_gc_hook(module, proc, RUBY_INTERNAL_EVENT_GC_END_SWEEP,
                        "__set_after_gc_end_tpval__", "__set_after_gc_end_proc__");
 }
 
