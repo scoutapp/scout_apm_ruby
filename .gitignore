@@ -6,3 +6,8 @@ pkg/*
 .rvmrc
 .idea
 test/tmp/*
+/tmp
+/ext/stack_profile/stack_profile.bundle
+/ext/stack_profile/stack_profile.so
+/ext/stack_profile/Makefile
+.DS_Store
