@@ -13,7 +13,7 @@ module ScoutApm
     end
 
     def add(new_value)
-      self.total += 1
+      @total += 1
       create_new_bin(new_value)
       trim
     end
@@ -29,8 +29,8 @@ module ScoutApm
         end
       end
 
-      # If we fell through, we were asking for the last quantile
-      return @bins[-1].value
+      # If we fell through, we were asking for the last (max) value
+      return bins[-1].value
     end
 
     def mean
@@ -40,6 +40,13 @@ module ScoutApm
 
       sum = bins.inject(0) { |s, bin| s + (bin.value * bin.count) }
       return sum.to_f / total.to_f
+    end
+
+    def combine!(other)
+      @bins += other.bins
+      @total += other.total
+      trim
+      self
     end
 
     private

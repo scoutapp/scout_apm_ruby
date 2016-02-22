@@ -33,5 +33,26 @@ class HistogramTest < Minitest::Test
     assert_equal 1, hist.quantile(0)
     assert_equal 9, hist.quantile(100)
   end
+
+  def test_combine
+    hist1 = ScoutApm::NumericHistogram.new(5)
+    10.times {
+      (1..10).to_a.shuffle.each do |i|
+        hist1.add(i)
+      end
+    }
+
+    hist2 = ScoutApm::NumericHistogram.new(10)
+    10.times {
+      (1..10).to_a.shuffle.each do |i|
+        hist2.add(i)
+      end
+    }
+
+    combined = hist1.combine!(hist2)
+    assert_equal 1, combined.quantile(0)
+    assert_equal 9, combined.quantile(100)
+    assert_equal 200, combined.total
+  end
 end
 
