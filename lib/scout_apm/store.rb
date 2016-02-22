@@ -93,18 +93,20 @@ module ScoutApm
 
   # One period of Storage. Typically 1 minute
   class StoreReportingPeriod
-    # A SlowTransactionSet object. 
+    # A SlowTransactionSet object.
     attr_reader :slow_transactions
 
     # A StoreReportingPeriodTimestamp representing the time that this
     # collection of metrics is for
     attr_reader :timestamp
 
+    attr_reader :metric_set
+
     def initialize(timestamp)
       @timestamp = timestamp
 
       @slow_transactions = SlowTransactionSet.new
-      @metrics_set = MetricSet.new
+      @metric_set = MetricSet.new
     end
 
     #################################
@@ -117,7 +119,7 @@ module ScoutApm
 
     def merge_slow_transactions!(new_transactions)
       Array(new_transactions).each do |one_transaction|
-        @slow_transactions << one_transaction
+        slow_transactions << one_transaction
       end
 
       self
@@ -127,11 +129,11 @@ module ScoutApm
     # Retrieve Metrics for reporting
     #################################
     def metrics_payload
-      @metric_set.metrics
+      metric_set.metrics
     end
 
     def slow_transactions_payload
-      @slow_transactions.to_a
+      slow_transactions.to_a
     end
 
     #################################
