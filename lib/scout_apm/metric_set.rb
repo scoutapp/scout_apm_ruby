@@ -35,5 +35,10 @@ module ScoutApm
         @metrics[agg_meta].combine!(stat)
       end
     end
+
+    def combine!(other)
+      absorb_all(other.metrics)
+      self
+    end
   end
 end
