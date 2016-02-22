@@ -14,7 +14,7 @@ module ScoutApm
 
     def add(new_value)
       @total += 1
-      create_new_bin(new_value)
+      create_new_bin(new_value.to_f)
       trim
     end
 
