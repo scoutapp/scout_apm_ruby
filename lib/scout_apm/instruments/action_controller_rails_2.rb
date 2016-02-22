@@ -63,6 +63,7 @@ module ScoutApm
         req.context.add_user(:ip => request.remote_ip)
         req.set_headers(request.headers)
         req.start_layer( ScoutApm::Layer.new("Controller", "#{controller_path}/#{action_name}") )
+        req.web!
 
         begin
           perform_action_without_scout_instruments(*args, &block)

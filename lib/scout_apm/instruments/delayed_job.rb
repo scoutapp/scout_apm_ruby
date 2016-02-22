@@ -33,6 +33,7 @@ module ScoutApm
 
         ScoutApm::Agent.instance.store.track_one!("Queue", queue, 0, {:extra_metrics => {:latency => latency}})
         req = ScoutApm::RequestManager.lookup
+        req.job!
         req.start_layer( ScoutApm::Layer.new("Job", scout_method_name) )
 
         begin

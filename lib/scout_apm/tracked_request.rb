@@ -29,6 +29,10 @@ module ScoutApm
     # Can be nil if we never reach a Rails Controller
     attr_reader :headers
 
+    # What kind of request is this? A trace of a web request, or a background job?
+    # Use job! and web! to set, and job? and web? to query
+    attr_reader :request_type
+
     def initialize
       @layers = []
       @annotations = {}
@@ -116,6 +120,22 @@ module ScoutApm
 
     def set_headers(headers)
       @headers = headers
+    end
+
+    def job!
+      @request_type = "job"
+    end
+
+    def job?
+      request_type == "job"
+    end
+
+    def web!
+      @request_type = "web"
+    end
+
+    def web?
+      request_type == "web"
     end
 
     ###################################

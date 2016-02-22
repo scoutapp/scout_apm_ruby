@@ -48,6 +48,7 @@ module ScoutApm
         latency = (Time.now.to_f - (msg['enqueued_at'] || msg['created_at'])) * 1000
 
         req = ScoutApm::RequestManager.lookup
+        req.job!
 
         req.start_layer( ScoutApm::Layer.new("Queue", queue) )
 
