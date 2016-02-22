@@ -61,6 +61,8 @@ require 'scout_apm/platform_integrations/heroku'
 require 'scout_apm/platform_integrations/cloud_foundry'
 require 'scout_apm/platform_integrations/server'
 
+require 'scout_apm/histogram'
+
 require 'scout_apm/deploy_integrations/capistrano_3'
 #require 'scout_apm/deploy_integrations/capistrano_2'
 
