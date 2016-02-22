@@ -104,14 +104,14 @@ module ScoutApm
       @timestamp = timestamp
 
       @slow_transactions = SlowTransactionSet.new
-      @aggregate_metrics = Hash.new
+      @metrics_set = MetricSet.new
     end
 
     #################################
     # Add metrics as they are recorded
     #################################
     def merge_metrics!(metrics)
-      metrics.each { |metric| absorb(metric) }
+      metric_set.absorb_all(metrics)
       self
     end
 
@@ -127,7 +127,7 @@ module ScoutApm
     # Retrieve Metrics for reporting
     #################################
     def metrics_payload
-      @aggregate_metrics
+      @metric_set.metrics
     end
 
     def slow_transactions_payload
@@ -142,34 +142,6 @@ module ScoutApm
       metrics_payload.
         select { |meta,stats| meta.metric_name =~ /\AController/ }.
         inject(0) {|sum, (_, stat)| sum + stat.call_count }
-    end
-
-    private
-
-    # We can't aggregate CPU, Memory, Capacity, or Controller, so pass through these metrics directly
-    # TODO: Figure out a way to not have this duplicate what's in Samplers, and also on server's ingest
-    PASSTHROUGH_METRICS = ["CPU", "Memory", "Instance", "Controller", "SlowTransaction"]
-
-    # Absorbs a single new metric into the aggregates
-    def absorb(metric)
-      meta, stat = metric
-
-      if PASSTHROUGH_METRICS.include?(meta.type) # Leave as-is, don't attempt to combine
-        @aggregate_metrics[meta] ||= MetricStats.new
-        @aggregate_metrics[meta].combine!(stat)
-
-      elsif meta.type == "Errors" # Sadly special cased, we want both raw and aggregate values
-        @aggregate_metrics[meta] ||= MetricStats.new
-        @aggregate_metrics[meta].combine!(stat)
-        agg_meta = MetricMeta.new("Errors/Request", :scope => meta.scope)
-        @aggregate_metrics[agg_meta] ||= MetricStats.new
-        @aggregate_metrics[agg_meta].combine!(stat)
-
-      else # Combine down to a single /all key
-        agg_meta = MetricMeta.new("#{meta.type}/all", :scope => meta.scope)
-        @aggregate_metrics[agg_meta] ||= MetricStats.new
-        @aggregate_metrics[agg_meta].combine!(stat)
-      end
     end
   end
 end
