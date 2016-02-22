@@ -8,7 +8,7 @@ module ScoutApm
       def initialize(request)
         @request = request
         @root_layer = request.root_layer
-        @walker = LayerDepthFirstWalker.new(root_layer)
+        @walker = DepthFirstWalker.new(root_layer)
       end
 
       # Scope is determined by the first Controller we hit.  Most of the time

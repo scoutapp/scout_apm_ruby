@@ -137,7 +137,7 @@ module ScoutApm
       error_metrics = LayerConverters::ErrorConverter.new(self).call
       ScoutApm::Agent.instance.store.track!(error_metrics)
 
-      queue_time_metrics = RequestQueueTime.new(self).call
+      queue_time_metrics = LayerConverters::RequestQueueTimeConverter.new(self).call
       ScoutApm::Agent.instance.store.track!(queue_time_metrics)
 
       # ScoutApm::Agent.instance.logger.debug("Finished recording request") if metrics.any?
