@@ -33,6 +33,7 @@ gc_start_end_i(VALUE tpval, void *data)
             mark_gc_start_time();
         } else {
             mark_gc_end_time();
+            get_rusage_data();
         }
         rb_postponed_job_register(0, invoke_proc, data);
     }
