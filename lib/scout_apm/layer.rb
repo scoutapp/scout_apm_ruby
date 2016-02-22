@@ -37,6 +37,7 @@ module ScoutApm
       @start_time = start_time
       @children = [] # In order of calls
       @desc = nil
+      @gc_time = {start_time: nil, end_time: nil}
     end
 
     def add_child(child)
@@ -45,6 +46,12 @@ module ScoutApm
 
     def record_stop_time!(stop_time = Time.now)
       @stop_time = stop_time
+    end
+
+    def record_gc_time
+      gc_times = StackProfile.get_gc_times
+      @gc_time.merge!(start_time: gc_times[0], end_time: gc_times[1])
+      p "Layer had GC End: #{name} - GC(Start #{@gc_time[:start_time].to_f}, End #{@gc_time[:end_time].to_f}) Layer(Start #{start_time.to_f}, End #{stop_time.to_f})" if (start_time < @gc_time[:end_time] && @gc_time[:end_time] < stop_time)
     end
 
     def desc=(desc)
