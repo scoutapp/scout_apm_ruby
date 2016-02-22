@@ -10,12 +10,13 @@ VALUE stack_array;
 int lines_buffer[BUF_SIZE];
 
 struct timeval tval_gc_start, tval_gc_end;
-struct rusage rusage;
-int sp_gc_count;
+struct rusage start_rusage, end_rusage;
+int start_gc_count, end_gc_count;
 
 static VALUE
 initialize(VALUE self)
 {
+    rb_iv_set(self, "@gc_data", Qnil);
     return self;
 }
 
@@ -36,31 +37,33 @@ getstack(VALUE rb_self)
 }
 
 static VALUE
-get_gc_data(VALUE self)
+load_gc_data(VALUE self)
 {
-    VALUE ary = rb_ary_new();
-    rb_ary_push(ary, rb_time_new(tval_gc_start.tv_sec, tval_gc_start.tv_usec));
-    rb_ary_push(ary, rb_time_new(tval_gc_end.tv_sec, tval_gc_end.tv_usec));
-    rb_ary_push(ary, INT2NUM(sp_gc_count));
-    rb_ary_push(ary, LONG2NUM(rusage.ru_maxrss));
-    return ary;
+    VALUE hsh = rb_hash_new();
+    rb_hash_aset(hsh, ID2SYM(rb_intern("start_time")), rb_time_new(tval_gc_start.tv_sec, tval_gc_start.tv_usec));
+    rb_hash_aset(hsh, ID2SYM(rb_intern("end_time")), rb_time_new(tval_gc_end.tv_sec, tval_gc_end.tv_usec));
+
+    rb_hash_aset(hsh, ID2SYM(rb_intern("start_gc_count")), INT2NUM(start_gc_count));
+    rb_hash_aset(hsh, ID2SYM(rb_intern("end_gc_count")), INT2NUM(end_gc_count));
+
+    rb_hash_aset(hsh, ID2SYM(rb_intern("start_max_rss")), LONG2NUM(start_rusage.ru_maxrss));
+    rb_hash_aset(hsh, ID2SYM(rb_intern("end_max_rss")), LONG2NUM(end_rusage.ru_maxrss));
+
+    return rb_iv_set(self, "@gc_data", hsh);
 }
 
-void get_rusage_data()
-{
-    getrusage(RUSAGE_SELF, &rusage);
-}
-
-void mark_gc_start_time()
+void record_gc_start_data()
 {
     gettimeofday(&tval_gc_start, NULL);
-    sp_gc_count = rb_gc_count();
+    start_gc_count = rb_gc_count();
+    getrusage(RUSAGE_SELF, &start_rusage);
 }
 
-void mark_gc_end_time()
+void record_gc_end_data()
 {
     gettimeofday(&tval_gc_end, NULL);
-    sp_gc_count = rb_gc_count();
+    end_gc_count = rb_gc_count();
+    getrusage(RUSAGE_SELF, &end_rusage);
 }
 
 void Init_stack_profile()
@@ -68,7 +71,7 @@ void Init_stack_profile()
     cClass = rb_define_class("StackProfile", rb_cObject);
     rb_define_method(cClass, "initialize", initialize, 0);
     rb_define_singleton_method(cClass, "getstack", getstack, 0);
-    rb_define_singleton_method(cClass, "get_gc_data", get_gc_data, 0);
+    rb_define_method(cClass, "load_gc_data", load_gc_data, 0);
 
     VALUE mScoutApm;
     mScoutApm = rb_define_module("ScoutApm");

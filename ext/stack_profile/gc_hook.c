@@ -30,10 +30,9 @@ gc_start_end_i(VALUE tpval, void *data)
     if (invoking == 0) {
         rb_trace_arg_t *tparg = rb_tracearg_from_tracepoint(tpval);
         if (rb_tracearg_event_flag(tparg) == RUBY_INTERNAL_EVENT_GC_START) {
-            mark_gc_start_time();
+            record_gc_start_data();
         } else {
-            mark_gc_end_time();
-            get_rusage_data();
+            record_gc_end_data();
         }
         rb_postponed_job_register(0, invoke_proc, data);
     }

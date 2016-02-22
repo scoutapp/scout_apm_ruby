@@ -37,7 +37,7 @@ module ScoutApm
       @start_time = start_time
       @children = [] # In order of calls
       @desc = nil
-      @gc_data = {start_time: nil, end_time: nil, gc_count: 0, max_rss: 0}
+      @stack_profile = StackProfile.new()
     end
 
     def add_child(child)
@@ -49,9 +49,10 @@ module ScoutApm
     end
 
     def record_gc_data
-      gc_data = StackProfile.get_gc_data
-      @gc_data.merge!(start_time: gc_data[0], end_time: gc_data[1], gc_count: gc_data[2], max_rss: gc_data[3])
-      p "Layer had GC End: #{name} - GC(Start #{@gc_data[:start_time].to_f}, End #{@gc_data[:end_time].to_f}) Layer(Start #{start_time.to_f}, End #{stop_time.to_f}) - GC Count: #{@gc_data[:gc_count]} - Max RSS: #{@gc_data[:max_rss]}" if (start_time < @gc_data[:end_time] && @gc_data[:end_time] < stop_time)
+      @stack_profile.load_gc_data
+      if @stackprofile.rss_increased? and @stack_profile.gc_ended_between?(start_time, stop_time)
+        p @stack_profile.gc_data.merge(layer: name)
+      end
     end
 
     def desc=(desc)
