@@ -27,12 +27,13 @@ invoke_proc(void *data)
 static void
 gc_start_end_i(VALUE tpval, void *data)
 {
-    if (0) {
-        rb_trace_arg_t *tparg = rb_tracearg_from_tracepoint(tpval);
-        fprintf(stderr, "trace: %s\n", rb_tracearg_event_flag(tparg) == RUBY_INTERNAL_EVENT_GC_START ? "gc_start" : "gc_end");
-    }
-
     if (invoking == 0) {
+        rb_trace_arg_t *tparg = rb_tracearg_from_tracepoint(tpval);
+        if (rb_tracearg_event_flag(tparg) == RUBY_INTERNAL_EVENT_GC_START) {
+            mark_gc_start_time();
+        } else {
+            mark_gc_end_time();
+        }
         rb_postponed_job_register(0, invoke_proc, data);
     }
 }
