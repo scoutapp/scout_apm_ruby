@@ -14,6 +14,8 @@ struct timeval tval_gc_start, tval_gc_end;
 struct rusage start_rusage, end_rusage;
 int start_gc_count, end_gc_count;
 
+VALUE gc_event_array;
+
 static VALUE
 initialize(VALUE self)
 {
@@ -58,6 +60,7 @@ void record_gc_start_data()
     gettimeofday(&tval_gc_start, NULL);
     start_gc_count = rb_gc_count();
     getrusage(RUSAGE_SELF, &start_rusage);
+    fprintf(stderr, "stackprofile gc_start: start_time: %d %0.6f, start_gc_count: %d, start_rusage: %d\n", tval_gc_start.tv_sec, (float)tval_gc_start.tv_usec, start_gc_count, start_rusage.ru_maxrss);
 }
 
 void record_gc_end_data()
@@ -65,6 +68,7 @@ void record_gc_end_data()
     gettimeofday(&tval_gc_end, NULL);
     end_gc_count = rb_gc_count();
     getrusage(RUSAGE_SELF, &end_rusage);
+    fprintf(stderr, "stackprofile gc_end: end_time: %d %0.6f, end_gc_count: %d, end_rusage: %d\n", tval_gc_end.tv_sec, (float)tval_gc_end.tv_usec, end_gc_count, end_rusage.ru_maxrss);
 }
 
 void Init_stack_profile()
@@ -74,6 +78,7 @@ void Init_stack_profile()
     rb_define_method(cStackProfile, "initialize", initialize, 0);
     rb_define_singleton_method(cStackProfile, "getstack", getstack, 0);
     rb_define_method(cStackProfile, "load_gc_data", load_gc_data, 0);
+    rb_cv_set(cStackProfile, "@@gc_event_array", rb_ary_new());
 
     Init_gc_hook(mScoutApm);
 }
