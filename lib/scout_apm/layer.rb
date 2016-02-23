@@ -49,10 +49,10 @@ module ScoutApm
     end
 
     def record_gc_data
-      @stack_profile.load_gc_data
-      if @stack_profile.rss_increased? and @stack_profile.gc_ended_between?(start_time, stop_time)
-        p @stack_profile.gc_data.merge(layer: name)
-      end
+      #@stack_profile.load_gc_data
+      #if @stack_profile.rss_increased? and @stack_profile.gc_ended_between?(start_time, stop_time)
+      #  p ScoutApm::StackProfile.gc_event_array #@stack_profile.gc_data.merge(layer: name)
+      #end
     end
 
     def desc=(desc)
