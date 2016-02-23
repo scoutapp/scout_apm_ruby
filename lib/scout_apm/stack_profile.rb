@@ -11,7 +11,7 @@ module ScoutApm
 
       def gc_ended_between?(start_time, stop_time)
         return false unless @gc_data
-        start_time < @gc_data[:end_time] and end_time > @gc_data[:start_time]
+        start_time < @gc_data[:end_time] and stop_time > @gc_data[:start_time]
       end
 
       def self.gc_event_array
