@@ -37,7 +37,7 @@ module ScoutApm
       @start_time = start_time
       @children = [] # In order of calls
       @desc = nil
-      @stack_profile = StackProfile.new()
+      @stack_profile = ScoutApm::StackProfile.new()
     end
 
     def add_child(child)
@@ -50,8 +50,8 @@ module ScoutApm
 
     def record_gc_data
       @stack_profile.load_gc_data
-      if @stackprofile.rss_increased? and @stack_profile.gc_ended_between?(start_time, stop_time)
-        p @stack_profile.gc_data.merge(layer: name)
+      if @stack_profile.rss_increased? and @stack_profile.gc_ended_between?(start_time, stop_time)
+        ScoutApm::Agent.instance.logger.debug @stack_profile.gc_data.merge(layer: name)
       end
     end
 

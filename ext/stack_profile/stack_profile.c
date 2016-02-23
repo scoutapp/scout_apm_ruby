@@ -4,7 +4,8 @@
 
 #define BUF_SIZE 2048
 
-VALUE cClass;
+VALUE mScoutApm;
+VALUE cStackProfile;
 VALUE frames_buffer[BUF_SIZE];
 VALUE stack_array;
 int lines_buffer[BUF_SIZE];
@@ -68,12 +69,11 @@ void record_gc_end_data()
 
 void Init_stack_profile()
 {
-    cClass = rb_define_class("StackProfile", rb_cObject);
-    rb_define_method(cClass, "initialize", initialize, 0);
-    rb_define_singleton_method(cClass, "getstack", getstack, 0);
-    rb_define_method(cClass, "load_gc_data", load_gc_data, 0);
-
-    VALUE mScoutApm;
     mScoutApm = rb_define_module("ScoutApm");
+    cStackProfile = rb_define_class_under(mScoutApm, "StackProfile", rb_cObject);
+    rb_define_method(cStackProfile, "initialize", initialize, 0);
+    rb_define_singleton_method(cStackProfile, "getstack", getstack, 0);
+    rb_define_method(cStackProfile, "load_gc_data", load_gc_data, 0);
+
     Init_gc_hook(mScoutApm);
 }
