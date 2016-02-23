@@ -3,10 +3,6 @@ require 'stack_profile'
 class StackProfile
     attr_reader :gc_data
 
-    #def initialize
-    #  @gc_data = {start_time: nil, end_time: nil, start_gc_count: 0, end_gc_count: 0, start_max_rss: 0, end_max_rss: 0}
-    #end
-
     def rss_increased?
       @gc_data[:end_max_rss] > @gc_data[:start_max_rss]
     end
