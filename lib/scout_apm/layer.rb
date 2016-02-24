@@ -30,6 +30,7 @@ module ScoutApm
     # backtrace of where it occurred.
     attr_reader :backtrace
 
+    attr_reader :stack_profile
 
     def initialize(type, name, start_time = Time.now)
       @type = type
@@ -37,7 +38,7 @@ module ScoutApm
       @start_time = start_time
       @children = [] # In order of calls
       @desc = nil
-      @stack_profile = ScoutApm::StackProfile.new()
+      @stack_profile = nil
     end
 
     def add_child(child)
@@ -49,10 +50,11 @@ module ScoutApm
     end
 
     def record_gc_data
-      #@stack_profile.load_gc_data
-      #if @stack_profile.rss_increased? and @stack_profile.gc_ended_between?(start_time, stop_time)
-      #  p ScoutApm::StackProfile.gc_event_array #@stack_profile.gc_data.merge(layer: name)
-      #end
+      @stack_profile = ScoutApm::StackProfile.new(ScoutApm::StackProfile.gc_event_datas_for(start_time, stop_time))
+      if @stack_profile.rss_increased?
+        dbg = {}
+        p dbg.merge!(layer: name, gc_events: @stack_profile.gc_events).inspect
+      end
     end
 
     def desc=(desc)

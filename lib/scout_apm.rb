@@ -111,6 +111,7 @@ require 'scout_apm/serializers/app_server_load_serializer'
 require 'scout_apm/serializers/deploy_serializer'
 
 require 'scout_apm/middleware'
+require 'scout_apm/gc_event'
 require 'scout_apm/stack_profile'
 
 if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR) && Rails::VERSION::MAJOR >= 3 && defined?(Rails::Railtie)

@@ -23,13 +23,6 @@ struct gc_event {
 struct gc_event gc_event_array[NUM_GC_EVENTS];
 int gc_event_count;
 
-static VALUE
-initialize(VALUE self)
-{
-    rb_iv_set(self, "@gc_data", Qnil);
-    return self;
-}
-
 void record_gc_start_data()
 {
     struct gc_event* evnt;
@@ -66,7 +59,7 @@ void record_gc_end_data()
 }
 
 static VALUE
-gc_events(VALUE self)
+gc_event_datas(VALUE self)
 {
     int i;
     VALUE event_array = rb_ary_new();
@@ -86,7 +79,7 @@ gc_events(VALUE self)
         rb_ary_push(event_array, hsh);
 
         // Debug printer
-        fprintf(stderr, "stackprofile print_gc_event: start_time: %d %0.6f, start_gc_count: %d, start_rusage: %d, end_time: %d %0.6f, end_gc_count: %d, end_rusage: %d\n", evnt->tval_gc_start.tv_sec, (float)evnt->tval_gc_start.tv_usec, evnt->start_gc_count, evnt->start_rusage.ru_maxrss, evnt->tval_gc_end.tv_sec, (float)evnt->tval_gc_end.tv_usec, evnt->end_gc_count, evnt->end_rusage.ru_maxrss);
+        //fprintf(stderr, "stackprofile print_gc_event: start_time: %d %0.6f, start_gc_count: %d, start_rusage: %d, end_time: %d %0.6f, end_gc_count: %d, end_rusage: %d\n", evnt->tval_gc_start.tv_sec, (float)evnt->tval_gc_start.tv_usec, evnt->start_gc_count, evnt->start_rusage.ru_maxrss, evnt->tval_gc_end.tv_sec, (float)evnt->tval_gc_end.tv_usec, evnt->end_gc_count, evnt->end_rusage.ru_maxrss);
 
     }
     return event_array;
@@ -96,8 +89,7 @@ void Init_stack_profile()
 {
     mScoutApm = rb_define_module("ScoutApm");
     cStackProfile = rb_define_class_under(mScoutApm, "StackProfile", rb_cObject);
-    rb_define_method(cStackProfile, "initialize", initialize, 0);
-    rb_define_singleton_method(cStackProfile, "gc_events", gc_events, 0);
+    rb_define_singleton_method(cStackProfile, "gc_event_datas", gc_event_datas, 0);
 
     Init_gc_hook(mScoutApm);
 }
