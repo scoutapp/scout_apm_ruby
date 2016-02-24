@@ -8,9 +8,6 @@
 
 VALUE mScoutApm;
 VALUE cStackProfile;
-VALUE frames_buffer[BUF_SIZE];
-VALUE stack_array;
-int lines_buffer[BUF_SIZE];
 
 // All of the data tracked from start to end of a single gc cycle
 struct gc_event {
