@@ -4,7 +4,7 @@
 
 #define BUF_SIZE 2048
 
-#define NUM_GC_EVENTS 100
+#define NUM_GC_EVENTS 40
 
 VALUE mScoutApm;
 VALUE cStackProfile;
