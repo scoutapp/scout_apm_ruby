@@ -53,7 +53,7 @@ module ScoutApm
       @stack_profile = ScoutApm::StackProfile.new(ScoutApm::StackProfile.gc_event_datas_for(start_time, stop_time))
       if @stack_profile.rss_increased?
         dbg = {}
-        p dbg.merge!(layer: legacy_metric_name, gc_events: @stack_profile.gc_events).inspect
+        p dbg.merge!(layer: legacy_metric_name, rss_size_diff: @stack_profile.rss_size_diff, gc_events: @stack_profile.gc_events)
       end
     end
 
