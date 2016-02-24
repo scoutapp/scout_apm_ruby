@@ -50,7 +50,6 @@ module ScoutApm
     end
 
     def record_gc_data
-      puts "record_gc_data layer: #{name}"
       @stack_profile = ScoutApm::StackProfile.new(ScoutApm::StackProfile.gc_event_datas_for(start_time, stop_time))
       if @stack_profile.rss_increased?
         dbg = {}
