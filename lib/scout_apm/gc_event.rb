@@ -1,5 +1,6 @@
 module ScoutApm
   class GcEvent
+    attr_accessor :gc_data
     def initialize(gc_data)
       @gc_data = gc_data
     end
