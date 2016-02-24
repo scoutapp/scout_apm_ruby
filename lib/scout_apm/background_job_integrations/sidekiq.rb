@@ -43,17 +43,14 @@ module ScoutApm
 
     class SidekiqMiddleware
       def call(worker, msg, queue)
-        msg_args = msg["args"].first
-        job_class = msg_args["job_class"]
+        job_class = msg["class"] # TODO: Validate this across different versions of Sidekiq
         latency = (Time.now.to_f - (msg['enqueued_at'] || msg['created_at'])) * 1000
 
         req = ScoutApm::RequestManager.lookup
         req.job!
+        req.annotate_request(:queue_latency => latency)
 
         req.start_layer( ScoutApm::Layer.new("Queue", queue) )
-
-        ScoutApm::Agent.instance.store.track_one!("Queue", "Latency", latency)
-
         req.start_layer( ScoutApm::Layer.new("Job", job_class) )
 
         begin
@@ -61,9 +58,10 @@ module ScoutApm
         rescue
           req.error!
           raise
-        ensure
-          req.stop_layer
         end
+      ensure
+        req.stop_layer # Job
+        req.stop_layer # Queue
       end
     end
   end
