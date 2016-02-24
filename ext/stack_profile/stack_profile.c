@@ -4,7 +4,7 @@
 
 #define BUF_SIZE 2048
 
-#define NUM_GC_EVENTS 10
+#define NUM_GC_EVENTS 100
 
 VALUE mScoutApm;
 VALUE cStackProfile;
@@ -34,8 +34,10 @@ void record_gc_start_data()
 {
     struct gc_event* evnt;
 
-    gc_event_count = gc_event_count + 1;
-    evnt = &gc_event_array[gc_event_count % NUM_GC_EVENTS];
+    // Avoid integer overflow, reset the counter when it hits NUM_GC_EVENTS - 1
+    gc_event_count = gc_event_count == (NUM_GC_EVENTS - 1) ? 0 : gc_event_count + 1;
+
+    evnt = &gc_event_array[gc_event_count];
 
     // Reset end_gc_count to 0 so we know the end data is not valid yet
     evnt->end_gc_count = 0;
@@ -52,7 +54,7 @@ void record_gc_start_data()
 void record_gc_end_data()
 {
     struct gc_event* evnt;
-    evnt = &gc_event_array[gc_event_count % NUM_GC_EVENTS];
+    evnt = &gc_event_array[gc_event_count];
 
     // Collect the event end data
     gettimeofday(&evnt->tval_gc_end, NULL);
