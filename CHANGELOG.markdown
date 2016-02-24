@@ -1,3 +1,7 @@
+# 1.4.1
+
+* Fix JSON encoding of special characters
+
 # 1.4.0
 
 * Release JSON reporting
