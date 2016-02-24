@@ -1,12 +1,6 @@
 #include "ruby/ruby.h"
 #include "ruby/debug.h"
 
-static VALUE
-invoke_proc_begin(VALUE proc)
-{
-    return rb_proc_call(proc, rb_ary_new());
-}
-
 static void
 gc_start_end_i(VALUE tpval, void *data)
 {
@@ -29,23 +23,9 @@ set_gc_hook(rb_event_flag_t event)
     return tpval;
 }
 
-static VALUE
-set_after_gc_start()
-{
-    return set_gc_hook(RUBY_INTERNAL_EVENT_GC_START);
-}
-
-static VALUE
-set_after_gc_end()
-{
-    return set_gc_hook(RUBY_INTERNAL_EVENT_GC_END_SWEEP);
-}
-
 void
 Init_gc_hook(VALUE module)
 {
-    set_after_gc_start();
-    set_after_gc_end();
-    // rb_define_module_function(module, "after_gc_start_hook=", set_after_gc_start, 1);
-    // rb_define_module_function(module, "after_gc_end_hook=", set_after_gc_end, 1);
+    set_gc_hook(RUBY_INTERNAL_EVENT_GC_START);
+    set_gc_hook(RUBY_INTERNAL_EVENT_GC_END_SWEEP);
 }
