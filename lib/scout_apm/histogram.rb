@@ -19,6 +19,10 @@ module ScoutApm
     end
 
     def quantile(q)
+      if q > 1
+        q = q / 100
+      end
+
       count = q.to_f * total.to_f
 
       bins.each_with_index do |bin, index|
@@ -43,7 +47,7 @@ module ScoutApm
     end
 
     def combine!(other)
-      @bins += other.bins
+      @bins = (other.bins + @bins).sort_by {|b| b.value }
       @total += other.total
       trim
       self

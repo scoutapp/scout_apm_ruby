@@ -60,6 +60,25 @@ class HistogramTest < Minitest::Test
     assert_equal 200, combined.total
   end
 
+  def test_combine_retains_order
+    hist1 = ScoutApm::NumericHistogram.new(5)
+    10.times {
+      (10..50).to_a.each do |i|
+        hist1.add(i)
+      end
+    }
+
+    hist2 = ScoutApm::NumericHistogram.new(10)
+    10.times {
+      (1..10).to_a.each do |i|
+        hist2.add(i)
+      end
+    }
+
+    combined = hist1.combine!(hist2)
+    assert combined.quantile(0) < combined.quantile(100)
+  end
+
   def test_mean
     hist = ScoutApm::NumericHistogram.new(5)
     10.times {
