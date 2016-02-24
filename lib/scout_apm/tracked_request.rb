@@ -37,6 +37,7 @@ module ScoutApm
       @root_layer = nil
       @stackprof = nil
       @error = false
+      @gc_generations = [] # track the GC generation ids across layers. used to not associate gc generations that occur at lower laters w/earlier layers.
     end
 
     def start_layer(layer)
@@ -50,7 +51,7 @@ module ScoutApm
     def stop_layer
       layer = @layers.pop
       layer.record_stop_time!
-      layer.record_gc_data
+      @gc_generations += layer.record_gc_data(@gc_generations) # don't find any gc events that are in the array of gc generation ids
 
       # Do this here, rather than in the layer because we need this caller. Maybe able to move it?
       if layer.total_exclusive_time > ScoutApm::SlowTransaction::BACKTRACE_THRESHOLD

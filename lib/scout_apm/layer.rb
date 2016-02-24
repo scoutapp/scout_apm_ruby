@@ -49,12 +49,22 @@ module ScoutApm
       @stop_time = stop_time
     end
 
-    def record_gc_data
-      @stack_profile = ScoutApm::StackProfile.new(ScoutApm::StackProfile.gc_event_datas_for(start_time, stop_time))
+    # Takes an array of GC Generation IDs to exclude from this layer. Want to exclude generations that started and ended earlier.
+    def record_gc_data(exclude_gc_generations)
+      # just exclude generations that started & ended, right?
+      events = ScoutApm::StackProfile.gc_event_datas_for(start_time, stop_time).reject { |e| e[:start_gc_count] == e[:end_gc_count] and exclude_gc_generations.include?(e[:start_gc_count]) }
+      @stack_profile = ScoutApm::StackProfile.new(events)
       if @stack_profile.rss_increased?
         dbg = {}
-        p dbg.merge!(layer: legacy_metric_name, rss_size_diff: (@stack_profile.rss_size_diff.to_f/1024/(ScoutApm::Agent.instance.environment.os == :macosx ? 1024 : 1)).round(1).to_s+" MB", gc_events: @stack_profile.gc_events.map { |e| "#{e.gc_data[:start_gc_count]}->#{e.gc_data[:end_gc_count]}"})
+        p dbg.merge!(layer: legacy_metric_name, rss: rss_to_s(@stack_profile.gc_events.last.gc_data[:end_max_rss]), rss_diff: rss_to_s(@stack_profile.rss_size_diff), gc_events: @stack_profile.gc_events.map { |e| "#{e.gc_data[:start_gc_count]}->#{e.gc_data[:end_gc_count]}"})
       end
+
+      events.map { |e| e[:start_gc_count]}
+    end
+
+    ## temporary hack - display memory as string in MB. needs to account for osx showingin bytes and linux in KB.
+    def rss_to_s(rss)
+      (rss.to_f/1024/(ScoutApm::Agent.instance.environment.os == :macosx ? 1024 : 1)).round(2).to_s + " MB"
     end
 
     def desc=(desc)
