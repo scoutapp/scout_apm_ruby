@@ -13,9 +13,5 @@ module ScoutApm
         return false unless @gc_data
         start_time < @gc_data[:end_time] and stop_time > @gc_data[:start_time]
       end
-
-      def self.gc_event_array
-        @@gc_event_array
-      end
   end
 end

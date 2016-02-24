@@ -33,38 +33,6 @@ initialize(VALUE self)
     return self;
 }
 
-static VALUE
-getstack(VALUE rb_self)
-{
-
-    int num, i;
-
-    num = rb_profile_frames(0, sizeof(frames_buffer) / sizeof(VALUE), frames_buffer, lines_buffer);
-
-    stack_array = rb_ary_new();
-    for(i = 0; i < num; i = i + 1) {
-        rb_ary_push(stack_array, rb_profile_frame_full_label(frames_buffer[i]));
-    }
-
-    return stack_array;
-}
-
-//static VALUE
-//load_gc_data(VALUE self)
-//{
-//    VALUE hsh = rb_hash_new();
-//    rb_hash_aset(hsh, ID2SYM(rb_intern("start_time")), rb_time_new(tval_gc_start.tv_sec, tval_gc_start.tv_usec));
-//    rb_hash_aset(hsh, ID2SYM(rb_intern("end_time")), rb_time_new(tval_gc_end.tv_sec, tval_gc_end.tv_usec));
-
-//    rb_hash_aset(hsh, ID2SYM(rb_intern("start_gc_count")), INT2NUM(start_gc_count));
-//    rb_hash_aset(hsh, ID2SYM(rb_intern("end_gc_count")), INT2NUM(end_gc_count));
-
-//    rb_hash_aset(hsh, ID2SYM(rb_intern("start_max_rss")), LONG2NUM(start_rusage.ru_maxrss));
-//    rb_hash_aset(hsh, ID2SYM(rb_intern("end_max_rss")), LONG2NUM(end_rusage.ru_maxrss));
-
-//    return rb_iv_set(self, "@gc_data", hsh);
-//}
-
 void record_gc_start_data()
 {
     struct gc_event* evnt;
@@ -98,14 +66,39 @@ void record_gc_end_data()
     fprintf(stderr, "stackprofile gc_end: end_time: %d %0.6f, end_gc_count: %d, end_rusage: %d\n", evnt->tval_gc_end.tv_sec, (float)evnt->tval_gc_end.tv_usec, evnt->end_gc_count, evnt->end_rusage.ru_maxrss);
 }
 
+static VALUE
+gc_events(VALUE self)
+{
+    int i;
+    VALUE event_array = rb_ary_new();
+
+    for (i = 0; i < NUM_GC_EVENTS; i = i + 1) {
+        struct gc_event* evnt;
+        evnt = &gc_event_array[i];
+
+        VALUE hsh = rb_hash_new();
+        rb_hash_aset(hsh, ID2SYM(rb_intern("start_time")), rb_time_new(evnt->tval_gc_start.tv_sec, evnt->tval_gc_start.tv_usec));
+        rb_hash_aset(hsh, ID2SYM(rb_intern("end_time")), rb_time_new(evnt->tval_gc_end.tv_sec, evnt->tval_gc_end.tv_usec));
+        rb_hash_aset(hsh, ID2SYM(rb_intern("start_gc_count")), INT2NUM(evnt->start_gc_count));
+        rb_hash_aset(hsh, ID2SYM(rb_intern("end_gc_count")), INT2NUM(evnt->end_gc_count));
+        rb_hash_aset(hsh, ID2SYM(rb_intern("start_max_rss")), LONG2NUM(evnt->start_rusage.ru_maxrss));
+        rb_hash_aset(hsh, ID2SYM(rb_intern("end_max_rss")), LONG2NUM(evnt->end_rusage.ru_maxrss));
+
+        rb_ary_push(event_array, hsh);
+
+        // Debug printer
+        fprintf(stderr, "stackprofile print_gc_event: start_time: %d %0.6f, start_gc_count: %d, start_rusage: %d, end_time: %d %0.6f, end_gc_count: %d, end_rusage: %d\n", evnt->tval_gc_start.tv_sec, (float)evnt->tval_gc_start.tv_usec, evnt->start_gc_count, evnt->start_rusage.ru_maxrss, evnt->tval_gc_end.tv_sec, (float)evnt->tval_gc_end.tv_usec, evnt->end_gc_count, evnt->end_rusage.ru_maxrss);
+
+    }
+    return event_array;
+}
+
 void Init_stack_profile()
 {
     mScoutApm = rb_define_module("ScoutApm");
     cStackProfile = rb_define_class_under(mScoutApm, "StackProfile", rb_cObject);
     rb_define_method(cStackProfile, "initialize", initialize, 0);
-    rb_define_singleton_method(cStackProfile, "getstack", getstack, 0);
-    //rb_define_method(cStackProfile, "load_gc_data", load_gc_data, 0);
-    rb_cv_set(cStackProfile, "@@gc_event_array", rb_ary_new());
+    rb_define_singleton_method(cStackProfile, "gc_events", gc_events, 0);
 
     Init_gc_hook(mScoutApm);
 }
