@@ -41,7 +41,7 @@ void record_gc_start_data()
     getrusage(RUSAGE_SELF, &evnt->start_rusage);
 
     // Debug printer
-    fprintf(stderr, "stackprofile gc_start: start_time: %d %0.6f, start_gc_count: %d, start_rusage: %d\n", evnt->tval_gc_start.tv_sec, (float)evnt->tval_gc_start.tv_usec, evnt->start_gc_count, evnt->start_rusage.ru_maxrss);
+    //fprintf(stderr, "stackprofile gc_start: start_time: %d %0.6f, start_gc_count: %d, start_rusage: %d\n", evnt->tval_gc_start.tv_sec, (float)evnt->tval_gc_start.tv_usec, evnt->start_gc_count, evnt->start_rusage.ru_maxrss);
 }
 
 void record_gc_end_data()
@@ -55,7 +55,7 @@ void record_gc_end_data()
     getrusage(RUSAGE_SELF, &evnt->end_rusage);
 
     // Debug printer
-    fprintf(stderr, "stackprofile gc_end: end_time: %d %0.6f, end_gc_count: %d, end_rusage: %d\n", evnt->tval_gc_end.tv_sec, (float)evnt->tval_gc_end.tv_usec, evnt->end_gc_count, evnt->end_rusage.ru_maxrss);
+    //fprintf(stderr, "stackprofile gc_end: end_time: %d %0.6f, end_gc_count: %d, end_rusage: %d\n", evnt->tval_gc_end.tv_sec, (float)evnt->tval_gc_end.tv_usec, evnt->end_gc_count, evnt->end_rusage.ru_maxrss);
 }
 
 static VALUE
