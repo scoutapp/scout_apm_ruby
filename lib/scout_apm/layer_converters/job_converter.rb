@@ -17,6 +17,7 @@ module ScoutApm
           queue_layer.name,
           job_layer.name,
           job_layer.total_call_time,
+          errors,
           create_metrics
         )
       end
@@ -27,6 +28,14 @@ module ScoutApm
 
       def job_layer
         @job_layer ||= find_first_layer_of_type("Job")
+      end
+
+      def errors
+        if request.error?
+          1
+        else
+          0
+        end
       end
 
       def find_first_layer_of_type(layer_type)
