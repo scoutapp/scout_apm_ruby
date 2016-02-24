@@ -160,7 +160,8 @@ module ScoutApm
       queue_time_metrics = LayerConverters::RequestQueueTimeConverter.new(self).call
       ScoutApm::Agent.instance.store.track!(queue_time_metrics)
 
-      # ScoutApm::Agent.instance.logger.debug("Finished recording request") if metrics.any?
+      job = LayerConverters::JobConverter.new(self).call
+      ScoutApm::Agent.instance.store.track_job!(job)
     end
 
     # Have we already persisted this request?

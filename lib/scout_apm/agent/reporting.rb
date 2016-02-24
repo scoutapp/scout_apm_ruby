@@ -38,6 +38,8 @@ module ScoutApm
       def deliver_period(reporting_period)
         metrics = reporting_period.metrics_payload
         slow_transactions = reporting_period.slow_transactions_payload
+        jobs = reporting_period.jobs
+
         metadata = {
           :app_root      => ScoutApm::Environment.instance.root.to_s,
           :unique_id     => ScoutApm::Utils::UniqueId.simple,
@@ -49,7 +51,9 @@ module ScoutApm
 
         log_deliver(metrics, slow_transactions, metadata)
 
-        payload = ScoutApm::Serializers::PayloadSerializer.serialize(metadata, metrics, slow_transactions)
+        payload = ScoutApm::Serializers::PayloadSerializer.serialize(metadata, metrics, slow_transactions, jobs)
+        logger.debug("Payload: #{payload}")
+
         response = reporter.report(payload, headers)
         unless response && response.is_a?(Net::HTTPSuccess)
           logger.warn "Error on checkin to #{reporter.uri.to_s}: #{response.inspect}"

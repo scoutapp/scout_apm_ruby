@@ -41,6 +41,13 @@ module ScoutApm
       }
     end
 
+    def track_job!(job)
+      return if job.nil?
+      @mutex.synchronize {
+        current_period.merge_jobs!(Array(job))
+      }
+    end
+
     # Take each completed reporting_period, and write it to the layaway passed
     #
     # force - a boolean argument that forces this function to write
@@ -107,6 +114,7 @@ module ScoutApm
 
       @slow_transactions = SlowTransactionSet.new
       @metric_set = MetricSet.new
+      @jobs = Hash.new
     end
 
     #################################
@@ -125,6 +133,18 @@ module ScoutApm
       self
     end
 
+    def merge_jobs!(jobs)
+      jobs.each do |job|
+        if @jobs.has_key?(job)
+          @jobs[job].combine!(job)
+        else
+          @jobs[job] = job
+        end
+      end
+
+      self
+    end
+
     #################################
     # Retrieve Metrics for reporting
     #################################
@@ -134,6 +154,10 @@ module ScoutApm
 
     def slow_transactions_payload
       slow_transactions.to_a
+    end
+
+    def jobs
+      @jobs.values
     end
 
     #################################
