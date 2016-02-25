@@ -9,13 +9,13 @@ module ScoutApm
     ###     Class Methods    ###
     ############################
 
-    def self.gc_event_datas_for(start_time, end_time)
-      event_datas = []
-      gc_event_datas.select{|evnt| (evnt[:end_gc_count] > 0) && times_overlap?(evnt[:start_time], evnt[:end_time], start_time, end_time) }.each do |gc_data_hash|
-        event_datas << gc_data_hash
-      end
-      event_datas
-    end
+    #def self.gc_event_datas_for(start_time, end_time)
+    #  event_datas = []
+    #  gc_event_datas.select{|evnt| (evnt[:end_gc_count] > 0) && times_overlap?(evnt[:start_time], evnt[:end_time], start_time, end_time) }.each do |gc_data_hash|
+    #    event_datas << gc_data_hash
+    #  end
+    #  event_datas
+    #end
 
     #            start_time                                       end_time    
     #      Layer      |──────────────────────────────────────────────|        
