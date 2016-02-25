@@ -1,4 +1,5 @@
 require 'stack_profile'
+require 'objspace'
 
 module ScoutApm
   class StackProfile
@@ -47,6 +48,26 @@ module ScoutApm
 
       # Otherwise events do not overlap
       return false
+    end
+
+    def self.memsize_of_all_reachable_objects_from(obj, exclude_class = Module)
+      objs = {}
+      queue = [obj]
+      while obj = queue.pop
+        next if objs[obj.object_id]
+        next unless reachable_objects = ObjectSpace.reachable_objects_from(obj)
+        reachable_objects.each{|o|
+          case o
+          when ObjectSpace::InternalObjectWrapper
+            next if objs[o.internal_object_id]
+          else
+            next if objs[o.object_id]
+          end
+          queue.push o if !exclude_class || !o.kind_of?(exclude_class)
+        }
+        objs[obj.respond_to?(:internal_object_id) ? obj.internal_object_id : obj.object_id] = obj
+      end
+      objs.inject(0){|r, (_, o)| r += ObjectSpace.memsize_of(o)}
     end
 
     ############################
