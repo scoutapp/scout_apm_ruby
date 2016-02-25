@@ -35,20 +35,6 @@ module ScoutApm
       self
     end
 
-    # TODO: Should this belong here, or in the renderer?  Feels a bit like a
-    # view-layer concern
-    def timings
-      {
-        "0" => runtime.quantile(0),
-        "25" => runtime.quantile(25),
-        "50" => runtime.quantile(50),
-        "75" => runtime.quantile(75),
-        "95" => runtime.quantile(95),
-        "100" => runtime.quantile(100),
-        "avg" => runtime.mean,
-      }
-    end
-
     def run_count
       runtime.total
     end

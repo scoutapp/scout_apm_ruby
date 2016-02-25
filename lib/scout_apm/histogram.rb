@@ -53,6 +53,10 @@ module ScoutApm
       self
     end
 
+    def as_json
+      bins.map{|b| [b.value, b.count]}
+    end
+
     private
 
     # If we exactly match an existing bin, add to it, otherwise create a new bin holding a count for the new value.
