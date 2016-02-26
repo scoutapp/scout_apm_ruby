@@ -58,7 +58,7 @@ module ScoutApm
         req = ScoutApm::RequestManager.lookup
         request_id = req.headers["action_dispatch.request_id"]
         dbg = {}
-        ScoutApm::Agent.instance.logger.info dbg.merge!(layer: legacy_metric_name, uri: req.headers[:REQUEST_PATH], request_id: request_id, rss: rss_to_s(@stack_profile.gc_events.sort!{|a,b| a.gc_data[:gc_start_count] <=> b.gc_data[:gc_start_count]}.last.gc_data[:end_max_rss]), rss_diff: rss_to_s(@stack_profile.rss_size_diff), gc_events: @stack_profile.gc_events.map { |e| "#{e.gc_data[:start_gc_count]}->#{e.gc_data[:end_gc_count]}"})
+        ScoutApm::Agent.instance.logger.info dbg.merge!(layer: legacy_metric_name, uri: req.annotations[:uri], request_id: request_id, rss: rss_to_s(@stack_profile.gc_events.sort!{|a,b| a.gc_data[:gc_start_count] <=> b.gc_data[:gc_start_count]}.last.gc_data[:end_max_rss]), rss_diff: rss_to_s(@stack_profile.rss_size_diff), gc_events: @stack_profile.gc_events.map { |e| "#{e.gc_data[:start_gc_count]}->#{e.gc_data[:end_gc_count]}"})
       end
 
       events.map { |e| e[:start_gc_count]}
