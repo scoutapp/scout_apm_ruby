@@ -5,9 +5,9 @@ module ScoutApm
       @gc_data = gc_data
     end
 
-    def valid?
-      (@gc_data[:start_gc_count] > 0) && (@gc_data[:start_gc_count] == @gc_data[:end_gc_count])
-    end
+    #def valid?
+    #  (@gc_data[:start_gc_count] > 0) && (@gc_data[:start_gc_count] == @gc_data[:end_gc_count])
+    #end
 
     def rss_increased?
       rss_size_diff > 0

@@ -33,22 +33,22 @@ module ScoutApm
     #     3) gc starts and ends fully within layer start/end times            
     #     4) gc starts before layer end, but ends after layer end             
     #
-    def self.times_overlap?(gc_start_time, gc_end_time, start_time, end_time)
-      # GC Event case 1 from diagram
-      return true if (start_time > gc_start_time) && (end_time > gc_start_time) && (end_time < gc_end_time)
-
-      # GC Event case 2
-      return true if (start_time > gc_start_time) && (start_time < gc_end_time) && (end_time > gc_end_time)
-
-      # GC Event case 3
-      return true if (start_time < gc_start_time) && (end_time > gc_end_time)
-
-      # GC Event case 4
-      return true if (start_time < gc_start_time) && (end_time > gc_start_time) && (end_time < gc_end_time)
-
-      # Otherwise events do not overlap
-      return false
-    end
+    #def self.times_overlap?(gc_start_time, gc_end_time, start_time, end_time)
+    #  # GC Event case 1 from diagram
+    #  return true if (start_time > gc_start_time) && (end_time > gc_start_time) && (end_time < gc_end_time)
+    #
+    #  # GC Event case 2
+    #  return true if (start_time > gc_start_time) && (start_time < gc_end_time) && (end_time > gc_end_time)
+    #
+    #  # GC Event case 3
+    #  return true if (start_time < gc_start_time) && (end_time > gc_end_time)
+    #
+    #  # GC Event case 4
+    #  return true if (start_time < gc_start_time) && (end_time > gc_start_time) && (end_time < gc_end_time)
+    #
+    #  # Otherwise events do not overlap
+    #  return false
+    #end
 
     def self.memsize_of_all_reachable_objects_from(obj, exclude_class = Module)
       objs = {}
@@ -75,7 +75,7 @@ module ScoutApm
     ############################
     def initialize(gc_event_datas)
       @gc_event_datas = gc_event_datas
-      @gc_events = @gc_event_datas.map{|data| event = ScoutApm::GcEvent.new(data); event.valid? ? event : nil }.compact
+      @gc_events = @gc_event_datas.map{|data| ScoutApm::GcEvent.new(data) }
     end
 
     def rss_increased?
