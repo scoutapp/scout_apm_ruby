@@ -3,8 +3,6 @@
 #include <ruby/ruby.h>
 #include <ruby/debug.h>
 
-#define BUF_SIZE 2048
-
 #define NUM_GC_EVENTS 40
 
 VALUE mScoutApm;
@@ -82,15 +80,11 @@ int check_times_overlap(struct gc_event* evnt, VALUE val_start_time, VALUE val_e
     start_time = rb_time_timeval(val_start_time);
     end_time = rb_time_timeval(val_end_time);
 
-    if ( timercmp(&start_time, &gc_start_time, >) && timercmp(&end_time, &gc_start_time, >) && timercmp(&end_time, &gc_end_time, <) ) {
+    if ( (timercmp(&start_time, &gc_start_time, >) && timercmp(&end_time, &gc_start_time, >) && timercmp(&end_time, &gc_end_time, <)) ||
+         (timercmp(&start_time, &gc_start_time, >) && timercmp(&start_time, &gc_end_time, <) && timercmp(&end_time, &gc_end_time, >)) ||
+         (timercmp(&start_time, &gc_start_time, <) && timercmp(&end_time, &gc_end_time, >)) ||
+         (timercmp(&start_time, &gc_start_time, <) && timercmp(&end_time, &gc_start_time, >) && timercmp(&end_time, &gc_end_time, <)) )
         return 1;
-    } else if ( timercmp(&start_time, &gc_start_time, >) && timercmp(&start_time, &gc_end_time, <) && timercmp(&end_time, &gc_end_time, >) ) {
-        return 1;
-    } else if ( timercmp(&start_time, &gc_start_time, <) && timercmp(&end_time, &gc_end_time, >) ) {
-        return 1;
-    } else if ( timercmp(&start_time, &gc_start_time, <) && timercmp(&end_time, &gc_start_time, >) && timercmp(&end_time, &gc_end_time, <) ) {
-        return 1;
-    }
     return 0;
 }
 
