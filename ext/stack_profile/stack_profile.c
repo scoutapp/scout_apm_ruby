@@ -116,6 +116,19 @@ gc_event_datas_for(VALUE self, VALUE start_time, VALUE end_time)
     return event_array;
 }
 
+static __thread uint64_t endpoint_allocations;
+
+inline void increment_allocations() {
+  endpoint_allocations++;
+}
+
+inline static VALUE
+get_allocation_count() {
+  uint64_t ret = endpoint_allocations;
+  endpoint_allocations = 0;
+  return ULL2NUM(ret);
+}
+
 void Init_stack_profile()
 {
     sym_start_time = ID2SYM(rb_intern("start_time"));
@@ -128,6 +141,7 @@ void Init_stack_profile()
     mScoutApm = rb_define_module("ScoutApm");
     cStackProfile = rb_define_class_under(mScoutApm, "StackProfile", rb_cObject);
     rb_define_singleton_method(cStackProfile, "gc_event_datas_for", gc_event_datas_for, 2);
+    rb_define_singleton_method(cStackProfile, "get_allocation_count", get_allocation_count, 0);
 
     Init_gc_hook(mScoutApm);
 }

@@ -63,6 +63,13 @@ module ScoutApm
       events.map { |e| e[:start_gc_count]}
     end
 
+    def record_object_allocations
+      @object_allocations = StackProfile.get_allocation_count
+      req = ScoutApm::RequestManager.lookup
+      dbg = {}
+      ScoutApm::Agent.instance.logger.info dbg.merge!(layer: legacy_metric_name, uri: req.annotations[:uri], object_allocations: @object_allocations)
+    end
+
     ## temporary hack - display memory as string in MB. needs to account for osx showingin bytes and linux in KB.
     def rss_to_s(rss)
       (rss.to_f/1024/(ScoutApm::Agent.instance.environment.os == :macosx ? 1024 : 1)).round(2).to_s + " MB"

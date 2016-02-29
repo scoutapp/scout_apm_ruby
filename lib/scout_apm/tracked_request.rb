@@ -52,6 +52,7 @@ module ScoutApm
       layer = @layers.pop
       layer.record_stop_time!
       @gc_generations += layer.record_gc_data(@gc_generations) # don't find any gc events that are in the array of gc generation ids
+      layer.record_object_allocations
 
       # Do this here, rather than in the layer because we need this caller. Maybe able to move it?
       if layer.total_exclusive_time > ScoutApm::SlowTransaction::BACKTRACE_THRESHOLD
