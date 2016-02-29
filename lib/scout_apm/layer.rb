@@ -57,7 +57,7 @@ module ScoutApm
       if @stack_profile.rss_increased?
         req = ScoutApm::RequestManager.lookup
         dbg = {}
-        ScoutApm::Agent.instance.logger.info dbg.merge!(layer: legacy_metric_name, uri: req.annotations[:uri], rss: rss_to_s(@stack_profile.gc_events.sort!{|a,b| a.gc_data[:gc_start_count] <=> b.gc_data[:gc_start_count]}.last.gc_data[:end_max_rss]), rss_diff: rss_to_s(@stack_profile.rss_size_diff), gc_events: @stack_profile.gc_events.map { |e| "#{e.gc_data[:start_gc_count]}->#{e.gc_data[:end_gc_count]}"})
+        ScoutApm::Agent.instance.logger.info dbg.merge!(layer: legacy_metric_name, pid: Process.pid, uri: req.annotations[:uri], rss: rss_to_s(@stack_profile.gc_events.sort!{|a,b| a.gc_data[:gc_start_count] <=> b.gc_data[:gc_start_count]}.last.gc_data[:end_max_rss]), rss_diff: rss_to_s(@stack_profile.rss_size_diff), gc_events: @stack_profile.gc_events.map { |e| "#{e.gc_data[:start_gc_count]} (#{rss_to_s(e.gc_data[:end_max_rss],units=false)}-#{rss_to_s(e.gc_data[:start_max_rss],units)}=#{rss_to_s(e.rss_size_diff,units)})"})
       end
 
       events.map { |e| e[:start_gc_count]}
@@ -71,8 +71,8 @@ module ScoutApm
     end
 
     ## temporary hack - display memory as string in MB. needs to account for osx showingin bytes and linux in KB.
-    def rss_to_s(rss)
-      (rss.to_f/1024/(ScoutApm::Agent.instance.environment.os == :macosx ? 1024 : 1)).round(2).to_s + " MB"
+    def rss_to_s(rss,units=true)
+      (rss.to_f/1024/(ScoutApm::Agent.instance.environment.os == :macosx ? 1024 : 1)).round(2).to_s + (units ? " MB" : '')
     end
 
     def desc=(desc)
