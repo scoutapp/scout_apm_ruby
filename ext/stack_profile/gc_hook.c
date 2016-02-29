@@ -28,7 +28,7 @@ set_gc_hook(rb_event_flag_t event)
 void
 Init_gc_hook(VALUE module)
 {
-    set_gc_hook(RUBY_INTERNAL_EVENT_GC_START);
-    set_gc_hook(RUBY_INTERNAL_EVENT_GC_END_SWEEP);
+    //set_gc_hook(RUBY_INTERNAL_EVENT_GC_START);
+    //set_gc_hook(RUBY_INTERNAL_EVENT_GC_END_SWEEP);
     set_gc_hook(RUBY_INTERNAL_EVENT_NEWOBJ);
 }
