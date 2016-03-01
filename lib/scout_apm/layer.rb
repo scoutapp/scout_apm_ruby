@@ -32,6 +32,8 @@ module ScoutApm
 
     attr_reader :stack_profile
 
+    attr_reader :object_allocations
+
     def initialize(type, name, start_time = Time.now)
       @type = type
       @name = name
@@ -39,6 +41,7 @@ module ScoutApm
       @children = [] # In order of calls
       @desc = nil
       @stack_profile = nil
+      @object_allocations = 0
     end
 
     def add_child(child)
@@ -65,9 +68,9 @@ module ScoutApm
 
     def record_object_allocations
       @object_allocations = StackProfile.get_allocation_count
-      req = ScoutApm::RequestManager.lookup
-      dbg = {}
-      ScoutApm::Agent.instance.logger.info dbg.merge!(layer: legacy_metric_name, uri: req.annotations[:uri], object_allocations: @object_allocations)
+      #req = ScoutApm::RequestManager.lookup
+      #dbg = {}
+      #ScoutApm::Agent.instance.logger.info dbg.merge!(layer: legacy_metric_name, uri: req.annotations[:uri], object_allocations: @object_allocations)
     end
 
     ## temporary hack - display memory as string in MB. needs to account for osx showingin bytes and linux in KB.

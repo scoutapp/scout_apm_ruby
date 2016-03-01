@@ -174,6 +174,23 @@ module ScoutApm
     end
   end
 
+  class LayerObjectAllocationsConverter < LayerConverterBase
+    def call
+      scope = scope_layer
+
+      return {} unless scope
+
+      meta = MetricMeta.new("ObjectAllocations/#{scope.legacy_metric_name}")
+      stat = MetricStats.new
+
+      walker.walk do |layer|
+        stat.update!(layer.object_allocations)
+      end
+
+      { meta => stat }
+    end
+  end
+
   class LayerDepthFirstWalker
     attr_reader :root_layer
 
