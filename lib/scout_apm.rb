@@ -59,6 +59,7 @@ require 'scout_apm/deploy_integrations/capistrano_3'
 #require 'scout_apm/deploy_integrations/capistrano_2'
 
 require 'scout_apm/instruments/net_http'
+require 'scout_apm/instruments/http_client'
 require 'scout_apm/instruments/moped'
 require 'scout_apm/instruments/mongoid'
 require 'scout_apm/instruments/delayed_job'
