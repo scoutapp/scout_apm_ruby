@@ -1,3 +1,7 @@
+# 1.4.2
+
+* Add HTTPClient instrumentation
+
 # 1.4.1
 
 * Fix JSON encoding of special characters
