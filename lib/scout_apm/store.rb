@@ -168,7 +168,7 @@ module ScoutApm
       elsif meta.type == "ObjectAllocations"
         @aggregate_metrics[meta] ||= MetricStats.new
         @aggregate_metrics[meta].combine!(stat)
-        agg_meta = MetricMeta.new("ObjectAllocations/Request", :scope => meta.scope)
+        agg_meta = MetricMeta.new("ObjectAllocations/all", :scope => meta.scope)
         @aggregate_metrics[agg_meta] ||= MetricStats.new
         @aggregate_metrics[agg_meta].combine!(stat)
 
