@@ -118,11 +118,11 @@ gc_event_datas_for(VALUE self, VALUE start_time, VALUE end_time)
 
 static __thread uint64_t endpoint_allocations;
 
-inline void increment_allocations() {
+void increment_allocations() {
   endpoint_allocations++;
 }
 
-inline static VALUE
+static VALUE
 get_allocation_count() {
   uint64_t ret = endpoint_allocations;
   endpoint_allocations = 0;
