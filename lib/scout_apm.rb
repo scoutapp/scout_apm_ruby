@@ -33,6 +33,7 @@ require 'scout_apm/tracked_request'
 require 'scout_apm/layer'
 require 'scout_apm/request_manager'
 require 'scout_apm/layer_converter'
+require 'scout_apm/layer_converters/object_allocation'
 require 'scout_apm/request_queue_time'
 
 require 'scout_apm/server_integrations/passenger'
