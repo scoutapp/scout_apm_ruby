@@ -55,7 +55,7 @@ module ScoutApm
                        end
 
         # we don't need to use the full metric name for scoped metrics as we only display metrics aggregrated
-        # by type.
+        # by type (ex: all ActiveRecord calls under a controller are grouped together).
         metric_name = meta_options.has_key?(:scope) ? layer.type : layer.legacy_metric_name
 
         meta = MetricMeta.new(metric_name, meta_options)
@@ -171,23 +171,6 @@ module ScoutApm
       end
 
       metric_hash
-    end
-  end
-
-  class LayerObjectAllocationsConverter < LayerConverterBase
-    def call
-      scope = scope_layer
-
-      return {} unless scope
-
-      meta = MetricMeta.new("ObjectAllocations/#{scope.legacy_metric_name}")
-      stat = MetricStats.new
-
-      walker.walk do |layer|
-        stat.update!(layer.object_allocations)
-      end
-
-      { meta => stat }
     end
   end
 

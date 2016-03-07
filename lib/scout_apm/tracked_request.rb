@@ -143,7 +143,7 @@ module ScoutApm
       queue_time_metrics = RequestQueueTime.new(self).call
       ScoutApm::Agent.instance.store.track!(queue_time_metrics)
 
-      object_allocation_metrics = LayerObjectAllocationsConverter.new(self).call
+      object_allocation_metrics = LayerConverters::ObjectAllocation.new(self).call
       ScoutApm::Agent.instance.store.track!(object_allocation_metrics)
 
       # ScoutApm::Agent.instance.logger.debug("Finished recording request") if metrics.any?
