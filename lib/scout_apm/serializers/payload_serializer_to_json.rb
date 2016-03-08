@@ -35,20 +35,18 @@ module ScoutApm
           "{#{str_parts.join(",")}}"
         end
 
+        ESCAPE_MAPPINGS = {
+          "\b" => '\\b',
+          "\t" => '\\t',
+          "\n" => '\\n',
+          "\f" => '\\f',
+          "\r" => '\\r',
+          '"'  => '\\"',
+          '\\' => '\\\\',
+        }
+
         def escape(string)
-          string = string.to_s
-          escapers = {
-            '\b' => '\\b',
-            '\t' => '\\t',
-            '\n' => '\\n',
-            '\f' => '\\f',
-            '\r' => '\\r',
-            '"'  => '\\"',
-            '\\' => '\\\\'
-          }
-          # TODO escape control chars
-          escapers.each {|bad, good| string = string.gsub(bad, good)}
-          string
+          ESCAPE_MAPPINGS.inject(string.to_s) {|s, (bad, good)| s.gsub(bad, good) }
         end
 
         def format_by_type(formatee)

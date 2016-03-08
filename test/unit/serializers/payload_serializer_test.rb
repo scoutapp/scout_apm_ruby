@@ -116,7 +116,7 @@ class PayloadSerializerTest < Minitest::Test
   def test_serializes_slow_transactions_as_json
     slow_transaction_metrics = {
       ScoutApm::MetricMeta.new('ActiveRecord/all').tap { |meta|
-        meta.desc = "SELECT * from users where filter=?"
+        meta.desc = "SELECT *\nfrom users where filter=?"
         meta.extra = {:user => 'cooluser'}
         meta.metric_id = nil
         meta.scope = "Controller/apps/checkin"
@@ -163,7 +163,7 @@ class PayloadSerializerTest < Minitest::Test
             "key" => {
               "bucket" => "ActiveRecord",
               "name" => "all",
-              "desc" => "SELECT * from users where filter=?",
+              "desc" => "SELECT *\nfrom users where filter=?",
               "extra" => {
                 "user" => "cooluser",
               },
@@ -195,6 +195,7 @@ class PayloadSerializerTest < Minitest::Test
         ]
       }
     ]
+
     assert_equal formatted_slow_transactions, JSON.parse(payload)["slow_transactions"]
   end
 
@@ -211,5 +212,10 @@ class PayloadSerializerTest < Minitest::Test
       "payload_version" => 2
     }
     assert_equal formatted_metadata, JSON.parse(payload)["metadata"]
+  end
+
+  def test_escapes_newlines
+    json = { "foo" => "\bbar\nbaz\r" }
+    assert_equal json, JSON.parse(ScoutApm::Serializers::PayloadSerializerToJson.jsonify_hash(json))
   end
 end

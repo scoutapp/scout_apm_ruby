@@ -1,3 +1,15 @@
+# 1.4.3
+
+* Add a to_s call to have HTTPClient work with URI objects.  Thanks to Nicolai for providing the change!
+
+# 1.4.2
+
+* Add HTTPClient instrumentation
+
+# 1.4.1
+
+* Fix JSON encoding of special characters
+
 # 1.4.0
 
 * Release JSON reporting
