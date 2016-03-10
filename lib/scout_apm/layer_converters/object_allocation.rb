@@ -25,7 +25,7 @@ module ScoutApm
                            {:scope => PREFIX+scope_layer.legacy_metric_name}
                          end
 
-          metric_name = meta_options.has_key?(:scope) ? layer.type : PREFIX+layer.legacy_metric_name
+          metric_name = meta_options.has_key?(:scope) ? PREFIX+layer.type : PREFIX+layer.legacy_metric_name
 
           meta = MetricMeta.new(metric_name, meta_options)
           metric_hash[meta] ||= MetricStats.new( meta_options.has_key?(:scope) )
