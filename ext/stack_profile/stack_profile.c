@@ -124,9 +124,7 @@ void increment_allocations() {
 
 static VALUE
 get_allocation_count() {
-  uint64_t ret = endpoint_allocations;
-  endpoint_allocations = 0;
-  return ULL2NUM(ret);
+  return ULL2NUM(endpoint_allocations);
 }
 
 void Init_stack_profile()

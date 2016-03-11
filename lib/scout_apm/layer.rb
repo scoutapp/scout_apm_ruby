@@ -32,7 +32,8 @@ module ScoutApm
 
     attr_reader :stack_profile
 
-    attr_reader :object_allocations
+    # The number of objects allocated at the start and end of the layer
+    attr_reader :objects_start, :objects_stop
 
     def initialize(type, name, start_time = Time.now)
       @type = type
@@ -40,8 +41,8 @@ module ScoutApm
       @start_time = start_time
       @children = [] # In order of calls
       @desc = nil
-      @stack_profile = nil
-      @object_allocations = 0
+      @objects_start = ScoutApm::StackProfile.get_allocation_count
+      @objects_stop = 0
     end
 
     def add_child(child)
@@ -66,11 +67,8 @@ module ScoutApm
       events.map { |e| e[:start_gc_count]}
     end
 
-    def record_object_allocations
-      @object_allocations = StackProfile.get_allocation_count
-      #req = ScoutApm::RequestManager.lookup
-      #dbg = {}
-      #ScoutApm::Agent.instance.logger.info dbg.merge!(layer: legacy_metric_name, uri: req.annotations[:uri], object_allocations: @object_allocations)
+    def record_objects!
+      @objects_stop = StackProfile.get_allocation_count
     end
 
     ## temporary hack - display memory as string in MB. needs to account for osx showingin bytes and linux in KB.
@@ -143,6 +141,25 @@ module ScoutApm
       children.
         map { |child| child.total_call_time }.
         inject(0) { |sum, time| sum + time }
+    end
+
+    ######################################
+    # Object Calculations
+    ######################################
+
+    def total_objects
+      objects = (@objects_stop - @objects_start)
+      objects < 0 ? 0 : objects
+    end
+
+    def total_exclusive_objects
+      total_objects - child_objects
+    end
+
+    def child_objects
+      children.
+        map { |child| child.total_objects }.
+        inject(0) { |sum, obj| sum + obj }
     end
   end
 end
