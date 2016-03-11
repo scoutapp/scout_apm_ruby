@@ -32,7 +32,7 @@ module ScoutApm
 
           stat = metric_hash[meta]
           # calling state#update! and passing in allocations as time makes server-side metric queries involved. this is handled easier.
-          stat.call_count += layer.object_allocations 
+          stat.call_count += layer.total_exclusive_objects 
         end
         metric_hash
       end
