@@ -266,6 +266,14 @@ module ScoutApm
     def install_instrument(instrument_klass)
       # Don't attempt to install the same instrument twice
       return if @installed_instruments.any? { |already_installed_instrument| instrument_klass === already_installed_instrument }
+
+      # Allow users to skip individual instruments via the config file
+      instrument_short_name = instrument_klass.name.split("::").last
+      if config.value("disabled_instruments").include?(instrument_short_name)
+        logger.info "Skipping Disabled Instrument: #{instrument_short_name} - To re-enable, change `disabled_instruments` key in scout_apm.yml"
+        return
+      end
+
       instance = instrument_klass.new
       @installed_instruments << instance
       instance.install
