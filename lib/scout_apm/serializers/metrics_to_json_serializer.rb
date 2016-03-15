@@ -19,6 +19,8 @@ module ScoutApm
           "count" => stat.call_count,
           "total_call_time" => stat.total_call_time,
           "total_exclusive_time" => stat.total_exclusive_time,
+          "min_call_time" => stat.min_call_time,
+          "max_call_time" => stat.max_call_time,
 
           # Pretty unsure how to synthesize histograms out of what we store now
           "total_histogram" => [
