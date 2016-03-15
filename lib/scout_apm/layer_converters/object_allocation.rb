@@ -3,7 +3,6 @@ module ScoutApm
     # Object Allocation metrics for this request. These have the same format as timing metrics - only aggregrates of 
     # the layer#type are stored.
     class ObjectAllocation < LayerConverterBase
-      PREFIX = "ObjectAllocations/".freeze
       def call
         scope = scope_layer
 
@@ -13,8 +12,7 @@ module ScoutApm
       end
 
       # Almost the same as +LayerMetricConverter#create_metrics+. Differences:
-      # * prefix metric_name w/ "ObjectAllocations/"
-      # * update stats w/ +layer.object_allocations+ vs. call times.
+      # * set meta.kind = 'object'
       def create_metrics
         metric_hash = Hash.new
 
@@ -22,10 +20,11 @@ module ScoutApm
           meta_options = if layer == scope_layer # We don't scope the controller under itself
                            {}
                          else
-                           {:scope => PREFIX+scope_layer.legacy_metric_name}
+                           {:scope => scope_layer.legacy_metric_name}
                          end
+          meta_options[:kind] = 'object'
 
-          metric_name = meta_options.has_key?(:scope) ? PREFIX+layer.type : PREFIX+layer.legacy_metric_name
+          metric_name = meta_options.has_key?(:scope) ? layer.type : layer.legacy_metric_name
 
           meta = MetricMeta.new(metric_name, meta_options)
           metric_hash[meta] ||= MetricStats.new( meta_options.has_key?(:scope) )
