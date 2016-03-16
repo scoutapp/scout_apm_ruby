@@ -9,16 +9,23 @@ module ScoutApm
   class JobRecord
     attr_reader :queue_name
     attr_reader :job_name
-    attr_reader :runtime
+    attr_reader :total_time
+    attr_reader :exclusive_time
     attr_reader :errors
     attr_reader :metric_set
 
-    def initialize(queue_name, job_name, total_time, errors, metrics)
+    def initialize(queue_name, job_name, total_time, exclusive_time, errors, metrics)
       @queue_name = queue_name
       @job_name = job_name
-      @runtime = NumericHistogram.new(50)
-      @runtime.add(total_time)
+
+      @total_time = NumericHistogram.new(50)
+      @total_time.add(total_time)
+
+      @exclusive_time = NumericHistogram.new(50)
+      @exclusive_time.add(exclusive_time)
+
       @errors = errors.to_i
+
       @metric_set = MetricSet.new
       @metric_set.absorb_all(metrics)
     end
@@ -30,13 +37,14 @@ module ScoutApm
 
       @errors += other.errors
       @metric_set = metric_set.combine!(other.metric_set)
-      @runtime.combine!(other.runtime)
+      @total_time.combine!(other.total_time)
+      @exclusive_time.combine!(other.exclusive_time)
 
       self
     end
 
     def run_count
-      runtime.total
+      total_time.total
     end
 
     def metrics

@@ -17,6 +17,7 @@ module ScoutApm
           queue_layer.name,
           job_layer.name,
           job_layer.total_call_time,
+          job_layer.total_exclusive_time,
           errors,
           create_metrics
         )
@@ -51,11 +52,11 @@ module ScoutApm
       def create_metrics
         metric_hash = Hash.new
 
+        meta_options = {:scope => job_layer.legacy_metric_name}
+
         walker.walk do |layer|
           next if layer == job_layer
           next if layer == queue_layer
-
-          meta_options = {:scope => job_layer.legacy_metric_name}
 
           # we don't need to use the full metric name for scoped metrics as we
           # only display metrics aggregrated by type, just use "ActiveRecord"
@@ -68,6 +69,13 @@ module ScoutApm
           stat = metric_hash[meta]
           stat.update!(layer.total_call_time, layer.total_exclusive_time)
         end
+
+        # Add the latency metric, which wasn't stored as a distinct layer
+        latency = request.annotations[:queue_latency] || 0
+        meta = MetricMeta.new("Latency", meta_options)
+        stat = MetricStats.new
+        stat.update!(latency)
+        metric_hash[meta] = stat
 
         metric_hash
       end

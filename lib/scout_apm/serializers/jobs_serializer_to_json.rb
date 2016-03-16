@@ -16,7 +16,8 @@ module ScoutApm
             "name" => job.job_name,
             "count" => job.run_count,
             "errors" => job.errors,
-            "total_histogram" => job.runtime.as_json,
+            "total_histogram" => job.total_time.as_json,
+            "exclusive_histogram" => job.exclusive_time.as_json,
             "metrics" => MetricsToJsonSerializer.new(job.metrics).as_json, # New style of metrics
           }
         end

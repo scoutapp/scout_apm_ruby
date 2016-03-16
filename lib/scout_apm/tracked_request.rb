@@ -19,6 +19,7 @@ module ScoutApm
     # As we go through a request, instrumentation can mark more general data into the Request
     # Known Keys:
     #   :uri - the full URI requested by the user
+    #   :queue_latency - how long a background Job spent in the queue before starting processing
     attr_reader :annotations
 
     # Nil until the request is finalized, at which point it will hold the
