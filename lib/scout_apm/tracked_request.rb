@@ -163,6 +163,9 @@ module ScoutApm
 
       job = LayerConverters::JobConverter.new(self).call
       ScoutApm::Agent.instance.store.track_job!(job)
+
+      slow_job = LayerConverters::SlowJobConverter.new(self).call
+      ScoutApm::Agent.instance.store.track_slow_job!(slow_job)
     end
 
     # Have we already persisted this request?
