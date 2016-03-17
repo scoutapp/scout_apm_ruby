@@ -1,7 +1,7 @@
 module ScoutApm
   class SlowJobRecord
     attr_reader :queue_name
-    attr_reader :attr_names
+    attr_reader :job_name
     attr_reader :total_call_time
     attr_reader :total_exclusive_time
     attr_reader :metrics
