@@ -48,6 +48,13 @@ module ScoutApm
       }
     end
 
+    def track_slow_job!(job)
+      return if job.nil?
+      @mutex.synchronize {
+        current_period.merge_slow_jobs!(Array(job))
+      }
+    end
+
     # Take each completed reporting_period, and write it to the layaway passed
     #
     # force - a boolean argument that forces this function to write
@@ -100,8 +107,11 @@ module ScoutApm
 
   # One period of Storage. Typically 1 minute
   class StoreReportingPeriod
-    # A SlowTransactionSet object.
+    # A SlowItemSet to store slow transactions in
     attr_reader :slow_transactions
+
+    # A SlowItemSet to store slow jobs in
+    attr_reader :slow_jobs
 
     # A StoreReportingPeriodTimestamp representing the time that this
     # collection of metrics is for
@@ -112,7 +122,9 @@ module ScoutApm
     def initialize(timestamp)
       @timestamp = timestamp
 
-      @slow_transactions = SlowTransactionSet.new
+      @slow_transactions = SlowItemSet.new
+      @slow_jobs = SlowItemSet.new
+
       @metric_set = MetricSet.new
       @jobs = Hash.new
     end
@@ -143,6 +155,12 @@ module ScoutApm
       end
 
       self
+    end
+
+    def merge_slow_jobs!(new_jobs)
+      Array(new_jobs).each do |job|
+        slow_jobs << job
+      end
     end
 
     #################################
