@@ -18,6 +18,7 @@ module ScoutApm
     attr_accessor :options # options passed to the agent when +#start+ is called.
     attr_accessor :metric_lookup # Hash used to lookup metric ids based on their name and scope
     attr_reader :slow_request_policy
+    attr_reader :slow_job_policy
 
     # All access to the agent is thru this class method to ensure multiple Agent instances are not initialized per-Ruby process.
     def self.instance(options = {})
@@ -31,6 +32,7 @@ module ScoutApm
       @started = false
       @options ||= options
       @config = ScoutApm::Config.new(options[:config_path])
+      @slow_job_policy = ScoutApm::SlowJobPolicy.new
 
       @store          = ScoutApm::Store.new
       @layaway        = ScoutApm::Layaway.new
