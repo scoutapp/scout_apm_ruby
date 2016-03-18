@@ -12,7 +12,11 @@ module ScoutApm
         metrics.map{|meta, stat| metric_as_json(meta, stat) }
       end
 
-      def metric_as_json(meta, stat)
+      # Children metrics is a hash of meta=>stat pairs. Leave empty for no children.
+      # Supports only a single-level nesting, until we have redone metric
+      # classes, instead of Meta and Stats
+      def metric_as_json(meta, stat, child_metrics={})
+
         { "bucket" => meta.type,
           "name" => meta.name, # No scope values needed here, since it's implied by the nesting.
 
@@ -30,8 +34,7 @@ module ScoutApm
             [stat.total_exclusive_time / stat.call_count, stat.call_count]
           ],
 
-          # Not supporting nested metrics yet
-          "metrics" => [],
+          "metrics" => transform_child_metrics(child_metrics),
 
           # Will later hold the exact SQL, or URL or whatever other detail
           # about this query is necessary
@@ -39,6 +42,11 @@ module ScoutApm
         }
       end
 
+      def transform_child_metrics(metrics)
+        metrics.map do |meta, stat|
+          metric_as_json(meta, stat)
+        end
+      end
     end
   end
 end
