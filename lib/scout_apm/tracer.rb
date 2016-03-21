@@ -49,28 +49,48 @@ module ScoutApm
         type = options[:type] || "Custom"
         name = options[:name] || "#{self.name}/#{method.to_s}"
 
-        return if !instrumentable?(method) or instrumented?(method, type, name)
+        instrumented_name, uninstrumented_name = _determine_instrumented_name(method, type, name)
+
+        return if !_instrumentable?(method) or _instrumented?(instrumented_name, method)
 
         class_eval(
-          instrumented_method_string(method, type, name, {:scope => options[:scope] }),
+          _instrumented_method_string(instrumented_name, uninstrumented_name, type, name, {:scope => options[:scope] }),
           __FILE__, __LINE__
         )
 
-        alias_method _uninstrumented_method_name(method, type, name), method
-        alias_method method, _instrumented_method_name(method, type, name)
+        alias_method uninstrumented_name, method
+        alias_method method, instrumented_name
       end
 
       private
 
-      def instrumented_method_string(method, type, name, options={})
+      def _determine_instrumented_name(method, type, name)
+        inst = _find_unused_method_name { _instrumented_method_name(method, type, name) }
+        uninst = _find_unused_method_name { _uninstrumented_method_name(method, type, name) }
+
+        return inst, uninst
+      end
+
+      def _find_unused_method_name
+        raw_name = name = yield
+
+        i = 0
+        while method_defined?(name) && i < 100
+          i += 1
+          name = "#{raw_name}_#{i}"
+        end
+        name
+      end
+
+      def _instrumented_method_string(instrumented_name, uninstrumented_name, type, name, options={})
         klass = (self === Module) ? "self" : "self.class"
         method_str = <<-EOF
-        def #{_instrumented_method_name(method, type, name)}(*args, &block)
+        def #{instrumented_name}(*args, &block)
           #{klass}.instrument( "#{type}",
                                "#{name}",
                                {:scope => #{options[:scope] || false}}
                              ) do
-            #{_uninstrumented_method_name(method, type, name)}(*args, &block)
+            #{uninstrumented_name}(*args, &block)
           end
         end
         EOF
@@ -79,15 +99,15 @@ module ScoutApm
       end
 
       # The method must exist to be instrumented.
-      def instrumentable?(method)
+      def _instrumentable?(method)
         exists = method_defined?(method) || private_method_defined?(method)
         ScoutApm::Agent.instance.logger.warn "The method [#{self.name}##{method}] does not exist and will not be instrumented" unless exists
         exists
       end
 
       # +True+ if the method is already instrumented.
-      def instrumented?(method, type, name)
-        instrumented = method_defined?(_instrumented_method_name(method, type, name))
+      def _instrumented?(instrumented_name, method)
+        instrumented = method_defined?(instrumented_name)
         ScoutApm::Agent.instance.logger.warn("The method [#{self.name}##{method}] has already been instrumented") if instrumented
         instrumented
       end
