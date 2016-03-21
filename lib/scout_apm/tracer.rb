@@ -44,29 +44,31 @@ module ScoutApm
       # Options:
       # type - "View" or "ActiveRecord" and similar
       # name - "users/show", "App#find"
-      def instrument_method(method, options = {})
-        ScoutApm::Agent.instance.logger.info "Instrumenting #{method}"
+      def instrument_method(method_name, options = {})
+        ScoutApm::Agent.instance.logger.info "Instrumenting #{method_name}"
         type = options[:type] || "Custom"
-        name = options[:name] || "#{self.name}/#{method.to_s}"
+        name = options[:name] || "#{self.name}/#{method_name.to_s}"
 
-        instrumented_name, uninstrumented_name = _determine_instrumented_name(method, type, name)
+        instrumented_name, uninstrumented_name = _determine_instrumented_name(method_name, type)
 
-        return if !_instrumentable?(method) or _instrumented?(instrumented_name, method)
+        ScoutApm::Agent.instance.logger.info "Instrumenting #{instrumented_name}, #{uninstrumented_name}"
+
+        return if !_instrumentable?(method_name) or _instrumented?(instrumented_name, method_name)
 
         class_eval(
           _instrumented_method_string(instrumented_name, uninstrumented_name, type, name, {:scope => options[:scope] }),
           __FILE__, __LINE__
         )
 
-        alias_method uninstrumented_name, method
-        alias_method method, instrumented_name
+        alias_method uninstrumented_name, method_name
+        alias_method method_name, instrumented_name
       end
 
       private
 
-      def _determine_instrumented_name(method, type, name)
-        inst = _find_unused_method_name { _instrumented_method_name(method, type, name) }
-        uninst = _find_unused_method_name { _uninstrumented_method_name(method, type, name) }
+      def _determine_instrumented_name(method_name, type)
+        inst = _find_unused_method_name { _instrumented_method_name(method_name, type) }
+        uninst = _find_unused_method_name { _uninstrumented_method_name(method_name, type) }
 
         return inst, uninst
       end
@@ -86,8 +88,15 @@ module ScoutApm
         klass = (self === Module) ? "self" : "self.class"
         method_str = <<-EOF
         def #{instrumented_name}(*args, &block)
+          name = begin
+                   "#{name}"
+                 rescue => e
+                   ScoutApm::Agent.instance.logger.error("Error raised while interpreting instrumented name: %s, %s" % ['#{name}', e.message])
+                   "Unknown"
+                 end
+
           #{klass}.instrument( "#{type}",
-                               "#{name}",
+                               name,
                                {:scope => #{options[:scope] || false}}
                              ) do
             #{uninstrumented_name}(*args, &block)
@@ -95,33 +104,35 @@ module ScoutApm
         end
         EOF
 
+        ScoutApm::Agent.instance.logger.info method_str
+
         method_str
       end
 
       # The method must exist to be instrumented.
-      def _instrumentable?(method)
-        exists = method_defined?(method) || private_method_defined?(method)
-        ScoutApm::Agent.instance.logger.warn "The method [#{self.name}##{method}] does not exist and will not be instrumented" unless exists
+      def _instrumentable?(method_name)
+        exists = method_defined?(method_name) || private_method_defined?(method_name)
+        ScoutApm::Agent.instance.logger.warn "The method [#{self.name}##{method_name}] does not exist and will not be instrumented" unless exists
         exists
       end
 
       # +True+ if the method is already instrumented.
-      def _instrumented?(instrumented_name, method)
+      def _instrumented?(instrumented_name, method_name)
         instrumented = method_defined?(instrumented_name)
-        ScoutApm::Agent.instance.logger.warn("The method [#{self.name}##{method}] has already been instrumented") if instrumented
+        ScoutApm::Agent.instance.logger.warn("The method [#{self.name}##{method_name}] has already been instrumented") if instrumented
         instrumented
       end
 
       # given a method and a metric, this method returns the
       # untraced alias of the method name
-      def _uninstrumented_method_name(method, type, name)
-        "#{_sanitize_name(method)}_without_scout_instrument_#{_sanitize_name(name)}"
+      def _uninstrumented_method_name(method_name, type)
+        "#{_sanitize_name(method_name)}_without_scout_instrument"
       end
 
       # given a method and a metric, this method returns the traced
       # alias of the method name
-      def _instrumented_method_name(method, type, name)
-        "#{_sanitize_name(method)}_with_scout_instrument_#{_sanitize_name(name)}"
+      def _instrumented_method_name(method_name, type)
+        "#{_sanitize_name(method_name)}_with_scout_instrument"
       end
 
       # Method names like +any?+ or +replace!+ contain a trailing character that would break when

@@ -26,7 +26,6 @@ module ScoutApm
             end
           end
         end
-
       end
     end
   end
