@@ -21,9 +21,6 @@ module ScoutApm
     # returns true if this request should be stored in higher trace detail, false otherwise
     def slow?(worker, total_time)
       @histograms[worker].add(total_time)
-
-      ScoutApm::Agent.instance.logger.info(@histograms.inspect)
-
       total_time > @histograms[worker].quantile(QUANTILE)
     end
   end
