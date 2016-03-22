@@ -253,6 +253,7 @@ module ScoutApm
       install_instrument(ScoutApm::Instruments::Mongoid)
       install_instrument(ScoutApm::Instruments::NetHttp)
       install_instrument(ScoutApm::Instruments::HttpClient)
+      install_instrument(ScoutApm::Instruments::Redis)
 
       if StackProf.respond_to?(:fake?) && StackProf.fake?
         logger.info 'StackProf not found - add `gem "stackprof"` to your Gemfile to enable advanced code profiling (only for Ruby 2.1+)'
