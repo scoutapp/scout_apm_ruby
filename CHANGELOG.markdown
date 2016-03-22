@@ -1,3 +1,8 @@
+# 1.4.4
+
+* Instrument Mongoid
+* Instrument Redis
+
 # 1.4.3
 
 * Add a to_s call to have HTTPClient work with URI objects.  Thanks to Nicolai for providing the change!
