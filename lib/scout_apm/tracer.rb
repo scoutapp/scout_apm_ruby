@@ -104,8 +104,6 @@ module ScoutApm
         end
         EOF
 
-        ScoutApm::Agent.instance.logger.info method_str
-
         method_str
       end
 
