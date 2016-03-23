@@ -34,8 +34,8 @@ module ScoutApm
         begin
           yield
         ensure
-          req.stop_layer
           req.acknowledge_children! if options[:ignore_children]
+          req.stop_layer
         end
       end
 
