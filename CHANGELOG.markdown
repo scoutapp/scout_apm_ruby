@@ -1,3 +1,8 @@
+# 1.4.5
+
+* Instrument Elasticsearch
+* Instrument InfluxDB
+
 # 1.4.4
 
 * Instrument Mongoid
