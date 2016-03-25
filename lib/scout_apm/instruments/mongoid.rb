@@ -22,11 +22,10 @@ module ScoutApm
           ::Mongoid::Collection.class_eval do
             include ScoutApm::Tracer
             (::Mongoid::Collections::Operations::ALL - [:<<, :[]]).each do |method|
-              instrument_method method, :type => "MongoDB", :name => '#{@klass}/#{method}'
+              instrument_method method, :type => "MongoDB", :name => '#{@klass}/' + method.to_s
             end
           end
         end
-
       end
     end
   end

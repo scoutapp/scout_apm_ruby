@@ -45,14 +45,20 @@ module ScoutApm
     end
 
     def start_layer(layer)
+      if ignoring_children?
+        ScoutApm::Agent.instance.logger.info("Skipping layer because we're ignoring children: #{layer.inspect}")
+        return
+      end
+
       start_request(layer) unless @root_layer
 
-      # ScoutApm::Agent.instance.logger.info("Starting Layer: #{layer.to_s}")
       @layers[-1].add_child(layer) if @layers.any?
       @layers.push(layer)
     end
 
     def stop_layer
+      return if ignoring_children?
+
       layer = @layers.pop
       layer.record_stop_time!
 
@@ -185,6 +191,9 @@ module ScoutApm
     # internally
     #
     # When enabled, new layers won't be added to the current Request.
+    #
+    # Do not forget to turn if off when leaving a layer, it is the
+    # instrumentation's task to do that.
 
     def ignore_children!
       @ignoring_children = true
@@ -192,6 +201,10 @@ module ScoutApm
 
     def acknowledge_children!
       @ignoring_children = false
+    end
+
+    def ignoring_children?
+      @ignoring_children
     end
   end
 end

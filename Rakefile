@@ -8,3 +8,12 @@ task :test do
   Dir.glob('./test/**/*_test.rb').each { |file| require file }
 end
 
+
+desc "IRB with this gem required" 
+task :console do
+  require 'irb'
+  require 'irb/completion'
+  require 'scout_apm'
+  ARGV.clear
+  IRB.start
+end
