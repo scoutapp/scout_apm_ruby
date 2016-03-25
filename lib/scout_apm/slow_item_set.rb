@@ -6,12 +6,17 @@
 #  * Just add it if there is an open spot
 #  * If there isn't an open spot, attempt to remove an over-represented
 #    item instead ("attempt_to_evict"). Overrepresented is simply "has more
-#    than @fair number of Matching Items in the set"
+#    than @fair number of Matching Items in the set". The fastest of the
+#    overrepresented items is removed.
 #  * If there isn't an open spot, and no Item is valid to evict, drop the
 #    incoming Item without adding.
 #
 # There is no way to remove Items from this set, create a new object
 # for each reporting period.
+#
+# Item must respond to:
+#   #metric_name - string - grouping key to see if one kind of thing is overrepresented
+#   #total_call_time - float - duration of the item
 
 module ScoutApm
   class SlowItemSet
