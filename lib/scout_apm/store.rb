@@ -178,6 +178,10 @@ module ScoutApm
       @jobs.values
     end
 
+    def slow_jobs_payload
+      slow_jobs.to_a
+    end
+
     #################################
     # Debug Helpers
     #################################
