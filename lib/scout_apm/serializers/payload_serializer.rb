@@ -2,9 +2,9 @@
 module ScoutApm
   module Serializers
     class PayloadSerializer
-      def self.serialize(metadata, metrics, slow_transactions, jobs)
+      def self.serialize(metadata, metrics, slow_transactions, jobs, slow_jobs)
         if ScoutApm::Agent.instance.config.value("report_format") == 'json'
-          ScoutApm::Serializers::PayloadSerializerToJson.serialize(metadata, metrics, slow_transactions, jobs)
+          ScoutApm::Serializers::PayloadSerializerToJson.serialize(metadata, metrics, slow_transactions, jobs, slow_jobs)
         else
           metadata = metadata.dup
           metadata.default = nil
@@ -14,7 +14,9 @@ module ScoutApm
           Marshal.dump(:metadata          => metadata,
                        :metrics           => metrics,
                        :slow_transactions => slow_transactions,
-                       :jobs              => jobs)
+                       :jobs              => jobs,
+                       :slow_jobs         => slow_jobs,
+                      )
         end
       end
 

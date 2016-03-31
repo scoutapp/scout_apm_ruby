@@ -1,9 +1,9 @@
 module ScoutApm
   module Serializers
-    class JobsSerializerToJson
+    class SlowJobsSerializerToJson
       attr_reader :jobs
 
-      # Jobs is a pre-deduped/combined set of job records.
+      # Jobs is a series of slow job records
       def initialize(jobs)
         @jobs = jobs
       end
@@ -14,11 +14,12 @@ module ScoutApm
           {
             "queue" => job.queue_name,
             "name" => job.job_name,
-            "count" => job.run_count,
-            "errors" => job.errors,
-            "total_time" => job.total_time.as_json,
-            "exclusive_time" => job.exclusive_time.as_json,
+            "time" => job.time,
+            "total_time" => job.total_time,
+            "exclusive_time" => job.exclusive_time,
+
             "metrics" => MetricsToJsonSerializer.new(job.metrics).as_json, # New style of metrics
+            "context" => job.context,
           }
         end
       end

@@ -38,7 +38,7 @@ module ScoutApm
 
           # Will later hold the exact SQL, or URL or whatever other detail
           # about this query is necessary
-          "detail" => {},
+          "detail" => meta.extra,
         }
       end
 
