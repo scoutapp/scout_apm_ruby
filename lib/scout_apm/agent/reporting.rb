@@ -39,6 +39,7 @@ module ScoutApm
         metrics = reporting_period.metrics_payload
         slow_transactions = reporting_period.slow_transactions_payload
         jobs = reporting_period.jobs
+        slow_jobs = reporting_period.slow_jobs_payload
 
         metadata = {
           :app_root      => ScoutApm::Environment.instance.root.to_s,
@@ -51,7 +52,7 @@ module ScoutApm
 
         log_deliver(metrics, slow_transactions, metadata)
 
-        payload = ScoutApm::Serializers::PayloadSerializer.serialize(metadata, metrics, slow_transactions, jobs)
+        payload = ScoutApm::Serializers::PayloadSerializer.serialize(metadata, metrics, slow_transactions, jobs, slow_jobs)
         logger.debug("Payload: #{payload}")
 
         response = reporter.report(payload, headers)
