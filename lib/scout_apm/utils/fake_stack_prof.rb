@@ -1,5 +1,5 @@
 # A fake implementation of stackprof, for systems that don't support it.
-class StackProf
+module StackProf
   def self.start(*args)
     @running = true
   end
