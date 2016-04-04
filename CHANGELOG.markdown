@@ -1,3 +1,7 @@
+# 1.4.6
+
+* Defend against a nil
+
 # 1.4.5
 
 * Instrument Elasticsearch
