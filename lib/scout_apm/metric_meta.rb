@@ -38,6 +38,15 @@ class MetricMeta
     self.eql?(o)
   end
 
+  # This should be abstracted to a true accessor ... earned it.
+  def backtrace=(bt)
+    extra[:backtrace] = bt
+  end
+
+  def backtrace
+    extra[:backtrace]
+  end
+
   def hash
     h = metric_name.downcase.hash
     h ^= scope.downcase.hash unless scope.nil?

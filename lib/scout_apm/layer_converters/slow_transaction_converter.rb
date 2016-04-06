@@ -15,6 +15,8 @@ module ScoutApm
         stat = MetricStats.new
         stat.update!(1)
 
+        @backtraces = [] # An Array of MetricMetas that have a backtrace
+
         uri = request.annotations[:uri] || ""
 
         metrics = create_metrics
@@ -31,6 +33,14 @@ module ScoutApm
                               stackprof),
           { meta => stat }
         ]
+      end
+
+      # Iterates over the TrackedRequest's MetricMetas that have backtraces and attaches each to correct MetricMeta in the Metric Hash.
+      def attach_backtraces(metric_hash)
+        @backtraces.each do |meta_with_backtrace|
+          metric_hash.keys.find { |k| k == meta_with_backtrace }.backtrace = meta_with_backtrace.backtrace
+        end
+        metric_hash
       end
 
       # Full metrics from this request. These get aggregated in Store for the
@@ -70,7 +80,15 @@ module ScoutApm
           # Specific Metric
           meta_options.merge!(:desc => layer.desc.to_s) if layer.desc
           meta = MetricMeta.new(layer.legacy_metric_name, meta_options)
-          meta.extra.merge!(:backtrace => ScoutApm::SlowTransaction.backtrace_parser(layer.backtrace)) if layer.backtrace
+          if layer.backtrace
+            bt = ScoutApm::Utils::BacktraceParser.new(layer.backtrace).call
+            if bt.any? # we could walk thru the call stack and not find in-app code
+              meta.backtrace = bt
+              # Why not just call meta.backtrace and call it done? The walker could access a later later that generates the same MetricMeta but doesn't have a backtrace. This could be
+              # lost in the metric_hash if it is replaced by the new key.
+              @backtraces << meta
+            end
+          end
           metric_hash[meta] ||= MetricStats.new( meta_options.has_key?(:scope) )
           stat = metric_hash[meta]
           stat.update!(layer.total_call_time, layer.total_exclusive_time)
@@ -81,6 +99,8 @@ module ScoutApm
           stat = metric_hash[meta]
           stat.update!(layer.total_call_time, layer.total_exclusive_time)
         end
+
+        metric_hash = attach_backtraces(metric_hash)
 
         metric_hash
       end

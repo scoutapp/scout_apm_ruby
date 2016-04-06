@@ -88,6 +88,7 @@ require 'scout_apm/instruments/process/process_memory'
 require 'scout_apm/app_server_load'
 
 require 'scout_apm/utils/sql_sanitizer'
+require 'scout_apm/utils/backtrace_parser'
 require 'scout_apm/utils/active_record_metric_name'
 require 'scout_apm/utils/null_logger'
 require 'scout_apm/utils/installed_gems'

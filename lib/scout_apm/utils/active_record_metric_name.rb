@@ -27,6 +27,18 @@ module ScoutApm
         end
       end
 
+      # For the layer lookup. Doesn't look @ SQL as unsanitized SQL will likely be more prevalant. This will treat different SQL calls to the same model as the same.
+      def hash
+        h = name.downcase.hash
+        h
+      end
+
+      # For the layer lookup. Doesn't look @ SQL as unsanitized SQL will likely be more prevalant. This will treat different SQL calls to the same model as the same.
+      def eql?(o)
+        self.class    == o.class &&
+        name.downcase == o.name.downcase
+      end
+
       private
 
       def model

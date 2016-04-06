@@ -34,8 +34,18 @@ module ScoutApm
     # Use job! and web! to set, and job? and web? to query
     attr_reader :request_type
 
+    # This maintains a lookup hash of Layer names and call counts. It's used to trigger fetching a backtrace on n+1 calls.
+    # Note that layer names might not be Strings - can alse be Utils::ActiveRecordMetricName. Also, this would fail for layers
+    # with same names across multiple types.
+    attr_accessor :call_counts
+
+    N_PLUS_ONE_MAGIC_NUMBER = 5 # Fetch backtraces on this number of calls to a layer.
+    BACKTRACE_THRESHOLD = 0.5 # the minimum threshold in seconds to record the backtrace for a metric.
+    BACKTRACE_CALLER_LIMIT = 30 # maximum number of lines to send thru for backtrace analysis
+
     def initialize
       @layers = []
+      @call_counts = Hash.new { |h, k| h[k] = 0 }
       @annotations = {}
       @ignoring_children = false
       @context = Context.new
@@ -51,7 +61,7 @@ module ScoutApm
       end
 
       start_request(layer) unless @root_layer
-
+      update_call_counts!(layer)
       @layers[-1].add_child(layer) if @layers.any?
       @layers.push(layer)
     end
@@ -62,14 +72,23 @@ module ScoutApm
       layer = @layers.pop
       layer.record_stop_time!
 
-      # Do this here, rather than in the layer because we need this caller. Maybe able to move it?
-      if layer.total_exclusive_time > ScoutApm::SlowTransaction::BACKTRACE_THRESHOLD
-        layer.store_backtrace(caller)
+      if capture_backtrace?(layer)
+        layer.capture_backtrace!
       end
 
       if finalized?
         stop_request
       end
+    end
+
+    def capture_backtrace?(layer)
+      layer.total_exclusive_time > BACKTRACE_THRESHOLD ||
+        @call_counts[layer.name] == N_PLUS_ONE_MAGIC_NUMBER
+    end
+
+    # Maintains a lookup Hash of call counts by layer name. Used to determine if we should capture a backtrace.
+    def update_call_counts!(layer)
+      @call_counts[layer.name] += 1
     end
 
     ###################################

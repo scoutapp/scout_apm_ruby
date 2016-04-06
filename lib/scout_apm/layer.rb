@@ -66,10 +66,18 @@ module ScoutApm
       "#{type}/#{name}"
     end
 
-    def store_backtrace(bt)
-      return unless bt.is_a? Array
-      return unless bt.length > 0
-      @backtrace = bt
+    def capture_backtrace!
+      @backtrace = caller_array
+    end
+
+    # In Ruby 2.0+, we can pass the range directly to the caller to reduce the memory footprint.
+    def caller_array
+      # omits the first several callers which are in the ScoutAPM stack.
+      if ScoutApm::Environment.instance.ruby_2?
+        caller(3...TrackedRequest::BACKTRACE_CALLER_LIMIT)
+      else
+        caller[3...TrackedRequest::BACKTRACE_CALLER_LIMIT]
+      end
     end
 
     ######################################

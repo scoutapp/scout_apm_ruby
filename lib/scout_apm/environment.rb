@@ -160,11 +160,15 @@ module ScoutApm
     end
 
     def ruby_19?
-      defined?(RUBY_ENGINE) && RUBY_ENGINE == "ruby" && RUBY_VERSION.match(/^1\.9/)
+      @ruby_19 ||= defined?(RUBY_ENGINE) && RUBY_ENGINE == "ruby" && RUBY_VERSION.match(/^1\.9/)
     end
 
     def ruby_187?
-      defined?(RUBY_VERSION) && RUBY_VERSION.match(/^1\.8\.7/)
+      @ruby_187 ||= defined?(RUBY_VERSION) && RUBY_VERSION.match(/^1\.8\.7/)
+    end
+
+    def ruby_2?
+      @ruby_2 ||= defined?(RUBY_VERSION) && RUBY_VERSION.match(/^2/)
     end
 
     ### framework checks
