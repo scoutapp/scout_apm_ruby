@@ -176,7 +176,7 @@ module ScoutApm
       metrics = LayerConverters::MetricConverter.new(self).call
       ScoutApm::Agent.instance.store.track!(metrics)
 
-      slow, slow_metrics = LayerConverters::SlowTransactionConverter.new(self).call
+      slow, slow_metrics = LayerConverters::SlowRequestConverter.new(self).call
       ScoutApm::Agent.instance.store.track_slow_transaction!(slow)
       ScoutApm::Agent.instance.store.track!(slow_metrics)
 
