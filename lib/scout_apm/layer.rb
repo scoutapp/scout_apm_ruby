@@ -30,6 +30,7 @@ module ScoutApm
     # backtrace of where it occurred.
     attr_reader :backtrace
 
+    BACKTRACE_CALLER_LIMIT = 30 # maximum number of lines to send thru for backtrace analysis
 
     def initialize(type, name, start_time = Time.now)
       @type = type
@@ -74,9 +75,9 @@ module ScoutApm
     def caller_array
       # omits the first several callers which are in the ScoutAPM stack.
       if ScoutApm::Environment.instance.ruby_2?
-        caller(3...TrackedRequest::BACKTRACE_CALLER_LIMIT)
+        caller(3...BACKTRACE_CALLER_LIMIT)
       else
-        caller[3...TrackedRequest::BACKTRACE_CALLER_LIMIT]
+        caller[3...BACKTRACE_CALLER_LIMIT]
       end
     end
 

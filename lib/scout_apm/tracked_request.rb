@@ -41,7 +41,6 @@ module ScoutApm
 
     N_PLUS_ONE_MAGIC_NUMBER = 5 # Fetch backtraces on this number of calls to a layer.
     BACKTRACE_THRESHOLD = 0.5 # the minimum threshold in seconds to record the backtrace for a metric.
-    BACKTRACE_CALLER_LIMIT = 30 # maximum number of lines to send thru for backtrace analysis
 
     def initialize
       @layers = []
