@@ -46,7 +46,6 @@ module ScoutApm
 
     def start_layer(layer)
       if ignoring_children?
-        ScoutApm::Agent.instance.logger.info("Skipping layer because we're ignoring children: #{layer.inspect}")
         return
       end
 
