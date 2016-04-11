@@ -87,6 +87,8 @@ module ScoutApm
               # Why not just call meta.backtrace and call it done? The walker could access a later later that generates the same MetricMeta but doesn't have a backtrace. This could be
               # lost in the metric_hash if it is replaced by the new key.
               @backtraces << meta
+            else
+              ScoutApm::Agent.instance.logger.debug "Unable to capture an app-specific backtrace for #{meta.inspect}\n#{layer.backtrace}"
             end
           end
           metric_hash[meta] ||= MetricStats.new( meta_options.has_key?(:scope) )
