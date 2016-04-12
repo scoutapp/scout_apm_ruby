@@ -34,8 +34,7 @@ module ScoutApm
         req = ScoutApm::RequestManager.lookup
         req.annotate_request(:uri => @request.path_info)
         req.context.add_user(:ip => @request.ip)
-        # set_headers is rails-specific. by not setting headers, we are unable to get time-in-queue currently.
-        # req.set_headers(request.headers)
+        # req.set_headers(env) # TODO: Parse headers with name HTTP_*
 
         req.start_layer( ScoutApm::Layer.new("Controller", scout_controller_action) )
         begin
