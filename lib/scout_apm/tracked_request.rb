@@ -81,7 +81,7 @@ module ScoutApm
     end
 
     def capture_backtrace?(layer)
-      layer != root_layer && # don't collect a backtrace for the root layer as the backtrace doesn't reach into the Rails app folder.
+      layer.type != 'Controller' && # don't collect a backtrace for the Controller layer as the backtrace doesn't reach into the Rails app folder.
         (layer.total_exclusive_time > BACKTRACE_THRESHOLD || @call_counts[layer.name] == N_PLUS_ONE_MAGIC_NUMBER)
     end
 
