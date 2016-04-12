@@ -48,7 +48,7 @@ module ScoutApm
           job_class = msg["wrapped"]
         end
 
-        latency = (Time.now.to_f - (msg['enqueued_at'] || msg['created_at'])) * 1000
+        latency = (Time.now.to_f - (msg['enqueued_at'] || msg['created_at']))
 
         req = ScoutApm::RequestManager.lookup
         req.job!
