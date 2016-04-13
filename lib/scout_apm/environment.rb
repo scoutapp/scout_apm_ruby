@@ -130,7 +130,11 @@ module ScoutApm
     end
 
     def background_job_integration
-      @background_job_integration ||= BACKGROUND_JOB_INTEGRATIONS.detect {|integration| integration.present?}
+      if Agent.instance.config.value("enable_background_jobs", !Agent.instance.config.config_file_exists?)
+        @background_job_integration ||= BACKGROUND_JOB_INTEGRATIONS.detect {|integration| integration.present?}
+      else
+        nil
+      end
     end
 
     def background_job_name
