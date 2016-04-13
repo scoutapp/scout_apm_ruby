@@ -39,12 +39,11 @@ module ScoutApm
     # with same names across multiple types.
     attr_accessor :call_counts
 
-    N_PLUS_ONE_MAGIC_NUMBER = 5 # Fetch backtraces on this number of calls to a layer. The caller data is only collected on this call (and this + greater) to limit overhead.
     BACKTRACE_THRESHOLD = 0.5 # the minimum threshold in seconds to record the backtrace for a metric.
 
     def initialize
       @layers = []
-      @call_counts = Hash.new { |h, k| h[k] = 0 }
+      @call_counts = Hash.new { |h, k| h[k] = CallSet.new }
       @annotations = {}
       @ignoring_children = false
       @context = Context.new
@@ -82,12 +81,12 @@ module ScoutApm
 
     def capture_backtrace?(layer)
       layer.type != 'Controller' && # don't collect a backtrace for the Controller layer as the backtrace doesn't reach into the Rails app folder.
-        (layer.total_exclusive_time > BACKTRACE_THRESHOLD || @call_counts[layer.name] == N_PLUS_ONE_MAGIC_NUMBER)
+        (layer.total_exclusive_time > BACKTRACE_THRESHOLD || @call_counts[layer.name].capture_backtrace?)
     end
 
     # Maintains a lookup Hash of call counts by layer name. Used to determine if we should capture a backtrace.
     def update_call_counts!(layer)
-      @call_counts[layer.name] += 1
+      @call_counts[layer.name].update!(layer.desc)
     end
 
     ###################################
