@@ -61,7 +61,7 @@ module ScoutApm
       if @grouped_items.any? 
         @grouped_items
       else
-        @items.group_by { |item| unique_name_for(item) }
+        @grouped_items = @items.group_by { |item| unique_name_for(item) }
       end
     end
 
