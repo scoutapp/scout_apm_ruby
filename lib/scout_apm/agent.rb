@@ -80,7 +80,7 @@ module ScoutApm
 
       if defined?(::ScoutRails)
         logger.warn "ScoutAPM is incompatible with the old Scout Rails plugin. Please remove scout_rails from your Gemfile"
-        return false
+        return false unless force?
       end
 
       true
@@ -110,15 +110,17 @@ module ScoutApm
 
       app_server_load_hook
 
+      if environment.background_job_integration
+        environment.background_job_integration.install
+        logger.info "Installed Background Job Integration [#{environment.background_job_name}]"
+      end
+
       # start_background_worker? is true on non-forking servers, and directly
       # starts the background worker.  On forking servers, a server-specific
       # hook is inserted to start the background worker after forking.
       if start_background_worker?
         start_background_worker
         logger.info "Scout Agent [#{ScoutApm::VERSION}] Initialized"
-      elsif environment.background_job_integration
-        environment.background_job_integration.install
-        logger.info "Scout Agent [#{ScoutApm::VERSION}] loaded in [#{environment.background_job_name}] master process. Monitoring will start after background job framework forks its workers."
       else
         environment.app_server_integration.install
         logger.info "Scout Agent [#{ScoutApm::VERSION}] loaded in [#{environment.app_server}] master process. Monitoring will start after server forks its workers."

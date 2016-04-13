@@ -44,7 +44,11 @@ module ScoutApm
     class SidekiqMiddleware
       def call(worker, msg, queue)
         job_class = msg["class"] # TODO: Validate this across different versions of Sidekiq
-        latency = (Time.now.to_f - (msg['enqueued_at'] || msg['created_at'])) * 1000
+        if job_class == "ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper" && msg.has_key?("wrapped")
+          job_class = msg["wrapped"]
+        end
+
+        latency = (Time.now.to_f - (msg['enqueued_at'] || msg['created_at']))
 
         req = ScoutApm::RequestManager.lookup
         req.job!
