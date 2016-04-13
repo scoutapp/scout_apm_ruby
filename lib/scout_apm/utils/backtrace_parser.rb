@@ -18,7 +18,6 @@ module ScoutApm
         # Only the first element is used in Github code display.
         stack = []
         @call_stack.each_with_index do |c,i|
-          # TODO - don't gsub every time ... store it.
           if m = c.match(@@app_dir_regex)
             stack << m[2]
             break
