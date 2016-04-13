@@ -42,7 +42,7 @@ module ScoutApm
     end
 
     def at_magic_number?
-      res=grouped_items[unique_name_for(@items.last)].size == N_PLUS_ONE_MAGIC_NUMBER
+      res=grouped_items[unique_name_for(@items.last)].size >= N_PLUS_ONE_MAGIC_NUMBER
       if res
         ScoutApm::Agent.instance.logger.debug "Grouped Call Set @ magic number."
       end
