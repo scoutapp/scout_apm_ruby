@@ -30,6 +30,7 @@ module ScoutApm
     # backtrace of where it occurred.
     attr_reader :backtrace
 
+    BACKTRACE_CALLER_LIMIT = 30 # maximum number of lines to send thru for backtrace analysis
 
     def initialize(type, name, start_time = Time.now)
       @type = type
@@ -66,10 +67,19 @@ module ScoutApm
       "#{type}/#{name}"
     end
 
-    def store_backtrace(bt)
-      return unless bt.is_a? Array
-      return unless bt.length > 0
-      @backtrace = bt
+    def capture_backtrace!
+      ScoutApm::Agent.instance.logger.debug "Capturing Backtrace for Layer [#{type}/#{name}]"
+      @backtrace = caller_array
+    end
+
+    # In Ruby 2.0+, we can pass the range directly to the caller to reduce the memory footprint.
+    def caller_array
+      # omits the first several callers which are in the ScoutAPM stack.
+      if ScoutApm::Environment.instance.ruby_2?
+        caller(3...BACKTRACE_CALLER_LIMIT)
+      else
+        caller[3...BACKTRACE_CALLER_LIMIT]
+      end
     end
 
     ######################################

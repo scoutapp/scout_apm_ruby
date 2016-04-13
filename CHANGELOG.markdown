@@ -1,3 +1,7 @@
+# 1.5.1
+
+* Collecting backtraces on n+1 calls
+
 # 1.4.5
 
 * Instrument Elasticsearch

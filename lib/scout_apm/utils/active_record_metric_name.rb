@@ -27,6 +27,25 @@ module ScoutApm
         end
       end
 
+      # For the layer lookup.
+      def hash
+        h = name.downcase.hash
+        h ^= sanitized_sql.hash unless sanitized_sql.nil? # can't think of a case where this would be nil, but just in case...
+        h
+      end
+
+      # For the layer lookup.
+      # Reminder: #eql? is for Hash equality: returns true if obj and other refer to the same hash key.
+      def eql?(o)
+        self.class    == o.class &&
+        name.downcase == o.name.downcase &&
+        self.sanitized_sql == o.sanitized_sql
+      end
+
+      def sanitized_sql
+        @sanitized_sql ||= Utils::SqlSanitizer.new(sql).to_s
+      end
+
       private
 
       def model
