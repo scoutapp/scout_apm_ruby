@@ -2,6 +2,7 @@ module ScoutApm
   class CallSet
 
     N_PLUS_ONE_MAGIC_NUMBER = 5 # Fetch backtraces on this number of calls to a layer. The caller data is only collected on this call to limit overhead.
+    N_PLUS_ONE_TIME_THRESHOLD = 50/1000.0 # Minimum time in seconds before we start performing any work. This is to prevent doing a lot of work on already fast calls.
 
     attr_reader :call_count
 
@@ -9,7 +10,9 @@ module ScoutApm
       @items = [] # An array of Layer descriptions that are associated w/a single Layer name (ex: User/find). Note this may contain nil items.
       @grouped_items = Hash.new { |h, k| h[k] = [] } # items groups by their normalized name since multiple layers could have the same layer name.
       @call_count = 0
-      @captured = false
+      @captured = false # cached for performance
+      @start_time = Time.now
+      @past_start_time = false # cached for performance
     end
 
     def update!(item = nil)
@@ -23,11 +26,17 @@ module ScoutApm
       end
     end
 
+    # Limit our workload if time across this set of calls is small.
+    def past_time_threshold?
+      return true if @past_time_threshold # no need to check again once past
+      @past_time_threshold = (Time.now-@start_time) >= N_PLUS_ONE_TIME_THRESHOLD
+    end
+
     # We're selective on capturing a backtrace for two reasons:
     # * Grouping ActiveRecord calls requires us to sanitize the SQL. This isn't cheap.
     # * Capturing backtraces isn't cheap.
     def capture_backtrace?
-      if !@captured && @call_count >= N_PLUS_ONE_MAGIC_NUMBER && at_magic_number?
+      if !@captured && @call_count >= N_PLUS_ONE_MAGIC_NUMBER && past_time_threshold? && at_magic_number?
         @captured = true
       end
     end
