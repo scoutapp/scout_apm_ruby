@@ -19,7 +19,7 @@ module ScoutApm
 
     def update!(item = nil)
       if @captured # No need to do any work if we've already captured a backtrace.
-        ScoutApm::Agent.instance.logger.debug "Already captured a backtrace for item [#{item}]"
+        ScoutApm::Agent.instance.logger.debug { "Already captured a backtrace for item [#{item}]" }
         return
       end
       @call_count += 1
@@ -61,7 +61,8 @@ module ScoutApm
       if @grouped_items.any? 
         @grouped_items
       else
-        @grouped_items = @items.group_by { |item| unique_name_for(item) }
+        ScoutApm::Agent.instance.logger.debug { "Grouping items: #{@items.last}" }
+        @grouped_items.merge!(@items.group_by { |item| unique_name_for(item) })
       end
     end
 
