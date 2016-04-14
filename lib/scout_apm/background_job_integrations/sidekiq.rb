@@ -12,7 +12,7 @@ module ScoutApm
       end
 
       def forking?
-        true
+        false
       end
 
       def install
