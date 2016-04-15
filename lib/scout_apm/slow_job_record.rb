@@ -25,6 +25,7 @@ module ScoutApm
       @context = context
       @metrics = metrics
       @mem_delta = mem_delta
+      ScoutApm::Agent.instance.logger.debug { "Slow Job [#{metric_name}] - Call Time: #{total_call_time} Mem Delta: #{mem_delta}"}
     end
 
     def metric_name
