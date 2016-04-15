@@ -84,8 +84,7 @@ module ScoutApm
     end
 
     def root
-      return deploy_integration.root if deploy_integration
-      framework_root
+      @root ||= deploy_integration? ? deploy_integration.root : framework_root
     end
 
     def framework_root
@@ -169,6 +168,18 @@ module ScoutApm
 
     def ruby_2?
       @ruby_2 ||= defined?(RUBY_VERSION) && RUBY_VERSION.match(/^2/)
+    end
+
+    # Returns a string representation of the OS (ex: darwin, linux)
+    def os
+      return @os if @os
+      raw_os = RbConfig::CONFIG['target_os']
+      match = raw_os.match(/([a-z]+)/)
+      if match
+        @os = match[1]
+      else
+        @os = raw_os
+      end
     end
 
     ### framework checks

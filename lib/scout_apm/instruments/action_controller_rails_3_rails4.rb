@@ -60,7 +60,7 @@ module ScoutApm
       def process_action(*args)
         req = ScoutApm::RequestManager.lookup
         path = ScoutApm::Agent.instance.config.value("uri_reporting") == 'path' ? request.path : request.fullpath
-        req.annotate_request(:uri => path, :start_rss => ::Process.rusage.maxrss)
+        req.annotate_request(:uri => path)
         req.context.add_user(:ip => request.remote_ip)
         req.set_headers(request.headers)
         req.web!

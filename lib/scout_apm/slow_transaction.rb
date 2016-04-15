@@ -11,8 +11,9 @@ module ScoutApm
     attr_reader :time
     attr_reader :prof
     attr_reader :raw_prof
+    attr_reader :mem_delta
 
-    def initialize(uri, metric_name, total_call_time, metrics, context, time, raw_stackprof)
+    def initialize(uri, metric_name, total_call_time, metrics, context, time, raw_stackprof, mem_delta)
       @uri = uri
       @metric_name = metric_name
       @total_call_time = total_call_time
@@ -21,6 +22,8 @@ module ScoutApm
       @time = time
       @prof = ScoutApm::StackprofTreeCollapser.new(raw_stackprof).call
       @raw_prof = raw_stackprof # Send whole data up to server
+      mem_delta = mem_delta
+      ScoutApm::Agent.instance.logger.debug { "Slow Request [#{uri}] - Call Time: #{total_call_time} Mem Delta: #{mem_delta}"}
     end
 
     # Used to remove metrics when the payload will be too large.
@@ -34,7 +37,7 @@ module ScoutApm
     end
 
     def as_json
-      json_attributes = [:key, :time, :total_call_time, :uri, [:context, :context_hash], :prof]
+      json_attributes = [:key, :time, :total_call_time, :uri, [:context, :context_hash], :prof, :mem_delta]
       ScoutApm::AttributeArranger.call(self, json_attributes)
     end
 
