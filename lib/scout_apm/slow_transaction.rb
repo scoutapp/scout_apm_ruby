@@ -22,7 +22,7 @@ module ScoutApm
       @time = time
       @prof = ScoutApm::StackprofTreeCollapser.new(raw_stackprof).call
       @raw_prof = raw_stackprof # Send whole data up to server
-      mem_delta = mem_delta
+      @mem_delta = mem_delta
       ScoutApm::Agent.instance.logger.debug { "Slow Request [#{uri}] - Call Time: #{total_call_time} Mem Delta: #{mem_delta}"}
     end
 
