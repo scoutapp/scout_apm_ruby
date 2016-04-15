@@ -2,6 +2,10 @@
 
 * Collecting backtraces on n+1 calls
 
+# 1.5.0
+
+* Background Job instrumentation for Sidekiq and Sidekiq-backed ActiveJob
+
 # 1.4.5
 
 * Instrument Elasticsearch
