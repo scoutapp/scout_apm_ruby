@@ -14,8 +14,9 @@ module ScoutApm
     alias_method :total_call_time, :total_time
 
     attr_reader :metrics
+    attr_reader :mem_delta
 
-    def initialize(queue_name, job_name, time, total_time, exclusive_time, context, metrics)
+    def initialize(queue_name, job_name, time, total_time, exclusive_time, context, metrics, mem_delta)
       @queue_name = queue_name
       @job_name = job_name
       @time = time
@@ -23,6 +24,7 @@ module ScoutApm
       @exclusive_time = exclusive_time
       @context = context
       @metrics = metrics
+      @mem_delta = mem_delta
     end
 
     def metric_name

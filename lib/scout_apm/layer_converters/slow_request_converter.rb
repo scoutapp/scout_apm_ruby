@@ -48,11 +48,6 @@ module ScoutApm
         metric_hash
       end
 
-      # Account for Darwin returning maxrss in bytes and Linux in KB.
-      def rss_to_mb(rss)
-        rss.to_f/1024/(ScoutApm::Agent.instance.environment.os == 'darwin' ? 1024 : 1)
-      end
-
       # Full metrics from this request. These get aggregated in Store for the
       # overview metrics, or stored permanently in a SlowTransaction
       # Some merging of metrics will happen here, so if a request calls the same

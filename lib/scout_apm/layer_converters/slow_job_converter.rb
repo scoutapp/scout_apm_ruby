@@ -9,6 +9,9 @@ module ScoutApm
         slow_enough = ScoutApm::Agent.instance.slow_job_policy.slow?(job_name, root_layer.total_call_time)
         return unless slow_enough
 
+        # record the change in memory usage
+        mem_delta = rss_to_mb(request.capture_mem_delta!)
+
         SlowJobRecord.new(
           queue_layer.name,
           job_layer.name,
@@ -17,6 +20,7 @@ module ScoutApm
           job_layer.total_exclusive_time,
           request.context,
           create_metrics,
+          mem_delta
         )
       end
 
