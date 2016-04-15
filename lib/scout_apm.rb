@@ -23,6 +23,7 @@ begin
 rescue LoadError
   require 'scout_apm/utils/fake_stack_prof'
 end
+require 'rusage'
 
 #####################################
 # Internal Requires

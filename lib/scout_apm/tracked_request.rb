@@ -20,6 +20,7 @@ module ScoutApm
     # Known Keys:
     #   :uri - the full URI requested by the user
     #   :queue_latency - how long a background Job spent in the queue before starting processing
+    #   :start_rusage - The RSS usage at the start of the request.
     attr_reader :annotations
 
     # Nil until the request is finalized, at which point it will hold the
@@ -38,6 +39,9 @@ module ScoutApm
     # Note that layer names might not be Strings - can alse be Utils::ActiveRecordMetricName. Also, this would fail for layers
     # with same names across multiple types.
     attr_accessor :call_counts
+
+    # The change in RSS from the start to the end of the request.
+    attr_accessor :rss_diff
 
     BACKTRACE_THRESHOLD = 0.5 # the minimum threshold in seconds to record the backtrace for a metric.
 
@@ -74,7 +78,16 @@ module ScoutApm
       end
 
       if finalized?
+        record_rusage_diff!
         stop_request
+      end
+    end
+
+    # TODO - I believe the units on this will vary based on the OS. Look up past work on this.
+    def record_rusage_diff!
+      if s=annotations[:start_rss]
+        @rss_diff = ::Process.rusage.maxrss - s
+        ScoutApm::Agent.instance.logger.debug { "RSS Diff: #{rss_diff}"}
       end
     end
 
