@@ -1,3 +1,7 @@
+# 1.5.2
+
+* Collecting memory metrics on slow requests
+
 # 1.5.1
 
 * Collecting backtraces on n+1 calls
