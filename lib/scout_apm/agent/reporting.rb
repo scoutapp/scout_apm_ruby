@@ -55,12 +55,9 @@ module ScoutApm
         payload = ScoutApm::Serializers::PayloadSerializer.serialize(metadata, metrics, slow_transactions, jobs, slow_jobs)
         logger.debug("Payload: #{payload}")
 
-        response = reporter.report(payload, headers)
-        unless response && response.is_a?(Net::HTTPSuccess)
-          logger.warn "Error on checkin to #{reporter.uri.to_s}: #{response.inspect}"
-        end
+        reporter.report(payload, headers)
       rescue => e
-        logger.warn "Error on checkin to #{reporter.uri.to_s}"
+        logger.warn "Error on checkin"
         logger.info e.message
         logger.debug e.backtrace
       end
