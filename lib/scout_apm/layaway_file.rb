@@ -16,9 +16,9 @@ module ScoutApm
         return nil
       end
       Marshal.load(dump)
-    rescue ArgumentError, TypeError => e
-      ScoutApm::Agent.instance.logger.debug("Error loading data from layaway file: #{e.inspect}")
-      ScoutApm::Agent.instance.logger.debug(e.backtrace.inspect)
+    rescue NameError, ArgumentError, TypeError => e
+      ScoutApm::Agent.instance.logger.info("Unable to load data from Layaway file, resetting.")
+      ScoutApm::Agent.instance.logger.debug("#{e.message}, #{e.backtrace.join("\n\t")}")
       nil
     end
 
@@ -37,7 +37,7 @@ module ScoutApm
         end
       end
     rescue Errno::ENOENT, Exception  => e
-      ScoutApm::Agent.instance.logger.error("Unable to access the layaway file [#{e.message}]. " +
+      ScoutApm::Agent.instance.logger.error("Unable to access the layaway file [#{e.class} - #{e.message}]. " +
                                             "The user running the app must have read & write access. " +
                                             "Change the path by setting the `data_file` key in scout_apm.yml"
                                            )
