@@ -86,6 +86,7 @@ require 'scout_apm/instruments/rails_router'
 require 'scout_apm/instruments/sinatra'
 require 'scout_apm/instruments/process/process_cpu'
 require 'scout_apm/instruments/process/process_memory'
+require 'scout_apm/allocations'
 
 require 'scout_apm/app_server_load'
 

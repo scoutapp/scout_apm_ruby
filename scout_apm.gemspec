@@ -17,6 +17,7 @@ Gem::Specification.new do |s|
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib","data"]
+  s.extensions << 'ext/allocations/extconf.rb'
 
   s.add_runtime_dependency "rusage", '~> 0.2.0'
 
