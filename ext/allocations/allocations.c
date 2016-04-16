@@ -4,6 +4,7 @@
 #include <ruby/debug.h>
 
 VALUE mScoutApm;
+VALUE mInstruments;
 VALUE cAllocations;
 
 static __thread uint64_t endpoint_allocations;
@@ -45,7 +46,8 @@ Init_hooks(VALUE module)
 void Init_allocations()
 {
     mScoutApm = rb_define_module("ScoutApm");
-    cAllocations = rb_define_class_under(mScoutApm, "Allocations", rb_cObject);
+    mInstruments = rb_define_module_under(mScoutApm, "Instruments");
+    cAllocations = rb_define_class_under(mInstruments, "Allocations", rb_cObject);
     rb_define_singleton_method(cAllocations, "count", get_allocation_count, 0);
 
     Init_hooks(mScoutApm);

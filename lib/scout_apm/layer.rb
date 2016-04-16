@@ -36,6 +36,8 @@ module ScoutApm
       @type = type
       @name = name
       @start_time = start_time
+      @allocations_start = ScoutApm::Instruments::Allocations.count
+      @allocations_stop = 0
       @children = [] # In order of calls
       @desc = nil
     end
@@ -46,6 +48,11 @@ module ScoutApm
 
     def record_stop_time!(stop_time = Time.now)
       @stop_time = stop_time
+    end
+
+    # Fetch the current number of allocated objects. This will always increment - we fetch when initializing and when stopping the layer.
+    def record_allocations!
+      @allocations_stop = ScoutApm::Instruments::Allocations.count
     end
 
     def desc=(desc)
@@ -122,6 +129,27 @@ module ScoutApm
       children.
         map { |child| child.total_call_time }.
         inject(0) { |sum, time| sum + time }
+    end
+
+    ######################################
+    # Allocation Calculations
+    ######################################
+
+    # These are almost identical to the timing metrics.
+
+    def total_allocations
+      allocations = (@allocations_stop - @allocations_start)
+      allocations < 0 ? 0 : allocations
+    end
+
+    def total_exclusive_allocations
+      total_allocations - child_allocations
+    end
+
+    def child_allocations
+      children.
+        map { |child| child.total_allocations }.
+        inject(0) { |sum, obj| sum + obj }
     end
   end
 end
