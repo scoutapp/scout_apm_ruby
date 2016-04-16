@@ -2,7 +2,7 @@ module ScoutApm
   class CallSet
 
     N_PLUS_ONE_MAGIC_NUMBER = 5 # Fetch backtraces on this number of calls to a layer. The caller data is only collected on this call to limit overhead.
-    N_PLUS_ONE_TIME_THRESHOLD = 100/1000.0 # Minimum time in seconds before we start performing any work. This is to prevent doing a lot of work on already fast calls.
+    N_PLUS_ONE_TIME_THRESHOLD = 150/1000.0 # Minimum time in seconds before we start performing any work. This is to prevent doing a lot of work on already fast calls.
 
     attr_reader :call_count
 
@@ -42,11 +42,7 @@ module ScoutApm
     end
 
     def at_magic_number?
-      res=grouped_items[unique_name_for(@items.last)].size >= N_PLUS_ONE_MAGIC_NUMBER
-      if res
-        ScoutApm::Agent.instance.logger.debug "Grouped Call Set @ magic number."
-      end
-      res
+      grouped_items[unique_name_for(@items.last)].size >= N_PLUS_ONE_MAGIC_NUMBER
     end
 
     def grouped_items
