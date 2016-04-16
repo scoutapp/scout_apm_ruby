@@ -19,6 +19,8 @@ module ScoutApm
             "exclusive_time" => job.exclusive_time,
             "mem_delta" => job.mem_delta,
             "allocations" => job.allocations,
+            "seconds_since_startup" => job.seconds_since_startup,
+            "hostname" => job.hostname,
             "metrics" => MetricsToJsonSerializer.new(job.metrics).as_json, # New style of metrics
             "context" => job.context,
           }

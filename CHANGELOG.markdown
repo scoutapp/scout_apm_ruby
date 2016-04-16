@@ -1,6 +1,9 @@
 # 1.5.2
 
-* Collecting memory metrics on slow requests
+* Collecting memory metrics on slow transactions
+* Collecting additional fields for slow transactions:
+  * hostname
+  * seconds_since_startup (larger memory increases and other other odd behavior more common when close to startup)
 
 # 1.5.1
 

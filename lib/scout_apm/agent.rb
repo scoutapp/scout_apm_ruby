@@ -19,6 +19,7 @@ module ScoutApm
     attr_accessor :metric_lookup # Hash used to lookup metric ids based on their name and scope
     attr_reader :slow_request_policy
     attr_reader :slow_job_policy
+    attr_reader :process_start_time # used when creating slow transactions to report how far from startup the transaction was recorded.
 
     # All access to the agent is thru this class method to ensure multiple Agent instances are not initialized per-Ruby process.
     def self.instance(options = {})
@@ -30,6 +31,7 @@ module ScoutApm
     # be started (when forking).
     def initialize(options = {})
       @started = false
+      @process_start_time = Time.now
       @options ||= options
       @config = ScoutApm::Config.new(options[:config_path])
       @slow_job_policy = ScoutApm::SlowJobPolicy.new
