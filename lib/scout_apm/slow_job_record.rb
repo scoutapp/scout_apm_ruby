@@ -15,8 +15,9 @@ module ScoutApm
 
     attr_reader :metrics
     attr_reader :mem_delta
+    attr_reader :allocations
 
-    def initialize(queue_name, job_name, time, total_time, exclusive_time, context, metrics, mem_delta)
+    def initialize(queue_name, job_name, time, total_time, exclusive_time, context, metrics, mem_delta, allocations)
       @queue_name = queue_name
       @job_name = job_name
       @time = time
@@ -25,6 +26,7 @@ module ScoutApm
       @context = context
       @metrics = metrics
       @mem_delta = mem_delta
+      @allocations = allocations
       ScoutApm::Agent.instance.logger.debug { "Slow Job [#{metric_name}] - Call Time: #{total_call_time} Mem Delta: #{mem_delta}"}
     end
 

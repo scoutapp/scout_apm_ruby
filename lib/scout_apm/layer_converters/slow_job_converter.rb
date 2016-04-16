@@ -20,7 +20,8 @@ module ScoutApm
           job_layer.total_exclusive_time,
           request.context,
           create_metrics,
-          mem_delta
+          mem_delta,
+          job_layer.total_allocations
         )
       end
 

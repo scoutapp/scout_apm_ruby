@@ -34,7 +34,8 @@ module ScoutApm
                               request.context,
                               root_layer.stop_time,
                               stackprof,
-                              mem_delta
+                              mem_delta,
+                              root_layer.total_allocations
                               ),
           { meta => stat }
         ]
