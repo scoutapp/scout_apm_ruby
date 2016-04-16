@@ -88,7 +88,7 @@ module ScoutApm
               # lost in the metric_hash if it is replaced by the new key.
               @backtraces << meta
             else
-              ScoutApm::Agent.instance.logger.debug "Unable to capture an app-specific backtrace for #{meta.inspect}\n#{layer.backtrace}"
+              ScoutApm::Agent.instance.logger.debug { "Unable to capture an app-specific backtrace for #{meta.inspect}\n#{layer.backtrace}" }
             end
           end
           metric_hash[meta] ||= MetricStats.new( meta_options.has_key?(:scope) )
