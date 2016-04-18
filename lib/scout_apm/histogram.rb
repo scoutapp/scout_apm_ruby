@@ -20,7 +20,7 @@ module ScoutApm
 
     def quantile(q)
       if q > 1
-        q = q / 100
+        q = q / 100.0
       end
 
       count = q.to_f * total.to_f
