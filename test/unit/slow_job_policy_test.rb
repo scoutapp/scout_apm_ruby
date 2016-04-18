@@ -32,9 +32,9 @@ class SlowJobPolicyTest < Minitest::Test
     policy = ScoutApm::SlowJobPolicy.new
     policy.slow?("TestWorker", 10) # Prime it with a not-slow
 
-    assert policy.slow?("TestWorker", 12)
+    assert  policy.slow?("TestWorker", 12)
     assert !policy.slow?("TestWorker", 8)
-    assert policy.slow?("TestWorker", 11)
+    assert  policy.slow?("TestWorker", 13)
     assert !policy.slow?("TestWorker", 6)
   end
 
@@ -44,12 +44,12 @@ class SlowJobPolicyTest < Minitest::Test
     policy.slow?("OtherWorker", 1.0) # Prime it with a not-slow
 
     assert !policy.slow?("TestWorker", 8)
-    assert policy.slow?("OtherWorker", 2)
+    assert  policy.slow?("OtherWorker", 2)
     assert !policy.slow?("TestWorker", 1)
-    assert policy.slow?("OtherWorker", 3)
-    assert policy.slow?("TestWorker", 12)
+    assert  policy.slow?("OtherWorker", 3)
+    assert  policy.slow?("TestWorker", 12)
     assert !policy.slow?("OtherWorker", 1)
-    assert policy.slow?("TestWorker", 11)
-    assert policy.slow?("OtherWorker", 4)
+    assert  policy.slow?("TestWorker", 12)
+    assert  policy.slow?("OtherWorker", 4)
   end
 end

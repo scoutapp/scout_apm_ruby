@@ -10,7 +10,7 @@ module ScoutApm
   class SlowJobPolicy
     DEFAULT_HISTOGRAM_SIZE = 20
 
-    QUANTILE = 90
+    QUANTILE = 99
 
     def initialize(histogram_size = DEFAULT_HISTOGRAM_SIZE)
       @histograms = Hash.new { |h, k| h[k] = NumericHistogram.new(histogram_size) }
@@ -21,7 +21,9 @@ module ScoutApm
     # returns true if this request should be stored in higher trace detail, false otherwise
     def slow?(worker, total_time)
       @histograms[worker].add(total_time)
-      total_time > @histograms[worker].quantile(QUANTILE)
+      return false if @histograms[worker].total == 1 # First call is never slow
+
+      total_time >= @histograms[worker].quantile(QUANTILE)
     end
   end
 end
