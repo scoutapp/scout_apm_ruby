@@ -84,6 +84,11 @@ module ScoutApm
       # always be 100% framework code.
       return false if BACKTRACE_BLACKLIST.include?(layer.type)
 
+      # Only capture backtraces if we're in a real "request". Otherwise we
+      # can spend lot of time capturing backtraces from the internals of
+      # Sidekiq, only to throw them away immediately.
+      return false unless (web? || job?)
+
       # Capture any individually slow layer.
       return true if layer.total_exclusive_time > BACKTRACE_THRESHOLD
 
