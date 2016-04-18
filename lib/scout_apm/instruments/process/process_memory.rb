@@ -26,7 +26,7 @@ module ScoutApm
             get_mem_from_procfile
           when /darwin9/ # 10.5
             get_mem_from_shell("ps -o rsz")
-          when /darwin1[0123]/ # 10.6 - 10.10
+          when /darwin1[01234]/ # 10.6 - 10.11
             get_mem_from_shell("ps -o rss")
           else
             0 # What default? was nil.
