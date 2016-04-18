@@ -21,7 +21,9 @@ module ScoutApm
     # returns true if this request should be stored in higher trace detail, false otherwise
     def slow?(worker, total_time)
       @histograms[worker].add(total_time)
-      total_time > @histograms[worker].quantile(QUANTILE)
+      return false if @histograms[worker].total == 1 # First call is never slow
+
+      total_time >= @histograms[worker].quantile(QUANTILE)
     end
   end
 end
