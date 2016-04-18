@@ -10,7 +10,7 @@ module ScoutApm
   class SlowJobPolicy
     DEFAULT_HISTOGRAM_SIZE = 20
 
-    QUANTILE = 90
+    QUANTILE = 99
 
     def initialize(histogram_size = DEFAULT_HISTOGRAM_SIZE)
       @histograms = Hash.new { |h, k| h[k] = NumericHistogram.new(histogram_size) }
