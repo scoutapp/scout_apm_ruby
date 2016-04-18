@@ -19,8 +19,10 @@ module ScoutApm
     end
 
     def quantile(q)
+      return 0 if total == 0
+
       if q > 1
-        q = q / 100
+        q = q / 100.0
       end
 
       count = q.to_f * total.to_f
@@ -114,6 +116,9 @@ module ScoutApm
       # Remove the two bins we just merged together, then add the merged one
       bins.slice!(minDeltaIndex - 1, 2)
       bins.insert(minDeltaIndex - 1, mergedBin)
+    rescue => e
+      ScoutApm::Agent.instance.logger.info("Error in NumericHistogram#trim_one. #{e.message}, #{e.backtrace}, #{self.inspect}")
+      raise
     end
   end
 end
