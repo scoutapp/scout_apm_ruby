@@ -22,6 +22,7 @@ module ScoutApm
             "seconds_since_startup" => job.seconds_since_startup,
             "hostname" => job.hostname,
             "metrics" => MetricsToJsonSerializer.new(job.metrics).as_json, # New style of metrics
+            "allocation_metrics" => MetricsToJsonSerializer.new(job.allocation_metrics).as_json, # New style of metrics
             "context" => job.context,
           }
         end

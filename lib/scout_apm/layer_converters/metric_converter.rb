@@ -1,6 +1,5 @@
 # Take a TrackedRequest and turn it into a hash of:
 #   MetricMeta => MetricStats
-
 module ScoutApm
   module LayerConverters
     class MetricConverter < ConverterBase

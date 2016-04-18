@@ -85,7 +85,7 @@ module ScoutApm
 
     # This may be in bytes or KB based on the OSX. We store this as-is here and only do conversion to MB in Layer Converters.
     def mem_usage
-      ::Process.rusage.maxrss
+      ScoutApm::Instruments::Process::ProcessMemory.rss
     end
 
     def capture_mem_delta!

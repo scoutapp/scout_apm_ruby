@@ -5,6 +5,7 @@ module ScoutApm
     attr_reader :metric_name
     attr_reader :total_call_time
     attr_reader :metrics
+    attr_reader :allocation_metrics
     attr_reader :meta
     attr_reader :uri
     attr_reader :context
@@ -16,11 +17,12 @@ module ScoutApm
     attr_accessor :hostname # hack - we need to reset these server side.
     attr_accessor :seconds_since_startup # hack - we need to reset these server side.
 
-    def initialize(uri, metric_name, total_call_time, metrics, context, time, raw_stackprof, mem_delta, allocations)
+    def initialize(uri, metric_name, total_call_time, metrics, allocation_metrics, context, time, raw_stackprof, mem_delta, allocations)
       @uri = uri
       @metric_name = metric_name
       @total_call_time = total_call_time
       @metrics = metrics
+      @allocation_metrics = allocation_metrics
       @context = context
       @time = time
       @prof = ScoutApm::StackprofTreeCollapser.new(raw_stackprof).call

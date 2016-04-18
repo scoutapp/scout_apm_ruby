@@ -10,7 +10,7 @@ module ScoutApm
         return unless slow_enough
 
         # record the change in memory usage
-        mem_delta = rss_to_mb(request.capture_mem_delta!)
+        mem_delta = ScoutApm::Instruments::Process::ProcessMemory.rss_to_mb(request.capture_mem_delta!)
 
         SlowJobRecord.new(
           queue_layer.name,
@@ -20,6 +20,7 @@ module ScoutApm
           job_layer.total_exclusive_time,
           request.context,
           create_metrics,
+          nil, # placeholder for allocation metrics.
           mem_delta,
           job_layer.total_allocations
         )

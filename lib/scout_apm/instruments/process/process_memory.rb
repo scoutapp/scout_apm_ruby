@@ -4,6 +4,19 @@ module ScoutApm
       class ProcessMemory
         attr_reader :logger
 
+        # Account for Darwin returning maxrss in bytes and Linux in KB. Used by the slow converters. Doesn't feel like this should go here though...more of a utility.
+        def self.rss_to_mb(rss)
+          rss.to_f/1024/(ScoutApm::Agent.instance.environment.os == 'darwin' ? 1024 : 1)
+        end
+
+        def self.rss
+          ::Process.rusage.maxrss
+        end
+
+        def self.rss_in_mb
+          rss_to_mb(rss)
+        end
+
         def initialize(logger)
           @logger = logger
         end
@@ -21,37 +34,7 @@ module ScoutApm
         end
 
         def run
-          case RUBY_PLATFORM.downcase
-          when /linux/
-            get_mem_from_procfile
-          when /darwin9/ # 10.5
-            get_mem_from_shell("ps -o rsz")
-          when /darwin1[0123]/ # 10.6 - 10.10
-            get_mem_from_shell("ps -o rss")
-          else
-            0 # What default? was nil.
-          end.tap { |res| logger.debug "#{human_name}: #{res.inspect}" }
-        end
-
-        private
-
-        def get_mem_from_procfile
-          res = nil
-          proc_status = File.open(procfile, "r") { |f| f.read_nonblock(4096).strip }
-          if proc_status =~ /RSS:\s*(\d+) kB/i
-            res= $1.to_f / 1024.0
-          end
-          res
-        end
-
-        def procfile
-          "/proc/#{$$}/status"
-        end
-
-        # memory in MB the current process is using
-        def get_mem_from_shell(command)
-          res = `#{command} #{$$}`.split("\n")[1].to_f / 1024.0 #rescue nil
-          res
+          self.class.rss_in_mb.tap { |res| logger.debug "#{human_name}: #{res.inspect}" }
         end
       end
     end
