@@ -19,6 +19,8 @@ module ScoutApm
     end
 
     def quantile(q)
+      return 0 if total == 0
+
       if q > 1
         q = q / 100.0
       end
