@@ -248,7 +248,7 @@ module ScoutApm
           install_instrument(ScoutApm::Instruments::ActionControllerRails3Rails4)
           install_instrument(ScoutApm::Instruments::MiddlewareSummary)
           install_instrument(ScoutApm::Instruments::RailsRouter)
-        when :sinatra     then install_instrument(ScoutApm::Instruments::Sinatra)
+        # when :sinatra     then install_instrument(ScoutApm::Instruments::Sinatra)
         end
       end
 
