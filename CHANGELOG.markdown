@@ -5,7 +5,7 @@
 
 # 1.4.6
 
-* Collecting backtraces on n+1 calls
+* Defend against a nil
 
 # 1.5.0
 
