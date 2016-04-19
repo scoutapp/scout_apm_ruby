@@ -16,8 +16,7 @@ module ScoutApm
           job_layer.total_call_time,
           job_layer.total_exclusive_time,
           request.context,
-          create_metrics,
-        )
+          create_metrics)
       end
 
       def queue_layer

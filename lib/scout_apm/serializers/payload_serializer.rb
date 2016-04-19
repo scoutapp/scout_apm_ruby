@@ -15,8 +15,7 @@ module ScoutApm
                        :metrics           => metrics,
                        :slow_transactions => slow_transactions,
                        :jobs              => jobs,
-                       :slow_jobs         => slow_jobs,
-                      )
+                       :slow_jobs         => slow_jobs)
         end
       end
 
