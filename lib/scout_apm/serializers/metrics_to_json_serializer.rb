@@ -42,7 +42,7 @@ module ScoutApm
 
           # Will later hold the exact SQL, or URL or whatever other detail
           # about this query is necessary
-          "detail" => { desc: meta.desc }.merge(meta.extra || {}),
+          "detail" => { :desc => meta.desc }.merge(meta.extra || {}),
         }
       end
 

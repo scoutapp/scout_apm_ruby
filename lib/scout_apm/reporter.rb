@@ -19,7 +19,7 @@ module ScoutApm
     def report(payload, headers = {})
       Array(config.value('host')).each do |host|
 
-        full_uri = uri(host: host)
+        full_uri = uri(host)
         response = post(full_uri, payload, headers)
         unless response && response.is_a?(Net::HTTPSuccess)
           logger.warn "Error on checkin to #{full_uri.to_s}: #{response.inspect}"
@@ -27,7 +27,7 @@ module ScoutApm
       end
     end
 
-    def uri(host:)
+    def uri(host)
       case type
       when :checkin
         URI.parse("#{host}/apps/checkin.scout?key=#{config.value('key')}&name=#{CGI.escape(Environment.instance.application_name)}")
