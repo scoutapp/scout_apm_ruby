@@ -1,13 +1,18 @@
-# 1.5.2
+# 1.5.1
 
 * Collecting memory metrics on slow transactions
 * Collecting additional fields for slow transactions:
   * hostname
   * seconds_since_startup (larger memory increases and other other odd behavior more common when close to startup)
 
-# 1.5.1
+# 1.5.0
 
+* Background Job instrumentation for Sidekiq and Sidekiq-backed ActiveJob
 * Collecting backtraces on n+1 calls
+
+# 1.4.6
+
+* Defend against a nil
 
 # 1.5.0
 

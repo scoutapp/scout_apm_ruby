@@ -34,7 +34,7 @@ module ScoutApm
         end
 
         def run
-          self.class.rss_in_mb.tap { |res| logger.debug "#{human_name}: #{res.inspect}" }
+          self.class.rss_in_mb.tap { |res| logger.debug "#{human_name}: #{res.inspect}" }      
         end
       end
     end

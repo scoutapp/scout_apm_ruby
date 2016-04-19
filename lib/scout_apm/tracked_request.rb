@@ -92,9 +92,25 @@ module ScoutApm
       @mem_delta = mem_usage - @mem_start
     end
 
+    BACKTRACE_BLACKLIST = ["Controller", "Job"]
     def capture_backtrace?(layer)
-      layer.type != 'Controller' && # don't collect a backtrace for the Controller layer as the backtrace doesn't reach into the Rails app folder.
-        (layer.total_exclusive_time > BACKTRACE_THRESHOLD || @call_counts[layer.name].capture_backtrace?)
+      # Never capture backtraces for this kind of layer. The backtrace will
+      # always be 100% framework code.
+      return false if BACKTRACE_BLACKLIST.include?(layer.type)
+
+      # Only capture backtraces if we're in a real "request". Otherwise we
+      # can spend lot of time capturing backtraces from the internals of
+      # Sidekiq, only to throw them away immediately.
+      return false unless (web? || job?)
+
+      # Capture any individually slow layer.
+      return true if layer.total_exclusive_time > BACKTRACE_THRESHOLD
+
+      # Capture any layer that we've seen many times. Captures n+1 problems
+      return true if @call_counts[layer.name].capture_backtrace?
+
+      # Don't capture otherwise
+      false
     end
 
     # Maintains a lookup Hash of call counts by layer name. Used to determine if we should capture a backtrace.
