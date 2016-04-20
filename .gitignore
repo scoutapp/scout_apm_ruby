@@ -5,4 +5,5 @@ Gemfile.lock
 pkg/*
 .rvmrc
 .idea
-test/tmp/*
+test/tmp/*coverage/*
+coverage/*
