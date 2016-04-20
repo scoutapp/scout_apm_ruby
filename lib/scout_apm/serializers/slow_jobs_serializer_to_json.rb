@@ -23,7 +23,7 @@ module ScoutApm
             "hostname" => job.hostname,
             "metrics" => MetricsToJsonSerializer.new(job.metrics).as_json, # New style of metrics
             "allocation_metrics" => MetricsToJsonSerializer.new(job.allocation_metrics).as_json, # New style of metrics
-            "context" => job.context,
+            "context" => job.context.to_hash,
           }
         end
       end

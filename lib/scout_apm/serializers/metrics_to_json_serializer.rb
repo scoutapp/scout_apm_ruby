@@ -20,7 +20,6 @@ module ScoutApm
       # Supports only a single-level nesting, until we have redone metric
       # classes, instead of Meta and Stats
       def metric_as_json(meta, stat, child_metrics={})
-
         { "bucket" => meta.type,
           "name" => meta.name, # No scope values needed here, since it's implied by the nesting.
 

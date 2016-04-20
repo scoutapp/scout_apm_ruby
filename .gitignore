@@ -13,3 +13,5 @@ test/tmp/*
 /ext/stack_profile/mkmf.log
 /ext/stack_profile/Makefile
 .DS_Store
+test/tmp/*coverage/*
+coverage/*
