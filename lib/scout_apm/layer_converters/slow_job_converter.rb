@@ -1,6 +1,11 @@
 module ScoutApm
   module LayerConverters
     class SlowJobConverter < ConverterBase
+      def initialize(*)
+        @backtraces = []
+        super
+      end
+
       def call
         return unless request.job?
 
@@ -68,8 +73,18 @@ module ScoutApm
           # Specific Metric
           meta_options.merge!(:desc => layer.desc.to_s) if layer.desc
           meta = MetricMeta.new(layer.legacy_metric_name, meta_options)
-          # this has moved - commenting out for now. will copy over bits from SlowRequestConverter
-          # meta.extra.merge!(:backtrace => ScoutApm::SlowTransaction.backtrace_parser(layer.backtrace)) if layer.backtrace
+          if layer.backtrace
+            bt = ScoutApm::Utils::BacktraceParser.new(layer.backtrace).call
+            if bt.any? # we could walk thru the call stack and not find in-app code
+              meta.backtrace = bt
+              # Why not just call meta.backtrace and call it done? The walker could access a later later that generates the same MetricMeta but doesn't have a backtrace. This could be
+              # lost in the metric_hash if it is replaced by the new key.
+              @backtraces << meta
+            else
+              ScoutApm::Agent.instance.logger.debug { "Unable to capture an app-specific backtrace for #{meta.inspect}\n#{layer.backtrace}" }
+            end
+          end
+
           metric_hash[meta] ||= MetricStats.new( meta_options.has_key?(:scope) )
           stat = metric_hash[meta]
           stat.update!(layer.total_call_time, layer.total_exclusive_time)
@@ -81,6 +96,16 @@ module ScoutApm
           stat.update!(layer.total_call_time, layer.total_exclusive_time)
         end
 
+        metric_hash = attach_backtraces(metric_hash)
+
+        metric_hash
+      end
+
+      def attach_backtraces(metric_hash)
+        ScoutApm::Agent.instance.logger.info("Attaching backtraces to job #{@backtraces}")
+        @backtraces.each do |meta_with_backtrace|
+          metric_hash.keys.find { |k| k == meta_with_backtrace }.backtrace = meta_with_backtrace.backtrace
+        end
         metric_hash
       end
     end
