@@ -19,7 +19,7 @@ module ScoutApm
             "exclusive_time" => job.exclusive_time,
 
             "metrics" => MetricsToJsonSerializer.new(job.metrics).as_json, # New style of metrics
-            "context" => job.context,
+            "context" => job.context.to_hash,
           }
         end
       end
