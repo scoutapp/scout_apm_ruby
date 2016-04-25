@@ -19,16 +19,6 @@ module ScoutApm
           ::ActionController::Base.class_eval do
             include ScoutApm::Tracer
             include ::ScoutApm::Instruments::ActionControllerRails2Instruments
-
-            def rescue_action_with_scout(exception)
-              ScoutApm::Agent.instance.store.track!("Errors/Request",1, :scope => nil)
-              ScoutApm::Agent.instance.store.ignore_transaction!
-              rescue_action_without_scout exception
-            end
-
-            alias_method :rescue_action_without_scout, :rescue_action
-            alias_method :rescue_action, :rescue_action_with_scout
-            protected :rescue_action
           end
 
           ScoutApm::Agent.instance.logger.info "Instrumenting ActionView::Template"
