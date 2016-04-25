@@ -19,6 +19,7 @@ module ScoutApm
     # As we go through a request, instrumentation can mark more general data into the Request
     # Known Keys:
     #   :uri - the full URI requested by the user
+    #   :queue_latency - how long a background Job spent in the queue before starting processing
     attr_reader :annotations
 
     # Nil until the request is finalized, at which point it will hold the
@@ -29,8 +30,20 @@ module ScoutApm
     # Can be nil if we never reach a Rails Controller
     attr_reader :headers
 
+    # What kind of request is this? A trace of a web request, or a background job?
+    # Use job! and web! to set, and job? and web? to query
+    attr_reader :request_type
+
+    # This maintains a lookup hash of Layer names and call counts. It's used to trigger fetching a backtrace on n+1 calls.
+    # Note that layer names might not be Strings - can alse be Utils::ActiveRecordMetricName. Also, this would fail for layers
+    # with same names across multiple types.
+    attr_accessor :call_counts
+
+    BACKTRACE_THRESHOLD = 0.5 # the minimum threshold in seconds to record the backtrace for a metric.
+
     def initialize
       @layers = []
+      @call_counts = Hash.new { |h, k| h[k] = CallSet.new }
       @annotations = {}
       @ignoring_children = false
       @context = Context.new
@@ -41,12 +54,11 @@ module ScoutApm
 
     def start_layer(layer)
       if ignoring_children?
-        ScoutApm::Agent.instance.logger.info("Skipping layer because we're ignoring children: #{layer.inspect}")
         return
       end
 
       start_request(layer) unless @root_layer
-
+      update_call_counts!(layer)
       @layers[-1].add_child(layer) if @layers.any?
       @layers.push(layer)
     end
@@ -57,14 +69,39 @@ module ScoutApm
       layer = @layers.pop
       layer.record_stop_time!
 
-      # Do this here, rather than in the layer because we need this caller. Maybe able to move it?
-      if layer.total_exclusive_time > ScoutApm::SlowTransaction::BACKTRACE_THRESHOLD
-        layer.store_backtrace(caller)
+      if capture_backtrace?(layer)
+        layer.capture_backtrace!
       end
 
       if finalized?
         stop_request
       end
+    end
+
+    BACKTRACE_BLACKLIST = ["Controller", "Job"]
+    def capture_backtrace?(layer)
+      # Never capture backtraces for this kind of layer. The backtrace will
+      # always be 100% framework code.
+      return false if BACKTRACE_BLACKLIST.include?(layer.type)
+
+      # Only capture backtraces if we're in a real "request". Otherwise we
+      # can spend lot of time capturing backtraces from the internals of
+      # Sidekiq, only to throw them away immediately.
+      return false unless (web? || job?)
+
+      # Capture any individually slow layer.
+      return true if layer.total_exclusive_time > BACKTRACE_THRESHOLD
+
+      # Capture any layer that we've seen many times. Captures n+1 problems
+      return true if @call_counts[layer.name].capture_backtrace?
+
+      # Don't capture otherwise
+      false
+    end
+
+    # Maintains a lookup Hash of call counts by layer name. Used to determine if we should capture a backtrace.
+    def update_call_counts!(layer)
+      @call_counts[layer.name].update!(layer.desc)
     end
 
     ###################################
@@ -124,6 +161,22 @@ module ScoutApm
       @headers = headers
     end
 
+    def job!
+      @request_type = "job"
+    end
+
+    def job?
+      request_type == "job"
+    end
+
+    def web!
+      @request_type = "web"
+    end
+
+    def web?
+      request_type == "web"
+    end
+
     ###################################
     # Persist the Request
     ###################################
@@ -133,20 +186,24 @@ module ScoutApm
     def record!
       @recorded = true
 
-      metrics = LayerMetricConverter.new(self).call
+      metrics = LayerConverters::MetricConverter.new(self).call
       ScoutApm::Agent.instance.store.track!(metrics)
 
-      slow, slow_metrics = LayerSlowTransactionConverter.new(self).call
+      slow, slow_metrics = LayerConverters::SlowRequestConverter.new(self).call
       ScoutApm::Agent.instance.store.track_slow_transaction!(slow)
       ScoutApm::Agent.instance.store.track!(slow_metrics)
 
-      error_metrics = LayerErrorConverter.new(self).call
+      error_metrics = LayerConverters::ErrorConverter.new(self).call
       ScoutApm::Agent.instance.store.track!(error_metrics)
 
-      queue_time_metrics = RequestQueueTime.new(self).call
+      queue_time_metrics = LayerConverters::RequestQueueTimeConverter.new(self).call
       ScoutApm::Agent.instance.store.track!(queue_time_metrics)
 
-      # ScoutApm::Agent.instance.logger.debug("Finished recording request") if metrics.any?
+      job = LayerConverters::JobConverter.new(self).call
+      ScoutApm::Agent.instance.store.track_job!(job)
+
+      slow_job = LayerConverters::SlowJobConverter.new(self).call
+      ScoutApm::Agent.instance.store.track_slow_job!(slow_job)
     end
 
     # Have we already persisted this request?

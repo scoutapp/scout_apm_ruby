@@ -27,6 +27,19 @@ module ScoutApm
         end
       end
 
+      # For the layer lookup.
+      def hash
+        h = name.downcase.hash
+        h
+      end
+
+      # For the layer lookup.
+      # Reminder: #eql? is for Hash equality: returns true if obj and other refer to the same hash key.
+      def eql?(o)
+        self.class    == o.class &&
+        name.downcase == o.name.downcase
+      end
+
       private
 
       def model

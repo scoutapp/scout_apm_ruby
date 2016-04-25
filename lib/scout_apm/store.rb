@@ -41,6 +41,20 @@ module ScoutApm
       }
     end
 
+    def track_job!(job)
+      return if job.nil?
+      @mutex.synchronize {
+        current_period.merge_jobs!(Array(job))
+      }
+    end
+
+    def track_slow_job!(job)
+      return if job.nil?
+      @mutex.synchronize {
+        current_period.merge_slow_jobs!(Array(job))
+      }
+    end
+
     # Take each completed reporting_period, and write it to the layaway passed
     #
     # force - a boolean argument that forces this function to write
@@ -93,45 +107,79 @@ module ScoutApm
 
   # One period of Storage. Typically 1 minute
   class StoreReportingPeriod
-    # A SlowTransactionSet object. 
+    # A SlowItemSet to store slow transactions in
     attr_reader :slow_transactions
+
+    # A SlowItemSet to store slow jobs in
+    attr_reader :slow_jobs
 
     # A StoreReportingPeriodTimestamp representing the time that this
     # collection of metrics is for
     attr_reader :timestamp
 
+    attr_reader :metric_set
+
     def initialize(timestamp)
       @timestamp = timestamp
 
-      @slow_transactions = SlowTransactionSet.new
-      @aggregate_metrics = Hash.new
+      @slow_transactions = SlowItemSet.new
+      @slow_jobs = SlowItemSet.new
+
+      @metric_set = MetricSet.new
+      @jobs = Hash.new
     end
 
     #################################
     # Add metrics as they are recorded
     #################################
     def merge_metrics!(metrics)
-      metrics.each { |metric| absorb(metric) }
+      metric_set.absorb_all(metrics)
       self
     end
 
     def merge_slow_transactions!(new_transactions)
       Array(new_transactions).each do |one_transaction|
-        @slow_transactions << one_transaction
+        slow_transactions << one_transaction
       end
 
       self
+    end
+
+    def merge_jobs!(jobs)
+      jobs.each do |job|
+        if @jobs.has_key?(job)
+          @jobs[job].combine!(job)
+        else
+          @jobs[job] = job
+        end
+      end
+
+      self
+    end
+
+    def merge_slow_jobs!(new_jobs)
+      Array(new_jobs).each do |job|
+        slow_jobs << job
+      end
     end
 
     #################################
     # Retrieve Metrics for reporting
     #################################
     def metrics_payload
-      @aggregate_metrics
+      metric_set.metrics
     end
 
     def slow_transactions_payload
-      @slow_transactions.to_a
+      slow_transactions.to_a
+    end
+
+    def jobs
+      @jobs.values
+    end
+
+    def slow_jobs_payload
+      slow_jobs.to_a
     end
 
     #################################
@@ -142,34 +190,6 @@ module ScoutApm
       metrics_payload.
         select { |meta,stats| meta.metric_name =~ /\AController/ }.
         inject(0) {|sum, (_, stat)| sum + stat.call_count }
-    end
-
-    private
-
-    # We can't aggregate CPU, Memory, Capacity, or Controller, so pass through these metrics directly
-    # TODO: Figure out a way to not have this duplicate what's in Samplers, and also on server's ingest
-    PASSTHROUGH_METRICS = ["CPU", "Memory", "Instance", "Controller", "SlowTransaction"]
-
-    # Absorbs a single new metric into the aggregates
-    def absorb(metric)
-      meta, stat = metric
-
-      if PASSTHROUGH_METRICS.include?(meta.type) # Leave as-is, don't attempt to combine
-        @aggregate_metrics[meta] ||= MetricStats.new
-        @aggregate_metrics[meta].combine!(stat)
-
-      elsif meta.type == "Errors" # Sadly special cased, we want both raw and aggregate values
-        @aggregate_metrics[meta] ||= MetricStats.new
-        @aggregate_metrics[meta].combine!(stat)
-        agg_meta = MetricMeta.new("Errors/Request", :scope => meta.scope)
-        @aggregate_metrics[agg_meta] ||= MetricStats.new
-        @aggregate_metrics[agg_meta].combine!(stat)
-
-      else # Combine down to a single /all key
-        agg_meta = MetricMeta.new("#{meta.type}/all", :scope => meta.scope)
-        @aggregate_metrics[agg_meta] ||= MetricStats.new
-        @aggregate_metrics[agg_meta].combine!(stat)
-      end
     end
   end
 end

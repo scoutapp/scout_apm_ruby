@@ -2,13 +2,18 @@ module ScoutApm
   module Serializers
     module PayloadSerializerToJson
       class << self
-        def serialize(metadata, metrics, slow_transactions)
-          rearranged_metrics = rearrange_the_metrics(metrics)
-          rearranged_slow_transactions = rearrange_the_slow_transactions(slow_transactions)
+        def serialize(metadata, metrics, slow_transactions, jobs, slow_jobs)
           metadata.merge!({:payload_version => 2})
-          jsonify_hash({:metadata => metadata, :metrics => rearranged_metrics, :slow_transactions => rearranged_slow_transactions})
+
+          jsonify_hash({:metadata => metadata,
+                        :metrics => rearrange_the_metrics(metrics),
+                        :slow_transactions => rearrange_the_slow_transactions(slow_transactions),
+                        :jobs => JobsSerializerToJson.new(jobs).as_json,
+                        :slow_jobs => SlowJobsSerializerToJson.new(slow_jobs).as_json,
+                      })
         end
 
+        # Old style of metric serializing.
         def rearrange_the_metrics(metrics)
           metrics.to_a.map do |meta, stats|
             stats.as_json.merge(:key => meta.as_json)

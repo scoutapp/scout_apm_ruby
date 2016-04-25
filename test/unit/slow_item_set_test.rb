@@ -1,17 +1,17 @@
 require 'test_helper'
 
-require 'scout_apm/slow_transaction_set'
+require 'scout_apm/slow_item_set'
 require 'scout_apm/slow_transaction'
 
-class SlowTransactionSetTest < Minitest::Test
+class SlowItemSetTest < Minitest::Test
   def test_adding_to_empty_set
-    set = ScoutApm::SlowTransactionSet.new(3, 1)
+    set = ScoutApm::SlowItemSet.new(3, 1)
     set << make_slow("Controller/Foo")
     assert_equal 1, set.count
   end
 
   def test_adding_to_partially_full_set
-    set = ScoutApm::SlowTransactionSet.new(3, 1)
+    set = ScoutApm::SlowItemSet.new(3, 1)
     set << make_slow("Controller/Foo")
     set << make_slow("Controller/Foo")
     assert_equal 2, set.count
@@ -19,7 +19,7 @@ class SlowTransactionSetTest < Minitest::Test
 
   def test_overflow_of_one_type
     max_size = 3
-    set = ScoutApm::SlowTransactionSet.new(max_size, 1)
+    set = ScoutApm::SlowItemSet.new(max_size, 1)
     set << make_slow("Controller/Foo")
     set << make_slow("Controller/Foo")
     set << make_slow("Controller/Foo")
@@ -31,7 +31,7 @@ class SlowTransactionSetTest < Minitest::Test
 
   def test_eviction_of_overrepresented
     max_size = 3
-    set = ScoutApm::SlowTransactionSet.new(max_size, 1)
+    set = ScoutApm::SlowItemSet.new(max_size, 1)
     set << make_slow("Controller/Foo")
     set << make_slow("Controller/Foo")
     set << make_slow("Controller/Foo")
@@ -49,7 +49,7 @@ class SlowTransactionSetTest < Minitest::Test
   # evicted one was the fastest of the Foos
   def test_eviction_of_fastest
     max_size = 3
-    set = ScoutApm::SlowTransactionSet.new(max_size, 1)
+    set = ScoutApm::SlowItemSet.new(max_size, 1)
 
     [1,2,3].shuffle.each do |seconds| # Shuffle to remove any assumptions on order
       set << make_slow("Controller/Foo", seconds)
@@ -63,7 +63,7 @@ class SlowTransactionSetTest < Minitest::Test
   def test_eviction_when_no_overrepresented
     max_size = 4
     fair = 2
-    set = ScoutApm::SlowTransactionSet.new(max_size, fair)
+    set = ScoutApm::SlowItemSet.new(max_size, fair)
 
     # Full, but each is at fair level
     set << make_slow("Controller/Bar")

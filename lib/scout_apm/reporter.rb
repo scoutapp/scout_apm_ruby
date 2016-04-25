@@ -17,17 +17,24 @@ module ScoutApm
 
     # TODO: Parse & return a real response object, not the HTTP Response object
     def report(payload, headers = {})
-      post(uri, payload, headers)
+      Array(config.value('host')).each do |host|
+
+        full_uri = uri(host)
+        response = post(full_uri, payload, headers)
+        unless response && response.is_a?(Net::HTTPSuccess)
+          logger.warn "Error on checkin to #{full_uri.to_s}: #{response.inspect}"
+        end
+      end
     end
 
-    def uri
+    def uri(host)
       case type
       when :checkin
-        URI.parse("#{config.value('host')}/apps/checkin.scout?key=#{config.value('key')}&name=#{CGI.escape(Environment.instance.application_name)}")
+        URI.parse("#{host}/apps/checkin.scout?key=#{config.value('key')}&name=#{CGI.escape(Environment.instance.application_name)}")
       when :app_server_load
-        URI.parse("#{config.value('host')}/apps/app_server_load.scout?key=#{config.value('key')}&name=#{CGI.escape(Environment.instance.application_name)}")
+        URI.parse("#{host}/apps/app_server_load.scout?key=#{config.value('key')}&name=#{CGI.escape(Environment.instance.application_name)}")
       when :deploy_hook
-        URI.parse("#{config.value('host')}/apps/deploy.scout?key=#{config.value('key')}&name=#{CGI.escape(config.value('name'))}")
+        URI.parse("#{host}/apps/deploy.scout?key=#{config.value('key')}&name=#{CGI.escape(config.value('name'))}")
       end.tap{|u| logger.debug("Posting to #{u.to_s}")}
     end
 

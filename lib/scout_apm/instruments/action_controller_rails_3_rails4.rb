@@ -63,6 +63,7 @@ module ScoutApm
         req.annotate_request(:uri => path)
         req.context.add_user(:ip => request.remote_ip)
         req.set_headers(request.headers)
+        req.web!
 
         req.start_layer( ScoutApm::Layer.new("Controller", "#{controller_path}/#{action_name}") )
         begin

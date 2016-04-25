@@ -1,3 +1,8 @@
+# 1.5.0
+
+* Background Job instrumentation for Sidekiq and Sidekiq-backed ActiveJob
+* Collecting backtraces on n+1 calls
+
 # 1.4.6
 
 * Defend against a nil

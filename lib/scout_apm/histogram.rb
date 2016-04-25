@@ -1,0 +1,124 @@
+module ScoutApm
+  HistogramBin = Struct.new(:value, :count)
+
+  class NumericHistogram
+    attr_reader :max_bins
+    attr_reader :bins
+    attr_accessor :total
+
+    def initialize(max_bins)
+      @max_bins = max_bins
+      @bins = []
+      @total = 0
+    end
+
+    def add(new_value)
+      @total += 1
+      create_new_bin(new_value.to_f)
+      trim
+    end
+
+    def quantile(q)
+      return 0 if total == 0
+
+      if q > 1
+        q = q / 100.0
+      end
+
+      count = q.to_f * total.to_f
+
+      bins.each_with_index do |bin, index|
+        count -= bin.count
+
+        if count <= 0
+          return bin.value
+        end
+      end
+
+      # If we fell through, we were asking for the last (max) value
+      return bins[-1].value
+    end
+
+    def mean
+      if total == 0
+        return 0
+      end
+
+      sum = bins.inject(0) { |s, bin| s + (bin.value * bin.count) }
+      return sum.to_f / total.to_f
+    end
+
+    def combine!(other)
+      @bins = (other.bins + @bins).sort_by {|b| b.value }
+      @total += other.total
+      trim
+      self
+    end
+
+    def as_json
+      bins.map{|b| [b.value, b.count]}
+    end
+
+    private
+
+    # If we exactly match an existing bin, add to it, otherwise create a new bin holding a count for the new value.
+    def create_new_bin(new_value)
+      bins.each_with_index do |bin, index|
+        # If it matches exactly, increment the bin's count
+        if bin.value == new_value
+          bin.count += 1
+          return
+        end
+
+        # We've gone one bin too far, so insert before the current bin.
+        if bin.value > new_value
+          # Insert at this index
+          new_bin = HistogramBin.new(new_value, 1)
+          bins.insert(index, new_bin)
+          return
+        end
+      end
+
+      # If we get to here, the bin needs to be added to the end.
+      bins << HistogramBin.new(new_value, 1)
+    end
+
+    def trim
+      while bins.length > max_bins
+        trim_one
+      end
+    end
+
+    def trim_one
+      minDelta = Float::MAX
+      minDeltaIndex = 0
+
+      # Which two bins should we merge?
+      bins.each_with_index do |_, index|
+        next if index == 0
+
+        delta = bins[index].value - bins[index - 1].value
+        if delta < minDelta
+          minDelta = delta
+          minDeltaIndex = index
+        end
+      end
+
+      # Create the merged bin with summed count, and weighted value
+      mergedCount = bins[minDeltaIndex - 1].count + bins[minDeltaIndex].count
+      mergedValue = (
+        bins[minDeltaIndex - 1].value * bins[minDeltaIndex - 1].count +
+        bins[minDeltaIndex].value     * bins[minDeltaIndex].count
+        ) / mergedCount
+
+      mergedBin = HistogramBin.new(mergedValue, mergedCount)
+
+      # Remove the two bins we just merged together, then add the merged one
+      bins.slice!(minDeltaIndex - 1, 2)
+      bins.insert(minDeltaIndex - 1, mergedBin)
+    rescue => e
+      ScoutApm::Agent.instance.logger.info("Error in NumericHistogram#trim_one. #{e.message}, #{e.backtrace}, #{self.inspect}")
+      raise
+    end
+  end
+end

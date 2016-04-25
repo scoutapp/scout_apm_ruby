@@ -33,7 +33,7 @@ class PayloadSerializerTest < Minitest::Test
       :unique_id => "unique_idz",
       :agent_version => 123
     }
-    payload = ScoutApm::Serializers::PayloadSerializerToJson.serialize(metadata, {}, {})
+    payload = ScoutApm::Serializers::PayloadSerializerToJson.serialize(metadata, {}, {}, [], [])
 
     # symbol keys turn to strings
     formatted_metadata = {
@@ -74,7 +74,7 @@ class PayloadSerializerTest < Minitest::Test
         stats.total_exclusive_time = 0.07813208899999999
       }
     }
-    payload = ScoutApm::Serializers::PayloadSerializerToJson.serialize({}, metrics, {})
+    payload = ScoutApm::Serializers::PayloadSerializerToJson.serialize({}, metrics, {}, [], [])
     formatted_metrics = [
       {
         "key" => {
@@ -145,8 +145,8 @@ class PayloadSerializerTest < Minitest::Test
     context = ScoutApm::Context.new
     context.add({"this" => "that"})
     context.add_user({"hello" => "goodbye"})
-    slow_t = ScoutApm::SlowTransaction.new("http://example.com/blabla", "Buckethead/something/else", 1.23, slow_transaction_metrics, context, Time.at(1448198788), [])
-    payload = ScoutApm::Serializers::PayloadSerializerToJson.serialize({}, {}, [slow_t])
+    slow_t = ScoutApm::SlowTransaction.new("http://example.com/blabla", "Buckethead/something/else", 1.23, slow_transaction_metrics, context, Time.at(1448198788), StackProf.new)
+    payload = ScoutApm::Serializers::PayloadSerializerToJson.serialize({}, {}, [slow_t], [], [])
     formatted_slow_transactions = [
       {
         "key" => {
@@ -204,7 +204,7 @@ class PayloadSerializerTest < Minitest::Test
       :quotie => "here are some \"quotes\"",
       :payload_version => 2,
     }
-    payload = ScoutApm::Serializers::PayloadSerializerToJson.serialize(metadata, {}, {})
+    payload = ScoutApm::Serializers::PayloadSerializerToJson.serialize(metadata, {}, {}, [], [])
 
     # symbol keys turn to strings
     formatted_metadata = {

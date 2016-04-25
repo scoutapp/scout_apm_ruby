@@ -7,7 +7,7 @@ module ScoutApm
 
     STDOUT_LOGGER = begin
                       l = Logger.new(STDOUT)
-                      l.level = ENV["SCOUT_LOG_LEVEL"] || Logger::INFO
+                      l.level = Logger::INFO
                       l
                     end
 
@@ -25,7 +25,7 @@ module ScoutApm
 
     BACKGROUND_JOB_INTEGRATIONS = [
       ScoutApm::BackgroundJobIntegrations::Sidekiq.new,
-      ScoutApm::BackgroundJobIntegrations::DelayedJob.new
+      # ScoutApm::BackgroundJobIntegrations::DelayedJob.new
     ]
 
     FRAMEWORK_INTEGRATIONS = [
@@ -130,9 +130,11 @@ module ScoutApm
     end
 
     def background_job_integration
-      @background_job_integration ||= BACKGROUND_JOB_INTEGRATIONS.detect {|integration| integration.present?}
-      #### Temporary Disable
-      nil
+      if Agent.instance.config.value("enable_background_jobs", !Agent.instance.config.config_file_exists?)
+        @background_job_integration ||= BACKGROUND_JOB_INTEGRATIONS.detect {|integration| integration.present?}
+      else
+        nil
+      end
     end
 
     def background_job_name
@@ -158,11 +160,15 @@ module ScoutApm
     end
 
     def ruby_19?
-      defined?(RUBY_ENGINE) && RUBY_ENGINE == "ruby" && RUBY_VERSION.match(/^1\.9/)
+      @ruby_19 ||= defined?(RUBY_ENGINE) && RUBY_ENGINE == "ruby" && RUBY_VERSION.match(/^1\.9/)
     end
 
     def ruby_187?
-      defined?(RUBY_VERSION) && RUBY_VERSION.match(/^1\.8\.7/)
+      @ruby_187 ||= defined?(RUBY_VERSION) && RUBY_VERSION.match(/^1\.8\.7/)
+    end
+
+    def ruby_2?
+      @ruby_2 ||= defined?(RUBY_VERSION) && RUBY_VERSION.match(/^2/)
     end
 
     ### framework checks
@@ -170,6 +176,5 @@ module ScoutApm
     def sinatra?
       framework_integration.name == :sinatra
     end
-
   end # class Environemnt
 end
