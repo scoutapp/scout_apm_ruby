@@ -145,7 +145,7 @@ class PayloadSerializerTest < Minitest::Test
     context = ScoutApm::Context.new
     context.add({"this" => "that"})
     context.add_user({"hello" => "goodbye"})
-    slow_t = ScoutApm::SlowTransaction.new("http://example.com/blabla", "Buckethead/something/else", 1.23, slow_transaction_metrics, context, Time.at(1448198788), StackProf.new)
+    slow_t = ScoutApm::SlowTransaction.new("http://example.com/blabla", "Buckethead/something/else", 1.23, slow_transaction_metrics, context, Time.at(1448198788), [])
     payload = ScoutApm::Serializers::PayloadSerializerToJson.serialize({}, {}, [slow_t], [], [])
     formatted_slow_transactions = [
       {
