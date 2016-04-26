@@ -80,6 +80,7 @@ module ScoutApm
           # Specific Metric
           meta_options.merge!(:desc => layer.desc.to_s) if layer.desc
           meta = MetricMeta.new(layer.legacy_metric_name, meta_options)
+          meta.extra.merge!(layer.annotations)
           if layer.backtrace
             bt = ScoutApm::Utils::BacktraceParser.new(layer.backtrace).call
             if bt.any? # we could walk thru the call stack and not find in-app code

@@ -40,6 +40,8 @@ module ScoutApm
         name.downcase == o.name.downcase
       end
 
+      alias_method :==, :eql?
+
       private
 
       def model

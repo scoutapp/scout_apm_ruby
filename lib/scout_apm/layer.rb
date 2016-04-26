@@ -7,7 +7,11 @@ module ScoutApm
 
     # Name: a more specific name of this single item
     #   Examples: "Rack::Cache", "User#find", "users/index", "users/index.html.erb"
-    attr_reader :name
+    #
+    # Accessor, so we can update a layer if multiple pieces of instrumentation work
+    #   together at different layers to fill in the full data. See the ActiveRecord
+    #   instrumentation for an example of how this is useful
+    attr_accessor :name
 
     # An array of children layers, in call order.
     # For instance, if we are in a middleware, there will likely be only a single
@@ -30,11 +34,18 @@ module ScoutApm
     # backtrace of where it occurred.
     attr_reader :backtrace
 
+    # As we go through a part of a request, instrumentation can store additional data
+    # Known Keys:
+    #   :record_count - The number of rows returned by an AR query (From notification instantiation.active_record)
+    #   :class_name   - The ActiveRecord class name (From notification instantiation.active_record)
+    attr_reader :annotations
+
     BACKTRACE_CALLER_LIMIT = 30 # maximum number of lines to send thru for backtrace analysis
 
     def initialize(type, name, start_time = Time.now)
       @type = type
       @name = name
+      @annotations = {}
       @start_time = start_time
       @allocations_start = ScoutApm::Instruments::Allocations.count
       @allocations_stop = 0
@@ -57,6 +68,11 @@ module ScoutApm
 
     def desc=(desc)
       @desc = desc
+    end
+
+    # This data is internal to ScoutApm, to add custom information, use the Context api.
+    def annotate_layer(hsh)
+      @annotations.merge!(hsh)
     end
 
     def subscopable!

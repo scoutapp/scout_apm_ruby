@@ -39,9 +39,6 @@ module ScoutApm
     # with same names across multiple types.
     attr_accessor :call_counts
 
-    # The change in RSS from the start to the end of the request in MB.
-    attr_accessor :mem_delta
-
     BACKTRACE_THRESHOLD = 0.5 # the minimum threshold in seconds to record the backtrace for a metric.
 
     def initialize
@@ -53,7 +50,6 @@ module ScoutApm
       @root_layer = nil
       @stackprof = nil
       @error = false
-      @mem_start = mem_usage
     end
 
     def start_layer(layer)
@@ -72,7 +68,6 @@ module ScoutApm
 
       layer = @layers.pop
       layer.record_stop_time!
-      layer.record_allocations!
 
       if capture_backtrace?(layer)
         layer.capture_backtrace!
@@ -83,13 +78,16 @@ module ScoutApm
       end
     end
 
-    # This may be in bytes or KB based on the OSX. We store this as-is here and only do conversion to MB in Layer Converters.
-    def mem_usage
-      ScoutApm::Instruments::Process::ProcessMemory.rss
-    end
-
-    def capture_mem_delta!
-      @mem_delta = mem_usage - @mem_start
+    # Grab the currently running layer. Useful for adding additional data as we
+    # learn it. This is useful in ActiveRecord instruments, where we start the
+    # instrumentation early, and gradually learn more about the request that
+    # actually happened as we go (for instance, the # of records found, or the
+    # actual SQL generated).
+    # 
+    # Returns nil in the case there is no current layer. That would be normal
+    # for a completed TrackedRequest
+    def current_layer
+      @layers.last
     end
 
     BACKTRACE_BLACKLIST = ["Controller", "Job"]
