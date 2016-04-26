@@ -50,6 +50,7 @@ module ScoutApm
       @root_layer = nil
       @stackprof = nil
       @error = false
+      @mem_start = mem_usage
     end
 
     def start_layer(layer)
@@ -114,6 +115,15 @@ module ScoutApm
     # Maintains a lookup Hash of call counts by layer name. Used to determine if we should capture a backtrace.
     def update_call_counts!(layer)
       @call_counts[layer.name].update!(layer.desc)
+    end
+
+    # This may be in bytes or KB based on the OSX. We store this as-is here and only do conversion to MB in Layer Converters.
+    def mem_usage
+      ScoutApm::Instruments::Process::ProcessMemory.rss
+    end
+
+    def capture_mem_delta!
+      @mem_delta = mem_usage - @mem_start
     end
 
     ###################################
