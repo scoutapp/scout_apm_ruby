@@ -69,6 +69,7 @@ module ScoutApm
 
       layer = @layers.pop
       layer.record_stop_time!
+      layer.record_allocations!
 
       if capture_backtrace?(layer)
         layer.capture_backtrace!
