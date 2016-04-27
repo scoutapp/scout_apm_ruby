@@ -2,6 +2,9 @@ module ScoutApm
   HistogramBin = Struct.new(:value, :count)
 
   class NumericHistogram
+    # This class should be threadsafe.
+    attr_reader :mutex
+
     attr_reader :max_bins
     attr_reader :bins
     attr_accessor :total
@@ -10,53 +13,66 @@ module ScoutApm
       @max_bins = max_bins
       @bins = []
       @total = 0
+      @mutex = Mutex.new
     end
 
     def add(new_value)
-      @total += 1
-      create_new_bin(new_value.to_f)
-      trim
+      mutex.synchronize do
+        @total += 1
+        create_new_bin(new_value.to_f)
+        trim
+      end
     end
 
     def quantile(q)
-      return 0 if total == 0
+      mutex.synchronize do
+        return 0 if total == 0
 
-      if q > 1
-        q = q / 100.0
-      end
-
-      count = q.to_f * total.to_f
-
-      bins.each_with_index do |bin, index|
-        count -= bin.count
-
-        if count <= 0
-          return bin.value
+        if q > 1
+          q = q / 100.0
         end
-      end
 
-      # If we fell through, we were asking for the last (max) value
-      return bins[-1].value
+        count = q.to_f * total.to_f
+
+        bins.each_with_index do |bin, index|
+          count -= bin.count
+
+          if count <= 0
+            return bin.value
+          end
+        end
+
+        # If we fell through, we were asking for the last (max) value
+        return bins[-1].value
+      end
     end
 
     def mean
-      if total == 0
-        return 0
-      end
+      mutex.synchronize do
+        if total == 0
+          return 0
+        end
 
-      sum = bins.inject(0) { |s, bin| s + (bin.value * bin.count) }
-      return sum.to_f / total.to_f
+        sum = bins.inject(0) { |s, bin| s + (bin.value * bin.count) }
+        return sum.to_f / total.to_f
+      end
     end
 
     def combine!(other)
-      @bins = (other.bins + @bins).sort_by {|b| b.value }
-      @total += other.total
-      trim
-      self
+      mutex.synchronize do
+        other.mutex.synchronize do
+          @bins = (other.bins + @bins).sort_by {|b| b.value }
+          @total += other.total
+          trim
+          self
+        end
+      end
     end
 
     def as_json
-      bins.map{|b| [b.value, b.count]}
+      mutex.synchronize do
+        bins.map{|b| [b.value, b.count]}
+      end
     end
 
     private
