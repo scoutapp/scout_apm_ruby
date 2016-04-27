@@ -9,6 +9,15 @@ module ScoutApm
     attr_reader :bins
     attr_accessor :total
 
+    def marshal_dump
+      [@max_bins, @bins, @total]
+    end
+
+    def marshal_load(array)
+      @max_bins, @bins, @total = array
+      @mutex = Mutex.new
+    end
+
     def initialize(max_bins)
       @max_bins = max_bins
       @bins = []
