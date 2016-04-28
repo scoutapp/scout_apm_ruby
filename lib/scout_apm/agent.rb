@@ -33,7 +33,14 @@ module ScoutApm
       @started = false
       @process_start_time = Time.now
       @options ||= options
-      @config = ScoutApm::Config.new(options[:config_path])
+
+      # Start up without attempting to load a configuration file. We need to be
+      # able to lookup configuration options like "application_root" which would
+      # then in turn influence where the configuration file came from.
+      #
+      # Later in initialization, we reset @config to include the file.
+      @config = ScoutApm::Config.without_file
+
       @slow_job_policy = ScoutApm::SlowJobPolicy.new
 
       @store          = ScoutApm::Store.new
@@ -92,6 +99,7 @@ module ScoutApm
     # It initializes the agent and starts the worker thread (if appropiate).
     def start(options = {})
       @options.merge!(options)
+      @config = ScoutApm::Config.with_file(@config.value("config_file"))
       init_logger
       logger.info "Attempting to start Scout Agent [#{ScoutApm::VERSION}] on [#{environment.hostname}]"
 
