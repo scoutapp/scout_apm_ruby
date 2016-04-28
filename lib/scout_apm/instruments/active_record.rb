@@ -104,17 +104,9 @@ module ScoutApm
 
         # Either: update the current layer and yield, don't start a new one.
         if current_layer && current_layer.type == "ActiveRecord"
-
-          ScoutApm::Agent.instance.logger.debug("  -------------------------------")
-          ScoutApm::Agent.instance.logger.debug("  Layer name: #{name.inspect}")
-
-          # TODO: Get rid of call .to_s, need to find this without forcing a
-          # previous run of the name logic
+          # TODO: Get rid of call .to_s, need to find this without forcing a previous run of the name logic
           if current_layer.name.to_s == Utils::ActiveRecordMetricName::DEFAULT_METRIC
-            ScoutApm::Agent.instance.logger.debug("  Updating layer with new name: #{metric_name.to_s}. Layer was #{current_layer.name}")
             current_layer.name = metric_name
-          else
-            ScoutApm::Agent.instance.logger.debug("  Not updating layer name")
           end
 
           current_layer.desc = desc
@@ -165,7 +157,6 @@ module ScoutApm
       end
 
       def find_by_sql_with_scout_instruments(*args, &block)
-        ScoutApm::Agent.instance.logger.debug("===============================: #{args.first.to_s}")
         self.instrument("ActiveRecord", Utils::ActiveRecordMetricName::DEFAULT_METRIC, :ignore_children => true) do
           find_by_sql_without_scout_instruments(*args)
         end
