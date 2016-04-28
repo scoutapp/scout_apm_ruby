@@ -78,7 +78,11 @@ module ScoutApm
       end
 
       if app_server_missing?(options) && background_job_missing?
-        logger.warn "Couldn't find a supported app server or background job framework. #{force? ? 'Forcing agent to start' : 'Not starting agent'}."
+        if force?
+          logger.warn "Agent starting (forced)"
+        else
+          logger.warn "Deferring agent start. Standing by for first request"
+        end
         return false unless force?
       end
 
