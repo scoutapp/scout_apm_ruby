@@ -21,6 +21,8 @@ module ScoutApm
         metric_hash = Hash.new
 
         walker.walk do |layer|
+          next if layer.annotations[:ignorable]
+
           meta_options = if layer == scope_layer # We don't scope the controller under itself
                           {}
                         else
