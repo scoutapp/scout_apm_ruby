@@ -80,6 +80,14 @@ module ScoutApm
         end
 
         walker.walk do |layer|
+          # Sometimes we start capturing a layer without knowing if we really
+          # want to make an entry for it.  See ActiveRecord instrumentation for
+          # an example. We start capturing before we know if a query is cached
+          # or not, and want to skip any cached queries.
+          if layer.annotations[:ignorable]
+            next
+          end
+
           meta_options = if subscope_layers.first && layer != subscope_layers.first # Don't scope under ourself.
                            subscope_name = subscope_layers.first.legacy_metric_name
                            {:scope => subscope_name}

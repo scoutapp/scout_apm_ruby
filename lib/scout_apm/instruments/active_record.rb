@@ -102,14 +102,24 @@ module ScoutApm
         req = ScoutApm::RequestManager.lookup
         current_layer = req.current_layer
 
+
+        # If we call #log, we have a real query to run, and we've already
+        # gotten through the cache gatekeeper. Since we want to only trace real
+        # queries, and not repeated identical queries that just hit cache, we
+        # mark layer as ignorable initially in #find_by_sql, then only when we
+        # know it's a real database call do we mark it back as usable.
+        #
+        # This flag is later used in SlowRequestConverter to skip adding ignorable layers
+        current_layer.annotate_layer(:ignorable => false)
+
         # Either: update the current layer and yield, don't start a new one.
         if current_layer && current_layer.type == "ActiveRecord"
           # TODO: Get rid of call .to_s, need to find this without forcing a previous run of the name logic
           if current_layer.name.to_s == Utils::ActiveRecordMetricName::DEFAULT_METRIC
             current_layer.name = metric_name
+            current_layer.desc = desc
           end
 
-          current_layer.desc = desc
           log_without_scout_instruments(sql, name, &block)
 
         # OR: Start a new layer, we didn't pick up instrumentation earlier in the stack.
@@ -157,8 +167,16 @@ module ScoutApm
       end
 
       def find_by_sql_with_scout_instruments(*args, &block)
-        self.instrument("ActiveRecord", Utils::ActiveRecordMetricName::DEFAULT_METRIC, :ignore_children => true) do
+        req = ScoutApm::RequestManager.lookup
+        layer = ScoutApm::Layer.new("ActiveRecord", Utils::ActiveRecordMetricName::DEFAULT_METRIC)
+        layer.annotate_layer(:ignorable => true)
+        req.start_layer(layer)
+        req.ignore_children!
+        begin
           find_by_sql_without_scout_instruments(*args)
+        ensure
+          req.acknowledge_children!
+          req.stop_layer
         end
       end
     end
@@ -175,8 +193,16 @@ module ScoutApm
       end
 
       def find_with_associations_with_scout_instruments(*args, &block)
-        self.instrument("ActiveRecord", Utils::ActiveRecordMetricName::DEFAULT_METRIC, :ignore_children => true) do
+        req = ScoutApm::RequestManager.lookup
+        layer = ScoutApm::Layer.new("ActiveRecord", Utils::ActiveRecordMetricName::DEFAULT_METRIC)
+        layer.annotate_layer(:ignorable => true)
+        req.start_layer(layer)
+        req.ignore_children!
+        begin
           find_with_associations_without_scout_instruments(*args)
+        ensure
+          req.acknowledge_children!
+          req.stop_layer
         end
       end
     end

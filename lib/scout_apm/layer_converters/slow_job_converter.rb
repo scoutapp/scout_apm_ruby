@@ -66,6 +66,14 @@ module ScoutApm
         end
 
         walker.walk do |layer|
+          # Sometimes we start capturing a layer without knowing if we really
+          # want to make an entry for it.  See ActiveRecord instrumentation for
+          # an example. We start capturing before we know if a query is cached
+          # or not, and want to skip any cached queries.
+          next if layer.annotations[:ignorable]
+
+          # The queue_layer is useful to capture for other reasons, but doesn't
+          # create a MetricMeta/Stat of its own
           next if layer == queue_layer
 
           meta_options = if subscope_layers.first && layer != subscope_layers.first # Don't scope under ourself.
