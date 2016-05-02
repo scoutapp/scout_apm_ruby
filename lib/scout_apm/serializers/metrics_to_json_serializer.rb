@@ -12,7 +12,7 @@ module ScoutApm
         if metrics
           metrics.map{|meta, stat| metric_as_json(meta, stat) }
         else
-          'null'
+          nil
         end
       end
 
