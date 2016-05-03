@@ -227,6 +227,9 @@ module ScoutApm
 
       slow_job = LayerConverters::SlowJobConverter.new(self).call
       ScoutApm::Agent.instance.store.track_slow_job!(slow_job)
+
+      allocation_metrics = LayerConverters::AllocationMetricConverter.new(self).call
+      ScoutApm::Agent.instance.store.track!(allocation_metrics)
     end
 
     # Have we already persisted this request?
