@@ -56,7 +56,7 @@ module ScoutApm
     private
 
     def post(uri, body, headers = Hash.new)
-      response = nil
+      response = :connection_failed
       request(uri) do |connection|
         post = Net::HTTP::Post.new( uri.path +
                                     (uri.query ? ('?' + uri.query) : ''),
@@ -82,7 +82,7 @@ module ScoutApm
         logger.debug "/#{type} FAILED: #{response.inspect}"
       end
     rescue Exception
-      logger.debug "Exception sending request to server: \n#{$!.message}\n\t#{$!.backtrace.join("\n\t")}"
+      logger.info "Exception sending request to server: \n#{$!.message}\n\t#{$!.backtrace.join("\n\t")}"
     ensure
       response
     end
