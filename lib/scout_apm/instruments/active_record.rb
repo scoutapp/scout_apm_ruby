@@ -110,7 +110,7 @@ module ScoutApm
         # know it's a real database call do we mark it back as usable.
         #
         # This flag is later used in SlowRequestConverter to skip adding ignorable layers
-        current_layer.annotate_layer(:ignorable => false)
+        current_layer.annotate_layer(:ignorable => false) if current_layer
 
         # Either: update the current layer and yield, don't start a new one.
         if current_layer && current_layer.type == "ActiveRecord"
