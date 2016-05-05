@@ -204,6 +204,18 @@ module ScoutApm
 
       slow_job = LayerConverters::SlowJobConverter.new(self).call
       ScoutApm::Agent.instance.store.track_slow_job!(slow_job)
+
+      # if realtime?
+      # RealtimeReporter.new(self).call(slow)
+
+      # def RealtimeReporter.call
+      #   spawns its own thread to:
+      #   .. call something like PayloadSerializerToJson to serialize everything
+      #   .. calls Reporter with a new type, passing the json bundle
+      #   .. Reporter reports it directly to apm.scoutapp.com, including the ACCESS KEY
+      #   ..
+      # end
+
     end
 
     # Have we already persisted this request?

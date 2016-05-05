@@ -63,6 +63,10 @@ module ScoutApm
         req.annotate_request(:uri => path)
         req.context.add_user(:ip => request.remote_ip)
         req.set_headers(request.headers)
+
+        # read headers, check if it's an immediately profiled request
+        # req.realtime!
+
         req.web!
 
         req.start_layer( ScoutApm::Layer.new("Controller", "#{controller_path}/#{action_name}") )
