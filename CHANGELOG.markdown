@@ -1,3 +1,7 @@
+# 1.5.1
+
+* Fix deploy webhook endpoint
+
 # 1.5.0
 
 * Background Job instrumentation for Sidekiq and Sidekiq-backed ActiveJob
