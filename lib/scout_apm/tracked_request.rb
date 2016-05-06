@@ -43,7 +43,7 @@ module ScoutApm
 
     def initialize
       @layers = []
-      @call_counts = Hash.new { |h, k| h[k] = CallSet.new }
+      @call_set = Hash.new { |h, k| h[k] = CallSet.new }
       @annotations = {}
       @ignoring_children = false
       @context = Context.new
@@ -59,7 +59,6 @@ module ScoutApm
       end
 
       start_request(layer) unless @root_layer
-      update_call_counts!(layer)
       @layers[-1].add_child(layer) if @layers.any?
       @layers.push(layer)
     end
@@ -71,6 +70,9 @@ module ScoutApm
       layer.record_stop_time!
       layer.record_allocations!
 
+      # This must be called before checking if a backtrace should be collected as the call count influences our capture logic.
+      # We call `#update_call_counts in stop layer to ensure the layer has a final desc. Layer#desc is updated during the AR instrumentation flow.
+      update_call_counts!(layer)
       if capture_backtrace?(layer)
         layer.capture_backtrace!
       end
@@ -107,7 +109,7 @@ module ScoutApm
       return true if layer.total_exclusive_time > BACKTRACE_THRESHOLD
 
       # Capture any layer that we've seen many times. Captures n+1 problems
-      return true if @call_counts[layer.name].capture_backtrace?
+      return true if @call_set[layer.name].capture_backtrace?
 
       # Don't capture otherwise
       false
@@ -115,7 +117,7 @@ module ScoutApm
 
     # Maintains a lookup Hash of call counts by layer name. Used to determine if we should capture a backtrace.
     def update_call_counts!(layer)
-      @call_counts[layer.name].update!(layer.desc)
+      @call_set[layer.name].update!(layer.desc)
     end
 
     # This may be in bytes or KB based on the OSX. We store this as-is here and only do conversion to MB in Layer Converters.
