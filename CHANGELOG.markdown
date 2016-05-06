@@ -1,3 +1,7 @@
+# 1.5.2
+
+* Fix deploy webhook endpoint
+
 # 1.5.1
 
 * Collecting memory metrics on slow transactions
