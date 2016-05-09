@@ -27,7 +27,6 @@ module ScoutApm
 
         timing_metrics, allocation_metrics = create_metrics
         unless ScoutApm::Instruments::Allocations::ENABLED
-           ScoutApm::Agent.instance.logger.debug "Allocation Metrics are disabled and will not be recorded for this slow request."
           allocation_metrics = {}
         end
 
