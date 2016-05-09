@@ -4,7 +4,6 @@
 #   #call to get the storable item
 #   #name to get a unique identifier of the storable
 #   #score to get a numeric score, where higher is better
-#   #stored! as a callback to notifiy upstream that the item was accepted into the Set
 module ScoutApm
   class ScoredItemSet
     include Enumerable
