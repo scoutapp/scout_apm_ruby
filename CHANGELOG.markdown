@@ -1,3 +1,7 @@
+# 2.0.0
+
+* Reporting object allocation metrics and mem delta with slow requests and jobs.
+
 # 1.5.2
 
 * Fix deploy webhook endpoint
