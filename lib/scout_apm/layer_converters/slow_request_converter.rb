@@ -14,27 +14,19 @@ module ScoutApm
         scope = scope_layer
         return [nil, {}] unless scope
 
-        # increment the slow transaction count if this is a slow transaction.
-        meta = MetricMeta.new("SlowTransaction/#{scope.legacy_metric_name}")
-        stat = MetricStats.new
-        stat.update!(1)
-
         uri = request.annotations[:uri] || ""
 
         metrics = create_metrics
         # Disable stackprof output for now
         stackprof = [] # request.stackprof
 
-        [
-          SlowTransaction.new(uri,
-                              scope.legacy_metric_name,
-                              root_layer.total_call_time,
-                              metrics,
-                              request.context,
-                              root_layer.stop_time,
-                              stackprof),
-          { meta => stat }
-        ]
+        SlowTransaction.new(uri,
+                            scope.legacy_metric_name,
+                            root_layer.total_call_time,
+                            metrics,
+                            request.context,
+                            root_layer.stop_time,
+                            stackprof)
       end
 
       # Iterates over the TrackedRequest's MetricMetas that have backtraces and attaches each to correct MetricMeta in the Metric Hash.

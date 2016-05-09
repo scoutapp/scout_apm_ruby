@@ -189,6 +189,7 @@ module ScoutApm
       metrics = LayerConverters::MetricConverter.new(self).call
       ScoutApm::Agent.instance.store.track!(metrics)
 
+      # Don't #call this - that's the job of the ScoredItemSet later.
       slow_converter = LayerConverters::SlowRequestConverter.new(self)
       ScoutApm::Agent.instance.store.track_slow_transaction!(slow_converter)
 
