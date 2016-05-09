@@ -11,14 +11,14 @@ module ScoutApm
       CAPTURE_NONE    = "capture_none",
     ]
 
-    # Each minute we haven't seen an endpoint makes it "250ms" more weighty
+    # Adjust speed points. See the function
+    POINT_MULTIPLIER_SPEED = 0.25
+
+    # For each minute we haven't seen an endpoint
     POINT_MULTIPLIER_AGE = 0.25
 
     # Outliers are worth up to "1000ms" of weight
-    POINT_MULTIPLIER_PERCENTILE = 1
-
-    # Each second is worth "1000ms" of weight
-    POINT_MULTIPLIER_SPEED = 1
+    POINT_MULTIPLIER_PERCENTILE = 1.0
 
     # A hash of Endpoint Name to the last time we stored a slow transaction for it.
     #
@@ -43,8 +43,8 @@ module ScoutApm
       @histograms = Hash.new { |h, k| h[k] = NumericHistogram.new(histogram_size) }
     end
 
-    def stored!(metric_name)
-      last_seen[metric_name] = Time.now
+    def stored!(request)
+      last_seen[unique_name_for(request)] = Time.now
     end
 
     # Determine if this request trace should be fully analyzed by scoring it
@@ -71,9 +71,7 @@ module ScoutApm
       histogram.add(total_time)
       percentile = histogram.approximate_quantile_of_value(total_time)
 
-      points = speed_points(total_time) + percentile_points(percentile) + age_points(age)
-
-      points
+      return speed_points(total_time) + percentile_points(percentile) + age_points(age)
     end
 
     private
@@ -88,8 +86,10 @@ module ScoutApm
     end
 
     # Time in seconds
+    # Logarithm keeps huge times from swamping the other metrics.
+    # 1+ is necessary to keep the log function in positive territory.
     def speed_points(time)
-      time * POINT_MULTIPLIER_SPEED
+      Math.log(1 + time) * POINT_MULTIPLIER_SPEED
     end
 
     def percentile_points(percentile)
@@ -97,7 +97,7 @@ module ScoutApm
     end
 
     def age_points(age)
-      age * POINT_MULTIPLIER_AGE
+      age / 60.0 * POINT_MULTIPLIER_AGE
     end
   end
 end
