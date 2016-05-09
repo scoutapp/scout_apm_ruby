@@ -1,11 +1,12 @@
+# Load & Start simplecov before loading scout_apm
+require 'simplecov'
+SimpleCov.start
+
 require 'minitest/autorun'
 require 'minitest/unit'
 require 'minitest/pride'
 require 'pry'
 
-# Load & Start simplecov before loading scout_apm
-require 'simplecov'
-SimpleCov.start
 
 require 'scout_apm'
 
