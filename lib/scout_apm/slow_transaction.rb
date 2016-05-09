@@ -11,8 +11,9 @@ module ScoutApm
     attr_reader :time
     attr_reader :prof
     attr_reader :raw_prof
+    attr_reader :score
 
-    def initialize(uri, metric_name, total_call_time, metrics, context, time, raw_stackprof)
+    def initialize(uri, metric_name, total_call_time, metrics, context, time, raw_stackprof, score)
       @uri = uri
       @metric_name = metric_name
       @total_call_time = total_call_time
@@ -21,6 +22,7 @@ module ScoutApm
       @time = time
       @prof = ScoutApm::StackprofTreeCollapser.new(raw_stackprof).call
       @raw_prof = raw_stackprof # Send whole data up to server
+      @score = score
     end
 
     # Used to remove metrics when the payload will be too large.
@@ -40,6 +42,22 @@ module ScoutApm
 
     def context_hash
       context.to_hash
+    end
+
+    ########################
+    # Scorable interface
+    #
+    # Needed so we can merge ScoredItemSet instances
+    def call
+      self
+    end
+
+    def name
+      metric_name
+    end
+
+    def score
+      score
     end
   end
 end
