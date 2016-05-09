@@ -107,11 +107,12 @@ module ScoutApm
 
   # One period of Storage. Typically 1 minute
   class StoreReportingPeriod
-    # A SlowItemSet to store slow transactions in
-    attr_reader :slow_transactions
 
-    # A SlowItemSet to store slow jobs in
-    attr_reader :slow_jobs
+    # A ScoredItemSet holding the "best" traces for the period
+    attr_reader :request_traces
+
+    # A SlowItemSet holding the "best" traces for the period
+    attr_reader :job_traces
 
     # A StoreReportingPeriodTimestamp representing the time that this
     # collection of metrics is for
@@ -122,8 +123,8 @@ module ScoutApm
     def initialize(timestamp)
       @timestamp = timestamp
 
-      @slow_transactions = SlowItemSet.new
-      @slow_jobs = SlowItemSet.new
+      @request_traces = ScoredItemSet.new
+      @job_traces = SlowItemSet.new
 
       @metric_set = MetricSet.new
       @jobs = Hash.new
@@ -139,7 +140,7 @@ module ScoutApm
 
     def merge_slow_transactions!(new_transactions)
       Array(new_transactions).each do |one_transaction|
-        slow_transactions << one_transaction
+        request_traces << one_transaction
       end
 
       self
@@ -159,7 +160,7 @@ module ScoutApm
 
     def merge_slow_jobs!(new_jobs)
       Array(new_jobs).each do |job|
-        slow_jobs << job
+        job_traces << job
       end
     end
 
@@ -171,7 +172,7 @@ module ScoutApm
     end
 
     def slow_transactions_payload
-      slow_transactions.to_a
+      request_traces.to_a
     end
 
     def jobs
@@ -179,7 +180,7 @@ module ScoutApm
     end
 
     def slow_jobs_payload
-      slow_jobs.to_a
+      job_traces.to_a
     end
 
     #################################
