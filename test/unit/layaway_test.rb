@@ -18,13 +18,10 @@ class LayawayTest < Minitest::Test
 
   def test_merge_reporting_period
     File.open(DATA_FILE_PATH, 'w') { |file| file.write(Marshal.dump(NEW_FORMAT)) }
-    ScoutApm::Agent.instance.start
-
-    data = ScoutApm::Layaway.new
-    t = ScoutApm::StoreReportingPeriodTimestamp.new
-    data.add_reporting_period(TIMESTAMP,ScoutApm::StoreReportingPeriod.new(TIMESTAMP))
-    assert_equal [TIMESTAMP], Marshal.load(File.read(DATA_FILE_PATH)).keys
-    # TODO - add tests to verify metrics+slow transactions are merged
+    layaway = ScoutApm::Layaway.new
+    layaway.add_reporting_period(TIMESTAMP, ScoutApm::StoreReportingPeriod.new(TIMESTAMP))
+    unmarshalled = Marshal.load(File.read(DATA_FILE_PATH))
+    assert_equal [TIMESTAMP], unmarshalled.keys
   end
 
   TIMESTAMP = ScoutApm::StoreReportingPeriodTimestamp.new(Time.parse("2015-01-01"))

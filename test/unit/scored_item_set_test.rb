@@ -9,9 +9,7 @@ class FakeScoredItem
   end
   def name; @name; end
   def score; @score; end
-  def call
-    "called_#{@score}_#{@name}"
-  end
+  def call; "called_#{@score}_#{@name}"; end
 end
 
 class ScoredItemSetTest < Minitest::Test
