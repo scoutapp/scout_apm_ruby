@@ -1,15 +1,15 @@
 module ScoutApm
   module BucketNameSplitter
-    def bucket
+    def bucket_type
       split_metric_name(metric_name).first
     end
 
-    def name
+    def bucket_name
       split_metric_name(metric_name).last
     end
 
     def key
-      {:bucket => bucket, :name => name}
+      {:bucket => bucket_type, :name => bucket_name}
     end
 
     private
