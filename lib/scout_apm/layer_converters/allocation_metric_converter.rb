@@ -3,7 +3,7 @@ module ScoutApm
     class AllocationMetricConverter < ConverterBase
       def call
         scope = scope_layer
-        return {} unless scope
+        return {} unless scope && ScoutApm::Instruments::Allocations::ENABLED
 
         meta = MetricMeta.new("ObjectAllocations", {:scope => scope.legacy_metric_name})
         stat = MetricStats.new

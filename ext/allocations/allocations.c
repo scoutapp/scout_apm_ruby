@@ -1,14 +1,14 @@
 #include <ruby/ruby.h>
 
+VALUE mScoutApm;
+VALUE mInstruments;
+VALUE cAllocations;
+
 #ifdef RUBY_INTERNAL_EVENT_NEWOBJ
 
 #include <sys/resource.h> // is this needed?
 #include <sys/time.h>
 #include <ruby/debug.h>
-
-VALUE mScoutApm;
-VALUE mInstruments;
-VALUE cAllocations;
 
 static __thread uint64_t endpoint_allocations;
 void increment_allocations() {
@@ -52,8 +52,33 @@ void Init_allocations()
     mInstruments = rb_define_module_under(mScoutApm, "Instruments");
     cAllocations = rb_define_class_under(mInstruments, "Allocations", rb_cObject);
     rb_define_singleton_method(cAllocations, "count", get_allocation_count, 0);
+    rb_define_singleton_method(cAllocations, "count", get_allocation_count, 0);
+    rb_define_const(cAllocations, "ENABLED", Qtrue);
+    Init_hooks(mScoutApm);
+}
 
+#else
+
+static VALUE
+get_allocation_count() {
+  return ULL2NUM(0);
+}
+
+void
+Init_hooks(VALUE module)
+{
+}
+
+void Init_allocations()
+{
+    mScoutApm = rb_define_module("ScoutApm");
+    mInstruments = rb_define_module_under(mScoutApm, "Instruments");
+    cAllocations = rb_define_class_under(mInstruments, "Allocations", rb_cObject);
+    rb_define_singleton_method(cAllocations, "count", get_allocation_count, 0);
+    rb_define_singleton_method(cAllocations, "count", get_allocation_count, 0);
+    rb_define_const(cAllocations, "ENABLED", Qfalse);
     Init_hooks(mScoutApm);
 }
 
 #endif //#ifdef RUBY_INTERNAL_EVENT_NEWOBJ
+

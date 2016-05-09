@@ -18,6 +18,9 @@ module ScoutApm
         mem_delta = ScoutApm::Instruments::Process::ProcessMemory.rss_to_mb(request.capture_mem_delta!)
 
         timing_metrics, allocation_metrics = create_metrics
+        unless ScoutApm::Instruments::Allocations::ENABLED
+          allocation_metrics = {}
+        end
 
         SlowJobRecord.new(
           queue_layer.name,
