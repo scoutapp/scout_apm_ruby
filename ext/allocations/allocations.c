@@ -1,6 +1,9 @@
+#include <ruby/ruby.h>
+
+#ifdef RUBY_INTERNAL_EVENT_NEWOBJ
+
 #include <sys/resource.h> // is this needed?
 #include <sys/time.h>
-#include <ruby/ruby.h>
 #include <ruby/debug.h>
 
 VALUE mScoutApm;
@@ -52,3 +55,5 @@ void Init_allocations()
 
     Init_hooks(mScoutApm);
 }
+
+#endif //#ifdef RUBY_INTERNAL_EVENT_NEWOBJ
