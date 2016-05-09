@@ -56,6 +56,26 @@ module ScoutApm
       end
     end
 
+    # Given a value, where in this histogram does it fall?
+    # Returns a float between 0 and 1
+    def approximate_quantile_of_value(v)
+      mutex.synchronize do
+        return 100 if total == 0
+
+        count_examined = 0
+
+        bins.each_with_index do |bin, index|
+          if v <= bin.value
+            break
+          end
+
+          count_examined += bin.count
+        end
+
+        count_examined / total.to_f
+      end
+    end
+
     def mean
       mutex.synchronize do
         if total == 0

@@ -32,13 +32,13 @@ module ScoutApm
       @started = false
       @options ||= options
       @config = ScoutApm::Config.new(options[:config_path])
+
       @slow_job_policy = ScoutApm::SlowJobPolicy.new
+      @slow_request_policy = ScoutApm::SlowRequestPolicy.new
 
       @store          = ScoutApm::Store.new
       @layaway        = ScoutApm::Layaway.new
       @metric_lookup  = Hash.new
-
-      @slow_request_policy = ScoutApm::SlowRequestPolicy.new
 
       @capacity       = ScoutApm::Capacity.new
       @installed_instruments = []

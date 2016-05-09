@@ -4,16 +4,15 @@ module ScoutApm
       def initialize(*)
         @backtraces = [] # An Array of MetricMetas that have a backtrace
         super
+
+        @points = ScoutApm::Agent.instance.slow_request_policy.score(request)
       end
 
+      # Unconditionally attempts to convert this into a SlowTrace.
+      # Can return nil if the request didn't have any scope_layer.
       def call
         scope = scope_layer
         return [nil, {}] unless scope
-
-        policy = ScoutApm::Agent.instance.slow_request_policy.capture_type(root_layer.total_call_time)
-        if policy == ScoutApm::SlowRequestPolicy::CAPTURE_NONE
-          return [nil, {}]
-        end
 
         # increment the slow transaction count if this is a slow transaction.
         meta = MetricMeta.new("SlowTransaction/#{scope.legacy_metric_name}")
