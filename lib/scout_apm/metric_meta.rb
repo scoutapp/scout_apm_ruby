@@ -17,7 +17,7 @@ class MetricMeta
 
   # Unsure if type or bucket is a better name.
   def type
-    bucket
+    bucket_name
   end
 
   # A key metric is the "core" of a request - either the Rails controller reached, or the background Job executed
