@@ -4,21 +4,26 @@ module ScoutApm
       def initialize(*)
         @backtraces = [] # An Array of MetricMetas that have a backtrace
         super
+
+        # After call to super, to populate @request
+        @points = ScoutApm::Agent.instance.slow_request_policy.score(request)
       end
 
+      def name
+        scope_layer.legacy_metric_name
+      end
+
+      def score
+        @points
+      end
+
+      # Unconditionally attempts to convert this into a SlowTransaction object.
+      # Can return nil if the request didn't have any scope_layer.
       def call
         scope = scope_layer
         return [nil, {}] unless scope
 
-        policy = ScoutApm::Agent.instance.slow_request_policy.capture_type(root_layer.total_call_time)
-        if policy == ScoutApm::SlowRequestPolicy::CAPTURE_NONE
-          return [nil, {}]
-        end
-
-        # increment the slow transaction count if this is a slow transaction.
-        meta = MetricMeta.new("SlowTransaction/#{scope.legacy_metric_name}")
-        stat = MetricStats.new
-        stat.update!(1)
+        ScoutApm::Agent.instance.slow_request_policy.stored!(request)
 
         uri = request.annotations[:uri] || ""
 
@@ -26,16 +31,14 @@ module ScoutApm
         # Disable stackprof output for now
         stackprof = [] # request.stackprof
 
-        [
-          SlowTransaction.new(uri,
-                              scope.legacy_metric_name,
-                              root_layer.total_call_time,
-                              metrics,
-                              request.context,
-                              root_layer.stop_time,
-                              stackprof),
-          { meta => stat }
-        ]
+        SlowTransaction.new(uri,
+                            scope.legacy_metric_name,
+                            root_layer.total_call_time,
+                            metrics,
+                            request.context,
+                            root_layer.stop_time,
+                            stackprof,
+                            @points)
       end
 
       # Iterates over the TrackedRequest's MetricMetas that have backtraces and attaches each to correct MetricMeta in the Metric Hash.

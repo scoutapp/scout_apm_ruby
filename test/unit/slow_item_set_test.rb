@@ -88,6 +88,7 @@ class SlowItemSetTest < Minitest::Test
       {}, # metrics
       {}, # context
       Time.now, # end time
-      []) # stackprof
+      [], # stackprof
+      0)
   end
 end

@@ -20,7 +20,7 @@ module ScoutApm
 
           old_val.
             merge_metrics!(new_val.metrics_payload).
-            merge_slow_transactions!(new_val.slow_transactions).
+            merge_slow_transactions!(new_val.slow_transactions_payload).
             merge_jobs!(new_val.jobs)
         }
 
