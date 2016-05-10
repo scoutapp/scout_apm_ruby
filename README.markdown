@@ -19,24 +19,11 @@ Your config file should look like:
 
     production:
       <<: *defaults
-      
-## Supported Frameworks
 
-* Rails 2.2 through Rails 4
+## Docs
 
-## Supported Rubies
-
-* Ruby 1.8.7 through Ruby 2.3
-
-## Supported Application Servers
-
-* Phusion Passenger
-* Thin
-* WEBrick
-* Unicorn (make sure to add `preload_app true` to `config/unicorn.rb`)
-* Rainbows
-* Puma
+For the complete list of supported frameworks, Rubies, etc, see our [help site](http://help.apm.scoutapp.com/).
 
 ## Help
 
-See our [help site](http://help.apm.scoutapp.com/) or email support@scoutapp.com if you need a hand.
+Email support@scoutapp.com if you need a hand.

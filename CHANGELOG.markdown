@@ -1,3 +1,7 @@
+# 1.5.1
+
+* Add `ignore_traces` config option to ignore SlowTransactions from certain URIs.
+
 # 1.5.0
 
 * Background Job instrumentation for Sidekiq and Sidekiq-backed ActiveJob
