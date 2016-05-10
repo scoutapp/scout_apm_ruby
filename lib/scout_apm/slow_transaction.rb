@@ -11,7 +11,6 @@ module ScoutApm
     attr_reader :time
     attr_reader :prof
     attr_reader :raw_prof
-    attr_reader :score
 
     def initialize(uri, metric_name, total_call_time, metrics, context, time, raw_stackprof, score)
       @uri = uri
@@ -36,7 +35,7 @@ module ScoutApm
     end
 
     def as_json
-      json_attributes = [:key, :time, :total_call_time, :uri, [:context, :context_hash], :prof]
+      json_attributes = [:key, :time, :total_call_time, :uri, [:context, :context_hash], :prof, :score]
       ScoutApm::AttributeArranger.call(self, json_attributes)
     end
 
@@ -57,7 +56,7 @@ module ScoutApm
     end
 
     def score
-      score
+      @score
     end
   end
 end
