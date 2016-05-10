@@ -3,9 +3,18 @@ module ScoutApm
     class SlowRequestConverter < ConverterBase
       def initialize(*)
         @backtraces = [] # An Array of MetricMetas that have a backtrace
-        @points = ScoutApm::Agent.instance.slow_request_policy.score(request)
-
         super
+
+        # After call to super, to populate @request
+        @points = ScoutApm::Agent.instance.slow_request_policy.score(request)
+      end
+
+      def name
+        scope_layer.legacy_metric_name
+      end
+
+      def score
+        @points
       end
 
       # Unconditionally attempts to convert this into a SlowTransaction object.
