@@ -34,7 +34,7 @@ module ScoutApm
       @hostname = ScoutApm::Environment.instance.hostname
 
       @score = score
-      ScoutApm::Agent.instance.logger.debug { "Slow Request [#{uri}] - Call Time: #{total_call_time} Mem Delta: #{mem_delta}"}
+      ScoutApm::Agent.instance.logger.debug { "Slow Request [#{uri}] - Call Time: #{total_call_time} Mem Delta: #{mem_delta} Score: #{score}"}
     end
 
     # Used to remove metrics when the payload will be too large.
