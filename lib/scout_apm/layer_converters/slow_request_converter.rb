@@ -10,7 +10,11 @@ module ScoutApm
       end
 
       def name
-        scope_layer.legacy_metric_name
+        if scope_layer
+          scope_layer.legacy_metric_name
+        else
+          nil
+        end
       end
 
       def score
