@@ -25,7 +25,7 @@ module ScoutApm
       # Can return nil if the request didn't have any scope_layer.
       def call
         scope = scope_layer
-        return [nil, {}] unless scope
+        return nil unless scope
 
         ScoutApm::Agent.instance.slow_request_policy.stored!(request)
 
@@ -34,10 +34,9 @@ module ScoutApm
         ScoutApm::Agent.instance.config.value("ignore_traces").each do |pattern|
           if /#{pattern}/ =~ uri
             ScoutApm::Agent.instance.logger.debug("Skipped recording a trace for #{uri} due to `ignore_traces` pattern: #{pattern}")
-            return [nil, { meta => stat }]
+            return nil
           end
         end
-
 
         metrics = create_metrics
         # Disable stackprof output for now
