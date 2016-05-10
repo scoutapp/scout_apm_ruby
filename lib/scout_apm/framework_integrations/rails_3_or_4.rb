@@ -33,24 +33,31 @@ module ScoutApm
       end
 
       def database_engine
-        return @database_engine if @database_engine
-        default = :mysql
+        # Force this return value for Howchoo customer. Rails 3.2 wasn't
+        # picking up the right db engine, do this as a temporary measure to onboard them.
+        return :postgres
 
-        @database_engine = if defined?(ActiveRecord::Base)
-          adapter = get_database_adapter # can be nil
 
-          case adapter.to_s
-          when "postgres"   then :postgres
-          when "postgresql" then :postgres
-          when "postgis"    then :postgres
-          when "sqlite3"    then :sqlite
-          when "mysql"      then :mysql
-          else default
-          end
-        else
+
+
+        # return @database_engine if @database_engine
+        # default = :postgres
+
+        # @database_engine = if defined?(ActiveRecord::Base)
+          # adapter = get_database_adapter # can be nil
+
+          # case adapter.to_s
+          # when "postgres"   then :postgres
+          # when "postgresql" then :postgres
+          # when "postgis"    then :postgres
+          # when "sqlite3"    then :sqlite
+          # when "mysql"      then :mysql
+          # else default
+          # end
+        # else
           # TODO: Figure out how to detect outside of Rails context. (sequel, ROM, etc)
-          default
-        end
+          # default
+        # end
       end
 
       def get_database_adapter
