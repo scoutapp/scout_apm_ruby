@@ -1,6 +1,10 @@
 # 2.0.0
 
 * Reporting object allocation metrics and mem delta with slow requests and jobs.
+* Collecting memory metrics on slow transactions
+* Collecting additional fields for slow transactions:
+  * hostname
+  * seconds_since_startup (larger memory increases and other other odd behavior more common when close to startup)
 
 # 1.5.2
 
@@ -8,10 +12,7 @@
 
 # 1.5.1
 
-* Collecting memory metrics on slow transactions
-* Collecting additional fields for slow transactions:
-  * hostname
-  * seconds_since_startup (larger memory increases and other other odd behavior more common when close to startup)
+* Add `ignore_traces` config option to ignore SlowTransactions from certain URIs.
 
 # 1.5.0
 

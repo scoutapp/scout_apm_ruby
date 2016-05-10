@@ -71,6 +71,7 @@ module ScoutApm
         'report_format'          => 'json',
         'disabled_instruments'   => [],
         'enable_background_jobs' => true,
+        'ignore_traces' => [],
       }.freeze
 
       def value(key)
