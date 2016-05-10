@@ -34,7 +34,7 @@ module ScoutApm
       when :app_server_load
         URI.parse("#{host}/apps/app_server_load.scout?key=#{config.value('key')}&name=#{CGI.escape(Environment.instance.application_name)}")
       when :deploy_hook
-        URI.parse("#{host}/apps/deploy.scout?key=#{config.value('key')}&name=#{CGI.escape(config.value('name'))}")
+        URI.parse("https://apm.scoutapp.com/apps/deploy.scout?key=#{config.value('key')}&name=#{CGI.escape(config.value('name'))}")
       end.tap{|u| logger.debug("Posting to #{u.to_s}")}
     end
 
@@ -56,7 +56,7 @@ module ScoutApm
     private
 
     def post(uri, body, headers = Hash.new)
-      response = nil
+      response = :connection_failed
       request(uri) do |connection|
         post = Net::HTTP::Post.new( uri.path +
                                     (uri.query ? ('?' + uri.query) : ''),
@@ -82,7 +82,7 @@ module ScoutApm
         logger.debug "/#{type} FAILED: #{response.inspect}"
       end
     rescue Exception
-      logger.debug "Exception sending request to server: \n#{$!.message}\n\t#{$!.backtrace.join("\n\t")}"
+      logger.info "Exception sending request to server: \n#{$!.message}\n\t#{$!.backtrace.join("\n\t")}"
     ensure
       response
     end

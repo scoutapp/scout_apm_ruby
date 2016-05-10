@@ -25,19 +25,29 @@ module ScoutApm
 
         ScoutApm::Agent.instance.slow_request_policy.stored!(request)
 
+        # record the change in memory usage
+        mem_delta = ScoutApm::Instruments::Process::ProcessMemory.rss_to_mb(@request.capture_mem_delta!)
+
         uri = request.annotations[:uri] || ""
 
-        metrics = create_metrics
+        timing_metrics, allocation_metrics = create_metrics
+        unless ScoutApm::Instruments::Allocations::ENABLED
+          allocation_metrics = {}
+        end
+
         # Disable stackprof output for now
         stackprof = [] # request.stackprof
 
         SlowTransaction.new(uri,
                             scope.legacy_metric_name,
                             root_layer.total_call_time,
-                            metrics,
+                            timing_metrics,
+                            allocation_metrics,
                             request.context,
                             root_layer.stop_time,
                             stackprof,
+                            mem_delta,
+                            root_layer.total_allocations,
                             @points)
       end
 
@@ -49,12 +59,14 @@ module ScoutApm
         metric_hash
       end
 
-      # Full metrics from this request. These get aggregated in Store for the
-      # overview metrics, or stored permanently in a SlowTransaction
+      # Full metrics from this request. These get stored permanently in a SlowTransaction.
       # Some merging of metrics will happen here, so if a request calls the same
       # ActiveRecord or View repeatedly, it'll get merged.
+      # 
+      # This returns a 2-element of Metric Hashes (the first element is timing metrics, the second element is allocation metrics)
       def create_metrics
         metric_hash = Hash.new
+        allocation_metric_hash = Hash.new
 
         # Keep a list of subscopes, but only ever use the front one.  The rest
         # get pushed/popped in cases when we have many levels of subscopable
@@ -74,6 +86,14 @@ module ScoutApm
         end
 
         walker.walk do |layer|
+          # Sometimes we start capturing a layer without knowing if we really
+          # want to make an entry for it.  See ActiveRecord instrumentation for
+          # an example. We start capturing before we know if a query is cached
+          # or not, and want to skip any cached queries.
+          if layer.annotations[:ignorable]
+            next
+          end
+
           meta_options = if subscope_layers.first && layer != subscope_layers.first # Don't scope under ourself.
                            subscope_name = subscope_layers.first.legacy_metric_name
                            {:scope => subscope_name}
@@ -86,6 +106,7 @@ module ScoutApm
           # Specific Metric
           meta_options.merge!(:desc => layer.desc.to_s) if layer.desc
           meta = MetricMeta.new(layer.legacy_metric_name, meta_options)
+          meta.extra.merge!(layer.annotations)
           if layer.backtrace
             bt = ScoutApm::Utils::BacktraceParser.new(layer.backtrace).call
             if bt.any? # we could walk thru the call stack and not find in-app code
@@ -100,19 +121,30 @@ module ScoutApm
             end
           end
           metric_hash[meta] ||= MetricStats.new( meta_options.has_key?(:scope) )
+          allocation_metric_hash[meta] ||= MetricStats.new( meta_options.has_key?(:scope) )
+          # timing
           stat = metric_hash[meta]
           stat.update!(layer.total_call_time, layer.total_exclusive_time)
+          # allocations
+          stat = allocation_metric_hash[meta]
+          stat.update!(layer.total_allocations, layer.total_exclusive_allocations)
 
           # Merged Metric (no specifics, just sum up by type)
           meta = MetricMeta.new("#{layer.type}/all")
           metric_hash[meta] ||= MetricStats.new(false)
+          allocation_metric_hash[meta] ||= MetricStats.new(false)
+          # timing
           stat = metric_hash[meta]
           stat.update!(layer.total_call_time, layer.total_exclusive_time)
+          # allocations
+          stat = allocation_metric_hash[meta]
+          stat.update!(layer.total_allocations, layer.total_exclusive_allocations)
         end
 
         metric_hash = attach_backtraces(metric_hash)
+        allocation_metric_hash = attach_backtraces(allocation_metric_hash)
 
-        metric_hash
+        [metric_hash,allocation_metric_hash]
       end
     end
   end

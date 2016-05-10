@@ -19,6 +19,7 @@ module ScoutApm
     attr_accessor :metric_lookup # Hash used to lookup metric ids based on their name and scope
     attr_reader :slow_request_policy
     attr_reader :slow_job_policy
+    attr_reader :process_start_time # used when creating slow transactions to report how far from startup the transaction was recorded.
 
     # All access to the agent is thru this class method to ensure multiple Agent instances are not initialized per-Ruby process.
     def self.instance(options = {})
@@ -30,8 +31,15 @@ module ScoutApm
     # be started (when forking).
     def initialize(options = {})
       @started = false
+      @process_start_time = Time.now
       @options ||= options
-      @config = ScoutApm::Config.new(options[:config_path])
+
+      # Start up without attempting to load a configuration file. We need to be
+      # able to lookup configuration options like "application_root" which would
+      # then in turn influence where the configuration file came from.
+      #
+      # Later in initialization, we reset @config to include the file.
+      @config = ScoutApm::Config.without_file
 
       @slow_job_policy = ScoutApm::SlowJobPolicy.new
       @slow_request_policy = ScoutApm::SlowRequestPolicy.new
@@ -69,7 +77,11 @@ module ScoutApm
       end
 
       if app_server_missing?(options) && background_job_missing?
-        logger.warn "Couldn't find a supported app server or background job framework. #{force? ? 'Forcing agent to start' : 'Not starting agent'}."
+        if force?
+          logger.warn "Agent starting (forced)"
+        else
+          logger.warn "Deferring agent start. Standing by for first request"
+        end
         return false unless force?
       end
 
@@ -90,6 +102,7 @@ module ScoutApm
     # It initializes the agent and starts the worker thread (if appropiate).
     def start(options = {})
       @options.merge!(options)
+      @config = ScoutApm::Config.with_file(@config.value("config_file"))
       init_logger
       logger.info "Attempting to start Scout Agent [#{ScoutApm::VERSION}] on [#{environment.hostname}]"
 

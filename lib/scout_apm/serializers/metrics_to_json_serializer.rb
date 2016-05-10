@@ -9,7 +9,11 @@ module ScoutApm
       end
 
       def as_json
-        metrics.map{|meta, stat| metric_as_json(meta, stat) }
+        if metrics
+          metrics.map{|meta, stat| metric_as_json(meta, stat) }
+        else
+          nil
+        end
       end
 
       # Children metrics is a hash of meta=>stat pairs. Leave empty for no children.

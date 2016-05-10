@@ -14,6 +14,14 @@ module ScoutApm
         slow_enough = ScoutApm::Agent.instance.slow_job_policy.slow?(job_name, root_layer.total_call_time)
         return unless slow_enough
 
+        # record the change in memory usage
+        mem_delta = ScoutApm::Instruments::Process::ProcessMemory.rss_to_mb(request.capture_mem_delta!)
+
+        timing_metrics, allocation_metrics = create_metrics
+        unless ScoutApm::Instruments::Allocations::ENABLED
+          allocation_metrics = {}
+        end
+
         SlowJobRecord.new(
           queue_layer.name,
           job_layer.name,
@@ -21,7 +29,11 @@ module ScoutApm
           job_layer.total_call_time,
           job_layer.total_exclusive_time,
           request.context,
-          create_metrics)
+          timing_metrics,
+          allocation_metrics,
+          mem_delta,
+          job_layer.total_allocations
+        )
       end
 
       def queue_layer
@@ -40,6 +52,7 @@ module ScoutApm
 
       def create_metrics
         metric_hash = Hash.new
+        allocation_metric_hash = Hash.new
 
         # Keep a list of subscopes, but only ever use the front one.  The rest
         # get pushed/popped in cases when we have many levels of subscopable
@@ -59,6 +72,14 @@ module ScoutApm
         end
 
         walker.walk do |layer|
+          # Sometimes we start capturing a layer without knowing if we really
+          # want to make an entry for it.  See ActiveRecord instrumentation for
+          # an example. We start capturing before we know if a query is cached
+          # or not, and want to skip any cached queries.
+          next if layer.annotations[:ignorable]
+
+          # The queue_layer is useful to capture for other reasons, but doesn't
+          # create a MetricMeta/Stat of its own
           next if layer == queue_layer
 
           meta_options = if subscope_layers.first && layer != subscope_layers.first # Don't scope under ourself.
@@ -73,6 +94,8 @@ module ScoutApm
           # Specific Metric
           meta_options.merge!(:desc => layer.desc.to_s) if layer.desc
           meta = MetricMeta.new(layer.legacy_metric_name, meta_options)
+          meta.extra.merge!(layer.annotations)
+
           if layer.backtrace
             bt = ScoutApm::Utils::BacktraceParser.new(layer.backtrace).call
             if bt.any? # we could walk thru the call stack and not find in-app code
@@ -86,23 +109,29 @@ module ScoutApm
           end
 
           metric_hash[meta] ||= MetricStats.new( meta_options.has_key?(:scope) )
+          allocation_metric_hash[meta] ||= MetricStats.new( meta_options.has_key?(:scope) )
           stat = metric_hash[meta]
           stat.update!(layer.total_call_time, layer.total_exclusive_time)
+          stat = allocation_metric_hash[meta]
+          stat.update!(layer.total_allocations, layer.total_exclusive_allocations)
 
           # Merged Metric (no specifics, just sum up by type)
           meta = MetricMeta.new("#{layer.type}/all")
           metric_hash[meta] ||= MetricStats.new(false)
+          allocation_metric_hash[meta] ||= MetricStats.new(false)
           stat = metric_hash[meta]
           stat.update!(layer.total_call_time, layer.total_exclusive_time)
+          stat = allocation_metric_hash[meta]
+          stat.update!(layer.total_allocations, layer.total_exclusive_allocations)
         end
 
         metric_hash = attach_backtraces(metric_hash)
+        allocation_metric_hash = attach_backtraces(allocation_metric_hash)
 
-        metric_hash
+        [metric_hash,allocation_metric_hash]
       end
 
       def attach_backtraces(metric_hash)
-        ScoutApm::Agent.instance.logger.info("Attaching backtraces to job #{@backtraces}")
         @backtraces.each do |meta_with_backtrace|
           metric_hash.keys.find { |k| k == meta_with_backtrace }.backtrace = meta_with_backtrace.backtrace
         end

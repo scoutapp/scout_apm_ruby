@@ -1,4 +1,5 @@
 module ScoutApm
+  # Encapsulates our logic to determine when a backtrace should be collected.
   class CallSet
 
     N_PLUS_ONE_MAGIC_NUMBER = 5 # Fetch backtraces on this number of calls to a layer. The caller data is only collected on this call to limit overhead.
