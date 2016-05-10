@@ -22,6 +22,14 @@ module ScoutApm
 
         uri = request.annotations[:uri] || ""
 
+        ScoutApm::Agent.instance.config.value("ignore_traces").each do |pattern|
+          if /#{pattern}/ =~ uri
+            ScoutApm::Agent.instance.logger.debug("Skipped recording a trace for #{uri} due to `ignore_traces` pattern: #{pattern}")
+            return [nil, { meta => stat }]
+          end
+        end
+
+
         metrics = create_metrics
         # Disable stackprof output for now
         stackprof = [] # request.stackprof
