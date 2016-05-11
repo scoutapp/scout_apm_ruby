@@ -17,6 +17,10 @@ class MetricMeta
 
   # Unsure if type or bucket is a better name.
   def type
+    bucket_type
+  end
+
+  def name
     bucket_name
   end
 
