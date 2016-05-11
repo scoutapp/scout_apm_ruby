@@ -27,20 +27,10 @@ module ScoutApm
     # has been running.
     attr_reader :last_seen
 
-    DEFAULT_HISTOGRAM_SIZE = 50
 
-    # A hash of Endpoint Name to an approximate histogram
-    #
-    # Each time a new request is requested to see if it's slow or not, we
-    # should insert it into the histogram, and get the approximate percentile
-    # of that time
-    attr_reader :histograms
-
-    def initialize(histogram_size = DEFAULT_HISTOGRAM_SIZE)
+    def initialize
       zero_time = Time.now
-
       @last_seen = Hash.new { |h, k| h[k] = zero_time }
-      @histograms = Hash.new { |h, k| h[k] = NumericHistogram.new(histogram_size) }
     end
 
     def stored!(request)
@@ -66,10 +56,9 @@ module ScoutApm
       # How long has it been since we've seen this?
       age = Time.now - last_seen[unique_name]
 
-      # Always store off histogram time
-      histogram = histograms[unique_name]
-      histogram.add(total_time)
-      percentile = histogram.approximate_quantile_of_value(total_time)
+      # Store off the new time into the histogram, and then get its approximate quantile.
+      ScoutApm::Agent.instance.request_histograms.add(unique_name, total_time)
+      percentile = ScoutApm::Agent.instance.request_histograms.approximate_quantile_of_value(unique_name, total_time)
 
       return speed_points(total_time) + percentile_points(percentile) + age_points(age)
     end
