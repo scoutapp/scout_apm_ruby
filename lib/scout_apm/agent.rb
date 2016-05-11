@@ -20,6 +20,7 @@ module ScoutApm
     attr_reader :slow_request_policy
     attr_reader :slow_job_policy
     attr_reader :process_start_time # used when creating slow transactions to report how far from startup the transaction was recorded.
+    attr_reader :request_histograms
 
     # All access to the agent is thru this class method to ensure multiple Agent instances are not initialized per-Ruby process.
     def self.instance(options = {})
@@ -43,6 +44,7 @@ module ScoutApm
 
       @slow_job_policy = ScoutApm::SlowJobPolicy.new
       @slow_request_policy = ScoutApm::SlowRequestPolicy.new
+      @request_histograms = ScoutApm::RequestHistograms.new
 
       @store          = ScoutApm::Store.new
       @layaway        = ScoutApm::Layaway.new
@@ -118,7 +120,8 @@ module ScoutApm
 
       @samplers = [
         ScoutApm::Instruments::Process::ProcessCpu.new(environment.processors, logger),
-        ScoutApm::Instruments::Process::ProcessMemory.new(logger)
+        ScoutApm::Instruments::Process::ProcessMemory.new(logger),
+        ScoutApm::Instruments::PercentileSampler.new(logger, 95),
       ]
 
       app_server_load_hook
@@ -307,8 +310,12 @@ module ScoutApm
     def run_samplers
       @samplers.each do |sampler|
         begin
-          result = sampler.run
-          store.track_one!(sampler.metric_type, sampler.metric_name, result) if result
+          if sampler.respond_to? :metrics
+            store.track!(sampler.metrics)
+          else
+            result = sampler.run
+            store.track_one!(sampler.metric_type, sampler.metric_name, result) if result
+          end
         rescue => e
           logger.info "Error reading #{sampler.human_name}"
           logger.debug e.message
