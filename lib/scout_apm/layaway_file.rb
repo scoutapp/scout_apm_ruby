@@ -2,8 +2,32 @@
 module ScoutApm
   class LayawayFile
     def path
-      ScoutApm::Agent.instance.config.value("data_file") ||
-        "#{ScoutApm::Agent.instance.default_log_path}/scout_apm.db"
+      return @path if @path
+
+      candidates = [
+        ScoutApm::Agent.instance.config.value("data_file"),
+        "#{ScoutApm::Agent.instance.default_log_path}/scout_apm.db",
+        "#{ScoutApm::Agent.instance.environment.root}/tmp/scout_apm.db"
+      ]
+
+      candidates.each do |candidate|
+        next if candidate.nil?
+
+        begin
+          ScoutApm::Agent.instance.logger.debug("Checking Layaway File Location: #{candidate}")
+          File.open(candidate, "w") { |f| } # Open & Close to check that we can
+
+          # No exception, it is valid
+          ScoutApm::Agent.instance.logger.info("Layaway File location found: #{candidate}")
+          @path = candidate
+          return @path
+        rescue Exception
+          ScoutApm::Agent.instance.logger.debug("Couldn't open layaway file for test write at #{candidate}")
+        end
+      end
+
+      ScoutApm::Agent.instance.logger.error("No valid layaway file found, please set a location in the configuration key `data_file`")
+      nil
     end
 
     def dump(object)
