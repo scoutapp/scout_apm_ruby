@@ -17,7 +17,7 @@ module ScoutApm
       def metrics
         ms = {}
 
-        ScoutApm::Agent.instance.request_histograms.each_name do |name|
+        ScoutApm::Agent.instance.request_histograms_resettable.each_name do |name|
           percentiles.each do |percentile|
             meta = MetricMeta.new("Percentile/#{percentile}/#{name}")
             stat = MetricStats.new
