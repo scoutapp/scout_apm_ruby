@@ -211,6 +211,12 @@ module ScoutApm
     def record!
       @recorded = true
 
+      # Update histograms
+      if web? && unique_name != :unknown
+        ScoutApm::Agent.instance.request_histograms.add(unique_name, root_layer.total_call_time)
+        ScoutApm::Agent.instance.request_histograms_resettable.add(unique_name, root_layer.total_call_time)
+      end
+
       metrics = LayerConverters::MetricConverter.new(self).call
       ScoutApm::Agent.instance.store.track!(metrics)
 
@@ -232,6 +238,18 @@ module ScoutApm
 
       allocation_metrics = LayerConverters::AllocationMetricConverter.new(self).call
       ScoutApm::Agent.instance.store.track!(allocation_metrics)
+    end
+
+    # Only call this after the request is complete
+    def unique_name
+      @unique_name ||= begin
+                         scope_layer = LayerConverters::ConverterBase.new(self).scope_layer
+                         if scope_layer
+                           scope_layer.legacy_metric_name
+                         else
+                           :unknown
+                         end
+                       end
     end
 
     # Have we already persisted this request?

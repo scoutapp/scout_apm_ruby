@@ -21,10 +21,13 @@ module ScoutApm
           percentiles.each do |percentile|
             meta = MetricMeta.new("Percentile/#{percentile}/#{name}")
             stat = MetricStats.new
-            stat.update!(ScoutApm::Agent.instance.request_histograms.quantile(name, percentile))
+            stat.update!(ScoutApm::Agent.instance.request_histograms_resettable.quantile(name, percentile))
             ms[meta] = stat
           end
         end
+
+        # Wipe the histograms, get ready for the next minute's worth of data.
+        ScoutApm::Agent.instance.request_histograms_resettable.reset_all!
 
         ms
       end

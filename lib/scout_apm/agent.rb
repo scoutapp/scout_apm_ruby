@@ -20,7 +20,12 @@ module ScoutApm
     attr_reader :slow_request_policy
     attr_reader :slow_job_policy
     attr_reader :process_start_time # used when creating slow transactions to report how far from startup the transaction was recorded.
+
+    # Histogram of the cumulative requests since the start of the process
     attr_reader :request_histograms
+
+    # Histogram of the requests since last reset. Reset by the sampler, so once per minutes.
+    attr_reader :request_histograms_resettable
 
     # All access to the agent is thru this class method to ensure multiple Agent instances are not initialized per-Ruby process.
     def self.instance(options = {})
@@ -45,6 +50,7 @@ module ScoutApm
       @slow_job_policy = ScoutApm::SlowJobPolicy.new
       @slow_request_policy = ScoutApm::SlowRequestPolicy.new
       @request_histograms = ScoutApm::RequestHistograms.new
+      @request_histograms_resettable = ScoutApm::RequestHistograms.new
 
       @store          = ScoutApm::Store.new
       @layaway        = ScoutApm::Layaway.new

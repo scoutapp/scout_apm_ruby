@@ -46,7 +46,7 @@ module ScoutApm
     # they go up to "regionals" and are compared against the other processes
     # running on a node.
     def score(request)
-      unique_name = unique_name_for(request)
+      unique_name = request.unique_name
       if unique_name == :unknown
         return -1 # A negative score, should never be good enough to store.
       end
@@ -56,8 +56,7 @@ module ScoutApm
       # How long has it been since we've seen this?
       age = Time.now - last_seen[unique_name]
 
-      # Store off the new time into the histogram, and then get its approximate quantile.
-      ScoutApm::Agent.instance.request_histograms.add(unique_name, total_time)
+      # What approximate percentile was this request?
       percentile = ScoutApm::Agent.instance.request_histograms.approximate_quantile_of_value(unique_name, total_time)
 
       return speed_points(total_time) + percentile_points(percentile) + age_points(age)
