@@ -11,7 +11,10 @@ module ScoutApm
     attr_reader :histograms
     private :histograms
 
+    attr_reader :histogram_size
+
     def initialize(histogram_size = DEFAULT_HISTOGRAM_SIZE)
+      @histogram_size = histogram_size
       initialize_histograms_hash
     end
 

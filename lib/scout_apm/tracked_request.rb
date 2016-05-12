@@ -215,7 +215,7 @@ module ScoutApm
     # Only call this after the request is complete
     def unique_name
       @unique_name ||= begin
-                         scope_layer = LayerConverters::ConverterBase.new(request).scope_layer
+                         scope_layer = LayerConverters::ConverterBase.new(self).scope_layer
                          if scope_layer
                            scope_layer.legacy_metric_name
                          else
