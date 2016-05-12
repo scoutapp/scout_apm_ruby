@@ -12,7 +12,7 @@ module ScoutApm
     private :histograms
 
     def initialize(histogram_size = DEFAULT_HISTOGRAM_SIZE)
-      @histograms = Hash.new { |h, k| h[k] = NumericHistogram.new(histogram_size) }
+      initialize_histograms_hash
     end
 
     def each_name
@@ -29,6 +29,15 @@ module ScoutApm
 
     def quantile(item, q)
       @histograms[item].quantile(q)
+    end
+
+    # Wipes all histograms, setting them back to empty
+    def reset_all!
+      initialize_histograms_hash
+    end
+
+    def initialize_histograms_hash
+      @histograms = Hash.new { |h, k| h[k] = NumericHistogram.new(histogram_size) }
     end
   end
 end
