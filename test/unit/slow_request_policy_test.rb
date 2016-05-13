@@ -9,6 +9,7 @@ class FakeRequest
     @root_layer = ScoutApm::Layer.new("Controller", name)
     @root_layer.instance_variable_set("@stop_time", Time.now)
   end
+  def unique_name; "Controller/foo/bar"; end
   def root_layer; @root_layer; end
   def set_duration(seconds)
     @root_layer.instance_variable_set("@start_time", Time.now - seconds)
@@ -22,7 +23,7 @@ class SlowRequestPolicyTest < Minitest::Test
     request = FakeRequest.new("users/index")
 
     policy.stored!(request)
-    assert policy.last_seen[policy.send(:unique_name_for, request)] > test_start
+    assert policy.last_seen[request.unique_name] > test_start
   end
 
   def test_score
@@ -30,11 +31,12 @@ class SlowRequestPolicyTest < Minitest::Test
     request = FakeRequest.new("users/index")
 
     request.set_duration(10) # 10 seconds
-    policy.last_seen[policy.send(:unique_name_for, request)] = Time.now - 120 # 2 minutes since last seen
-    policy.histograms[policy.send(:unique_name_for, request)].add(1)
+    policy.last_seen[request.unique_name] = Time.now - 120 # 2 minutes since last seen
+    agent.request_histograms.add(request.unique_name, 1)
 
     # Actual value I have in console is 1.599
     assert policy.score(request) > 1.5
     assert policy.score(request) < 2.0
+
   end
 end

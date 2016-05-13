@@ -81,7 +81,18 @@ module ScoutApm
     end
 
     def percentile_points(percentile)
-      percentile * POINT_MULTIPLIER_PERCENTILE
+      if percentile < 40
+        0.4 # Don't put much emphasis on capturing low percentiles.
+      elsif percentile < 60
+        1.4 # Highest here to get mean traces
+      elsif percentile < 90
+        0.7 # Between 60 & 90% is fine.
+      elsif percentile >= 90
+        1.4 # Highest here to get 90+%ile traces
+      else
+        # impossible.
+        percentile
+      end
     end
 
     def age_points(age)
