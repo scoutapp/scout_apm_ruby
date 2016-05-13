@@ -8,7 +8,7 @@
 
 # 1.5.2
 
-* Fix deploy webhook endpoint
+* Force timestamps to be iso8601 format
 
 # 1.5.1
 

@@ -59,6 +59,8 @@ module ScoutApm
             "[#{all_the_elements.join(",")}]"
           when Numeric
             formatee
+          when Time
+            formatee.iso8601
           when nil
             "null"
           else # strings and everything
