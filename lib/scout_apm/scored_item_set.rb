@@ -70,7 +70,9 @@ module ScoutApm
     end
 
     def store!(new_item)
-      items[new_item.name] = [new_item.score, new_item.call]
+      if !new_item.name.nil? # Never store a nil name.
+        items[new_item.name] = [new_item.score, new_item.call]
+      end
     end
   end
 end

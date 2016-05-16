@@ -50,7 +50,7 @@ module ScoutApm
           :platform      => "ruby",
         }
 
-        log_deliver(metrics, slow_transactions, metadata)
+        log_deliver(metrics, slow_transactions, metadata, slow_jobs)
 
         payload = ScoutApm::Serializers::PayloadSerializer.serialize(metadata, metrics, slow_transactions, jobs, slow_jobs)
         logger.debug("Payload: #{payload}")
@@ -62,7 +62,7 @@ module ScoutApm
         logger.debug e.backtrace
       end
 
-      def log_deliver(metrics, slow_transactions, metadata)
+      def log_deliver(metrics, slow_transactions, metadata, jobs_traces)
         total_request_count = metrics.
           select { |meta,stats| meta.metric_name =~ /\AController/ }.
           inject(0) {|sum, (_, stat)| sum + stat.call_count }
@@ -75,7 +75,12 @@ module ScoutApm
                             "Recorded across (unknown) processes"
                           end
 
-        logger.info "[#{Time.parse(metadata[:agent_time]).strftime("%H:%M")}] Delivering #{metrics.length} Metrics for #{total_request_count} requests and #{slow_transactions.length} Slow Transaction Traces, #{process_log_str}."
+        time_clause       = "[#{Time.parse(metadata[:agent_time]).strftime("%H:%M")}]"
+        metrics_clause    = "#{metrics.length} Metrics for #{total_request_count} requests"
+        slow_trans_clause = "#{slow_transactions.length} Slow Transaction Traces"
+        job_clause        = "#{jobs_traces.length} Job Traces"
+
+        logger.info "#{time_clause} Delivering #{metrics_clause} and #{slow_trans_clause} and #{job_clause}, #{process_log_str}."
         logger.debug("Metrics: #{metrics.pretty_inspect}\nSlowTrans: #{slow_transactions.pretty_inspect}\nMetadata: #{metadata.inspect.pretty_inspect}")
       end
 

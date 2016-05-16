@@ -27,20 +27,10 @@ module ScoutApm
     # has been running.
     attr_reader :last_seen
 
-    DEFAULT_HISTOGRAM_SIZE = 50
 
-    # A hash of Endpoint Name to an approximate histogram
-    #
-    # Each time a new request is requested to see if it's slow or not, we
-    # should insert it into the histogram, and get the approximate percentile
-    # of that time
-    attr_reader :histograms
-
-    def initialize(histogram_size = DEFAULT_HISTOGRAM_SIZE)
+    def initialize
       zero_time = Time.now
-
       @last_seen = Hash.new { |h, k| h[k] = zero_time }
-      @histograms = Hash.new { |h, k| h[k] = NumericHistogram.new(histogram_size) }
     end
 
     def stored!(request)
@@ -56,7 +46,7 @@ module ScoutApm
     # they go up to "regionals" and are compared against the other processes
     # running on a node.
     def score(request)
-      unique_name = unique_name_for(request)
+      unique_name = request.unique_name
       if unique_name == :unknown
         return -1 # A negative score, should never be good enough to store.
       end
@@ -66,10 +56,8 @@ module ScoutApm
       # How long has it been since we've seen this?
       age = Time.now - last_seen[unique_name]
 
-      # Always store off histogram time
-      histogram = histograms[unique_name]
-      histogram.add(total_time)
-      percentile = histogram.approximate_quantile_of_value(total_time)
+      # What approximate percentile was this request?
+      percentile = ScoutApm::Agent.instance.request_histograms.approximate_quantile_of_value(unique_name, total_time)
 
       return speed_points(total_time) + percentile_points(percentile) + age_points(age)
     end
@@ -93,7 +81,18 @@ module ScoutApm
     end
 
     def percentile_points(percentile)
-      percentile * POINT_MULTIPLIER_PERCENTILE
+      if percentile < 40
+        0.4 # Don't put much emphasis on capturing low percentiles.
+      elsif percentile < 60
+        1.4 # Highest here to get mean traces
+      elsif percentile < 90
+        0.7 # Between 60 & 90% is fine.
+      elsif percentile >= 90
+        1.4 # Highest here to get 90+%ile traces
+      else
+        # impossible.
+        percentile
+      end
     end
 
     def age_points(age)
