@@ -1,3 +1,7 @@
+# 1.5.3
+
+* Fix another minor bug related to iso8601 timestamps
+
 # 1.5.2
 
 * Force timestamps to be iso8601 format
