@@ -60,7 +60,7 @@ module ScoutApm
           when Numeric
             formatee
           when Time
-            formatee.iso8601
+            %Q["#{formatee.iso8601}"]
           when nil
             "null"
           else # strings and everything
