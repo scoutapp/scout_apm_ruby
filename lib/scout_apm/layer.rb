@@ -40,7 +40,7 @@ module ScoutApm
     #   :class_name   - The ActiveRecord class name (From notification instantiation.active_record)
     attr_reader :annotations
 
-    BACKTRACE_CALLER_LIMIT = 30 # maximum number of lines to send thru for backtrace analysis
+    BACKTRACE_CALLER_LIMIT = 50 # maximum number of lines to send thru for backtrace analysis
 
     def initialize(type, name, start_time = Time.now)
       @type = type
