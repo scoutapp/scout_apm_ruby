@@ -17,8 +17,10 @@ module ScoutApm
 
     # TODO: Parse & return a real response object, not the HTTP Response object
     def report(payload, headers = {})
-      Array(config.value('host')).each do |host|
+      # Some posts (typically ones under development) bypass the ingestion pipeline and go directly to the webserver. They use direct_host instead of host
+      hosts = [:deploy_hook, :instant_trace].include?(type) ? config.value('direct_host') : config.value('host')
 
+      Array(hosts).each do |host|
         full_uri = uri(host)
         response = post(full_uri, payload, headers)
         unless response && response.is_a?(Net::HTTPSuccess)
