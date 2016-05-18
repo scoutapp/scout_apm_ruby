@@ -105,6 +105,9 @@ module ScoutApm
       # Sidekiq, only to throw them away immediately.
       return false unless (web? || job?)
 
+      # force a backtrace
+      return true
+
       # Capture any individually slow layer.
       return true if layer.total_exclusive_time > BACKTRACE_THRESHOLD
 
