@@ -23,11 +23,15 @@ module ScoutApm
         @metrics[meta].combine!(stat)
 
       elsif meta.type == "Errors" # Sadly special cased, we want both raw and aggregate values
-        @metrics[meta] ||= MetricStats.new
-        @metrics[meta].combine!(stat)
-        agg_meta = MetricMeta.new("Errors/Request", :scope => meta.scope)
-        @metrics[agg_meta] ||= MetricStats.new
-        @metrics[agg_meta].combine!(stat)
+        # When combining MetricSets between different 
+          @metrics[meta] ||= MetricStats.new
+          @metrics[meta].combine!(stat)
+
+        if !@combine_in_progress
+          agg_meta = MetricMeta.new("Errors/Request", :scope => meta.scope)
+          @metrics[agg_meta] ||= MetricStats.new
+          @metrics[agg_meta].combine!(stat)
+        end
 
       else # Combine down to a single /all key
         agg_meta = MetricMeta.new("#{meta.type}/all", :scope => meta.scope)
@@ -37,7 +41,9 @@ module ScoutApm
     end
 
     def combine!(other)
+      @combine_in_progress = true
       absorb_all(other.metrics)
+      @combine_in_progress = false
       self
     end
   end
