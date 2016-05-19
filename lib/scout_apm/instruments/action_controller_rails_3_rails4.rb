@@ -61,7 +61,10 @@ module ScoutApm
         req = ScoutApm::RequestManager.lookup
         path = ScoutApm::Agent.instance.config.value("uri_reporting") == 'path' ? request.path : request.fullpath
         req.annotate_request(:uri => path)
-        req.context.add_user(:ip => request.remote_ip)
+
+        # IP Spoofing Protection can throw an exception, just move on w/o remote ip
+        req.context.add_user(:ip => request.remote_ip) rescue nil
+
         req.set_headers(request.headers)
         req.web!
 
