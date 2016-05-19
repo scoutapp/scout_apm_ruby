@@ -22,7 +22,7 @@ module ScoutApm
     # Save newly collected metrics
     def track!(metrics, options={})
       @mutex.synchronize {
-        current_period.merge_metrics!(metrics)
+        current_period.absorb_metrics!(metrics)
       }
     end
 
@@ -129,11 +129,27 @@ module ScoutApm
       @jobs = Hash.new
     end
 
+    # Merges another StoreReportingPeriod into this one
+    def merge(new_val)
+      self.
+        merge_metrics!(new_val.metric_set).
+        merge_slow_transactions!(new_val.slow_transactions).
+        merge_jobs!(new_val.jobs)
+    end
+
     #################################
     # Add metrics as they are recorded
     #################################
-    def merge_metrics!(metrics)
+
+    # For absorbing an array of metric {Meta => Stat} records
+    def absorb_metrics!(metrics)
       metric_set.absorb_all(metrics)
+      self
+    end
+
+    # For merging when you have another metric_set object
+    def merge_metrics!(other_metric_set)
+      metric_set.combine!(other_metric_set)
       self
     end
 

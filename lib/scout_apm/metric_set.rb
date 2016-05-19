@@ -40,6 +40,9 @@ module ScoutApm
       end
     end
 
+    # Sets a combine_in_progress flag to prevent double-counting Error metrics.
+    # Without it, the Errors/Request number would be increasingly off as
+    # metric_sets get merged in.
     def combine!(other)
       @combine_in_progress = true
       absorb_all(other.metrics)
