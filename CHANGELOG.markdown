@@ -1,3 +1,8 @@
+# 1.5.4
+
+* Fix issue where error counts were being misreported
+* Politely ignore cases when `request.remote_ip` raises exceptions.
+
 # 1.5.3
 
 * Fix another minor bug related to iso8601 timestamps
