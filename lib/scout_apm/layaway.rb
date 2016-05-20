@@ -18,10 +18,7 @@ module ScoutApm
           new_req = new_val.request_count
           ScoutApm::Agent.instance.logger.debug("Merging Two reporting periods (#{old_val.timestamp.to_s}, #{new_val.timestamp.to_s}): old req #{old_req}, new req #{new_req}")
 
-          old_val.
-            merge_metrics!(new_val.metrics_payload).
-            merge_slow_transactions!(new_val.slow_transactions_payload).
-            merge_jobs!(new_val.jobs)
+          old_val.merge(new_val)
         }
 
         ScoutApm::Agent.instance.logger.debug("AddReportingPeriod: AfterMerge Timestamps: #{existing_data.keys.map(&:to_s).inspect}")

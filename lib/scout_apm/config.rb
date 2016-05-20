@@ -7,14 +7,15 @@ require 'scout_apm/environment'
 #
 # application_root - override the detected directory of the application
 # data_file        - override the default temporary storage location. Must be a location in a writable directory
-# hostname         - override the default hostname detection. Default varies by environment - either system hostname, or PAAS hostname
+# host             - override the default hostname detection. Default varies by environment - either system hostname, or PAAS hostname
+# direct_host      - override the default "direct" host. The direct_host bypasses the ingestion pipeline and goes directly to the webserver, and is primarily used for features under development.
 # key              - the account key with Scout APM. Found in Settings in the Web UI
 # log_file_path    - either a directory or "STDOUT".
 # log_level        - DEBUG / INFO / WARN as usual
 # monitor          - true or false.  False prevents any instrumentation from starting
 # name             - override the name reported to APM. This is the name that shows in the Web UI
 # uri_reporting    - 'path' or 'full_path' default is 'full_path', which reports URL params as well as the path.
-# report_format    - 'json' or 'marshal'. Json is default, Marshal is deprecated
+# report_format    - 'json' or 'marshal'. Marshal is legacy and will be removed.
 #
 # Any of these config settings can be set with an environment variable prefixed
 # by SCOUT_ and uppercasing the key: SCOUT_LOG_LEVEL for instance.
@@ -65,6 +66,7 @@ module ScoutApm
     class ConfigDefaults
       DEFAULTS = {
         'host'                   => 'https://checkin.scoutapp.com',
+        'direct_host'            => 'https://apm.scoutapp.com',
         'log_level'              => 'info',
         'stackprof_interval'     => 20000, # microseconds, 1000 = 1 millisecond, so 20k == 20 milliseconds
         'uri_reporting'          => 'full_path',

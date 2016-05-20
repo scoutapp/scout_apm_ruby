@@ -6,6 +6,15 @@
   * hostname
   * seconds_since_startup (larger memory increases and other other odd behavior more common when close to startup)
 
+# 1.5.4
+
+* Fix issue where error counts were being misreported
+* Politely ignore cases when `request.remote_ip` raises exceptions.
+
+# 1.5.3
+
+* Fix another minor bug related to iso8601 timestamps
+
 # 1.5.2
 
 * Force timestamps to be iso8601 format
