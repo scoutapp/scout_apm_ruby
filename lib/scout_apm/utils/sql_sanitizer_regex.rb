@@ -13,8 +13,8 @@ module ScoutApm
 
       MYSQL_VAR_INTERPOLATION = %r|\[\[.*\]\]\s*$|.freeze
       MYSQL_REMOVE_INTEGERS = /(?<!LIMIT )\b\d+\b/.freeze
-      MYSQL_REMOVE_SINGLE_QUOTE_STRINGS = /'(?:[^']|'')*'/.freeze
-      MYSQL_REMOVE_DOUBLE_QUOTE_STRINGS = /"(?:[^"]|"")*"/.freeze
+      MYSQL_REMOVE_SINGLE_QUOTE_STRINGS = %r{'(?:\\'|[^']|'')*'}.freeze
+      MYSQL_REMOVE_DOUBLE_QUOTE_STRINGS = %r{"(?:\\"|[^"]|"")*"}.freeze
       MYSQL_IN_CLAUSE = /IN\s+\(\?[^\)]*\)/.freeze
 
       SQLITE_VAR_INTERPOLATION = %r|\[\[.*\]\]\s*$|.freeze
