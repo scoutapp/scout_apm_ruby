@@ -1,3 +1,7 @@
+# 1.5.5
+
+* Handle backslash escaped quotes inside mysql strings.
+
 # 1.5.4
 
 * Fix issue where error counts were being misreported
