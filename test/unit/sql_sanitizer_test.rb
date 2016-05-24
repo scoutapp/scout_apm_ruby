@@ -85,6 +85,12 @@ module ScoutApm
         assert_equal %q|SELECT `blogs`.* FROM `blogs` WHERE (title = ?)|, ss.to_s
       end
 
+      def test_mysql_quotes
+        sql = %q|INSERT INTO `users` VALUES ('foo', 'b\'ar')|
+        ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :mysql }
+        assert_equal %q|INSERT INTO `users` VALUES (?, ?)|, ss.to_s
+      end
+
       def test_scrubs_invalid_encoding
         sql = "SELECT `blogs`.* FROM `blogs` WHERE (title = 'a\255c')".force_encoding('UTF-8')
         assert_equal false, sql.valid_encoding?
