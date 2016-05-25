@@ -84,12 +84,11 @@ module ScoutApm
     end
 
     def root
-      return deploy_integration.root if deploy_integration
-      framework_root
+      @root ||= deploy_integration? ? deploy_integration.root : framework_root
     end
 
     def framework_root
-      if override_root = Agent.instance.config.value("application_root", true)
+      if override_root = Agent.instance.config.value("application_root")
         return override_root
       end
       if framework == :rails
@@ -104,8 +103,7 @@ module ScoutApm
     end
 
     def hostname
-      config_hostname = Agent.instance.config.value("hostname", !Agent.instance.config.config_file_exists?)
-      @hostname ||= config_hostname || platform_integration.hostname
+      @hostname ||= Agent.instance.config.value("hostname") || platform_integration.hostname
     end
 
     # Returns the whole integration object
@@ -130,7 +128,7 @@ module ScoutApm
     end
 
     def background_job_integration
-      if Agent.instance.config.value("enable_background_jobs", !Agent.instance.config.config_file_exists?)
+      if Agent.instance.config.value("enable_background_jobs")
         @background_job_integration ||= BACKGROUND_JOB_INTEGRATIONS.detect {|integration| integration.present?}
       else
         nil
@@ -169,6 +167,18 @@ module ScoutApm
 
     def ruby_2?
       @ruby_2 ||= defined?(RUBY_VERSION) && RUBY_VERSION.match(/^2/)
+    end
+
+    # Returns a string representation of the OS (ex: darwin, linux)
+    def os
+      return @os if @os
+      raw_os = RbConfig::CONFIG['target_os']
+      match = raw_os.match(/([a-z]+)/)
+      if match
+        @os = match[1]
+      else
+        @os = raw_os
+      end
     end
 
     ### framework checks

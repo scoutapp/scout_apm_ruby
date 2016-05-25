@@ -22,7 +22,7 @@ module ScoutApm
 
         def rearrange_the_slow_transactions(slow_transactions)
           slow_transactions.to_a.map do |slow_t|
-            slow_t.as_json.merge(:metrics => rearrange_the_metrics(slow_t.metrics))
+            slow_t.as_json.merge(:metrics => rearrange_the_metrics(slow_t.metrics), :allocation_metrics => rearrange_the_metrics(slow_t.allocation_metrics))
           end
         end
 

@@ -23,6 +23,7 @@ begin
 rescue LoadError
   require 'scout_apm/utils/fake_stack_prof'
 end
+require 'rusage'
 
 #####################################
 # Internal Requires
@@ -42,6 +43,7 @@ require 'scout_apm/layer_converters/slow_job_converter'
 require 'scout_apm/layer_converters/metric_converter'
 require 'scout_apm/layer_converters/slow_request_converter'
 require 'scout_apm/layer_converters/request_queue_time_converter'
+require 'scout_apm/layer_converters/allocation_metric_converter'
 
 require 'scout_apm/server_integrations/passenger'
 require 'scout_apm/server_integrations/puma'
@@ -86,14 +88,16 @@ require 'scout_apm/instruments/sinatra'
 require 'scout_apm/instruments/process/process_cpu'
 require 'scout_apm/instruments/process/process_memory'
 require 'scout_apm/instruments/percentile_sampler'
+require 'allocations'
 
 require 'scout_apm/app_server_load'
 
-require 'scout_apm/utils/sql_sanitizer'
-require 'scout_apm/utils/backtrace_parser'
 require 'scout_apm/utils/active_record_metric_name'
-require 'scout_apm/utils/null_logger'
+require 'scout_apm/utils/backtrace_parser'
 require 'scout_apm/utils/installed_gems'
+require 'scout_apm/utils/klass_helper'
+require 'scout_apm/utils/null_logger'
+require 'scout_apm/utils/sql_sanitizer'
 require 'scout_apm/utils/time'
 require 'scout_apm/utils/unique_id'
 

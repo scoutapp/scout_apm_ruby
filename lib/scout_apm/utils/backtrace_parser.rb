@@ -6,21 +6,21 @@ module ScoutApm
   module Utils
     class BacktraceParser
 
+      APP_FRAMES = 3 # will return up to 3 frames from the app stack.
+
       def initialize(call_stack)
         @call_stack = call_stack
         # We can't use a constant as it'd be too early to fetch environment info
         @@app_dir_regex ||= /\A(#{ScoutApm::Environment.instance.root.to_s.gsub('/','\/')}\/)(app\/(.+))/.freeze
       end
 
-      # Given a call stack Array, grabs the first call within the application root directory.
+      # Given a call stack Array, grabs the first +APP_FRAMES+ callers within the application root directory.
       def call
-        # We used to return an array of up to 5 elements...this will return a single element-array for backwards compatibility.
-        # Only the first element is used in Github code display.
         stack = []
         @call_stack.each_with_index do |c,i|
           if m = c.match(@@app_dir_regex)
             stack << m[2]
-            break
+            break if stack.size == APP_FRAMES
           end
         end
         stack

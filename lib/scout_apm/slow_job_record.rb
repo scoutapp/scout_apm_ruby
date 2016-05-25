@@ -14,8 +14,13 @@ module ScoutApm
     alias_method :total_call_time, :total_time
 
     attr_reader :metrics
+    attr_reader :allocation_metrics
+    attr_reader :mem_delta
+    attr_reader :allocations
+    attr_reader :hostname
+    attr_reader :seconds_since_startup
 
-    def initialize(queue_name, job_name, time, total_time, exclusive_time, context, metrics)
+    def initialize(queue_name, job_name, time, total_time, exclusive_time, context, metrics, allocation_metrics, mem_delta, allocations)
       @queue_name = queue_name
       @job_name = job_name
       @time = time
@@ -23,6 +28,12 @@ module ScoutApm
       @exclusive_time = exclusive_time
       @context = context
       @metrics = metrics
+      @allocation_metrics = allocation_metrics
+      @mem_delta = mem_delta
+      @allocations = allocations
+      @seconds_since_startup = (Time.now - ScoutApm::Agent.instance.process_start_time)
+      @hostname = ScoutApm::Environment.instance.hostname
+      ScoutApm::Agent.instance.logger.debug { "Slow Job [#{metric_name}] - Call Time: #{total_call_time} Mem Delta: #{mem_delta}"}
     end
 
     def metric_name
