@@ -54,11 +54,8 @@ module ScoutApm
       @root_layer = nil
       @stackprof = nil
       @error = false
-<<<<<<< HEAD
       @instant_key = nil
-=======
       @mem_start = mem_usage
->>>>>>> policy_points_mem
     end
 
     def start_layer(layer)
