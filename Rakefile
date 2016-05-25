@@ -17,3 +17,8 @@ task :console do
   ARGV.clear
   IRB.start
 end
+
+# Rake Compiler
+require 'rake/extensiontask'
+Rake::ExtensionTask.new('allocations')
+
