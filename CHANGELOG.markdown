@@ -1,3 +1,7 @@
+# 2.0.1
+
+* Initial support for instant traces
+
 # 2.0.0
 
 * Reporting object allocation metrics and mem delta with slow requests and jobs.
