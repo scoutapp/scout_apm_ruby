@@ -15,7 +15,9 @@ module ScoutApm
 
     attr_reader :metrics
 
-    def initialize(queue_name, job_name, time, total_time, exclusive_time, context, metrics)
+    attr_reader :score
+
+    def initialize(queue_name, job_name, time, total_time, exclusive_time, context, metrics, score)
       @queue_name = queue_name
       @job_name = job_name
       @time = time
@@ -23,10 +25,27 @@ module ScoutApm
       @exclusive_time = exclusive_time
       @context = context
       @metrics = metrics
+      @score = score
     end
 
     def metric_name
       "Job/#{queue_name}/#{job_name}"
+    end
+
+    ########################
+    # Scorable interface
+    #
+    # Needed so we can merge ScoredItemSet instances
+    def call
+      self
+    end
+
+    def name
+      metric_name
+    end
+
+    def score
+      @score
     end
 
   end

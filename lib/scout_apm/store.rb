@@ -124,18 +124,20 @@ module ScoutApm
       @timestamp = timestamp
 
       @request_traces = ScoredItemSet.new
-      @job_traces = SlowItemSet.new
+      @job_traces = ScoredItemSet.new
 
       @metric_set = MetricSet.new
       @jobs = Hash.new
     end
 
     # Merges another StoreReportingPeriod into this one
-    def merge(new_val)
+    def merge(other)
       self.
-        merge_metrics!(new_val.metric_set).
-        merge_slow_transactions!(new_val.slow_transactions).
-        merge_jobs!(new_val.jobs)
+        merge_metrics!(other.metric_set).
+        merge_slow_transactions!(other.slow_transactions_payload).
+        merge_jobs!(other.jobs).
+        merge_slow_jobs!(other.slow_jobs_payload)
+      self
     end
 
     #################################
