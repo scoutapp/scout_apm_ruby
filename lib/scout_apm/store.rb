@@ -111,7 +111,7 @@ module ScoutApm
     # A ScoredItemSet holding the "best" traces for the period
     attr_reader :request_traces
 
-    # A SlowItemSet holding the "best" traces for the period
+    # A ScoredItemSet holding the "best" traces for the period
     attr_reader :job_traces
 
     # A StoreReportingPeriodTimestamp representing the time that this
@@ -124,18 +124,20 @@ module ScoutApm
       @timestamp = timestamp
 
       @request_traces = ScoredItemSet.new
-      @job_traces = SlowItemSet.new
+      @job_traces = ScoredItemSet.new
 
       @metric_set = MetricSet.new
       @jobs = Hash.new
     end
 
     # Merges another StoreReportingPeriod into this one
-    def merge(new_val)
+    def merge(other)
       self.
-        merge_metrics!(new_val.metric_set).
-        merge_slow_transactions!(new_val.slow_transactions).
-        merge_jobs!(new_val.jobs)
+        merge_metrics!(other.metric_set).
+        merge_slow_transactions!(other.slow_transactions_payload).
+        merge_jobs!(other.jobs).
+        merge_slow_jobs!(other.slow_jobs_payload)
+      self
     end
 
     #################################
@@ -149,6 +151,7 @@ module ScoutApm
     end
 
     # For merging when you have another metric_set object
+    # Makes sure that you don't duplicate error count records
     def merge_metrics!(other_metric_set)
       metric_set.combine!(other_metric_set)
       self
@@ -163,7 +166,7 @@ module ScoutApm
     end
 
     def merge_jobs!(jobs)
-      jobs.each do |job|
+      Array(jobs).each do |job|
         if @jobs.has_key?(job)
           @jobs[job].combine!(job)
         else
@@ -178,6 +181,8 @@ module ScoutApm
       Array(new_jobs).each do |job|
         job_traces << job
       end
+
+      self
     end
 
     #################################

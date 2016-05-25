@@ -220,8 +220,8 @@ module ScoutApm
     def record!
       @recorded = true
 
-      # Update histograms
-      if web? && unique_name != :unknown
+      # Update immediate and long-term histograms for both job and web requests
+      if unique_name != :unknown
         ScoutApm::Agent.instance.request_histograms.add(unique_name, root_layer.total_call_time)
         ScoutApm::Agent.instance.request_histograms_resettable.add(unique_name, root_layer.total_call_time)
       end
@@ -229,30 +229,37 @@ module ScoutApm
       metrics = LayerConverters::MetricConverter.new(self).call
       ScoutApm::Agent.instance.store.track!(metrics)
 
-      # Don't #call this - that's the job of the ScoredItemSet later.
-      slow_converter = LayerConverters::SlowRequestConverter.new(self)
-      ScoutApm::Agent.instance.store.track_slow_transaction!(slow_converter)
-
       error_metrics = LayerConverters::ErrorConverter.new(self).call
       ScoutApm::Agent.instance.store.track!(error_metrics)
-
-      queue_time_metrics = LayerConverters::RequestQueueTimeConverter.new(self).call
-      ScoutApm::Agent.instance.store.track!(queue_time_metrics)
-
-      job = LayerConverters::JobConverter.new(self).call
-      ScoutApm::Agent.instance.store.track_job!(job)
-
-      slow_job = LayerConverters::SlowJobConverter.new(self).call
-      ScoutApm::Agent.instance.store.track_slow_job!(slow_job)
 
       allocation_metrics = LayerConverters::AllocationMetricConverter.new(self).call
       ScoutApm::Agent.instance.store.track!(allocation_metrics)
 
-      # If there's an instant_key, it means we need to report this right away
-      if instant?
-        trace = slow_converter.call
-        ScoutApm::InstantReporting.new(trace, instant_key).call()
+      if web?
+        # Don't #call this - that's the job of the ScoredItemSet later.
+        slow_converter = LayerConverters::SlowRequestConverter.new(self)
+        ScoutApm::Agent.instance.store.track_slow_transaction!(slow_converter)
+
+        queue_time_metrics = LayerConverters::RequestQueueTimeConverter.new(self).call
+        ScoutApm::Agent.instance.store.track!(queue_time_metrics)
+
+        # If there's an instant_key, it means we need to report this right away
+        if instant?
+          trace = slow_converter.call
+          ScoutApm::InstantReporting.new(trace, instant_key).call()
+        end
       end
+
+      if job?
+        job_metrics = LayerConverters::JobConverter.new(self).call
+        ScoutApm::Agent.instance.store.track_job!(job_metrics)
+
+        job_converter = LayerConverters::SlowJobConverter.new(self)
+        ScoutApm::Agent.instance.store.track_slow_job!(job_converter)
+      end
+
+      allocation_metrics = LayerConverters::AllocationMetricConverter.new(self).call
+      ScoutApm::Agent.instance.store.track!(allocation_metrics)
 
     end
 

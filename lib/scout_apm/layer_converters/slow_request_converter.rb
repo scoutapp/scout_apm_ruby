@@ -5,16 +5,16 @@ module ScoutApm
         @backtraces = [] # An Array of MetricMetas that have a backtrace
         super
 
-        # After call to super, to populate @request
-        @points = ScoutApm::Agent.instance.slow_request_policy.score(request)
+        # After call to super, so @request is populated
+        @points = if request.web?
+                    ScoutApm::Agent.instance.slow_request_policy.score(request)
+                  else
+                    -1
+                  end
       end
 
       def name
-        if scope_layer
-          scope_layer.legacy_metric_name
-        else
-          nil
-        end
+        request.unique_name
       end
 
       def score

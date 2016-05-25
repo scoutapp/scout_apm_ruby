@@ -24,6 +24,8 @@ module ScoutApm
             "metrics" => MetricsToJsonSerializer.new(job.metrics).as_json, # New style of metrics
             "allocation_metrics" => MetricsToJsonSerializer.new(job.allocation_metrics).as_json, # New style of metrics
             "context" => job.context.to_hash,
+
+            "score" => job.score,
           }
         end
       end

@@ -30,6 +30,7 @@ module ScoutApm
 
     # This function is a large if statement, with a few branches. See inline comments for each branch.
     def <<(new_item)
+      return if new_item.name == :unknown
 
       # If we have this item in the hash already, compare the new & old ones, and store
       # the new one only if it's higher score.
