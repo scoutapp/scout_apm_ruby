@@ -39,8 +39,8 @@ module ScoutApm
       @options ||= options
       @config = ScoutApm::Config.new(options[:config_path])
 
-      @slow_job_policy = ScoutApm::SlowJobPolicy.new
       @slow_request_policy = ScoutApm::SlowRequestPolicy.new
+      @slow_job_policy = ScoutApm::SlowJobPolicy.new
       @request_histograms = ScoutApm::RequestHistograms.new
       @request_histograms_resettable = ScoutApm::RequestHistograms.new
 

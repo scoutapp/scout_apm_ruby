@@ -1,8 +1,5 @@
 # Long running class that determines if, and in how much detail a potentially
 # slow transaction should be recorded in
-#
-# Rules:
-#   - Runtime must be slower than a threshold
 
 module ScoutApm
   class SlowRequestPolicy

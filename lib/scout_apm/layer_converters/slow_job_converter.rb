@@ -102,7 +102,6 @@ module ScoutApm
       end
 
       def attach_backtraces(metric_hash)
-        ScoutApm::Agent.instance.logger.info("Attaching backtraces to job #{@backtraces}")
         @backtraces.each do |meta_with_backtrace|
           metric_hash.keys.find { |k| k == meta_with_backtrace }.backtrace = meta_with_backtrace.backtrace
         end

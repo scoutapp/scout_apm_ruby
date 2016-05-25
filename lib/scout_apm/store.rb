@@ -111,7 +111,7 @@ module ScoutApm
     # A ScoredItemSet holding the "best" traces for the period
     attr_reader :request_traces
 
-    # A SlowItemSet holding the "best" traces for the period
+    # A ScoredItemSet holding the "best" traces for the period
     attr_reader :job_traces
 
     # A StoreReportingPeriodTimestamp representing the time that this
@@ -149,6 +149,7 @@ module ScoutApm
     end
 
     # For merging when you have another metric_set object
+    # Makes sure that you don't duplicate error count records
     def merge_metrics!(other_metric_set)
       metric_set.combine!(other_metric_set)
       self
@@ -163,7 +164,7 @@ module ScoutApm
     end
 
     def merge_jobs!(jobs)
-      jobs.each do |job|
+      Array(jobs).each do |job|
         if @jobs.has_key?(job)
           @jobs[job].combine!(job)
         else
@@ -178,6 +179,8 @@ module ScoutApm
       Array(new_jobs).each do |job|
         job_traces << job
       end
+
+      self
     end
 
     #################################
