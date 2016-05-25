@@ -19,10 +19,12 @@ module ScoutApm
       #       render :update
       #     end
       def scope_layer
-        @scope_layer ||= walker.walk do |layer|
-          if layer.type == "Controller"
-            break layer
-          end
+        @scope_layer ||= find_first_layer_of_type("Controller") || find_first_layer_of_type("Job")
+      end
+
+      def find_first_layer_of_type(layer_type)
+        walker.walk do |layer|
+          return layer if layer.type == layer_type
         end
       end
     end

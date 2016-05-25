@@ -4,15 +4,29 @@ module ScoutApm
       def initialize(*)
         @backtraces = []
         super
+
+        # After call to super, so @request is populated
+        @points = if request.job?
+                    ScoutApm::Agent.instance.slow_job_policy.score(request)
+                  else
+                    -1
+                  end
+      end
+
+      def name
+        request.unique_name
+      end
+
+      def score
+        @points
       end
 
       def call
-        return unless request.job?
+        return nil unless request.job?
+        return nil unless queue_layer
+        return nil unless job_layer
 
-        job_name = [queue_layer.name, job_layer.name]
-
-        slow_enough = ScoutApm::Agent.instance.slow_job_policy.slow?(job_name, root_layer.total_call_time)
-        return unless slow_enough
+        ScoutApm::Agent.instance.slow_job_policy.stored!(request)
 
         # record the change in memory usage
         mem_delta = ScoutApm::Instruments::Process::ProcessMemory.rss_to_mb(request.capture_mem_delta!)
@@ -32,8 +46,8 @@ module ScoutApm
           timing_metrics,
           allocation_metrics,
           mem_delta,
-          job_layer.total_allocations
-        )
+          job_layer.total_allocations,
+          score)
       end
 
       def queue_layer
@@ -42,12 +56,6 @@ module ScoutApm
 
       def job_layer
         @job_layer ||= find_first_layer_of_type("Job")
-      end
-
-      def find_first_layer_of_type(layer_type)
-        walker.walk do |layer|
-          return layer if layer.type == layer_type
-        end
       end
 
       def create_metrics

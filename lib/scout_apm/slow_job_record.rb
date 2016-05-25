@@ -19,8 +19,9 @@ module ScoutApm
     attr_reader :allocations
     attr_reader :hostname
     attr_reader :seconds_since_startup
+    attr_reader :score
 
-    def initialize(queue_name, job_name, time, total_time, exclusive_time, context, metrics, allocation_metrics, mem_delta, allocations)
+    def initialize(queue_name, job_name, time, total_time, exclusive_time, context, metrics, allocation_metrics, mem_delta, allocations, score)
       @queue_name = queue_name
       @job_name = job_name
       @time = time
@@ -33,6 +34,7 @@ module ScoutApm
       @allocations = allocations
       @seconds_since_startup = (Time.now - ScoutApm::Agent.instance.process_start_time)
       @hostname = ScoutApm::Environment.instance.hostname
+      @score = score
       ScoutApm::Agent.instance.logger.debug { "Slow Job [#{metric_name}] - Call Time: #{total_call_time} Mem Delta: #{mem_delta}"}
     end
 
@@ -40,5 +42,20 @@ module ScoutApm
       "Job/#{queue_name}/#{job_name}"
     end
 
+    ########################
+    # Scorable interface
+    #
+    # Needed so we can merge ScoredItemSet instances
+    def call
+      self
+    end
+
+    def name
+      metric_name
+    end
+
+    def score
+      @score
+    end
   end
 end

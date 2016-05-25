@@ -47,8 +47,8 @@ module ScoutApm
       # Later in initialization, we reset @config to include the file.
       @config = ScoutApm::Config.without_file
 
-      @slow_job_policy = ScoutApm::SlowJobPolicy.new
       @slow_request_policy = ScoutApm::SlowRequestPolicy.new
+      @slow_job_policy = ScoutApm::SlowJobPolicy.new
       @request_histograms = ScoutApm::RequestHistograms.new
       @request_histograms_resettable = ScoutApm::RequestHistograms.new
 
