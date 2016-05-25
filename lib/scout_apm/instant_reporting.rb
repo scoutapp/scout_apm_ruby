@@ -33,7 +33,6 @@ module ScoutApm
         # Hand it off to the reporter for POST to our servers
         reporter = Reporter.new(:instant_trace, config = Agent.instance.config, logger = Agent.instance.logger, instant_key = @instant_key)
         reporter.report(payload, {'Content-Type' => 'application/json'} )
-        Agent.instance.logger.info("**** DONE in InstantReporting *** ")
       end
     end
 

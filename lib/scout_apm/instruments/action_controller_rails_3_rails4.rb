@@ -69,7 +69,7 @@ module ScoutApm
 
         # Check if this this request is to be reported instantly
         if instant_key = request.cookies['scoutapminstant']
-          logger.info "Got an instant profile request with key=#{instant_key}"
+          Agent.instance.logger.info "Instant trace request with key=#{instant_key} for path=#{path}"
           req.instant_key = instant_key
         end
 
