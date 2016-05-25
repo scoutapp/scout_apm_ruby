@@ -64,8 +64,11 @@ module ScoutApm
         req.context.add_user(:ip => request.remote_ip)
         req.set_headers(request.headers)
 
-        # read headers, check if it's an immediately profiled request
-        # req.realtime!
+        # Check if this this request is to be reported instantly
+        if instant_key = request.cookies['scoutapminstant']
+          logger.info "Got an instant profile request with key=#{instant_key}"
+          req.instant_key = instant_key
+        end
 
         req.web!
 

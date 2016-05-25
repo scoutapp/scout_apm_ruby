@@ -113,6 +113,7 @@ require 'scout_apm/store'
 require 'scout_apm/tracer'
 require 'scout_apm/context'
 require 'scout_apm/stackprof_tree_collapser'
+require 'scout_apm/instant_reporting'
 
 require 'scout_apm/metric_meta'
 require 'scout_apm/metric_stats'
