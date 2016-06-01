@@ -201,9 +201,11 @@ module ScoutApm
         store.write_to_layaway(layaway, :force)
       end
 
-      # Make sure we don't exit the process while the background worker is running its task.
-      logger.debug "Joining background worker thread"
-      @background_worker_thread.join if @background_worker_thread
+      # make sure we don't exit the process while the background worker is running its task. Bypass this step in development.
+      if environment.env != 'development'
+        logger.debug "Joining background worker thread"
+        @background_worker_thread.join if @background_worker_thread
+      end
     end
 
     def started?

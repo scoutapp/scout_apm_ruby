@@ -8,11 +8,13 @@ module ScoutApm
     attr_reader :config
     attr_reader :logger
     attr_reader :type
+    attr_reader :instant_key
 
-    def initialize(type = :checkin, config=Agent.instance.config, logger=Agent.instance.logger)
+    def initialize(type = :checkin, config=Agent.instance.config, logger=Agent.instance.logger, instant_key=nil)
       @config = config
       @logger = logger
       @type = type
+      @instant_key = instant_key
     end
 
     # TODO: Parse & return a real response object, not the HTTP Response object
@@ -36,7 +38,9 @@ module ScoutApm
       when :app_server_load
         URI.parse("#{host}/apps/app_server_load.scout?key=#{config.value('key')}&name=#{CGI.escape(Environment.instance.application_name)}")
       when :deploy_hook
-        URI.parse("https://apm.scoutapp.com/apps/deploy.scout?key=#{config.value('key')}&name=#{CGI.escape(config.value('name'))}")
+        URI.parse("#{host}/apps/deploy.scout?key=#{config.value('key')}&name=#{CGI.escape(config.value('name'))}")
+      when :instant_trace
+        URI.parse("#{host}/apps/instant_trace.scout?key=#{config.value('key')}&name=#{CGI.escape(config.value('name'))}&instant_key=#{instant_key}")
       end.tap{|u| logger.debug("Posting to #{u.to_s}")}
     end
 

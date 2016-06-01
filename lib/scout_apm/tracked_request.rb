@@ -39,6 +39,10 @@ module ScoutApm
     # with same names across multiple types.
     attr_accessor :call_counts
 
+    # if there's an instant_key, pass the transaction trace on for immediate reporting (in addition to the usual background aggregation)
+    # this is set in the controller instumentation (ActionControllerRails3Rails4 according)
+    attr_accessor :instant_key
+
     BACKTRACE_THRESHOLD = 0.5 # the minimum threshold in seconds to record the backtrace for a metric.
 
     def initialize
@@ -50,6 +54,7 @@ module ScoutApm
       @root_layer = nil
       @stackprof = nil
       @error = false
+      @instant_key = nil
       @mem_start = mem_usage
     end
 
@@ -202,6 +207,10 @@ module ScoutApm
       request_type == "web"
     end
 
+    def instant?
+      instant_key
+    end
+
     ###################################
     # Persist the Request
     ###################################
@@ -233,6 +242,12 @@ module ScoutApm
 
         queue_time_metrics = LayerConverters::RequestQueueTimeConverter.new(self).call
         ScoutApm::Agent.instance.store.track!(queue_time_metrics)
+
+        # If there's an instant_key, it means we need to report this right away
+        if instant?
+          trace = slow_converter.call
+          ScoutApm::InstantReporting.new(trace, instant_key).call()
+        end
       end
 
       if job?
@@ -242,6 +257,10 @@ module ScoutApm
         job_converter = LayerConverters::SlowJobConverter.new(self)
         ScoutApm::Agent.instance.store.track_slow_job!(job_converter)
       end
+
+      allocation_metrics = LayerConverters::AllocationMetricConverter.new(self).call
+      ScoutApm::Agent.instance.store.track!(allocation_metrics)
+
     end
 
     # Only call this after the request is complete

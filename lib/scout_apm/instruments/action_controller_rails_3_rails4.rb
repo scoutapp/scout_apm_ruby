@@ -66,6 +66,13 @@ module ScoutApm
         req.context.add_user(:ip => request.remote_ip) rescue nil
 
         req.set_headers(request.headers)
+
+        # Check if this this request is to be reported instantly
+        if instant_key = request.cookies['scoutapminstant']
+          Agent.instance.logger.info "Instant trace request with key=#{instant_key} for path=#{path}"
+          req.instant_key = instant_key
+        end
+
         req.web!
 
         req.start_layer( ScoutApm::Layer.new("Controller", "#{controller_path}/#{action_name}") )
