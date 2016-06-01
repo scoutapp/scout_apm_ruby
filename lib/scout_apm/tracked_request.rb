@@ -72,6 +72,17 @@ module ScoutApm
       return if ignoring_children?
 
       layer = @layers.pop
+
+      # Safeguard against a mismatch in the layer tracking in an instrument.
+      # This class works under the assumption that start & stop layers are
+      # lined up correctly. If stop_layer gets called twice, when it should
+      # only have been called once you'll end up with this error.
+      if layer.nil?
+        ScoutApm::Agent.instance.logger.warn("Error stopping layer, was nil. Root Layer: #{@root_layer.inspect}")
+        stop_request
+        return
+      end
+
       layer.record_stop_time!
       layer.record_allocations!
 
@@ -92,7 +103,7 @@ module ScoutApm
     # instrumentation early, and gradually learn more about the request that
     # actually happened as we go (for instance, the # of records found, or the
     # actual SQL generated).
-    # 
+    #
     # Returns nil in the case there is no current layer. That would be normal
     # for a completed TrackedRequest
     def current_layer
