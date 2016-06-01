@@ -1,6 +1,3 @@
-# 2.0.1
-
-* Initial support for instant traces
 
 # 2.0.0
 
@@ -9,6 +6,8 @@
 * Collecting additional fields for slow transactions:
   * hostname
   * seconds_since_startup (larger memory increases and other other odd behavior more common when close to startup)
+* Initial support for instant traces
+* Collect 95th percentiles
 
 # 1.5.5
 
