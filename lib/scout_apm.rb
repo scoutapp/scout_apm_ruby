@@ -89,6 +89,8 @@ require 'scout_apm/instruments/process/process_cpu'
 require 'scout_apm/instruments/process/process_memory'
 require 'scout_apm/instruments/percentile_sampler'
 require 'allocations'
+require 'scout_apm/stacks'
+require 'stacks'
 
 require 'scout_apm/app_server_load'
 

@@ -27,6 +27,8 @@ module ScoutApm
     # Histogram of the requests since last reset. Reset by the sampler, so once per minutes.
     attr_reader :request_histograms_resettable
 
+    attr_reader :traces
+
     # All access to the agent is thru this class method to ensure multiple Agent instances are not initialized per-Ruby process.
     def self.instance(options = {})
       @@instance ||= self.new(options)
@@ -58,6 +60,8 @@ module ScoutApm
 
       @capacity       = ScoutApm::Capacity.new
       @installed_instruments = []
+
+      @traces = []
     end
 
     def environment
@@ -246,6 +250,9 @@ module ScoutApm
           # rather than per-request. "CPU Load" and similar.
           run_samplers
           capacity.process
+
+          logger.info("TRACES: #{traces.length}")
+          logger.info("TRACES: #{traces.inspect}")
 
           ScoutApm::Agent.instance.process_metrics
         }
