@@ -33,6 +33,18 @@ module ScoutApm
           "Process Memory"
         end
 
+        def metrics(_time)
+          result = run
+          if result
+            meta = MetricMeta.new("#{metric_type}/#{metric_name}")
+            stat = MetricStats.new(false)
+            stat.update!(result)
+            { meta => stat }
+          else
+            {}
+          end
+        end
+
         def run
           self.class.rss_in_mb.tap { |res| logger.debug "#{human_name}: #{res.inspect}" }      
         end

@@ -14,25 +14,24 @@ module ScoutApm
         "Percentiles"
       end
 
-      def metrics
+      # Gets the 95th%ile for the time requested
+      def metrics(time)
         ms = {}
-
-        ScoutApm::Agent.instance.request_histograms_resettable.each_name do |name|
+        histos = ScoutApm::Agent.instance.request_histograms_by_time[time]
+        histos.each_name do |name|
           percentiles.each do |percentile|
             meta = MetricMeta.new("Percentile/#{percentile}/#{name}")
             stat = MetricStats.new
-            stat.update!(ScoutApm::Agent.instance.request_histograms_resettable.quantile(name, percentile))
+            stat.update!(histos.quantile(name, percentile))
             ms[meta] = stat
           end
         end
 
-        # Wipe the histograms, get ready for the next minute's worth of data.
-        ScoutApm::Agent.instance.request_histograms_resettable.reset_all!
+        # Wipe the histograms we just collected data on
+        ScoutApm::Agent.instance.request_histograms_by_time.delete(time)
 
         ms
       end
-
-      private
     end
   end
 end
