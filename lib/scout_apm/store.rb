@@ -6,9 +6,13 @@ module ScoutApm
     # A hash of reporting periods. { StoreReportingPeriodTimestamp => StoreReportingPeriod }
     attr_reader :reporting_periods
 
+    # Used to pull metrics into each reporting period, as that reporting period is finished.
+    attr_reader :samplers
+
     def initialize
       @mutex = Mutex.new
       @reporting_periods = Hash.new { |h,k| h[k] = StoreReportingPeriod.new(k) }
+      @samplers = []
     end
 
     def current_timestamp
@@ -66,11 +70,31 @@ module ScoutApm
       @mutex.synchronize {
         reporting_periods.select { |time, rp| force || time.timestamp < current_timestamp.timestamp}.
                           each   { |time, rp|
+                                   collect_samplers(rp)
                                    layaway.add_reporting_period(time, rp)
                                    reporting_periods.delete(time)
                                  }
       }
       ScoutApm::Agent.instance.logger.debug("Finished writing to layaway")
+    end
+
+    ######################################
+    # Sampler support
+    def add_sampler(sampler)
+      @samplers << sampler
+    end
+
+    def collect_samplers(rp)
+      @samplers.each do |sampler|
+        begin
+          metrics = sampler.metrics(rp.timestamp)
+          rp.absorb_metrics!(metrics)
+        rescue => e
+          ScoutApm::Agent.instance.logger.info "Error reading #{sampler.human_name} for period: #{rp}"
+          ScoutApm::Agent.instance.logger.debug e.message
+          ScoutApm::Agent.instance.logger.debug e.backtrace.join("\n")
+        end
+      end
     end
   end
 
