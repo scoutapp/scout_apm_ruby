@@ -2,7 +2,7 @@ module ScoutApm
   class MetricSet
     # We can't aggregate CPU, Memory, Capacity, or Controller, so pass through these metrics directly
     # TODO: Figure out a way to not have this duplicate what's in Samplers, and also on server's ingest
-    PASSTHROUGH_METRICS = ["CPU", "Memory", "Instance", "Controller", "SlowTransaction", "Percentile"]
+    PASSTHROUGH_METRICS = ["CPU", "Memory", "Instance", "Controller", "SlowTransaction", "Percentile", "Job"]
 
     attr_reader :metrics
 

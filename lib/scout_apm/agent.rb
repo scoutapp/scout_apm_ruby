@@ -24,8 +24,9 @@ module ScoutApm
     # Histogram of the cumulative requests since the start of the process
     attr_reader :request_histograms
 
-    # Histogram of the requests since last reset. Reset by the sampler, so once per minutes.
-    attr_reader :request_histograms_resettable
+    # Histogram of the requests, distinct by reporting period (minute)
+    # { StoreReportingPeriodTimestamp => RequestHistograms }
+    attr_reader :request_histograms_by_time
 
     # All access to the agent is thru this class method to ensure multiple Agent instances are not initialized per-Ruby process.
     def self.instance(options = {})
@@ -50,7 +51,7 @@ module ScoutApm
       @slow_request_policy = ScoutApm::SlowRequestPolicy.new
       @slow_job_policy = ScoutApm::SlowJobPolicy.new
       @request_histograms = ScoutApm::RequestHistograms.new
-      @request_histograms_resettable = ScoutApm::RequestHistograms.new
+      @request_histograms_by_time = Hash.new { |h, k| h[k] = ScoutApm::RequestHistograms.new }
 
       @store          = ScoutApm::Store.new
       @layaway        = ScoutApm::Layaway.new
@@ -124,11 +125,10 @@ module ScoutApm
 
       load_instruments if should_load_instruments?(options)
 
-      @samplers = [
-        ScoutApm::Instruments::Process::ProcessCpu.new(environment.processors, logger),
+      [ ScoutApm::Instruments::Process::ProcessCpu.new(environment.processors, logger),
         ScoutApm::Instruments::Process::ProcessMemory.new(logger),
         ScoutApm::Instruments::PercentileSampler.new(logger, 95),
-      ]
+      ].each { |s| store.add_sampler(s) }
 
       app_server_load_hook
 
@@ -242,14 +242,17 @@ module ScoutApm
       @background_worker = ScoutApm::BackgroundWorker.new
       @background_worker_thread = Thread.new do
         @background_worker.start {
-          # First, run periodic samplers. These should run once a minute,
-          # rather than per-request. "CPU Load" and similar.
-          run_samplers
-          capacity.process
-
           ScoutApm::Agent.instance.process_metrics
+          clean_old_percentiles
         }
       end
+    end
+
+    def clean_old_percentiles
+      request_histograms_by_time.
+        keys.
+        select {|timestamp| timestamp.age_in_seconds > 60 * 10 }.
+        each {|old_timestamp| request_histograms_by_time.delete(old_timestamp) }
     end
 
     # If we want to skip the app_server_check, then we must load it.
@@ -312,24 +315,6 @@ module ScoutApm
 
     def deploy_integration
       environment.deploy_integration
-    end
-
-    # TODO: Extract a proper class / registery for these. They don't really belong here
-    def run_samplers
-      @samplers.each do |sampler|
-        begin
-          if sampler.respond_to? :metrics
-            store.track!(sampler.metrics)
-          else
-            result = sampler.run
-            store.track_one!(sampler.metric_type, sampler.metric_name, result) if result
-          end
-        rescue => e
-          logger.info "Error reading #{sampler.human_name}"
-          logger.debug e.message
-          logger.debug e.backtrace.join("\n")
-        end
-      end
     end
 
     def app_server_missing?(options = {})
