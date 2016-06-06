@@ -39,8 +39,6 @@ scout_record_sample()
   int num;
   num = rb_profile_frames(0, sizeof(frames_buffer) / sizeof(VALUE), frames_buffer, lines_buffer);
 
-  rb_warn("Collected frames");
-
   // Lookup the classes
   ID sym_ScoutApm = rb_intern("ScoutApm");
   ID sym_Stacks = rb_intern("Stacks");

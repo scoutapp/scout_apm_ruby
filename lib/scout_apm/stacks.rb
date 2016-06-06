@@ -23,9 +23,9 @@ module ScoutApm
     end
 
     def to_s
-      @aggregated.map {|gem, lines|
+      "Out of #{traces.length} traces: \n" + (@aggregated.map {|gem, lines|
         "#{gem} called from:\n\t#{lines.map(&:to_s).join("\n\t")}"
-      }.join("\n")
+      }.join("\n"))
     end
   end
 
