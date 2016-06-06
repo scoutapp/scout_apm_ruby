@@ -14,7 +14,7 @@ VALUE cStacks;
 
 
 #define BUF_SIZE 2048
-#define INTERVAL 100000
+#define INTERVAL 10000
 VALUE frames_buffer[BUF_SIZE];
 int lines_buffer[BUF_SIZE];
 
@@ -35,8 +35,6 @@ VALUE interval;
 void
 scout_record_sample()
 {
-  rb_warn("scout_record_sample()");
-
   // Get frames
   int num;
   num = rb_profile_frames(0, sizeof(frames_buffer) / sizeof(VALUE), frames_buffer, lines_buffer);
@@ -53,14 +51,10 @@ scout_record_sample()
   VALUE Stacks = rb_const_get(ScoutApm, sym_Stacks);
   VALUE StackTrace = rb_const_get(ScoutApm, sym_StackTrace);
 
-  rb_warn("Found Constants");
-
   // Initialize a Trace object
   VALUE trace_args[1];
   trace_args[0] = INT2FIX(num);
   VALUE trace = rb_class_new_instance(1, trace_args, StackTrace);
-
-  rb_warn("Made empty trace obj");
 
   // Populate the trace object
   int i;
@@ -73,12 +67,8 @@ scout_record_sample()
     rb_funcall(trace, sym_add, 4, file, line, label, klass);
   }
 
-  rb_warn("Populated Trace Obj");
-
   // Store the Trace object
   rb_funcall(Stacks, sym_collect, 1, trace);
-
-  rb_warn("Stored trace in Stacks");
 }
 
 
@@ -116,7 +106,7 @@ Init_hooks(VALUE module)
   sigaction(SIGALRM, &sa, NULL);
 
   timer.it_interval.tv_sec = 0;
-  timer.it_interval.tv_usec = NUM2LONG(interval);
+  timer.it_interval.tv_usec = NUM2INT(interval);
   timer.it_value = timer.it_interval;
   setitimer(ITIMER_REAL, &timer, 0);
 

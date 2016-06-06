@@ -1,4 +1,34 @@
 module ScoutApm
+  class TraceSet
+    attr_reader :traces
+
+    def initialize
+      @traces = []
+      @aggregated = Hash.new{|h,k| h[k] = [] }
+    end
+
+    def <<(trace)
+      @traces << trace
+
+      if trace.app_trace?
+        @aggregated["APP"] += [trace.app_code]
+      else
+        gem_line = trace.gem_before_app_code
+        @aggregated[gem_line.gem] += [trace.app_code]
+      end
+    end
+
+    def inspect
+      to_s
+    end
+
+    def to_s
+      @aggregated.map {|gem, lines|
+        "#{gem} called from:\n\t#{lines.map(&:to_s).join("\n\t")}"
+      }.join("\n")
+    end
+  end
+
   class StackLine
     attr_reader :file
     attr_reader :line
@@ -31,16 +61,18 @@ module ScoutApm
     # The last one is the one we want.
     # returns nil if no match
     def gem
-      r = %r{gems/(.*?)/}
-      results = file.scan(r)
-      results[-1]
+      @gem ||= begin
+                 r = %r{gems/(.*?)/}
+                 results = file.scan(r)
+                 results[-1]
+               end
     end
 
     def app?(app_root=ScoutApm::Environment.instance.root)
-      m = file.match(%r{#{app_root}/(.*)})
-      if m
-        return m[1]
-      end
+      @app ||= begin
+                 m = file.match(%r{#{app_root}/(.*)})
+                 m[1] if m
+               end
     end
   end
 
@@ -49,7 +81,6 @@ module ScoutApm
     attr_reader :num
 
     def initialize(num)
-      puts "Initialized, expecting #{num}"
       @num = num
       @data = []
     end
@@ -62,6 +93,35 @@ module ScoutApm
 
     def inspect
       "#{num} entries: \n #{@data.map(&:inspect).join("\n")}"
+    end
+
+    def gem_before_app_code
+      gem_line = nil
+      hit_app_code = false
+
+      data.each do |d|
+        if d.app?
+          hit_app_code = true
+          break
+        end
+
+        if d.gem
+          gem_line = d
+        end
+      end
+
+      return gem_line if hit_app_code
+      nil
+    end
+
+    # returns StackLine representing first app code hit
+    def app_code
+      data.detect { |d| d.app? }
+    end
+
+    # Return true if the top of the stack is inside the app
+    def app_trace?
+      data.first.app?
     end
   end
 

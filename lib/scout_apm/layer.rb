@@ -55,7 +55,7 @@ module ScoutApm
       @children = [] # In order of calls
       @desc = nil
 
-      @traces = []
+      @traces = ScoutApm::TraceSet.new
     end
 
     def add_child(child)

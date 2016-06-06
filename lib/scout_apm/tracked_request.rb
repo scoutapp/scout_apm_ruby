@@ -87,7 +87,7 @@ module ScoutApm
       layer.record_allocations!
 
       if layer.type == "Controller"
-        ScoutApm::Agent.instance.logger.info "****** Controller Traces (#{layer.name}): #{layer.traces.inspect}"
+        ScoutApm::Agent.instance.logger.info "****** Controller Traces (#{layer.name}):\n#{layer.traces.inspect}"
       end
 
       # This must be called before checking if a backtrace should be collected as the call count influences our capture logic.
