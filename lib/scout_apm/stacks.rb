@@ -18,7 +18,10 @@ module ScoutApm
 
     def self.collect(trace)
       req = RequestManager.lookup
-      req.current_layer.store_trace!(trace)
+      current_layer = req.current_layer
+      if current_layer
+        current_layer.store_trace!(trace)
+      end
     rescue => e
       puts "Error: #{e}"
     end
