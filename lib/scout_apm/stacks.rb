@@ -17,7 +17,8 @@ module ScoutApm
   class Stacks
 
     def self.collect(trace)
-      ScoutApm::Agent.instance.traces << trace
+      req = RequestManager.lookup
+      req.current_layer.store_trace!(trace)
     rescue => e
       puts "Error: #{e}"
     end

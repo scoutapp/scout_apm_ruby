@@ -86,6 +86,10 @@ module ScoutApm
       layer.record_stop_time!
       layer.record_allocations!
 
+      if layer.type == "Controller"
+        ScoutApm::Agent.instance.logger.info "****** Controller Traces (#{layer.name}): #{layer.traces.inspect}"
+      end
+
       # This must be called before checking if a backtrace should be collected as the call count influences our capture logic.
       # We call `#update_call_counts in stop layer to ensure the layer has a final desc. Layer#desc is updated during the AR instrumentation flow.
       update_call_counts!(layer)

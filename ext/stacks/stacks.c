@@ -29,6 +29,9 @@ VALUE interval;
 
 // Called every single time a tick happens.
 // Goal is to collect the backtrace, and shuffle it off back to ruby-land for further analysis
+//
+// NOTE: This runs inside of a signal handler, which limits the work you can do
+// here, or when calling back to rubyland
 void
 scout_record_sample()
 {
@@ -59,7 +62,7 @@ scout_record_sample()
 
   rb_warn("Made empty trace obj");
 
-  // Populate the trace
+  // Populate the trace object
   int i;
   for (i = 0; i < num; i++) {
     VALUE frame = frames_buffer[i];
@@ -72,7 +75,7 @@ scout_record_sample()
 
   rb_warn("Populated Trace Obj");
 
-  // Store the Trace
+  // Store the Trace object
   rb_funcall(Stacks, sym_collect, 1, trace);
 
   rb_warn("Stored trace in Stacks");
@@ -84,7 +87,6 @@ scout_profile_job_handler(void *data)
 {
   static int in_signal_handler = 0;
   if (in_signal_handler) return;
-  /* if (!_stackprof.running) return; */
 
   in_signal_handler++;
   scout_record_sample();
@@ -104,8 +106,6 @@ scout_profile_signal_handler(int sig, siginfo_t *sinfo, void *ucontext)
 void
 Init_hooks(VALUE module)
 {
-  /* objtracer = rb_tracepoint_new(Qnil, RUBY_INTERNAL_EVENT_NEWOBJ, stackprof_newobj_handler, 0); */
-
   struct sigaction sa;
   struct itimerval timer;
   interval = INT2FIX(INTERVAL);

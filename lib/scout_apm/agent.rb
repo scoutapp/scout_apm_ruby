@@ -28,8 +28,6 @@ module ScoutApm
     # { StoreReportingPeriodTimestamp => RequestHistograms }
     attr_reader :request_histograms_by_time
 
-    attr_reader :traces
-
     # All access to the agent is thru this class method to ensure multiple Agent instances are not initialized per-Ruby process.
     def self.instance(options = {})
       @@instance ||= self.new(options)
@@ -61,8 +59,6 @@ module ScoutApm
 
       @capacity       = ScoutApm::Capacity.new
       @installed_instruments = []
-
-      @traces = []
     end
 
     def environment
@@ -246,9 +242,6 @@ module ScoutApm
       @background_worker = ScoutApm::BackgroundWorker.new
       @background_worker_thread = Thread.new do
         @background_worker.start {
-          logger.info("TRACES: #{traces.length}")
-          logger.info("TRACES: #{traces.inspect}")
-
           ScoutApm::Agent.instance.process_metrics
           clean_old_percentiles
         }
