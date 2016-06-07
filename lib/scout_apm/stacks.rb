@@ -1,20 +1,42 @@
 module ScoutApm
   class TraceSet
     attr_reader :traces
+    attr_reader :size
+    alias_method :length, :size
+
+    # The aggregated metrics around a bunch of distinct traces.
+    attr_reader :aggregated
 
     def initialize
       @traces = []
+      @delayed_traces = []
+      @size = 0
       @aggregated = Hash.new{|h,k| h[k] = [] }
     end
 
-    def <<(trace)
+    def delay_add(trace)
+      @delayed_traces << trace
+    end
+
+    # Take any delayed traces and absorb them
+    def aggregate!
+      while trace = @delayed_traces.shift
+        absorb(trace)
+      end
+    end
+
+    # Take an individual trace, and add it to the summary
+    def absorb(trace)
       @traces << trace
 
       if trace.app_trace?
-        @aggregated["APP"] += [trace.app_code]
-      else
+        app_line = trace.first
+        @aggregated["#{app_line.klass}##{app_line.label}"] += [trace.app_code]
+      elsif gem_line = trace.gem_before_app_code
         gem_line = trace.gem_before_app_code
-        @aggregated[gem_line.gem] += [trace.app_code]
+        @aggregated[gem_line.gem_name] += [trace.app_code]
+      else
+        # TODO: No app code I suppose?
       end
     end
 
@@ -23,8 +45,8 @@ module ScoutApm
     end
 
     def to_s
-      "Out of #{traces.length} traces: \n" + (@aggregated.map {|gem, lines|
-        "#{gem} called from:\n\t#{lines.map(&:to_s).join("\n\t")}"
+      "Out of #{traces.length} traces: \n" + (@aggregated.map {|gem_name, lines|
+        "#{gem_name} called from:\n\t#{lines.map(&:to_s).join("\n\t")}"
       }.join("\n"))
     end
   end
@@ -34,16 +56,18 @@ module ScoutApm
     attr_reader :line
     attr_reader :label
     attr_reader :klass
+    attr_reader :app
 
     def initialize(file, line, label, klass)
       @file = file
       @line = line
       @label = label
       @klass = klass
+      @app = app?
     end
 
     def to_s
-      gem_clause = gem if gem
+      gem_clause = gem_name if gem_name
       app_clause = "APP" if app?
       clauses = [gem_clause, app_clause].join("")
       clauses = "ALERT! #{clauses}" if gem_clause.present? && app_clause.present?
@@ -60,11 +84,11 @@ module ScoutApm
     #
     # The last one is the one we want.
     # returns nil if no match
-    def gem
-      @gem ||= begin
+    def gem_name
+      @gem_name ||= begin
                  r = %r{gems/(.*?)/}
                  results = file.scan(r)
-                 results[-1]
+                 results[-1][0] # Scan will return a nested array, so extract out that nesting
                end
     end
 
@@ -77,12 +101,18 @@ module ScoutApm
   end
 
   class StackTrace
+    include Enumerable
+
     attr_reader :data
     attr_reader :num
 
     def initialize(num)
       @num = num
       @data = []
+    end
+
+    def each
+      @data.each { |d| yield d }
     end
 
     def add(file, line, label, klass)
@@ -105,7 +135,7 @@ module ScoutApm
           break
         end
 
-        if d.gem
+        if d.gem_name
           gem_line = d
         end
       end
@@ -133,7 +163,10 @@ module ScoutApm
         current_layer.store_trace!(trace)
       end
     rescue => e
+      puts "\n\n\n*****************************"
       puts "Error: #{e}"
+      puts e.backtrace
+      puts "*****************************\n\n\n"
     end
   end
 end
