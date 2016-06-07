@@ -9,6 +9,14 @@
 * Initial support for instant traces
 * Collect 95th percentiles
 
+# 1.6.0
+
+* Dynamic algorithm for selecting when to collect traces. Now, we will collect a
+  more complete cross-section of your application's performance, dynamically
+  tuned as your application runs.
+* Record and report 95th percentiles for each action
+* A variety of bug fixes
+
 # 1.5.5
 
 * Handle backslash escaped quotes inside mysql strings.
