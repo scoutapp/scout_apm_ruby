@@ -145,7 +145,7 @@ require 'scout_apm/serializers/deploy_serializer'
 
 require 'scout_apm/middleware'
 
-require 'stacks' unless ENV["NO_STACKS"]
+require 'stacks' if ENV["ENABLE_STACKS"]
 
 if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR) && Rails::VERSION::MAJOR >= 3 && defined?(Rails::Railtie)
   module ScoutApm
