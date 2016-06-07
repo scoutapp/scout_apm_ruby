@@ -9,6 +9,7 @@ class MetricStats
   attr_accessor :sum_of_squares
   attr_accessor :queue
   attr_accessor :latency
+  attr_accessor :traces
 
   def initialize(scoped = false)
     @scoped = scoped
@@ -18,6 +19,7 @@ class MetricStats
     self.min_call_time = 0.0
     self.max_call_time = 0.0
     self.sum_of_squares = 0.0
+    self.traces = []
   end
 
   # Note, that you must include exclusive_time if you wish to set
@@ -39,6 +41,10 @@ class MetricStats
     self
   end
 
+  def add_traces(traces)
+    self.traces += Array(traces)
+  end
+
   # combines data from another MetricStats object
   def combine!(other)
     self.call_count += other.call_count
@@ -47,6 +53,7 @@ class MetricStats
     self.min_call_time = other.min_call_time if self.min_call_time.zero? or other.min_call_time < self.min_call_time
     self.max_call_time = other.max_call_time if other.max_call_time > self.max_call_time
     self.sum_of_squares += other.sum_of_squares
+    self.traces += other.traces
     self
   end
 
@@ -57,7 +64,7 @@ class MetricStats
   end
 
   def as_json
-    json_attributes = [:call_count, :total_call_time, :total_exclusive_time, :min_call_time, :max_call_time]
+    json_attributes = [:call_count, :total_call_time, :total_exclusive_time, :min_call_time, :max_call_time, :traces]
     # uri, context
     ScoutApm::AttributeArranger.call(self, json_attributes)
   end

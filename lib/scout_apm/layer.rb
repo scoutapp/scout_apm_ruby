@@ -111,7 +111,7 @@ module ScoutApm
     end
 
     def store_trace!(trace)
-      @traces.delay_add(trace)
+      @traces.add(trace)
     end
 
     ######################################

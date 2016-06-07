@@ -90,7 +90,6 @@ require 'scout_apm/instruments/process/process_memory'
 require 'scout_apm/instruments/percentile_sampler'
 require 'allocations'
 require 'scout_apm/stacks'
-require 'stacks'
 
 require 'scout_apm/app_server_load'
 
@@ -145,6 +144,8 @@ require 'scout_apm/serializers/app_server_load_serializer'
 require 'scout_apm/serializers/deploy_serializer'
 
 require 'scout_apm/middleware'
+
+require 'stacks' unless ENV["NO_STACKS"]
 
 if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR) && Rails::VERSION::MAJOR >= 3 && defined?(Rails::Railtie)
   module ScoutApm

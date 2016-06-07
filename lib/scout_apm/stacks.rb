@@ -14,21 +14,23 @@ module ScoutApm
       @aggregated = Hash.new{|h,k| h[k] = [] }
     end
 
-    def delay_add(trace)
-      @delayed_traces << trace
+    def to_a
+      @traces.map(&:to_a)
+    end
+
+    def add(trace)
+      @traces << trace
     end
 
     # Take any delayed traces and absorb them
     def aggregate!
-      while trace = @delayed_traces.shift
+      traces.each do |trace|
         absorb(trace)
       end
     end
 
     # Take an individual trace, and add it to the summary
     def absorb(trace)
-      @traces << trace
-
       if trace.app_trace?
         app_line = trace.first
         @aggregated["#{app_line.klass}##{app_line.label}"] += [trace.app_code]
@@ -45,6 +47,8 @@ module ScoutApm
     end
 
     def to_s
+      aggregate!
+
       "Out of #{traces.length} traces: \n" + (@aggregated.map {|gem_name, lines|
         "#{gem_name} called from:\n\t#{lines.map(&:to_s).join("\n\t")}"
       }.join("\n"))
@@ -63,7 +67,11 @@ module ScoutApm
       @line = line
       @label = label
       @klass = klass
-      @app = app?
+      @app = (app? rescue false)
+    end
+
+    def to_a
+      [file, line, label, klass, app]
     end
 
     def to_s
@@ -86,10 +94,12 @@ module ScoutApm
     # returns nil if no match
     def gem_name
       @gem_name ||= begin
-                 r = %r{gems/(.*?)/}
-                 results = file.scan(r)
-                 results[-1][0] # Scan will return a nested array, so extract out that nesting
-               end
+                      r = %r{gems/(.*?)/}
+                      results = file.scan(r)
+                      results[-1][0] # Scan will return a nested array, so extract out that nesting
+                    rescue
+                      nil
+                    end
     end
 
     def app?(app_root=ScoutApm::Environment.instance.root)

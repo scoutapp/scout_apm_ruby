@@ -49,6 +49,7 @@ module ScoutApm
         # Disable stackprof output for now
         stackprof = [] # request.stackprof
 
+
         SlowTransaction.new(uri,
                             scope.legacy_metric_name,
                             root_layer.total_call_time,
@@ -136,6 +137,7 @@ module ScoutApm
           # timing
           stat = metric_hash[meta]
           stat.update!(layer.total_call_time, layer.total_exclusive_time)
+          stat.add_traces(layer.traces.to_a)
           # allocations
           stat = allocation_metric_hash[meta]
           stat.update!(layer.total_allocations, layer.total_exclusive_allocations)
