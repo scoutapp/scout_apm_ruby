@@ -92,7 +92,7 @@ scout_profile_signal_handler(int sig, siginfo_t *sinfo, void *ucontext)
 }
 
 void
-Init_hooks(VALUE module)
+Init_stack_hooks(VALUE module)
 {
   struct sigaction sa;
   struct itimerval timer;
@@ -117,7 +117,7 @@ void Init_stacks()
     mInstruments = rb_define_module_under(mScoutApm, "Instruments");
     cStacks = rb_define_class_under(mInstruments, "Stacks", rb_cObject);
     rb_define_const(cStacks, "ENABLED", Qtrue);
-    Init_hooks(cStacks);
+    Init_stack_hooks(cStacks);
     rb_warn("Finished Init_stacks");
 }
 
