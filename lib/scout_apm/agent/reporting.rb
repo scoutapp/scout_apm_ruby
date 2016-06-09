@@ -53,7 +53,7 @@ module ScoutApm
         log_deliver(metrics, slow_transactions, metadata, slow_jobs)
 
         payload = ScoutApm::Serializers::PayloadSerializer.serialize(metadata, metrics, slow_transactions, jobs, slow_jobs)
-        logger.debug("Payload: #{payload}")
+        # logger.debug("Payload: #{payload}")
 
         reporter.report(payload, headers)
       rescue => e
@@ -81,7 +81,7 @@ module ScoutApm
         job_clause        = "#{jobs_traces.length} Job Traces"
 
         logger.info "#{time_clause} Delivering #{metrics_clause} and #{slow_trans_clause} and #{job_clause}, #{process_log_str}."
-        logger.debug("Metrics: #{metrics.pretty_inspect}\nSlowTrans: #{slow_transactions.pretty_inspect}\nMetadata: #{metadata.inspect.pretty_inspect}")
+        # logger.debug("Metrics: #{metrics.pretty_inspect}\nSlowTrans: #{slow_transactions.pretty_inspect}\nMetadata: #{metadata.inspect.pretty_inspect}")
       end
 
       # TODO: Move this into PayloadSerializer?
