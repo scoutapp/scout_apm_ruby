@@ -124,7 +124,7 @@ void Init_stacks()
 #else
 
 void
-Init_hooks(VALUE module)
+Init_stack_hooks(VALUE module)
 {
 }
 
