@@ -53,19 +53,12 @@ class MetricStats
     self.min_call_time = other.min_call_time if self.min_call_time.zero? or other.min_call_time < self.min_call_time
     self.max_call_time = other.max_call_time if other.max_call_time > self.max_call_time
     self.sum_of_squares += other.sum_of_squares
-    self.traces += other.traces
+    self.traces = Array(self.traces) + Array(other.traces)
     self
-  end
-
-  # To avoid conflicts with different JSON libaries handle JSON ourselves.
-  # Time-based metrics are converted to milliseconds from seconds.
-  def to_json(*a)
-     %Q[{"total_exclusive_time":#{total_exclusive_time*1000},"min_call_time":#{min_call_time*1000},"call_count":#{call_count},"sum_of_squares":#{sum_of_squares*1000},"total_call_time":#{total_call_time*1000},"max_call_time":#{max_call_time*1000}}]
   end
 
   def as_json
     json_attributes = [:call_count, :total_call_time, :total_exclusive_time, :min_call_time, :max_call_time, :traces]
-    # uri, context
     ScoutApm::AttributeArranger.call(self, json_attributes)
   end
 end

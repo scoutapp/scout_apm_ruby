@@ -60,18 +60,16 @@ module ScoutApm
     attr_reader :line
     attr_reader :label
     attr_reader :klass
-    attr_reader :app
 
     def initialize(file, line, label, klass)
       @file = file
       @line = line
       @label = label
       @klass = klass
-      @app = (app? rescue false)
     end
 
     def to_a
-      [file, line, label, klass, app]
+      [file, line, label, klass]
     end
 
     def to_s
@@ -81,10 +79,6 @@ module ScoutApm
       clauses = "ALERT! #{clauses}" if gem_clause.present? && app_clause.present?
 
       "#{clauses} - #{klass}##{label}\t#{file}:#{line}"
-    end
-
-    def inspect
-      to_s
     end
 
     # This may match several times. For instance, this path has gems/RUBY/gems/GEM
@@ -119,6 +113,10 @@ module ScoutApm
     def initialize(num)
       @num = num
       @data = []
+    end
+
+    def to_a
+      @data.map(&:to_a)
     end
 
     def each

@@ -5,6 +5,8 @@ module ScoutApm
     def self.call(subject, attributes_list)
       attributes_list.inject({}) do |attribute_hash, attribute|
         case attribute
+        when :traces
+          attribute_hash[attribute] = subject.traces.to_a
         when Array
           attribute_hash[attribute[0]] = subject.send(attribute[1])
         when :bucket
