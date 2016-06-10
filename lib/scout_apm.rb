@@ -100,7 +100,6 @@ begin
 rescue LoadError
   require 'scout_apm/utils/fake_stacks'
 end
-require 'scout_apm/stacks'
 
 require 'scout_apm/app_server_load'
 
