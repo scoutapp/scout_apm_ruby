@@ -88,8 +88,18 @@ require 'scout_apm/instruments/sinatra'
 require 'scout_apm/instruments/process/process_cpu'
 require 'scout_apm/instruments/process/process_memory'
 require 'scout_apm/instruments/percentile_sampler'
-require 'allocations'
-require 'scout_apm/stacks'
+
+begin
+  require 'allocations'
+rescue LoadError
+  require 'scout_apm/utils/fake_allocations'
+end
+
+begin
+  require 'stacks' if ENV["ENABLE_STACKS"]
+rescue LoadError
+  require 'scout_apm/utils/fake_stacks'
+end
 
 require 'scout_apm/app_server_load'
 
@@ -144,8 +154,6 @@ require 'scout_apm/serializers/app_server_load_serializer'
 require 'scout_apm/serializers/deploy_serializer'
 
 require 'scout_apm/middleware'
-
-require 'stacks' if ENV["ENABLE_STACKS"]
 
 if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR) && Rails::VERSION::MAJOR >= 3 && defined?(Rails::Railtie)
   module ScoutApm
