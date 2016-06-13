@@ -52,7 +52,6 @@ void Init_allocations()
     mInstruments = rb_define_module_under(mScoutApm, "Instruments");
     cAllocations = rb_define_class_under(mInstruments, "Allocations", rb_cObject);
     rb_define_singleton_method(cAllocations, "count", get_allocation_count, 0);
-    rb_define_singleton_method(cAllocations, "count", get_allocation_count, 0);
     rb_define_const(cAllocations, "ENABLED", Qtrue);
     Init_hooks(mScoutApm);
 }
@@ -74,7 +73,6 @@ void Init_allocations()
     mScoutApm = rb_define_module("ScoutApm");
     mInstruments = rb_define_module_under(mScoutApm, "Instruments");
     cAllocations = rb_define_class_under(mInstruments, "Allocations", rb_cObject);
-    rb_define_singleton_method(cAllocations, "count", get_allocation_count, 0);
     rb_define_singleton_method(cAllocations, "count", get_allocation_count, 0);
     rb_define_const(cAllocations, "ENABLED", Qfalse);
     Init_hooks(mScoutApm);
