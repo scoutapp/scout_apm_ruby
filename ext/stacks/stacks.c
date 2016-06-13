@@ -133,7 +133,7 @@ scout_uninstall_profiling(VALUE module)
   setitimer(ITIMER_REAL, &timer, 0);
 
   // Clear signal handler for ALRM. Do this after the timer is reset
-  sigaction(SIGALRM, SIG_DFL, NULL);
+  signal(SIGALRM, SIG_DFL);
 
   return Qnil;
 }
@@ -152,11 +152,23 @@ void Init_stacks()
 
 #else
 
+void scout_install_profiling(VALUE module)
+{
+  return Qnil;
+}
+
+void scout_uninstall_profiling(VALUE module)
+{
+  return Qnil;
+}
+
 void Init_stacks()
 {
     mScoutApm = rb_define_module("ScoutApm");
     mInstruments = rb_define_module_under(mScoutApm, "Instruments");
     cStacks = rb_define_class_under(mInstruments, "Stacks", rb_cObject);
+    rb_define_singleton_method(cStacks, "install", scout_install_profiling, 0);
+    rb_define_singleton_method(cStacks, "uninstall", scout_uninstall_profiling, 0);
     rb_define_const(cStacks, "ENABLED", Qfalse);
 }
 
