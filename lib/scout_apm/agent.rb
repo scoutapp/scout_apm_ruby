@@ -176,6 +176,8 @@ module ScoutApm
       logger.debug "Installing Shutdown Handler"
 
       at_exit do
+        ScoutApm::Instruments::Stacks.uninstall
+
         logger.info "Shutting down Scout Agent"
         # MRI 1.9 bug drops exit codes.
         # http://bugs.ruby-lang.org/issues/5218
@@ -238,6 +240,7 @@ module ScoutApm
       logger.info "Initializing worker thread."
 
       install_exit_handler
+      ScoutApm::Instruments::Stacks.install
 
       @background_worker = ScoutApm::BackgroundWorker.new
       @background_worker_thread = Thread.new do
