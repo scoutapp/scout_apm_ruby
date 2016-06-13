@@ -81,8 +81,9 @@ scout_profile_job_handler(void *data)
   in_signal_handler--;
 }
 
+//scout_profile_signal_handler(int sig, siginfo_t *sinfo, void *ucontext)
 static void
-scout_profile_signal_handler(int sig, siginfo_t *sinfo, void *ucontext)
+scout_profile_signal_handler(int sig)
 {
   if (rb_during_gc()) {
     // _stackprof.during_gc++, _stackprof.overall_samples++;
@@ -94,16 +95,28 @@ scout_profile_signal_handler(int sig, siginfo_t *sinfo, void *ucontext)
 static VALUE
 scout_install_profiling(VALUE module)
 {
-  struct sigaction sa;
+  struct sigaction new_action, old_action;
   struct itimerval timer;
   interval = INT2FIX(INTERVAL);
 
-  sa.sa_sigaction = scout_profile_signal_handler;
-  sa.sa_flags = SA_RESTART | SA_SIGINFO;
-  sigemptyset(&sa.sa_mask);
-  sigaction(SIGALRM, &sa, NULL);
+  // Useful docs on signal handling:
+  //   http://www.gnu.org/software/libc/manual/html_node/Signal-Handling.html#Signal-Handling
+  //
+  // This seciton of code sets up a new signal handler
+  //
+  // SA_RESTART means to continue any primitive lib functions that were aborted
+  // when the timer fired. So an open() call that we interrupt will still
+  // happen, rather than returning an error where it was called (perhaps
+  // breaking poorly written code in other places that didn't think to check).
+  new_action.sa_handler = scout_profile_signal_handler;
+  new_action.sa_flags = SA_RESTART;
+  sigemptyset(&new_action.sa_mask);
+  sigaction(SIGALRM, &new_action, &old_action);
 
-  // Check for an existing timer
+  // This section of code sets up a timer that sends SIGALRM every <INTERVAL>
+  // amount of time
+  //
+  // First Check for an existing timer
   struct itimerval testTimer;
   int getResult = getitimer(ITIMER_REAL, &testTimer);
   if (getResult != 0) {
@@ -114,11 +127,13 @@ scout_install_profiling(VALUE module)
     rb_warn("Timer appears to already exist before setting Scout's");
   }
 
+  // Then make the timer
   timer.it_interval.tv_sec = 0;
   timer.it_interval.tv_usec = NUM2INT(interval);
   timer.it_value = timer.it_interval;
   setitimer(ITIMER_REAL, &timer, 0);
 
+  // VALUE must be returned, just return nil
   return Qnil;
 }
 
