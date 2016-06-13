@@ -91,8 +91,8 @@ scout_profile_signal_handler(int sig, siginfo_t *sinfo, void *ucontext)
   }
 }
 
-void
-Init_stack_hooks(VALUE module)
+static VALUE
+scout_install_profiling(VALUE module)
 {
   struct sigaction sa;
   struct itimerval timer;
@@ -103,11 +103,39 @@ Init_stack_hooks(VALUE module)
   sigemptyset(&sa.sa_mask);
   sigaction(SIGALRM, &sa, NULL);
 
+  // Check for an existing timer
+  struct itimerval testTimer;
+  int getResult = getitimer(ITIMER_REAL, &testTimer);
+  if (getResult != 0) {
+    rb_warn("Failed in call to getitimer: %d", getResult);
+  }
+
+  if (testTimer.it_value.tv_sec != 0 && testTimer.it_value.tv_usec != 0) {
+    rb_warn("Timer appears to already exist before setting Scout's");
+  }
+
   timer.it_interval.tv_sec = 0;
   timer.it_interval.tv_usec = NUM2INT(interval);
   timer.it_value = timer.it_interval;
   setitimer(ITIMER_REAL, &timer, 0);
 
+  return Qnil;
+}
+
+static VALUE
+scout_uninstall_profiling(VALUE module)
+{
+  // Wipe timer
+  struct itimerval timer;
+  timer.it_interval.tv_sec = 0;
+  timer.it_interval.tv_usec = 0;
+  timer.it_value = timer.it_interval;
+  setitimer(ITIMER_REAL, &timer, 0);
+
+  // Clear signal handler for ALRM. Do this after the timer is reset
+  sigaction(SIGALRM, SIG_DFL, NULL);
+
+  return Qnil;
 }
 
 void Init_stacks()
@@ -116,17 +144,13 @@ void Init_stacks()
     mScoutApm = rb_define_module("ScoutApm");
     mInstruments = rb_define_module_under(mScoutApm, "Instruments");
     cStacks = rb_define_class_under(mInstruments, "Stacks", rb_cObject);
+    rb_define_singleton_method(cStacks, "install", scout_install_profiling, 0);
+    rb_define_singleton_method(cStacks, "uninstall", scout_uninstall_profiling, 0);
     rb_define_const(cStacks, "ENABLED", Qtrue);
-    Init_stack_hooks(cStacks);
     rb_warn("Finished Init_stacks");
 }
 
 #else
-
-void
-Init_stack_hooks(VALUE module)
-{
-}
 
 void Init_stacks()
 {
