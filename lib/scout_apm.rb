@@ -97,7 +97,7 @@ end
 
 begin
   require 'scout_apm/stacks'
-  require 'stacks' if ENV["ENABLE_STACKS"]
+  require 'stacks'
 rescue LoadError
   require 'scout_apm/stacks'
   require 'scout_apm/utils/fake_stacks'
