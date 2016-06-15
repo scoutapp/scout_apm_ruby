@@ -39,8 +39,6 @@ module ScoutApm
         end
 
         metrics = create_metrics
-        # Disable stackprof output for now
-        stackprof = [] # request.stackprof
 
         SlowTransaction.new(uri,
                             scope.legacy_metric_name,
@@ -48,7 +46,7 @@ module ScoutApm
                             metrics,
                             request.context,
                             root_layer.stop_time,
-                            stackprof,
+                            [], # stackprof
                             @points)
       end
 

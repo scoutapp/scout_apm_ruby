@@ -18,11 +18,6 @@ require 'yaml'
 #####################################
 # Gem Requires
 #####################################
-begin
-  require 'stackprof'
-rescue LoadError
-  require 'scout_apm/utils/fake_stack_prof'
-end
 
 #####################################
 # Internal Requires
@@ -112,7 +107,6 @@ require 'scout_apm/metric_set'
 require 'scout_apm/store'
 require 'scout_apm/tracer'
 require 'scout_apm/context'
-require 'scout_apm/stackprof_tree_collapser'
 
 require 'scout_apm/metric_meta'
 require 'scout_apm/metric_stats'

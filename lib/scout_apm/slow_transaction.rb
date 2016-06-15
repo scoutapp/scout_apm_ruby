@@ -10,7 +10,6 @@ module ScoutApm
     attr_reader :context
     attr_reader :time
     attr_reader :prof
-    attr_reader :raw_prof
 
     def initialize(uri, metric_name, total_call_time, metrics, context, time, raw_stackprof, score)
       @uri = uri
@@ -19,8 +18,7 @@ module ScoutApm
       @metrics = metrics
       @context = context
       @time = time
-      @prof = ScoutApm::StackprofTreeCollapser.new(raw_stackprof).call
-      @raw_prof = raw_stackprof # Send whole data up to server
+      @prof = []
       @score = score
     end
 
