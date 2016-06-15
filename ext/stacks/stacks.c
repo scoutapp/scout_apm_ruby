@@ -96,7 +96,6 @@ static VALUE
 scout_install_profiling(VALUE module)
 {
   struct sigaction new_action, old_action;
-  struct itimerval timer;
   interval = INT2FIX(INTERVAL);
 
   // Useful docs on signal handling:
@@ -112,6 +111,16 @@ scout_install_profiling(VALUE module)
   new_action.sa_flags = SA_RESTART;
   sigemptyset(&new_action.sa_mask);
   sigaction(SIGALRM, &new_action, &old_action);
+
+  // VALUE must be returned, just return nil
+  return Qnil;
+}
+
+static VALUE
+scout_start_profiling(VALUE module)
+{
+  rb_warn("Starting Profiling")
+  struct itimerval timer;
 
   // This section of code sets up a timer that sends SIGALRM every <INTERVAL>
   // amount of time
@@ -138,6 +147,20 @@ scout_install_profiling(VALUE module)
 }
 
 static VALUE
+scout_stop_profiling(VALUE module)
+{
+  rb_warn("Stopping Profiling")
+  // Wipe timer
+  struct itimerval timer;
+  timer.it_interval.tv_sec = 0;
+  timer.it_interval.tv_usec = 0;
+  timer.it_value = timer.it_interval;
+  setitimer(ITIMER_REAL, &timer, 0);
+
+  return Qnil;
+}
+
+static VALUE
 scout_uninstall_profiling(VALUE module)
 {
   // Wipe timer
@@ -159,8 +182,15 @@ void Init_stacks()
     mScoutApm = rb_define_module("ScoutApm");
     mInstruments = rb_define_module_under(mScoutApm, "Instruments");
     cStacks = rb_define_class_under(mInstruments, "Stacks", rb_cObject);
+
+    // Installs/uninstalls the signal handler.
     rb_define_singleton_method(cStacks, "install", scout_install_profiling, 0);
     rb_define_singleton_method(cStacks, "uninstall", scout_uninstall_profiling, 0);
+
+    // Starts/removes the timer tick, leaving the sighandler.
+    rb_define_singleton_method(cStacks, "start", scout_start_profiling, 0);
+    rb_define_singleton_method(cStacks, "stop", scout_stop_profiling, 0);
+
     rb_define_const(cStacks, "ENABLED", Qtrue);
     rb_warn("Finished Init_stacks");
 }
@@ -177,13 +207,30 @@ void scout_uninstall_profiling(VALUE module)
   return Qnil;
 }
 
+void scout_start_profiling(VALUE module)
+{
+  return Qnil;
+}
+
+void scout_stop_profiling(VALUE module)
+{
+  return Qnil;
+}
+
 void Init_stacks()
 {
     mScoutApm = rb_define_module("ScoutApm");
     mInstruments = rb_define_module_under(mScoutApm, "Instruments");
     cStacks = rb_define_class_under(mInstruments, "Stacks", rb_cObject);
+
+    // Installs/uninstalls the signal handler.
     rb_define_singleton_method(cStacks, "install", scout_install_profiling, 0);
     rb_define_singleton_method(cStacks, "uninstall", scout_uninstall_profiling, 0);
+
+    // Starts/removes the timer tick, leaving the sighandler.
+    rb_define_singleton_method(cStacks, "start", scout_start_profiling, 0);
+    rb_define_singleton_method(cStacks, "stop", scout_stop_profiling, 0);
+
     rb_define_const(cStacks, "ENABLED", Qfalse);
 }
 

@@ -75,7 +75,10 @@ module ScoutApm
 
         req.web!
 
-        req.start_layer( ScoutApm::Layer.new("Controller", "#{controller_path}/#{action_name}") )
+        layer = ScoutApm::Layer.new("Controller", "#{controller_path}/#{action_name}")
+        layer.traced! # Capture ScoutProf if we can
+
+        req.start_layer(layer)
         begin
           super
         rescue

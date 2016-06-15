@@ -88,6 +88,14 @@ module ScoutApm
       @subscopable
     end
 
+    def traced!
+      @traced = true
+    end
+
+    def traced?
+      @traced
+    end
+
     # This is the old style name. This function is used for now, but should be
     # removed, and the new type & name split should be enforced through the
     # app.
