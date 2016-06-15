@@ -287,10 +287,6 @@ module ScoutApm
       install_instrument(ScoutApm::Instruments::Redis)
       install_instrument(ScoutApm::Instruments::InfluxDB)
       install_instrument(ScoutApm::Instruments::Elasticsearch)
-
-      if StackProf.respond_to?(:fake?) && StackProf.fake?
-        logger.info 'StackProf not found - add `gem "stackprof"` to your Gemfile to enable advanced code profiling (only for Ruby 2.1+)'
-      end
     rescue
       logger.warn "Exception loading instruments:"
       logger.warn $!.message
