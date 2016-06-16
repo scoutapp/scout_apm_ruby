@@ -8,6 +8,7 @@
   * seconds_since_startup (larger memory increases and other other odd behavior more common when close to startup)
 * Initial support for instant traces
 * Collect 95th percentiles
+* Remove unused & old references to Stackprof
 
 # 1.6.0
 
