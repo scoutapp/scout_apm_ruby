@@ -68,7 +68,6 @@ module ScoutApm
         'host'                   => 'https://checkin.scoutapp.com',
         'direct_host'            => 'https://apm.scoutapp.com',
         'log_level'              => 'info',
-        'stackprof_interval'     => 20000, # microseconds, 1000 = 1 millisecond, so 20k == 20 milliseconds
         'uri_reporting'          => 'full_path',
         'report_format'          => 'json',
         'disabled_instruments'   => [],

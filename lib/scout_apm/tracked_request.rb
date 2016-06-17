@@ -22,10 +22,6 @@ module ScoutApm
     #   :queue_latency - how long a background Job spent in the queue before starting processing
     attr_reader :annotations
 
-    # Nil until the request is finalized, at which point it will hold the
-    # entire raw stackprof output for this request
-    attr_reader :stackprof
-
     # Headers as recorded by rails
     # Can be nil if we never reach a Rails Controller
     attr_reader :headers
@@ -52,7 +48,6 @@ module ScoutApm
       @ignoring_children = false
       @context = Context.new
       @root_layer = nil
-      @stackprof = nil
       @error = false
       @instant_key = nil
       @mem_start = mem_usage
@@ -72,6 +67,17 @@ module ScoutApm
       return if ignoring_children?
 
       layer = @layers.pop
+
+      # Safeguard against a mismatch in the layer tracking in an instrument.
+      # This class works under the assumption that start & stop layers are
+      # lined up correctly. If stop_layer gets called twice, when it should
+      # only have been called once you'll end up with this error.
+      if layer.nil?
+        ScoutApm::Agent.instance.logger.warn("Error stopping layer, was nil. Root Layer: #{@root_layer.inspect}")
+        stop_request
+        return
+      end
+
       layer.record_stop_time!
       layer.record_allocations!
 
@@ -92,7 +98,7 @@ module ScoutApm
     # instrumentation early, and gradually learn more about the request that
     # actually happened as we go (for instance, the # of records found, or the
     # actual SQL generated).
-    # 
+    #
     # Returns nil in the case there is no current layer. That would be normal
     # for a completed TrackedRequest
     def current_layer
@@ -147,21 +153,14 @@ module ScoutApm
     # Run at the beginning of the whole request
     #
     # * Capture the first layer as the root_layer
-    # * Start Stackprof (disabling to avoid conflicts if stackprof is included as middleware since we aren't sending this up to server now)
     def start_request(layer)
       @root_layer = layer unless @root_layer # capture root layer
-      #StackProf.start(:mode => :wall, :interval => ScoutApm::Agent.instance.config.value("stackprof_interval"))
     end
 
     # Run at the end of the whole request
     #
-    # * Collect stackprof info
     # * Send the request off to be stored
     def stop_request
-      # ScoutApm::Agent.instance.logger.debug("stop_request: #{annotations[:uri]}" )
-      #StackProf.stop # disabling to avoid conflicts if stackprof is included as middleware since we aren't sending this up to server now
-      #@stackprof = StackProf.results
-
       record!
     end
 
