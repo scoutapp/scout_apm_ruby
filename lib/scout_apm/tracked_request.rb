@@ -41,7 +41,8 @@ module ScoutApm
 
     BACKTRACE_THRESHOLD = 0.5 # the minimum threshold in seconds to record the backtrace for a metric.
 
-    def initialize
+    def initialize(store)
+      @store = store #this is passed in so we can use a real store (normal operation) or fake store (instant mode only)
       @layers = []
       @call_set = Hash.new { |h, k| h[k] = CallSet.new }
       @annotations = {}
@@ -222,26 +223,26 @@ module ScoutApm
       # Update immediate and long-term histograms for both job and web requests
       if unique_name != :unknown
         ScoutApm::Agent.instance.request_histograms.add(unique_name, root_layer.total_call_time)
-        ScoutApm::Agent.instance.request_histograms_by_time[ScoutApm::Agent.instance.store.current_timestamp].
+        ScoutApm::Agent.instance.request_histograms_by_time[@store.current_timestamp].
           add(unique_name, root_layer.total_call_time)
       end
 
       metrics = LayerConverters::MetricConverter.new(self).call
-      ScoutApm::Agent.instance.store.track!(metrics)
+      @store.track!(metrics)
 
       error_metrics = LayerConverters::ErrorConverter.new(self).call
-      ScoutApm::Agent.instance.store.track!(error_metrics)
+      @store.track!(error_metrics)
 
       allocation_metrics = LayerConverters::AllocationMetricConverter.new(self).call
-      ScoutApm::Agent.instance.store.track!(allocation_metrics)
+      @store.track!(allocation_metrics)
 
       if web?
         # Don't #call this - that's the job of the ScoredItemSet later.
         slow_converter = LayerConverters::SlowRequestConverter.new(self)
-        ScoutApm::Agent.instance.store.track_slow_transaction!(slow_converter)
+        @store.track_slow_transaction!(slow_converter)
 
         queue_time_metrics = LayerConverters::RequestQueueTimeConverter.new(self).call
-        ScoutApm::Agent.instance.store.track!(queue_time_metrics)
+        @store.track!(queue_time_metrics)
 
         # If there's an instant_key, it means we need to report this right away
         if instant?
@@ -252,14 +253,14 @@ module ScoutApm
 
       if job?
         job_metrics = LayerConverters::JobConverter.new(self).call
-        ScoutApm::Agent.instance.store.track_job!(job_metrics)
+        @store.track_job!(job_metrics)
 
         job_converter = LayerConverters::SlowJobConverter.new(self)
-        ScoutApm::Agent.instance.store.track_slow_job!(job_converter)
+        @store.track_slow_job!(job_converter)
       end
 
       allocation_metrics = LayerConverters::AllocationMetricConverter.new(self).call
-      ScoutApm::Agent.instance.store.track!(allocation_metrics)
+      @store.track!(allocation_metrics)
 
     end
 

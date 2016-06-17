@@ -119,11 +119,13 @@ module ScoutApm
         logger.info "Starting monitoring for [#{environment.deploy_integration.name}]]."
         return environment.deploy_integration.install
       end
+
+      load_instruments if should_load_instruments?(options)
+
       return false unless preconditions_met?(options)
       @started = true
       logger.info "Starting monitoring for [#{environment.application_name}]. Framework [#{environment.framework}] App Server [#{environment.app_server}] Background Job Framework [#{environment.background_job_name}]."
 
-      load_instruments if should_load_instruments?(options)
 
       [ ScoutApm::Instruments::Process::ProcessCpu.new(environment.processors, logger),
         ScoutApm::Instruments::Process::ProcessMemory.new(logger),
@@ -258,6 +260,8 @@ module ScoutApm
     # If we want to skip the app_server_check, then we must load it.
     def should_load_instruments?(options={})
       return true if options[:skip_app_server_check]
+      return true if config.value('instant')
+      return false if !apm_enabled?
       environment.app_server_integration.found? || !background_job_missing?
     end
 

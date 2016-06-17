@@ -109,6 +109,7 @@ require 'scout_apm/bucket_name_splitter'
 require 'scout_apm/stack_item'
 require 'scout_apm/metric_set'
 require 'scout_apm/store'
+require 'scout_apm/fake_store'
 require 'scout_apm/tracer'
 require 'scout_apm/context'
 require 'scout_apm/instant_reporting'
@@ -138,6 +139,8 @@ require 'scout_apm/serializers/deploy_serializer'
 
 require 'scout_apm/middleware'
 
+require 'scout_apm/instant/middleware'
+
 if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR) && Rails::VERSION::MAJOR >= 3 && defined?(Rails::Railtie)
   module ScoutApm
     class Railtie < Rails::Railtie
@@ -150,6 +153,13 @@ if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR
         # Attempt to start right away, this will work best for preloading apps, Unicorn & Puma & similar
         ScoutApm::Agent.instance.start
 
+      end
+    end
+    class Railtie < Rails::Railtie
+      initializer "scout_apm.start" do |app|
+        if Rails.env.development?
+          app.middleware.use ScoutApm::Instant::Middleware
+        end
       end
     end
   end

@@ -20,7 +20,13 @@ module ScoutApm
 
     # Create a new TrackedRequest object for this thread
     def self.create
-      Thread.current[:scout_request] = TrackedRequest.new
+      store = if ScoutApm::Agent.instance.apm_enabled?
+                ScoutApm::Agent.instance.store
+              else
+                ScoutApm::FakeStore.new
+              end
+
+      Thread.current[:scout_request] = TrackedRequest.new(store)
     end
   end
 end

@@ -23,7 +23,7 @@ module ScoutApm
       @metrics = metrics
       @allocation_metrics = allocation_metrics
       @context = context
-      @time = time
+      @time = time || Time.now
       @prof = []
       @mem_delta = mem_delta
       @allocations = allocations

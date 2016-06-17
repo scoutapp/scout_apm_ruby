@@ -55,8 +55,8 @@ module ScoutApm
 
     def value(key)
       @overlays.each do |overlay|
-        if result = overlay.value(key)
-          return result
+        if overlay.has_key?(key)
+          return overlay.value(key)
         end
       end
 
@@ -73,17 +73,30 @@ module ScoutApm
         'disabled_instruments'   => [],
         'enable_background_jobs' => true,
         'ignore_traces' => [],
+        'instant' => true,
       }.freeze
 
       def value(key)
         DEFAULTS[key]
       end
+
+      def has_key?(key)
+        DEFAULTS.has_key?(key)
+      end
     end
 
     class ConfigEnvironment
       def value(key)
-        val = ENV['SCOUT_' + key.upcase]
+        val = ENV[key_to_env_key(key)]
         val.to_s.strip.length.zero? ? nil : val
+      end
+
+      def has_key?(key)
+        ENV.has_key?(key_to_env_key(key))
+      end
+
+      def key_to_env_key(key)
+        'SCOUT_' + key.upcase
       end
     end
 
@@ -103,6 +116,10 @@ module ScoutApm
         else
           nil
         end
+      end
+
+      def has_key?(key)
+        @settings.has_key?(key)
       end
 
       private
