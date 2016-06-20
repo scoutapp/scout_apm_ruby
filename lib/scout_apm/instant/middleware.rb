@@ -89,8 +89,16 @@ module ScoutApm
                   page.add_to_body("<script src='#{apm_host}/instant/scout_instant.js?cachebust=#{Time.now.to_i}'></script>")
                   page.add_to_body("<script>var scoutInstantPageTrace=#{payload};window.scoutInstant=window.scoutInstant('#{apm_host}', scoutInstantPageTrace)</script>")
 
-                  response.body=[page.res]
-                  [status, headers, response]
+
+                  if response.is_a?(ActionDispatch::Response)
+                    # preserve the ActionDispatch::Response when applicable
+                    response.body=[page.res]
+                    [status, headers, response]
+                  else
+                    # otherwise, just return an array
+                    # TODO: this will break ActionCable repsponse
+                    [status, headers, [page.res]]
+                  end
                 end
               else
                 [status, headers, response]
