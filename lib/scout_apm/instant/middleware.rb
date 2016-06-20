@@ -38,70 +38,50 @@ module ScoutApm
       end
     end
 
+    # Note that this middleware never even gets inserted unless Rails environment is development (See Railtie)
     class Middleware
-      # def initialize(app)
-      #   @app = app
-      # end
-      #
-      # def call(env)
-      # end
-
-      def initialize(*args)
-        @args = args
+      def initialize(app)
+        @app        = app
       end
 
       def call(env)
-        "#{self.class}::Logic".constantize.new(*@args).call(env)
-      end
+        status, headers, response = @app.call(env)
 
-      class Logic
-        # When development is done, just replace the middleware classes' methods with these
-        def initialize(app)
-          @app        = app
-        end
-
-        def call(env)
-          status, headers, response = @app.call(env)
-
-          # Note that this middleware never even gets inserted unless Rails environment is development
-          if ScoutApm::Agent.instance.config.value('instant')
-            if response.respond_to?(:body)
-              req = ScoutApm::RequestManager.lookup
-              slow_converter = LayerConverters::SlowRequestConverter.new(req)
-              trace = slow_converter.call
-              if trace
-                hash = ScoutApm::Serializers::PayloadSerializerToJson.rearrange_slow_transaction(trace)
-                hash.merge!(id:env['action_dispatch.request_id']) # TODO: this could be separated into a metadata section
-                payload = ScoutApm::Serializers::PayloadSerializerToJson.jsonify_hash(hash)
+        if ScoutApm::Agent.instance.config.value('instant')
+          if response.respond_to?(:body)
+            req = ScoutApm::RequestManager.lookup
+            slow_converter = LayerConverters::SlowRequestConverter.new(req)
+            trace = slow_converter.call
+            if trace
+              hash = ScoutApm::Serializers::PayloadSerializerToJson.rearrange_slow_transaction(trace)
+              hash.merge!(id:env['action_dispatch.request_id']) # TODO: this could be separated into a metadata section
+              payload = ScoutApm::Serializers::PayloadSerializerToJson.jsonify_hash(hash)
 
 
-                if env['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest'
-                  # Add the payload as a header if it's an AJAX call
-                  headers['X-scoutapminstant'] = payload
+              if env['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest'
+                # Add the payload as a header if it's an AJAX call
+                headers['X-scoutapminstant'] = payload
+                [status, headers, response]
+              else
+                # otherwise, attempt to add it inline in the page, along with the appropriate JS & CSS. Note, if page doesn't have a head or body,
+                #duration = (req.root_layer.total_call_time*1000).to_i
+                apm_host=ScoutApm::Agent.instance.config.value("direct_host")
+                page = ScoutApm::Instant::Page.new(response.body)
+                page.add_to_head(ScoutApm::Instant::Util.read_asset("xmlhttp_instrumentation.html")) # This monkey-patches XMLHttpRequest. It could possibly be part of the main scout_instant.js too. Putting it here so it runs as soon as possible.
+                page.add_to_head("<link href='#{apm_host}/instant/scout_instant.css?cachebust=#{Time.now.to_i}' media='all' rel='stylesheet' />")
+                page.add_to_body("<script src='#{apm_host}/instant/scout_instant.js?cachebust=#{Time.now.to_i}'></script>")
+                page.add_to_body("<script>var scoutInstantPageTrace=#{payload};window.scoutInstant=window.scoutInstant('#{apm_host}', scoutInstantPageTrace)</script>")
+
+
+                if response.is_a?(ActionDispatch::Response)
+                  # preserve the ActionDispatch::Response when applicable
+                  response.body=[page.res]
                   [status, headers, response]
                 else
-                  # otherwise, attempt to add it inline in the page, along with the appropriate JS & CSS. Note, if page doesn't have a head or body,
-                  #duration = (req.root_layer.total_call_time*1000).to_i
-                  apm_host=ScoutApm::Agent.instance.config.value("direct_host")
-                  page = ScoutApm::Instant::Page.new(response.body)
-                  page.add_to_head(ScoutApm::Instant::Util.read_asset("xmlhttp_instrumentation.html")) # This monkey-patches XMLHttpRequest. It could possibly be part of the main scout_instant.js too. Putting it here so it runs as soon as possible.
-                  page.add_to_head("<link href='#{apm_host}/instant/scout_instant.css?cachebust=#{Time.now.to_i}' media='all' rel='stylesheet' />")
-                  page.add_to_body("<script src='#{apm_host}/instant/scout_instant.js?cachebust=#{Time.now.to_i}'></script>")
-                  page.add_to_body("<script>var scoutInstantPageTrace=#{payload};window.scoutInstant=window.scoutInstant('#{apm_host}', scoutInstantPageTrace)</script>")
-
-
-                  if response.is_a?(ActionDispatch::Response)
-                    # preserve the ActionDispatch::Response when applicable
-                    response.body=[page.res]
-                    [status, headers, response]
-                  else
-                    # otherwise, just return an array
-                    # TODO: this will break ActionCable repsponse
-                    [status, headers, [page.res]]
-                  end
+                  # otherwise, just return an array
+                  # TODO: this will break ActionCable repsponse
+                  [status, headers, [page.res]]
                 end
-              else
-                [status, headers, response]
               end
             else
               [status, headers, response]
@@ -109,6 +89,8 @@ module ScoutApm
           else
             [status, headers, response]
           end
+        else
+          [status, headers, response]
         end
       end
     end
