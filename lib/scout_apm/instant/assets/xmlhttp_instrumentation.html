@@ -1,6 +1,6 @@
-<script>
+<script language="JavaScript">
 (function() {
-  /************ instrument XMLHttpRequest ************************/
+  /* instrument XMLHttpRequest */
   var open = window.XMLHttpRequest.prototype.open;
   var send = window.XMLHttpRequest.prototype.send;
   function openReplacement(method, url, async, user, password) {
@@ -15,10 +15,15 @@
     return send.apply(this, arguments);
   }
   function onLoadReplacement() {
-    traceText = this.getResponseHeader("X-scoutapminstant")
-    if(traceText){
-      console.info("Got an AJAX instrumentation with "+traceText.length.toString()+" characters.")
-      setTimeout(function(){ window.scoutInstant("addTrace",traceText) },0);
+    try {
+      traceText = this.getResponseHeader("X-scoutapminstant");
+      if(traceText){
+        //console.info("Got an AJAX instrumentation with "+traceText.length.toString()+" characters.")
+        setTimeout(function(){ window.scoutInstant("addTrace",traceText) },0);
+      }
+    } catch(e){
+      console.debug("Problem getting X-scoutapminstant header"):
+      console.debug(e);
     }
     if (this._onload) {
       return this._onload.apply(this, arguments);
@@ -26,5 +31,5 @@
   }
   window.XMLHttpRequest.prototype.open = openReplacement;
   window.XMLHttpRequest.prototype.send = sendReplacement;
-})()
+})();
 </script>
