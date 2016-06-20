@@ -73,7 +73,7 @@ module ScoutApm
         'disabled_instruments'   => [],
         'enable_background_jobs' => true,
         'ignore_traces' => [],
-        'instant' => true,
+        'instant' => false, # false for now so code can live in main branch
       }.freeze
 
       def value(key)
