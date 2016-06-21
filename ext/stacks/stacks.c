@@ -9,6 +9,12 @@
 #include <semaphore.h>
 
 
+ID sym_ScoutApm;
+ID sym_Stacks;
+ID sym_collect;
+VALUE ScoutApm;
+VALUE Stacks;
+
 VALUE mScoutApm;
 VALUE mInstruments;
 VALUE cStacks;
@@ -120,22 +126,16 @@ broadcast_profile_signal()
 void
 scout_record_sample()
 {
+  VALUE trace, trace_line;
+  int i, num;
+
   // Get frames
-  int num;
   num = rb_profile_frames(0, sizeof(frames_buffer) / sizeof(VALUE), frames_buffer, lines_buffer);
 
-  // Lookup the classes
-  ID sym_ScoutApm = rb_intern("ScoutApm");
-  ID sym_Stacks = rb_intern("Stacks");
-  ID sym_collect = rb_intern("collect");
-  VALUE ScoutApm = rb_const_get(rb_cObject, sym_ScoutApm);
-  VALUE Stacks = rb_const_get(ScoutApm, sym_Stacks);
-
   // Create an array to hold trace lines
-  VALUE trace = rb_ary_new2(num);
+  trace = rb_ary_new2(num);
 
-  int i;
-  VALUE trace_line = Qnil;
+  trace_line = Qnil;
   for (i = 0; i < num; i++) {
     // Extract values
     VALUE frame = frames_buffer[i];
@@ -227,13 +227,14 @@ scout_start_profiling()
 {
   struct itimerval timer;
   struct itimerval testTimer;
+  int getResult;
   rb_warn("Starting Profiling");
 
   // This section of code sets up a timer that sends SIGALRM every <INTERVAL>
   // amount of time
   //
   // First Check for an existing timer
-  int getResult = getitimer(ITIMER_REAL, &testTimer);
+  getResult = getitimer(ITIMER_REAL, &testTimer);
   if (getResult != 0) {
     rb_warn("Failed in call to getitimer: %d", getResult);
   }
@@ -252,18 +253,18 @@ scout_start_profiling()
   return Qnil;
 }
 
-static VALUE
-scout_stop_profiling(VALUE module)
-{
-  // Wipe timer
-  struct itimerval timer;
-  timer.it_interval.tv_sec = 0;
-  timer.it_interval.tv_usec = 0;
-  timer.it_value = timer.it_interval;
-  setitimer(ITIMER_REAL, &timer, 0);
-
-  return Qnil;
-}
+//static VALUE
+//scout_stop_profiling(VALUE module)
+//{
+//  // Wipe timer
+// struct itimerval timer;
+//  timer.it_interval.tv_sec = 0;
+//  timer.it_interval.tv_usec = 0;
+//  timer.it_value = timer.it_interval;
+//  setitimer(ITIMER_REAL, &timer, 0);
+//
+//  return Qnil;
+//}
 
 static VALUE
 scout_uninstall_profiling()
@@ -286,6 +287,12 @@ void Init_stacks()
     mScoutApm = rb_define_module("ScoutApm");
     mInstruments = rb_define_module_under(mScoutApm, "Instruments");
     cStacks = rb_define_class_under(mInstruments, "Stacks", rb_cObject);
+    // Lookup the classes
+    sym_ScoutApm = rb_intern("ScoutApm");
+    sym_Stacks = rb_intern("Stacks");
+    sym_collect = rb_intern("collect");
+    ScoutApm = rb_const_get(rb_cObject, sym_ScoutApm);
+    Stacks = rb_const_get(ScoutApm, sym_Stacks);
     rb_warn("Init_stacks");
 
     // Installs/uninstalls the signal handler.
