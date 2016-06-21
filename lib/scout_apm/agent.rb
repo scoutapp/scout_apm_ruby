@@ -125,6 +125,8 @@ module ScoutApm
 
       load_instruments if should_load_instruments?(options)
 
+      ScoutApm::Instruments::Stacks.install
+      ScoutApm::Instruments::Stacks.start
       ScoutApm::Instruments::Stacks.add_profiled_thread
 
       [ ScoutApm::Instruments::Process::ProcessCpu.new(environment.processors, logger),
