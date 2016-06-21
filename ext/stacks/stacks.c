@@ -43,8 +43,7 @@ struct profiled_thread
 
 // Profiled threads are joined as a linked list
 pthread_mutex_t profiled_threads_mutex;
-struct profiled_thread *root_thread = NULL;
-struct profiled_thread *last_thread = NULL;
+struct profiled_thread *head_thread = NULL;
 
 static VALUE add_profiled_thread()
 {
@@ -53,41 +52,39 @@ static VALUE add_profiled_thread()
   thr = (struct profiled_thread *) malloc(sizeof(struct profiled_thread ));
   thr->th = pthread_self();
   thr->next = NULL;
-  if (root_thread == NULL) {
-    root_thread = thr;
+  if (head_thread == NULL) {
+    head_thread = thr;
   } else {
-    last_thread->next = thr;
+    thr->next = head_thread;
+    head_thread = thr; // now we're head_thread
   }
-  last_thread = thr;
   pthread_mutex_unlock(&profiled_threads_mutex);
   return Qtrue;
 }
 
 static VALUE remove_profiled_thread()
 {
-  struct profiled_thread *ptr = root_thread;
+  struct profiled_thread *ptr = head_thread;
   struct profiled_thread *prev = NULL;
   pthread_t cur_thread = pthread_self();
   pthread_mutex_lock(&profiled_threads_mutex);
   while(ptr != NULL) {
     if (pthread_equal(cur_thread, ptr->th)) {
-      if (root_thread == ptr) { // we're the root_thread
-        if (root_thread == last_thread) { // we're also the last
-          root_thread = NULL;
-          last_thread = NULL;
+      if (head_thread == ptr) { // we're the head_thread
+        if (head_thread->next == NULL) { // we're also the last
+          head_thread = NULL;
           free(ptr);
           ptr = NULL;
-        } else { // Just the root, not the last. Reassign root_thread to next
-          root_thread = ptr->next;
+        } else { // Just the head, not the last. Reassign head_thread to next
+          head_thread = ptr->next;
           free(ptr);
           ptr = NULL;
-        } // if root_thread == last_thread
-      } else if (last_thread == ptr) { // we're the last thread, but not the root_thread
+        } // if head_thread->next == NULL
+      } else if (ptr->next == NULL) { // we're the last thread, but not the head_thread
         prev->next = NULL;
-        last_thread = prev;
         free(ptr);
         ptr = NULL;
-      } else { // we're not the root_thread or last_thread
+      } else { // we're not the head_thread or last thread
         prev->next = ptr->next; // cut ptr out of the linked list
         free(ptr);
         ptr = NULL;
@@ -106,7 +103,7 @@ broadcast_profile_signal()
   struct profiled_thread *ptr;
   while(1) {
     sem_wait(&do_broadcast);
-    ptr = root_thread;
+    ptr = head_thread;
     pthread_mutex_lock(&profiled_threads_mutex);
 
     while(ptr != NULL) {
