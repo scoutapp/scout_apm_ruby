@@ -40,7 +40,10 @@ module ScoutApm
     #   :class_name   - The ActiveRecord class name (From notification instantiation.active_record)
     attr_reader :annotations
 
-    # Captured backtraces from ScoutProf
+    # Captured backtraces from ScoutProf. This is distinct from the backtrace
+    # attribute, which gets the ruby backtrace of any given layer. StackProf
+    # focuses on Controller layers, and requires a native extension and a
+    # reasonably recent Ruby.
     attr_reader :traces
 
     BACKTRACE_CALLER_LIMIT = 50 # maximum number of lines to send thru for backtrace analysis
@@ -116,6 +119,12 @@ module ScoutApm
       else
         caller[3...BACKTRACE_CALLER_LIMIT]
       end
+    end
+
+    # Set the name of the file that this action is coming from.
+    # TraceSet uses this to more accurately filter backtraces
+    def set_controller_file(file)
+      @traces.set_controller_file(file)
     end
 
     def store_trace!(trace)

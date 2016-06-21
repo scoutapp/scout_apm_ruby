@@ -13,7 +13,6 @@ VALUE mScoutApm;
 VALUE mInstruments;
 VALUE cStacks;
 
-
 #define BUF_SIZE 2048
 #define INTERVAL 10000
 VALUE frames_buffer[BUF_SIZE];
@@ -128,30 +127,34 @@ scout_record_sample()
   // Lookup the classes
   ID sym_ScoutApm = rb_intern("ScoutApm");
   ID sym_Stacks = rb_intern("Stacks");
-  ID sym_StackTrace = rb_intern("StackTrace");
   ID sym_collect = rb_intern("collect");
-  ID sym_add = rb_intern("add");
   VALUE ScoutApm = rb_const_get(rb_cObject, sym_ScoutApm);
   VALUE Stacks = rb_const_get(ScoutApm, sym_Stacks);
-  VALUE StackTrace = rb_const_get(ScoutApm, sym_StackTrace);
 
-  // Initialize a Trace object
-  VALUE trace_args[1];
-  trace_args[0] = INT2FIX(num);
-  VALUE trace = rb_class_new_instance(1, trace_args, StackTrace);
+  // Create an array to hold trace lines
+  VALUE trace = rb_ary_new2(num);
 
-  // Populate the trace object
   int i;
+  VALUE trace_line = Qnil;
   for (i = 0; i < num; i++) {
+    // Extract values
     VALUE frame = frames_buffer[i];
     VALUE file  = rb_profile_frame_absolute_path(frame);
-    VALUE label = rb_profile_frame_label(frame);
-    VALUE klass = rb_profile_frame_classpath(frame);
     VALUE line  = INT2FIX(lines_buffer[i]);
-    rb_funcall(trace, sym_add, 4, file, line, label, klass);
+    VALUE klass = rb_profile_frame_classpath(frame);
+    VALUE label = rb_profile_frame_label(frame);
+
+    // Create and populate array to hold one line of the trace
+    trace_line = rb_ary_new2(4);
+    rb_ary_store(trace_line, 0, file);
+    rb_ary_store(trace_line, 1, line);
+    rb_ary_store(trace_line, 2, klass);
+    rb_ary_store(trace_line, 3, label);
+
+    rb_ary_push(trace, trace_line);
   }
 
-  // Store the Trace object
+  // Store the Trace
   rb_funcall(Stacks, sym_collect, 1, trace);
 }
 
@@ -241,7 +244,7 @@ scout_start_profiling()
 
   // Then make the timer
   timer.it_interval.tv_sec = 0;
-  timer.it_interval.tv_usec = NUM2INT(interval);
+  timer.it_interval.tv_usec = INTERVAL; //FIX2INT(interval);
   timer.it_value = timer.it_interval;
   setitimer(ITIMER_REAL, &timer, 0);
 
@@ -249,20 +252,18 @@ scout_start_profiling()
   return Qnil;
 }
 
-//static VALUE
-//scout_stop_profiling()
-//{
-//  // Wipe timer
-//  struct itimerval timer;
-//  rb_warn("Stopping Profiling");
+static VALUE
+scout_stop_profiling(VALUE module)
+{
+  // Wipe timer
+  struct itimerval timer;
+  timer.it_interval.tv_sec = 0;
+  timer.it_interval.tv_usec = 0;
+  timer.it_value = timer.it_interval;
+  setitimer(ITIMER_REAL, &timer, 0);
 
-//  timer.it_interval.tv_sec = 0;
-//  timer.it_interval.tv_usec = 0;
-//  timer.it_value = timer.it_interval;
-//  setitimer(ITIMER_REAL, &timer, 0);
-//
-//  return Qnil;
-//}
+  return Qnil;
+}
 
 static VALUE
 scout_uninstall_profiling()
@@ -301,7 +302,7 @@ void Init_stacks()
     rb_define_const(cStacks, "ENABLED", Qtrue);
     scout_install_profiling();
     scout_start_profiling();
-    rb_warn("Finished Init_stacks");
+    rb_warn("Finished Initializing ScoutProf Native Extension");
 }
 
 #else
