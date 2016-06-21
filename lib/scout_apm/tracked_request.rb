@@ -66,14 +66,6 @@ module ScoutApm
       start_request(layer) unless @root_layer
       @layers[-1].add_child(layer) if @layers.any?
       @layers.push(layer)
-
-      if ScoutApm::Instruments::Stacks::ENABLED
-        if layer.traced?
-          ScoutApm::Instruments::Stacks.start
-        else # todo: flag to record if we're currently start/stopped.
-          ScoutApm::Instruments::Stacks.stop
-        end
-      end
     end
 
     def stop_layer
@@ -96,21 +88,6 @@ module ScoutApm
 
       if layer.type == "Controller"
         ScoutApm::Agent.instance.logger.info "****** Controller Traces (#{layer.name}):\n#{layer.traces.inspect}"
-      end
-
-      # When we leave a traced layer to a non-traced, be sure we're stopping ScoutProf.
-      #
-      # When we re-enter a layer that's traced, we should be sure to restart
-      # tracing, since it probably was turned off during the execution of the
-      # child layer that we're stopping here.
-      if ScoutApm::Instruments::Stacks::ENABLED
-        if current_layer
-          if layer.traced? && !current_layer.traced?
-            ScoutApm::Instruments::Stacks.stop
-          elsif current_layer.traced?
-            ScoutApm::Instruments::Stacks.start
-          end
-        end
       end
 
       # This must be called before checking if a backtrace should be collected as the call count influences our capture logic.

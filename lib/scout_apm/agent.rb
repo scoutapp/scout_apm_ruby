@@ -125,6 +125,8 @@ module ScoutApm
 
       load_instruments if should_load_instruments?(options)
 
+      ScoutApm::Instruments::Stacks.add_profiled_thread
+
       [ ScoutApm::Instruments::Process::ProcessCpu.new(environment.processors, logger),
         ScoutApm::Instruments::Process::ProcessMemory.new(logger),
         ScoutApm::Instruments::PercentileSampler.new(logger, 95),
@@ -176,8 +178,6 @@ module ScoutApm
       logger.debug "Installing Shutdown Handler"
 
       at_exit do
-        ScoutApm::Instruments::Stacks.uninstall
-
         logger.info "Shutting down Scout Agent"
         # MRI 1.9 bug drops exit codes.
         # http://bugs.ruby-lang.org/issues/5218
@@ -208,6 +208,7 @@ module ScoutApm
         logger.debug "Joining background worker thread"
         @background_worker_thread.join if @background_worker_thread
       end
+      ScoutApm::Instruments::Stacks.remove_profiled_thread
     end
 
     def started?

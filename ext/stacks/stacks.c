@@ -6,6 +6,7 @@
 #include <signal.h>
 #include <sys/time.h>
 #include <pthread.h>
+#include <semaphore.h>
 
 
 VALUE mScoutApm;
@@ -26,6 +27,91 @@ VALUE interval;
 #include <sys/time.h>
 #include <ruby/debug.h>
 
+pthread_t btid; //Broadcast thread ID
+sem_t do_broadcast; // Broadcast thread blocks on this semaphore. Timer signals increment it.
+
+struct profiled_thread
+{
+  pthread_t th;
+  struct profiled_thread *next;
+};
+
+// Profiled threads are joined as a linked list
+pthread_mutex_t profiled_threads_mutex;
+struct profiled_thread *root_thread = NULL;
+struct profiled_thread *last_thread = NULL;
+
+static VALUE add_profiled_thread()
+{
+  struct profiled_thread *thr;
+  pthread_mutex_lock(&profiled_threads_mutex);
+  thr = (struct profiled_thread *) malloc(sizeof(struct profiled_thread ));
+  thr->th = pthread_self();
+  thr->next = NULL;
+  if (root_thread == NULL) {
+    root_thread = thr;
+  } else {
+    last_thread->next = thr;
+  }
+  last_thread = thr;
+  pthread_mutex_unlock(&profiled_threads_mutex);
+  return Qtrue;
+}
+
+static VALUE remove_profiled_thread()
+{
+  struct profiled_thread *ptr = root_thread;
+  struct profiled_thread *prev = NULL;
+  pthread_t cur_thread = pthread_self();
+  pthread_mutex_lock(&profiled_threads_mutex);
+  while(ptr != NULL) {
+    if (pthread_equal(cur_thread, ptr->th)) {
+      if (root_thread == ptr) { // we're the root_thread
+        if (root_thread == last_thread) { // we're also the last
+          root_thread = NULL;
+          last_thread = NULL;
+          free(ptr);
+          ptr = NULL;
+        } else { // Just the root, not the last. Reassign root_thread to next
+          root_thread = ptr->next;
+          free(ptr);
+          ptr = NULL;
+        } // if root_thread == last_thread
+      } else if (last_thread == ptr) { // we're the last thread, but not the root_thread
+        prev->next = NULL;
+        last_thread = prev;
+        free(ptr);
+        ptr = NULL;
+      } else { // we're not the root_thread or last_thread
+        prev->next = ptr->next; // cut ptr out of the linked list
+        free(ptr);
+        ptr = NULL;
+      }
+    } else { // pthread_equal()
+      ptr = ptr->next;
+    }
+  } // while (ptr != NULL)
+  pthread_mutex_unlock(&profiled_threads_mutex);
+  return Qtrue;
+}
+
+void *
+broadcast_profile_signal()
+{
+  struct profiled_thread *ptr;
+  while(1) {
+    sem_wait(&do_broadcast);
+    ptr = root_thread;
+    pthread_mutex_lock(&profiled_threads_mutex);
+
+    while(ptr != NULL) {
+      pthread_kill(ptr->th, SIGVTALRM); // Send signal to the specific thread
+      ptr = ptr->next;
+    }
+    pthread_mutex_unlock(&profiled_threads_mutex);
+  }
+  return 0;
+}
 
 // Called every single time a tick happens.
 // Goal is to collect the backtrace, and shuffle it off back to ruby-land for further analysis
@@ -81,9 +167,8 @@ scout_profile_job_handler(void *data)
   in_signal_handler--;
 }
 
-//scout_profile_signal_handler(int sig, siginfo_t *sinfo, void *ucontext)
 static void
-scout_profile_signal_handler(int sig)
+scout_profile_broadcast_signal_handler(int sig)
 {
   if (rb_during_gc()) {
     // _stackprof.during_gc++, _stackprof.overall_samples++;
@@ -92,10 +177,18 @@ scout_profile_signal_handler(int sig)
   }
 }
 
+//scout_profile_signal_handler(int sig, siginfo_t *sinfo, void *ucontext)
+static void
+scout_profile_timer_signal_handler(int sig)
+{
+  sem_post(&do_broadcast);
+}
+
 static VALUE
-scout_install_profiling(VALUE module)
+scout_install_profiling()
 {
   struct sigaction new_action, old_action;
+  struct sigaction new_vtaction, old_vtaction;
   interval = INT2FIX(INTERVAL);
 
   // Useful docs on signal handling:
@@ -107,26 +200,36 @@ scout_install_profiling(VALUE module)
   // when the timer fired. So an open() call that we interrupt will still
   // happen, rather than returning an error where it was called (perhaps
   // breaking poorly written code in other places that didn't think to check).
-  new_action.sa_handler = scout_profile_signal_handler;
+  new_action.sa_handler = scout_profile_timer_signal_handler;
   new_action.sa_flags = SA_RESTART;
   sigemptyset(&new_action.sa_mask);
   sigaction(SIGALRM, &new_action, &old_action);
+
+
+  sem_init(&do_broadcast, 0, 1);
+  pthread_create(&btid, NULL, broadcast_profile_signal, NULL);
+
+  // Also set up an interrupt handler for when we broadcast an alarm
+  new_vtaction.sa_handler = scout_profile_broadcast_signal_handler;
+  new_vtaction.sa_flags = SA_RESTART;
+  sigemptyset(&new_vtaction.sa_mask);
+  sigaction(SIGVTALRM, &new_vtaction, &old_vtaction);
 
   // VALUE must be returned, just return nil
   return Qnil;
 }
 
 static VALUE
-scout_start_profiling(VALUE module)
+scout_start_profiling()
 {
-  rb_warn("Starting Profiling")
   struct itimerval timer;
+  struct itimerval testTimer;
+  rb_warn("Starting Profiling");
 
   // This section of code sets up a timer that sends SIGALRM every <INTERVAL>
   // amount of time
   //
   // First Check for an existing timer
-  struct itimerval testTimer;
   int getResult = getitimer(ITIMER_REAL, &testTimer);
   if (getResult != 0) {
     rb_warn("Failed in call to getitimer: %d", getResult);
@@ -146,22 +249,23 @@ scout_start_profiling(VALUE module)
   return Qnil;
 }
 
-static VALUE
-scout_stop_profiling(VALUE module)
-{
-  rb_warn("Stopping Profiling")
-  // Wipe timer
-  struct itimerval timer;
-  timer.it_interval.tv_sec = 0;
-  timer.it_interval.tv_usec = 0;
-  timer.it_value = timer.it_interval;
-  setitimer(ITIMER_REAL, &timer, 0);
+//static VALUE
+//scout_stop_profiling()
+//{
+//  // Wipe timer
+//  struct itimerval timer;
+//  rb_warn("Stopping Profiling");
 
-  return Qnil;
-}
+//  timer.it_interval.tv_sec = 0;
+//  timer.it_interval.tv_usec = 0;
+//  timer.it_value = timer.it_interval;
+//  setitimer(ITIMER_REAL, &timer, 0);
+//
+//  return Qnil;
+//}
 
 static VALUE
-scout_uninstall_profiling(VALUE module)
+scout_uninstall_profiling()
 {
   // Wipe timer
   struct itimerval timer;
@@ -178,20 +282,25 @@ scout_uninstall_profiling(VALUE module)
 
 void Init_stacks()
 {
-    rb_warn("Init_stacks");
     mScoutApm = rb_define_module("ScoutApm");
     mInstruments = rb_define_module_under(mScoutApm, "Instruments");
     cStacks = rb_define_class_under(mInstruments, "Stacks", rb_cObject);
+    rb_warn("Init_stacks");
 
     // Installs/uninstalls the signal handler.
     rb_define_singleton_method(cStacks, "install", scout_install_profiling, 0);
     rb_define_singleton_method(cStacks, "uninstall", scout_uninstall_profiling, 0);
 
     // Starts/removes the timer tick, leaving the sighandler.
-    rb_define_singleton_method(cStacks, "start", scout_start_profiling, 0);
-    rb_define_singleton_method(cStacks, "stop", scout_stop_profiling, 0);
+    //rb_define_singleton_method(cStacks, "start", scout_start_profiling, 0);
+    //rb_define_singleton_method(cStacks, "stop", scout_stop_profiling, 0);
+
+    rb_define_singleton_method(cStacks, "add_profiled_thread", add_profiled_thread, 0);
+    rb_define_singleton_method(cStacks, "remove_profiled_thread", remove_profiled_thread, 0);
 
     rb_define_const(cStacks, "ENABLED", Qtrue);
+    scout_install_profiling();
+    scout_start_profiling();
     rb_warn("Finished Init_stacks");
 }
 
