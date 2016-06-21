@@ -71,7 +71,7 @@ module ScoutApm
         reporting_periods.select { |time, rp| force || time.timestamp < current_timestamp.timestamp}.
                           each   { |time, rp|
                                    collect_samplers(rp)
-                                   layaway.add_reporting_period(time, rp)
+                                   layaway.write_reporting_period(rp)
                                    reporting_periods.delete(time)
                                  }
       }
@@ -108,8 +108,21 @@ module ScoutApm
       @timestamp = @raw_time.to_i - @raw_time.sec # The normalized time (integer) to compare by
     end
 
+    def self.minutes_ago(min, base_time=Time.now)
+      adjusted = base_time - (min * 60)
+      new(adjusted)
+    end
+
     def to_s
-      Time.at(@timestamp).iso8601
+      strftime
+    end
+
+    def strftime(pattern=nil)
+      if pattern.nil?
+        Time.at(@timestamp).iso8601
+      else
+        Time.at(@timestamp).strftime(pattern)
+      end
     end
 
     def eql?(o)
