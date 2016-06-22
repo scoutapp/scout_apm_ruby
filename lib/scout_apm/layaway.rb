@@ -10,17 +10,38 @@ module ScoutApm
     # How old a file needs to be in Seconds before it gets reported.
     REPORTING_AGE = 120
 
+    # How long to let a stale file sit before deleting it.
+    # Letting it sit a bit may be useful for debugging
+    STALE_AGE = 10 * 60
+
+    # A strftime format string for how we render timestamps in filenames.
+    # Must be sortable as an integer
+    TIME_FORMAT = "%Y%m%d%H%M"
+
     def initialize(directory=nil)
       @directory = directory
     end
 
-    # Fully qualified directory where the layaway files can be placed. Must be
-    # writable by this process.
-    # Don't set this in initializer, since it relies on agent instance existing.
-    # TODO: Find a location for the in a more intelligent way
+    # Returns a Pathname object with the fully qualified directory where the layaway files can be placed.
+    # That directory must be writable by this process.
+    #
+    # Don't set this in initializer, since it relies on agent instance existing to figure out the value.
+    #
     def directory
-      default = "#{ScoutApm::Agent.instance.environment.root}/tmp"
-      @directory ||= Pathname.new(default)
+      return @directory if @directory
+
+      data_file = ScoutApm::Agent.instance.config.value("data_file")
+      data_file = File.dirname(data_file) if data_file && !File.directory?
+
+      candidates = [
+        data_file,
+        "#{ScoutApm::Agent.instance.environment.root}/tmp",
+        "/tmp"
+      ].compact
+
+      found = candidates.detect { |dir| File.writable?(dir) }
+      ScoutApm::Agent.instance.logger.info("Storing Layaway Files in #{found}")
+      @directory = Pathname.new(found)
     end
 
     def write_reporting_period(reporting_period)
@@ -29,10 +50,12 @@ module ScoutApm
       layaway_file.write(reporting_period)
     end
 
-    # Claims a given timestamp, then yields ReportingPeriods collected up from all the files.
+    # Claims a given timestamp (getting a lock on a particular filename),
+    # then yields ReportingPeriods collected up from all the files.
     # If the yield returns truthy, delete the layaway files that made it up.
     def with_claim(timestamp)
       coordinator_file = glob_pattern(timestamp, :coordinator)
+
       File.open(coordinator_file, File::RDWR | File::CREAT) do |f|
         begin
           # Exclusive lock.
@@ -44,6 +67,7 @@ module ScoutApm
             if rps.any?
               if yield rps
                 delete_files_for(timestamp)
+                delete_stale_files(timestamp.to_time - STALE_AGE)
               end
             else
               ScoutApm::Agent.instance.logger.debug("No layaway files to report")
@@ -58,10 +82,31 @@ module ScoutApm
           f.flock(File::LOCK_UN)
         end
       end
+    ensure
+
+      # We don't need the coordinator file to hang out after this.
+      if coordinator_file && File.file?(coordinator_file)
+        File.unlink(coordinator_file)
+      end
     end
 
     def delete_files_for(timestamp)
       all_files_for(timestamp).each { |layaway| File.unlink(layaway) }
+    end
+
+    def delete_stale_files(older_than)
+      binding.pry
+
+      ScoutApm::Agent.instance.logger.info("Starting delete of stale files: #{older_than.to_s}")
+      all_files_for(:all).
+        map { |filename| timestamp_from_filename(filename) }
+        compact.
+        uniq.
+        select { |timestamp| timestamp.to_i < older_than.strftime(TIME_FORMAT).to_i }.
+        map    { |timestamp|
+                 ScoutApm::Agent.instance.logger.info("Deleting stale layaway file: #{timestamp}")
+                 delete_files_for(timestamp)
+               }
     end
 
     private
@@ -89,8 +134,10 @@ module ScoutApm
     def format_timestamp(timestamp)
       if timestamp == :all
         "*"
+      elsif timestamp.respond_to?(:strftime)
+        timestamp.strftime(TIME_FORMAT)
       else
-        timestamp.strftime("%Y%m%d%H%M")
+        timestamp.to_s
       end
     end
 
@@ -102,20 +149,13 @@ module ScoutApm
       end
     end
 
-    # Find all times across all files (returned as strings) in the files we can see
-    def file_times
-      Dir[glob_pattern(:all, :all)].
-        map { |name| name.match(/scout_(.*)_.*data/) }.
-        reject {|matchdata| matchdata.nil? }.
-        map { |matchdata| matchdata[1] }.
-        uniq
-    end
-
-    # TODO: I don't trust this parse, since I don't specify the format.
-    # Parsed version of file_times
-    def parsed_file_times
-      file_times.
-        map {|ts| Time.parse(ts) }
+    def timestamp_from_filename(filename)
+      match = filename.match(%r{scout_(.*)_.*\.data})
+      if match
+        match[1]
+      else
+        nil
+      end
     end
   end
 end

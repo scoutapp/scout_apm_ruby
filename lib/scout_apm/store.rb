@@ -119,10 +119,14 @@ module ScoutApm
 
     def strftime(pattern=nil)
       if pattern.nil?
-        Time.at(@timestamp).iso8601
+        to_time.iso8601
       else
-        Time.at(@timestamp).strftime(pattern)
+        to_time.strftime(pattern)
       end
+    end
+
+    def to_time
+      Time.at(@timestamp)
     end
 
     def eql?(o)
