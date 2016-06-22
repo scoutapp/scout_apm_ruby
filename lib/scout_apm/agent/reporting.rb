@@ -34,12 +34,13 @@ module ScoutApm
           logger.debug("Succeeded claiming #{period_to_report.to_s}")
 
           begin
-            merged = rps.inject { |memo, rp| memo.merge!(rp) }
+            merged = rps.inject { |memo, rp| memo.merge(rp) }
             logger.debug("Merged #{rps.length} reporting periods, delivering")
             deliver_period(merged)
             true
-          rescue
-            logger.debug("Error merging reporting periods")
+          rescue => e
+            logger.debug("Error merging reporting periods #{e.message}")
+            logger.debug("Error merging reporting periods #{e.backtrace}")
             false
           end
 
