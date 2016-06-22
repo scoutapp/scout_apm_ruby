@@ -56,37 +56,37 @@ module ScoutApm
     def with_claim(timestamp)
       coordinator_file = glob_pattern(timestamp, :coordinator)
 
-      File.open(coordinator_file, File::RDWR | File::CREAT) do |f|
-        begin
-          # Exclusive lock.
-          # Don't block if some other process holds this lock.
-          if f.flock(File::LOCK_EX | File::LOCK_NB)
+      ScoutApm::Agent.instance.logger.debug("Coodinator file name: #{coordinator_file}")
 
-            files = all_files_for(timestamp).reject{|l| l.to_s == coordinator_file.to_s }
-            rps = files.map{ |layaway| LayawayFile.new(layaway).load }
-            if rps.any?
-              if yield rps
-                delete_files_for(timestamp)
-                delete_stale_files(timestamp.to_time - STALE_AGE)
-              end
-            else
-              ScoutApm::Agent.instance.logger.debug("No layaway files to report")
-            end
+      f = File.open(coordinator_file, File::RDWR | File::CREAT)
+      begin
+        # Exclusive lock.
+        # Don't block if some other process holds this lock.
+        if f.flock(File::LOCK_EX | File::LOCK_NB)
 
+          ScoutApm::Agent.instance.logger.debug("Obtained lock on #{coordinator_file}")
+
+          files = all_files_for(timestamp).reject{|l| l.to_s == coordinator_file.to_s }
+          rps = files.map{ |layaway| LayawayFile.new(layaway).load }
+          if rps.any?
+            yield rps
+
+            delete_files_for(timestamp) # also removes the coodinator_file
+            delete_stale_files(timestamp.to_time - STALE_AGE)
           else
-            # Couldn't obtain lock. Return false from this function, but otherwise no work
-            return false
+            ScoutApm::Agent.instance.logger.debug("No layaway files to report")
           end
-        ensure
-          # Unlock even if we didn't obtain the lock. No harm.
-          f.flock(File::LOCK_UN)
-        end
-      end
-    ensure
 
-      # We don't need the coordinator file to hang out after this.
-      if coordinator_file && File.file?(coordinator_file)
-        File.unlink(coordinator_file)
+          # Unlock the file when done!
+          ScoutApm::Agent.instance.logger.debug("About to unlock #{coordinator_file}")
+          f.flock(File::LOCK_UN | File::LOCK_NB)
+          f.close
+          true
+        else
+          # Couldn't obtain lock. Return false from this function, but otherwise no work
+          f.close
+          false
+        end
       end
     end
 
@@ -95,11 +95,10 @@ module ScoutApm
     end
 
     def delete_stale_files(older_than)
-      binding.pry
-
       ScoutApm::Agent.instance.logger.info("Starting delete of stale files: #{older_than.to_s}")
+
       all_files_for(:all).
-        map { |filename| timestamp_from_filename(filename) }
+        map { |filename| timestamp_from_filename(filename) }.
         compact.
         uniq.
         select { |timestamp| timestamp.to_i < older_than.strftime(TIME_FORMAT).to_i }.
