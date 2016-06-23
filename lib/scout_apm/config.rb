@@ -126,13 +126,13 @@ module ScoutApm
 
       def load_file(file)
         if !File.exist?(@resolved_file_path)
-          logger.info("Configuration file #{file} does not exist, skipping.")
+          logger.debug("Configuration file #{file} does not exist, skipping.")
           @file_loaded = false
           return
         end
 
         if !app_environment
-          logger.info("Could not determine application environment, aborting configuration file load")
+          logger.debug("Could not determine application environment, aborting configuration file load")
           @file_loaded = false
           return
         end
@@ -148,10 +148,10 @@ module ScoutApm
                    " check that there is a top level #{app_environment} key.")
           end
 
-          logger.info("Loaded Configuration: #{@resolved_file_path}. Using environment: #{app_environment}")
+          logger.debug("Loaded Configuration: #{@resolved_file_path}. Using environment: #{app_environment}")
           @file_loaded = true
         rescue Exception => e # Explicit `Exception` handling to catch SyntaxError and anything else that ERB or YAML may throw
-          logger.info("Failed loading configuration file: #{e.message}. ScoutAPM will continue starting with configuration from ENV and defaults")
+          logger.debug("Failed loading configuration file: #{e.message}. ScoutAPM will continue starting with configuration from ENV and defaults")
           @file_loaded = false
         end
       end
