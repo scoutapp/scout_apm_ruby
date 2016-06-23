@@ -74,6 +74,7 @@ module ScoutApm
             delete_files_for(timestamp) # also removes the coodinator_file
             delete_stale_files(timestamp.to_time - STALE_AGE)
           else
+            File.unlink(coordinator_file)
             ScoutApm::Agent.instance.logger.debug("No layaway files to report")
           end
 
