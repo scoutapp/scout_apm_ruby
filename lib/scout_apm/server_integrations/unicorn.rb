@@ -13,9 +13,7 @@ module ScoutApm
 
       def forking?
         return true unless (defined?(::Unicorn) && defined?(::Unicorn::Configurator))
-        ObjectSpace.each_object(::Unicorn::Configurator).first[:preload_app].tap {|x|
-          logger.info "Unicorn is forking? #{x}"
-        }
+        ObjectSpace.each_object(::Unicorn::Configurator).first[:preload_app]
       rescue
         true
       end
