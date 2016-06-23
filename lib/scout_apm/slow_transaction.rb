@@ -29,7 +29,6 @@ module ScoutApm
       @allocations = allocations
       @seconds_since_startup = (Time.now - ScoutApm::Agent.instance.process_start_time)
       @hostname = ScoutApm::Environment.instance.hostname
-
       @score = score
       ScoutApm::Agent.instance.logger.debug { "Slow Request [#{uri}] - Call Time: #{total_call_time} Mem Delta: #{mem_delta} Score: #{score}"}
     end

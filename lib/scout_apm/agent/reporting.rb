@@ -24,16 +24,34 @@ module ScoutApm
         report_to_server
       end
 
-      MAX_AGE_TO_REPORT = (10 * 60) # ten minutes as seconds
-
       # In a running app, one process will get one period ready for delivery, the others will see 0.
       def report_to_server
-        reporting_periods = layaway.periods_ready_for_delivery
-        reporting_periods.reject! {|rp| rp.timestamp.age_in_seconds > MAX_AGE_TO_REPORT }
-        reporting_periods.each do |rp|
-          deliver_period(rp)
+        period_to_report = ScoutApm::StoreReportingPeriodTimestamp.minutes_ago(2)
+
+        logger.debug("Attempting to claim #{period_to_report.to_s}")
+
+        did_write = layaway.with_claim(period_to_report) do |rps|
+          logger.debug("Succeeded claiming #{period_to_report.to_s}")
+
+          begin
+            merged = rps.inject { |memo, rp| memo.merge(rp) }
+            logger.debug("Merged #{rps.length} reporting periods, delivering")
+            deliver_period(merged)
+            true
+          rescue => e
+            logger.debug("Error merging reporting periods #{e.message}")
+            logger.debug("Error merging reporting periods #{e.backtrace}")
+            false
+          end
+
         end
+
+        if !did_write
+          logger.debug("Failed to obtain claim for #{period_to_report.to_s}")
+        end
+
       end
+
 
       def deliver_period(reporting_period)
         metrics = reporting_period.metrics_payload
