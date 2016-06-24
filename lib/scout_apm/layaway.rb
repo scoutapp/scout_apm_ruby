@@ -40,7 +40,7 @@ module ScoutApm
       ].compact
 
       found = candidates.detect { |dir| File.writable?(dir) }
-      ScoutApm::Agent.instance.logger.info("Storing Layaway Files in #{found}")
+      ScoutApm::Agent.instance.logger.debug("Storing Layaway Files in #{found}")
       @directory = Pathname.new(found)
     end
 
@@ -56,18 +56,17 @@ module ScoutApm
     def with_claim(timestamp)
       coordinator_file = glob_pattern(timestamp, :coordinator)
 
-      ScoutApm::Agent.instance.logger.debug("Coodinator file name: #{coordinator_file}")
 
+      # This file gets deleted only by a process that successfully obtained a lock
       f = File.open(coordinator_file, File::RDWR | File::CREAT)
       begin
-        # Exclusive lock.
-        # Don't block if some other process holds this lock.
+        # Nonblocking, Exclusive lock.
         if f.flock(File::LOCK_EX | File::LOCK_NB)
 
-          ScoutApm::Agent.instance.logger.debug("Obtained lock on #{coordinator_file}")
+          ScoutApm::Agent.instance.logger.debug("Obtained Reporting Lock")
 
           files = all_files_for(timestamp).reject{|l| l.to_s == coordinator_file.to_s }
-          rps = files.map{ |layaway| LayawayFile.new(layaway).load }
+          rps = files.map{ |layaway| LayawayFile.new(layaway).load }.compact
           if rps.any?
             yield rps
 
@@ -79,12 +78,11 @@ module ScoutApm
           end
 
           # Unlock the file when done!
-          ScoutApm::Agent.instance.logger.debug("About to unlock #{coordinator_file}")
           f.flock(File::LOCK_UN | File::LOCK_NB)
           f.close
           true
         else
-          # Couldn't obtain lock. Return false from this function, but otherwise no work
+          # Didn't obtain lock, another process is reporting. Return false from this function, but otherwise no work
           f.close
           false
         end
@@ -96,17 +94,13 @@ module ScoutApm
     end
 
     def delete_stale_files(older_than)
-      ScoutApm::Agent.instance.logger.info("Starting delete of stale files: #{older_than.to_s}")
-
       all_files_for(:all).
         map { |filename| timestamp_from_filename(filename) }.
         compact.
         uniq.
         select { |timestamp| timestamp.to_i < older_than.strftime(TIME_FORMAT).to_i }.
-        map    { |timestamp|
-                 ScoutApm::Agent.instance.logger.info("Deleting stale layaway file: #{timestamp}")
-                 delete_files_for(timestamp)
-               }
+          tap  { |timestamps| ScoutApm::Agent.instance.logger.debug("Deleting stale layaway files with timestamps: #{timestamps.inspect}") }.
+        map    { |timestamp| delete_files_for(timestamp) }
     end
 
     private
