@@ -75,7 +75,6 @@ module ScoutApm
                                    reporting_periods.delete(time)
                                  }
       }
-      ScoutApm::Agent.instance.logger.debug("Finished writing to layaway")
     end
 
     ######################################
