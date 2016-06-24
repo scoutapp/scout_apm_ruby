@@ -91,7 +91,6 @@ module ScoutApm
     end
 
     def capture_backtrace!
-      ScoutApm::Agent.instance.logger.debug { "Capturing Backtrace for Layer [#{type}/#{name}]" }
       @backtrace = caller_array
     end
 
