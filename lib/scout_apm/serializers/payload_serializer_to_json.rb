@@ -13,17 +13,21 @@ module ScoutApm
                       })
         end
 
-        # Old style of metric serializing.
+        # For the old style of metric serializing.
         def rearrange_the_metrics(metrics)
           metrics.to_a.map do |meta, stats|
             stats.as_json.merge(:key => meta.as_json)
           end
         end
 
+        # takes an array of slow transactions
         def rearrange_the_slow_transactions(slow_transactions)
-          slow_transactions.to_a.map do |slow_t|
-            slow_t.as_json.merge(:metrics => rearrange_the_metrics(slow_t.metrics), :allocation_metrics => rearrange_the_metrics(slow_t.allocation_metrics))
-          end
+          slow_transactions.to_a.map { |t| rearrange_slow_transaction(t) }
+        end
+
+        # takes just one slow transaction
+        def rearrange_slow_transaction(slow_t)
+          slow_t.as_json.merge(:metrics => rearrange_the_metrics(slow_t.metrics), :allocation_metrics => rearrange_the_metrics(slow_t.allocation_metrics))
         end
 
         def jsonify_hash(hash)

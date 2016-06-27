@@ -22,10 +22,6 @@ module ScoutApm
     #   :queue_latency - how long a background Job spent in the queue before starting processing
     attr_reader :annotations
 
-    # Nil until the request is finalized, at which point it will hold the
-    # entire raw stackprof output for this request
-    attr_reader :stackprof
-
     # Headers as recorded by rails
     # Can be nil if we never reach a Rails Controller
     attr_reader :headers
@@ -45,14 +41,14 @@ module ScoutApm
 
     BACKTRACE_THRESHOLD = 0.5 # the minimum threshold in seconds to record the backtrace for a metric.
 
-    def initialize
+    def initialize(store)
+      @store = store #this is passed in so we can use a real store (normal operation) or fake store (instant mode only)
       @layers = []
       @call_set = Hash.new { |h, k| h[k] = CallSet.new }
       @annotations = {}
       @ignoring_children = false
       @context = Context.new
       @root_layer = nil
-      @stackprof = nil
       @error = false
       @instant_key = nil
       @mem_start = mem_usage
@@ -185,21 +181,14 @@ module ScoutApm
     # Run at the beginning of the whole request
     #
     # * Capture the first layer as the root_layer
-    # * Start Stackprof (disabling to avoid conflicts if stackprof is included as middleware since we aren't sending this up to server now)
     def start_request(layer)
       @root_layer = layer unless @root_layer # capture root layer
-      #StackProf.start(:mode => :wall, :interval => ScoutApm::Agent.instance.config.value("stackprof_interval"))
     end
 
     # Run at the end of the whole request
     #
-    # * Collect stackprof info
     # * Send the request off to be stored
     def stop_request
-      # ScoutApm::Agent.instance.logger.debug("stop_request: #{annotations[:uri]}" )
-      #StackProf.stop # disabling to avoid conflicts if stackprof is included as middleware since we aren't sending this up to server now
-      #@stackprof = StackProf.results
-
       record!
     end
 
@@ -261,26 +250,26 @@ module ScoutApm
       # Update immediate and long-term histograms for both job and web requests
       if unique_name != :unknown
         ScoutApm::Agent.instance.request_histograms.add(unique_name, root_layer.total_call_time)
-        ScoutApm::Agent.instance.request_histograms_by_time[ScoutApm::Agent.instance.store.current_timestamp].
+        ScoutApm::Agent.instance.request_histograms_by_time[@store.current_timestamp].
           add(unique_name, root_layer.total_call_time)
       end
 
       metrics = LayerConverters::MetricConverter.new(self).call
-      ScoutApm::Agent.instance.store.track!(metrics)
+      @store.track!(metrics)
 
       error_metrics = LayerConverters::ErrorConverter.new(self).call
-      ScoutApm::Agent.instance.store.track!(error_metrics)
+      @store.track!(error_metrics)
 
       allocation_metrics = LayerConverters::AllocationMetricConverter.new(self).call
-      ScoutApm::Agent.instance.store.track!(allocation_metrics)
+      @store.track!(allocation_metrics)
 
       if web?
         # Don't #call this - that's the job of the ScoredItemSet later.
         slow_converter = LayerConverters::SlowRequestConverter.new(self)
-        ScoutApm::Agent.instance.store.track_slow_transaction!(slow_converter)
+        @store.track_slow_transaction!(slow_converter)
 
         queue_time_metrics = LayerConverters::RequestQueueTimeConverter.new(self).call
-        ScoutApm::Agent.instance.store.track!(queue_time_metrics)
+        @store.track!(queue_time_metrics)
 
         # If there's an instant_key, it means we need to report this right away
         if instant?
@@ -291,14 +280,14 @@ module ScoutApm
 
       if job?
         job_metrics = LayerConverters::JobConverter.new(self).call
-        ScoutApm::Agent.instance.store.track_job!(job_metrics)
+        @store.track_job!(job_metrics)
 
         job_converter = LayerConverters::SlowJobConverter.new(self)
-        ScoutApm::Agent.instance.store.track_slow_job!(job_converter)
+        @store.track_slow_job!(job_converter)
       end
 
       allocation_metrics = LayerConverters::AllocationMetricConverter.new(self).call
-      ScoutApm::Agent.instance.store.track!(allocation_metrics)
+      @store.track!(allocation_metrics)
 
     end
 

@@ -8,6 +8,24 @@
   * seconds_since_startup (larger memory increases and other other odd behavior more common when close to startup)
 * Initial support for instant traces
 * Collect 95th percentiles
+* Remove unused & old references to Stackprof
+
+# 1.6.2
+
+* Use a more flexible approach to storing "Layaway Files" (the temporary data
+  files the agent uses).
+
+# 1.6.1
+
+* Remove old & unused references to Stackprof. Prevent interaction with intentional usage of Stackprof
+
+# 1.6.0
+
+* Dynamic algorithm for selecting when to collect traces. Now, we will collect a
+  more complete cross-section of your application's performance, dynamically
+  tuned as your application runs.
+* Record and report 95th percentiles for each action
+* A variety of bug fixes
 
 # 1.5.5
 
