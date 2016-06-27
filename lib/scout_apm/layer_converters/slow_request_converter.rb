@@ -133,7 +133,8 @@ module ScoutApm
           # timing
           stat = metric_hash[meta]
           stat.update!(layer.total_call_time, layer.total_exclusive_time)
-          stat.add_traces(layer.traces.to_a)
+          stat.add_traces(layer.traces.as_json)
+
           # allocations
           stat = allocation_metric_hash[meta]
           stat.update!(layer.total_allocations, layer.total_exclusive_allocations)

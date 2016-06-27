@@ -1,5 +1,3 @@
-
-
 # Takes in a ton of traces. Structure is a several nested arrays:
 # [                             # Traces
 #    [                          # Trace
@@ -31,6 +29,15 @@ class TraceSet
     res = []
     @cube.each do |(trace, count)|
       res << [trace.to_a, count]
+    end
+
+    res
+  end
+
+  def as_json
+    res = []
+    @cube.each do |(trace, count)|
+      res << [trace.as_json, count]
     end
 
     res
@@ -112,6 +119,10 @@ class CleanTrace
     @lines.empty?
   end
 
+  def as_json
+    @lines.map { |line| line.as_json }
+  end
+
   ###############################
   # Hash Key interface
   def hash
@@ -185,6 +196,9 @@ class TraceLine
     "#{stdlib_name} #{klass}##{method} -- #{file}:#{line}"
   end
 
+  def as_json
+    [ file, line, klass, method, app?, gem_name, stdlib_name ]
+  end
 
   ###############################
   # Hash Key interface
