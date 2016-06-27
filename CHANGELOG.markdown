@@ -1,3 +1,8 @@
+# 1.6.2
+
+* Use a more flexible approach to storing "Layaway Files" (the temporary data
+  files the agent uses).
+
 # 1.6.1
 
 * Remove old & unused references to Stackprof. Prevent interaction with intentional usage of Stackprof
