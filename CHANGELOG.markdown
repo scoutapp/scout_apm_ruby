@@ -10,6 +10,10 @@
 * Collect 95th percentiles
 * Remove unused & old references to Stackprof
 
+# 1.6.1
+
+* Remove old & unused references to Stackprof. Prevent interaction with intentional usage of Stackprof
+
 # 1.6.0
 
 * Dynamic algorithm for selecting when to collect traces. Now, we will collect a
