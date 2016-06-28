@@ -164,9 +164,19 @@ module ScoutApm
         ScoutApm::Environment.instance.env
       end
 
-      # TODO: Make this better
       def logger
-        ScoutApm::Agent.instance.logger || Logger.new(STDOUT)
+        if ScoutApm::Agent.instance.logger
+          return ScoutApm::Agent.instance.logger
+        else
+          l = Logger.new(STDOUT)
+          if ENV["SCOUT_LOG_LEVEL"] == "debug"
+            l.level = Logger::DEBUG
+          else
+            l.level = Logger::INFO
+          end
+
+          return l
+        end
       end
     end
   end
