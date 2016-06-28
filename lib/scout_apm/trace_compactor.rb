@@ -146,6 +146,8 @@ class TraceLine
     @line = line
     @klass = klass
     @method = method
+
+    trim_file!
   end
 
   # Returns the name of the last gem in the line
@@ -179,6 +181,17 @@ class TraceLine
 
   def app?
     !gem_name && !stdlib_name
+  end
+
+  def trim_file!
+    if gem?
+      r = %r{.*gems/.*?/(.*)}
+      @file = file.sub(r, "\1")
+    elsif stdlib?
+      @file = file.sub(RbConfig::TOPDIR, '')
+    elsif app?
+      @file = file.sub(ScoutApm::Environment.instance.root, '')
+    end
   end
 
   # If controller_file is provided, just see if this is exactly that file. If not use a cheesy regex.
