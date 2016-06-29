@@ -85,6 +85,7 @@ module ScoutApm
 
       layer.record_stop_time!
       layer.record_allocations!
+      layer.record_traces!
 
       if layer.type == "Controller"
         ScoutApm::Agent.instance.logger.info "****** Controller Traces (#{layer.name}):\n#{layer.traces.inspect}"

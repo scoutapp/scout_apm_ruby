@@ -34,9 +34,6 @@ VALUE interval;
 #include <sys/time.h>
 #include <ruby/debug.h>
 
-pthread_t btid; // Broadcast thread ID
-sem_t do_broadcast; // Broadcast thread blocks on this semaphore. Timer signals increment it.
-
 struct profiled_thread
 {
   pthread_t th;
@@ -105,64 +102,24 @@ static VALUE rb_scout_remove_profiled_thread()
   return Qtrue;
 }
 
-void *
-broadcast_profile_signal()
-{
-  struct profiled_thread *ptr, *next;
-  while(1) {
-    sem_wait(&do_broadcast);
-    ptr = head_thread;
-    next = NULL;
-    pthread_mutex_lock(&profiled_threads_mutex);
-    while(ptr != NULL) {
-      if (pthread_kill(ptr->th, SIGVTALRM) == ESRCH) { // Send signal to the specific thread. If ESRCH is returned, remove the dead thread
-        next = ptr->next;
-        remove_profiled_thread(ptr->th);
-        ptr = next;
-      } else {
-        ptr = ptr->next;
-      }
-    }
-    pthread_mutex_unlock(&profiled_threads_mutex);
-  }
-  return 0; // should never get here.
-}
-
 // Goal is to collect the backtrace, and shuffle it off back to ruby-land for further analysis
 // Note that this is called from *EVERY PROFILED THREAD FOR EACH CLOCK TICK INTERVAL*, so the performance of this method is crucial.
 void
 scout_record_sample()
 {
-  VALUE frames_buffer[BUF_SIZE], trace, trace_line;
+  VALUE frames_buffer[BUF_SIZE], frames;
   int lines_buffer[BUF_SIZE], i, num;
 
-  // Get frames
   num = rb_profile_frames(0, sizeof(frames_buffer) / sizeof(VALUE), frames_buffer, lines_buffer);
 
-  // Create an array to hold trace lines
-  trace = rb_ary_new2(num);
+  frames = rb_ary_new2(num);
 
-  trace_line = Qnil;
   for (i = 0; i < num; i++) {
-    // Extract values
-    VALUE frame = frames_buffer[i];
-    VALUE file  = rb_profile_frame_absolute_path(frame);
-    VALUE line  = INT2FIX(lines_buffer[i]);
-    VALUE klass = rb_profile_frame_classpath(frame);
-    VALUE label = rb_profile_frame_label(frame);
-
-    // Create and populate array to hold one line of the trace
-    trace_line = rb_ary_new2(4);
-    rb_ary_store(trace_line, 0, file);
-    rb_ary_store(trace_line, 1, line);
-    rb_ary_store(trace_line, 2, klass);
-    rb_ary_store(trace_line, 3, label);
-
-    rb_ary_push(trace, trace_line);
+    rb_ary_store(frames, i, frames_buffer[i]);
   }
 
-  // Store the Trace
-  rb_funcall(Stacks, sym_collect, 1, trace);
+  // Store the frames
+  rb_funcall(Stacks, sym_collect, 1, frames);
 }
 
 
@@ -183,7 +140,7 @@ scout_profile_broadcast_signal_handler(int sig)
   if (rb_during_gc()) {
     // _stackprof.during_gc++, _stackprof.overall_samples++;
   } else {
-    rb_postponed_job_register_one(0, scout_profile_job_handler, 0);
+    rb_postponed_job_register(0, scout_profile_job_handler, 0);
   }
 }
 
@@ -191,7 +148,18 @@ scout_profile_broadcast_signal_handler(int sig)
 static void
 scout_profile_timer_signal_handler(int sig)
 {
-  sem_post(&do_broadcast);
+    struct profiled_thread *ptr, *next;
+    ptr = head_thread;
+    next = NULL;
+    while(ptr != NULL) {
+      if (pthread_kill(ptr->th, SIGVTALRM) == ESRCH) { // Send signal to the specific thread. If ESRCH is returned, remove the dead thread
+        next = ptr->next;
+        remove_profiled_thread(ptr->th);
+        ptr = next;
+      } else {
+        ptr = ptr->next;
+      }
+    }
 }
 
 static VALUE
@@ -221,12 +189,6 @@ rb_scout_install_profiling(VALUE self)
   sigemptyset(&new_action.sa_mask);
   sigaction(SIGALRM, &new_action, &old_action);
 
-
-  sem_init(&do_broadcast, 0, 1);
-  pthread_mutexattr_init(&profiled_threads_mutex_attr);
-  pthread_mutexattr_settype(&profiled_threads_mutex_attr, PTHREAD_MUTEX_RECURSIVE);
-  pthread_mutex_init(&profiled_threads_mutex, &profiled_threads_mutex_attr);
-  pthread_create(&btid, NULL, broadcast_profile_signal, NULL);
 
   // Also set up an interrupt handler for when we broadcast an alarm
   new_vtaction.sa_handler = scout_profile_broadcast_signal_handler;

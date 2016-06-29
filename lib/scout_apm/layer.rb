@@ -45,6 +45,7 @@ module ScoutApm
     # focuses on Controller layers, and requires a native extension and a
     # reasonably recent Ruby.
     attr_reader :traces
+    attr_reader :frames
 
     BACKTRACE_CALLER_LIMIT = 50 # maximum number of lines to send thru for backtrace analysis
 
@@ -59,6 +60,7 @@ module ScoutApm
       @desc = nil
 
       @traces = ScoutApm::TraceSet.new
+      @frames = []
     end
 
     def add_child(child)
@@ -127,8 +129,8 @@ module ScoutApm
       @traces.set_controller_file(file)
     end
 
-    def store_trace!(trace)
-      @traces.add(trace)
+    def store_frames!(frames)
+      @frames += frames
     end
 
     ######################################
