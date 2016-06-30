@@ -1,3 +1,7 @@
+# 1.6.3
+
+* Handle nil ignore_traces when ignoring trace patterns
+
 # 1.6.2
 
 * Use a more flexible approach to storing "Layaway Files" (the temporary data
