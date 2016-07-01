@@ -192,6 +192,8 @@ class TraceLine
     elsif app?
       @file = file.sub(ScoutApm::Environment.instance.root.to_s, '')
     end
+  rescue Exception => e
+    ScoutApm::Agent.instance.logger.debug("Exception in trim_file: #{e}")
   end
 
   # If controller_file is provided, just see if this is exactly that file. If not use a cheesy regex.
