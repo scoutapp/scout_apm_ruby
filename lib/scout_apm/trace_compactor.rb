@@ -185,12 +185,12 @@ class TraceLine
 
   def trim_file!
     if gem?
-      r = %r{.*gems/.*?/(.*)}
-      @file = file.sub(r, "\1")
+      r = %r{.*gems/.*?/}.freeze
+      @file = file.sub(r, "/")
     elsif stdlib?
       @file = file.sub(RbConfig::TOPDIR, '')
     elsif app?
-      @file = file.sub(ScoutApm::Environment.instance.root, '')
+      @file = file.sub(ScoutApm::Environment.instance.root.to_s, '')
     end
   end
 
