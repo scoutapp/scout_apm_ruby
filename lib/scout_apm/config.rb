@@ -125,6 +125,7 @@ module ScoutApm
       private
 
       def load_file(file)
+        @settings = {}
         if !File.exist?(@resolved_file_path)
           logger.debug("Configuration file #{file} does not exist, skipping.")
           @file_loaded = false

@@ -9,6 +9,7 @@
 * Initial support for instant traces
 * Collect 95th percentiles
 * Remove unused & old references to Stackprof
+* Fixing exception on load if no config file is provided
 
 # 1.6.2
 
