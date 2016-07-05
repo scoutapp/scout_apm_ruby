@@ -55,8 +55,8 @@ module ScoutApm
 
     def value(key)
       @overlays.each do |overlay|
-        if result = overlay.value(key)
-          return result
+        if overlay.has_key?(key)
+          return overlay.value(key)
         end
       end
 
@@ -68,23 +68,35 @@ module ScoutApm
         'host'                   => 'https://checkin.scoutapp.com',
         'direct_host'            => 'https://apm.scoutapp.com',
         'log_level'              => 'info',
-        'stackprof_interval'     => 20000, # microseconds, 1000 = 1 millisecond, so 20k == 20 milliseconds
         'uri_reporting'          => 'full_path',
         'report_format'          => 'json',
         'disabled_instruments'   => [],
         'enable_background_jobs' => true,
         'ignore_traces' => [],
+        'instant' => false, # false for now so code can live in main branch
       }.freeze
 
       def value(key)
         DEFAULTS[key]
       end
+
+      def has_key?(key)
+        DEFAULTS.has_key?(key)
+      end
     end
 
     class ConfigEnvironment
       def value(key)
-        val = ENV['SCOUT_' + key.upcase]
+        val = ENV[key_to_env_key(key)]
         val.to_s.strip.length.zero? ? nil : val
+      end
+
+      def has_key?(key)
+        ENV.has_key?(key_to_env_key(key))
+      end
+
+      def key_to_env_key(key)
+        'SCOUT_' + key.upcase
       end
     end
 
@@ -106,17 +118,21 @@ module ScoutApm
         end
       end
 
+      def has_key?(key)
+        @settings.has_key?(key)
+      end
+
       private
 
       def load_file(file)
         if !File.exist?(@resolved_file_path)
-          logger.info("Configuration file #{file} does not exist, skipping.")
+          logger.debug("Configuration file #{file} does not exist, skipping.")
           @file_loaded = false
           return
         end
 
         if !app_environment
-          logger.info("Could not determine application environment, aborting configuration file load")
+          logger.debug("Could not determine application environment, aborting configuration file load")
           @file_loaded = false
           return
         end
@@ -132,10 +148,10 @@ module ScoutApm
                    " check that there is a top level #{app_environment} key.")
           end
 
-          logger.info("Loaded Configuration: #{@resolved_file_path}. Using environment: #{app_environment}")
+          logger.debug("Loaded Configuration: #{@resolved_file_path}. Using environment: #{app_environment}")
           @file_loaded = true
         rescue Exception => e # Explicit `Exception` handling to catch SyntaxError and anything else that ERB or YAML may throw
-          logger.info("Failed loading configuration file: #{e.message}. ScoutAPM will continue starting with configuration from ENV and defaults")
+          logger.debug("Failed loading configuration file: #{e.message}. ScoutAPM will continue starting with configuration from ENV and defaults")
           @file_loaded = false
         end
       end
@@ -148,9 +164,19 @@ module ScoutApm
         ScoutApm::Environment.instance.env
       end
 
-      # TODO: Make this better
       def logger
-        ScoutApm::Agent.instance.logger || Logger.new(STDOUT)
+        if ScoutApm::Agent.instance.logger
+          return ScoutApm::Agent.instance.logger
+        else
+          l = Logger.new(STDOUT)
+          if ENV["SCOUT_LOG_LEVEL"] == "debug"
+            l.level = Logger::DEBUG
+          else
+            l.level = Logger::INFO
+          end
+
+          return l
+        end
       end
     end
   end

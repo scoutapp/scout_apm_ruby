@@ -109,7 +109,6 @@ module ScoutApm
     end
 
     def capture_backtrace!
-      ScoutApm::Agent.instance.logger.debug { "Capturing Backtrace for Layer [#{type}/#{name}]" }
       @backtrace = caller_array
     end
 
@@ -160,8 +159,7 @@ module ScoutApm
       if stop_time
         stop_time - start_time
       else
-        # Shouldn't have called this yet. Return 0
-        0
+        Time.now - start_time
       end
     end
 
@@ -182,7 +180,11 @@ module ScoutApm
     # These are almost identical to the timing metrics.
 
     def total_allocations
-      allocations = (@allocations_stop - @allocations_start)
+      if @allocations_stop > 0
+        allocations = (@allocations_stop - @allocations_start)
+      else
+        allocations = (ScoutApm::Instruments::Allocations.count - @allocations_start)
+      end
       allocations < 0 ? 0 : allocations
     end
 

@@ -15,7 +15,6 @@ test/tmp/*
 .DS_Store
 test/tmp/*coverage/*
 coverage/*
-lib/allocations.bundle
 lib/*.bundle
 lib/*.so
 **/.RUBYARCHDIR.time
