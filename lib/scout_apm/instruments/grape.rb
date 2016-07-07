@@ -41,22 +41,14 @@ module ScoutApm
         req.set_headers(request.headers)
         req.web!
 
-        action = self.options[:path].first
+        name = ["Grape",
+                self.options[:method].first,
+                self.options[:for].to_s,
+                self.namespace.sub(%r{\A/}, ''), # removing leading slashes
+                self.options[:path].first,
+        ].compact.map{ |n| n.to_s }.join("/")
 
-        # Get /api/v2/users from /api/v2/users/signin
-        controller_path = path.gsub(/#{action}\z/, '')
-
-        # Include method to distinguish between PUT /user and GET /user
-
-        action = action[1..-1]
-        method = self.options[:method].first.downcase
-        if action.blank?
-          action = method
-        else
-          action += "(#{method})"
-        end
-
-        req.start_layer( ScoutApm::Layer.new("Controller", "#{controller_path}/#{action}") )
+        req.start_layer( ScoutApm::Layer.new("Controller", name) )
         begin
           run_without_scout_instruments
         rescue
