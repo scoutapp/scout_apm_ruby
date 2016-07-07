@@ -16,15 +16,19 @@ int scout_profiling_running = 0;
 ID sym_ScoutApm;
 ID sym_Stacks;
 ID sym_collect;
+ID sym_scrub_bang;
 VALUE ScoutApm;
 VALUE Stacks;
+
+rb_encoding *enc_UTF8;
 
 VALUE mScoutApm;
 VALUE mInstruments;
 VALUE cStacks;
 
-#define BUF_SIZE 2048
+#define BUF_SIZE 512
 #define INTERVAL 5000
+#define MAX_TRACES 3000
 
 VALUE interval;
 
@@ -40,6 +44,35 @@ struct profiled_thread
   struct profiled_thread *next;
 };
 
+struct c_traceline {
+  char *file;
+  long file_len;
+  int line;
+  char *klass;
+  long klass_len;
+  char *label;
+  long label_len;
+};
+
+struct c_trace {
+  int num_tracelines;
+  struct c_traceline tracelines[BUF_SIZE];
+};
+
+struct frames_and_lines
+{
+  int num_frames;
+  VALUE frames[BUF_SIZE];
+  int lines[BUF_SIZE];
+};
+
+static __thread struct c_trace _traces[MAX_TRACES]; // perhaps make this a pointer to malloc'ed data - this can be a large structure
+static __thread int _ok_to_sample;  // used as a mutex to control the async interrupt handler
+static __thread int _start_frame_index;
+static __thread int _start_trace_index;
+static __thread int _cur_traces_num;
+static __thread struct frames_and_lines _frames_lines_buf; // perhaps make this a pointer to malloc'ed data - this can be a large structure
+
 // Profiled threads are joined as a linked list
 pthread_mutex_t profiled_threads_mutex;
 pthread_mutexattr_t profiled_threads_mutex_attr;
@@ -48,6 +81,10 @@ struct profiled_thread *head_thread = NULL;
 static VALUE rb_scout_add_profiled_thread(VALUE self)
 {
   struct profiled_thread *thr;
+  _ok_to_sample = 0;
+  _start_frame_index = 0;
+  _start_trace_index = 0;
+  _cur_traces_num = 0;
   pthread_mutex_lock(&profiled_threads_mutex);
   thr = (struct profiled_thread *) malloc(sizeof(struct profiled_thread ));
   thr->th = pthread_self();
@@ -96,30 +133,99 @@ static int remove_profiled_thread(pthread_t th)
   return 0;
 }
 
-static VALUE rb_scout_remove_profiled_thread()
+static VALUE rb_scout_remove_profiled_thread(VALUE self)
 {
+  _ok_to_sample = 0;
   remove_profiled_thread(pthread_self());
   return Qtrue;
 }
 
-// Goal is to collect the backtrace, and shuffle it off back to ruby-land for further analysis
 // Note that this is called from *EVERY PROFILED THREAD FOR EACH CLOCK TICK INTERVAL*, so the performance of this method is crucial.
 void
 scout_record_sample()
 {
-  VALUE frames_buffer[BUF_SIZE], frames;
-  int lines_buffer[BUF_SIZE], i, num;
-
-  num = rb_profile_frames(0, sizeof(frames_buffer) / sizeof(VALUE), frames_buffer, lines_buffer);
-
-  frames = rb_ary_new2(num);
-
-  for (i = 0; i < num; i++) {
-    rb_ary_store(frames, i, frames_buffer[i]);
+  int i, trace_index;
+  VALUE file, klass, label;
+  if (!_ok_to_sample || rb_during_gc()) {
+    return;
   }
+  trace_index = _cur_traces_num;
+  if (_ok_to_sample && (_cur_traces_num < MAX_TRACES)) {
+    _frames_lines_buf.num_frames = rb_profile_frames(0, sizeof(_frames_lines_buf.frames) / sizeof(VALUE), _frames_lines_buf.frames, _frames_lines_buf.lines);
 
-  // Store the frames
-  rb_funcall(Stacks, sym_collect, 1, frames);
+    if (_frames_lines_buf.num_frames - _start_frame_index > 0) {
+      _traces[trace_index].num_tracelines = _frames_lines_buf.num_frames - _start_frame_index;
+
+      for (i = _start_frame_index; i < _frames_lines_buf.num_frames; i++) {
+
+        file = rb_profile_frame_absolute_path(_frames_lines_buf.frames[i]);
+        if (TYPE(file) == T_STRING) {
+          _traces[trace_index].tracelines[i].file  = StringValuePtr(file);
+          _traces[trace_index].tracelines[i].file_len  = RSTRING_LEN(file);
+        } else {
+          _traces[trace_index].tracelines[i].file  = " ";
+          _traces[trace_index].tracelines[i].file_len  = (long)1;
+        }
+
+        _traces[trace_index].tracelines[i].line  = _frames_lines_buf.lines[i];
+
+        klass = rb_profile_frame_classpath(_frames_lines_buf.frames[i]);
+        //if (TYPE(klass) == T_STRING) {
+        //  _traces[trace_index].tracelines[i].klass = StringValuePtr(klass);
+        //  _traces[trace_index].tracelines[i].klass_len = RSTRING_LEN(klass);
+        //} else {
+          _traces[trace_index].tracelines[i].klass = " ";
+          _traces[trace_index].tracelines[i].klass_len = (long)1;
+        //}
+
+        label = rb_profile_frame_label(_frames_lines_buf.frames[i]);
+        if (TYPE(label) == T_STRING) {
+          _traces[trace_index].tracelines[i].label = StringValuePtr(label);
+          _traces[trace_index].tracelines[i].label_len = RSTRING_LEN(label);
+        } else {
+          _traces[trace_index].tracelines[i].label = " ";
+          _traces[trace_index].tracelines[i].label_len = (long)1;
+        }
+      }
+      _cur_traces_num++;
+    }
+  }
+}
+
+
+// Calls to this must have already stopped sampling
+static VALUE rb_scout_profile_frames(VALUE self)
+{
+  int i, n;
+  VALUE traces, trace, trace_line, scrub_replace;
+
+  scrub_replace = rb_str_new2("");
+
+  traces = rb_ary_new2(0); //_cur_traces_num - _start_trace_index);
+
+  fprintf(stderr, "TOTAL TRACES COUNT: %d\n", _cur_traces_num);
+  if (_cur_traces_num - _start_trace_index > 0) {
+    fprintf(stderr, "TRACES COUNT: %d\n", _cur_traces_num - _start_trace_index);
+    for(i = _start_trace_index; i < _cur_traces_num; i++) {
+      fprintf(stderr, "TRACELINES COUNT: %d\n", _traces[i].num_tracelines);
+      if (_traces[i].num_tracelines > 0) {
+        trace = rb_ary_new2(_traces[i].num_tracelines);
+        for(n = 0; n < _traces[i].num_tracelines; n++) {
+          //fprintf(stderr, ".");
+          trace_line = rb_ary_new2(4);
+          rb_ary_store(trace_line, 0, rb_funcall(rb_enc_str_new(_traces[i].tracelines[n].file, _traces[i].tracelines[n].file_len, enc_UTF8), sym_scrub_bang, 1, scrub_replace));
+          rb_ary_store(trace_line, 1, INT2FIX(_traces[i].tracelines[n].line));
+          rb_ary_store(trace_line, 2, rb_funcall(rb_enc_str_new(_traces[i].tracelines[n].klass, _traces[i].tracelines[n].klass_len, enc_UTF8), sym_scrub_bang, 1, scrub_replace));
+          rb_ary_store(trace_line, 3, rb_funcall(rb_enc_str_new(_traces[i].tracelines[n].label, _traces[i].tracelines[n].label_len, enc_UTF8), sym_scrub_bang, 1, scrub_replace));
+          rb_ary_push(trace, trace_line);
+        }
+        rb_ary_push(traces, trace);
+      }
+    }
+  }
+  _cur_traces_num = _start_trace_index;
+  fprintf(stderr, "TOTAL TRACES COUNT AFTER PROFILE: %d\n", _cur_traces_num);
+  return traces;
 }
 
 
@@ -275,15 +381,51 @@ rb_scout_uninstall_profiling(VALUE self)
   return Qnil;
 }
 
+static VALUE
+rb_scout_start_sampling(VALUE self)
+{
+  _ok_to_sample = 1;
+  return Qtrue;
+}
+
+static VALUE
+rb_scout_stop_sampling(VALUE self)
+{
+  _ok_to_sample = 0;
+  return Qtrue;
+}
+
+static VALUE
+rb_scout_update_indexes(VALUE self, VALUE frame_index, VALUE trace_index)
+{
+  _ok_to_sample = 0;
+  _start_trace_index = NUM2INT(trace_index);
+  _start_frame_index = NUM2INT(frame_index);
+  _ok_to_sample = 1;
+  return Qtrue;
+}
+
+static VALUE
+rb_scout_current_trace_index(VALUE self)
+{
+  _ok_to_sample = 0;
+  return INT2NUM(_cur_traces_num);
+  _ok_to_sample = 1;
+}
+
 void Init_stacks()
 {
     mScoutApm = rb_define_module("ScoutApm");
     mInstruments = rb_define_module_under(mScoutApm, "Instruments");
     cStacks = rb_define_class_under(mInstruments, "Stacks", rb_cObject);
-    // Lookup the classes
+
     sym_ScoutApm = rb_intern("ScoutApm");
     sym_Stacks = rb_intern("Stacks");
     sym_collect = rb_intern("collect");
+
+    sym_scrub_bang = rb_intern("scrub!");
+    enc_UTF8 = rb_enc_find("UTF-8");
+
     ScoutApm = rb_const_get(rb_cObject, sym_ScoutApm);
     Stacks = rb_const_get(ScoutApm, sym_Stacks);
     rb_warn("Init_stacks");
@@ -298,6 +440,11 @@ void Init_stacks()
 
     rb_define_singleton_method(cStacks, "add_profiled_thread", rb_scout_add_profiled_thread, 0);
     rb_define_singleton_method(cStacks, "remove_profiled_thread", rb_scout_remove_profiled_thread, 0);
+    rb_define_singleton_method(cStacks, "profile_frames", rb_scout_profile_frames, 0);
+    rb_define_singleton_method(cStacks, "start_sampling", rb_scout_start_sampling, 0);
+    rb_define_singleton_method(cStacks, "stop_sampling", rb_scout_stop_sampling, 0);
+    rb_define_singleton_method(cStacks, "update_indexes", rb_scout_update_indexes, 2);
+    rb_define_singleton_method(cStacks, "current_trace_index", rb_scout_current_trace_index, 0);
 
     rb_define_const(cStacks, "ENABLED", Qtrue);
     rb_warn("Finished Initializing ScoutProf Native Extension");

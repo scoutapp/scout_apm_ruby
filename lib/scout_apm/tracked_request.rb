@@ -160,6 +160,8 @@ module ScoutApm
     #
     # * Capture the first layer as the root_layer
     def start_request(layer)
+      ScoutApm::Instruments::Stacks.update_indexes(0,0)
+      ScoutApm::Instruments::Stacks.start_sampling
       @root_layer = layer unless @root_layer # capture root layer
     end
 
@@ -168,6 +170,8 @@ module ScoutApm
     # * Send the request off to be stored
     def stop_request
       record!
+      ScoutApm::Instruments::Stacks.update_indexes(0,0)
+      ScoutApm::Instruments::Stacks.stop_sampling
     end
 
     ###################################
