@@ -86,7 +86,7 @@ module ScoutApm
       layer.record_allocations!
 
       if layer.type == "Controller"
-        ScoutApm::Agent.instance.logger.info "****** Controller Traces (#{layer.name}):\n#{layer.traces.inspect}"
+        ScoutApm::Agent.instance.logger.info "****** Controller Traces (#{layer.name}, tet: #{layer.total_exclusive_time}, tct: #{layer.total_call_time}):\n#{layer.traces.inspect}"
       end
 
       # This must be called before checking if a backtrace should be collected as the call count influences our capture logic.
@@ -161,8 +161,10 @@ module ScoutApm
     end
 
     def continue_sampling_for_layers
-        ScoutApm::Instruments::Stacks.update_indexes(@layers.last.frame_index, @layers.last.trace_index)
-        ScoutApm::Instruments::Stacks.start_sampling
+        if last_traced_layer = @layers.select{|layer| layer.traced?}.last
+          ScoutApm::Instruments::Stacks.update_indexes(@layers.last.frame_index, @layers.last.trace_index)
+          ScoutApm::Instruments::Stacks.start_sampling
+        end
     end
 
     # Run at the beginning of the whole request

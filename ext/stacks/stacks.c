@@ -59,19 +59,16 @@ struct c_trace {
   struct c_traceline tracelines[BUF_SIZE];
 };
 
-struct frames_and_lines
-{
-  int num_frames;
-  VALUE frames[BUF_SIZE];
-  int lines[BUF_SIZE];
-};
+static __thread int _buf_i, _buf_trace_index, _buf_num_frames;
+static __thread VALUE _buf_file, _buf_klass, _buf_label;
+static __thread VALUE _frames_buf[BUF_SIZE];
+static __thread int _lines_buf[BUF_SIZE];
 
 static __thread struct c_trace _traces[MAX_TRACES]; // perhaps make this a pointer to malloc'ed data - this can be a large structure
 static __thread int _ok_to_sample;  // used as a mutex to control the async interrupt handler
 static __thread int _start_frame_index;
 static __thread int _start_trace_index;
 static __thread int _cur_traces_num;
-static __thread struct frames_and_lines _frames_lines_buf; // perhaps make this a pointer to malloc'ed data - this can be a large structure
 
 // Profiled threads are joined as a linked list
 pthread_mutex_t profiled_threads_mutex;
@@ -144,47 +141,48 @@ static VALUE rb_scout_remove_profiled_thread(VALUE self)
 void
 scout_record_sample()
 {
-  int i, trace_index;
-  VALUE file, klass, label;
   if (!_ok_to_sample || rb_during_gc()) {
     return;
   }
-  trace_index = _cur_traces_num;
-  if (_ok_to_sample && (_cur_traces_num < MAX_TRACES)) {
-    _frames_lines_buf.num_frames = rb_profile_frames(0, sizeof(_frames_lines_buf.frames) / sizeof(VALUE), _frames_lines_buf.frames, _frames_lines_buf.lines);
+  _buf_trace_index = _cur_traces_num;
+  if (_cur_traces_num < MAX_TRACES) {
+    _buf_num_frames = rb_profile_frames(0, sizeof(_frames_buf) / sizeof(VALUE), _frames_buf, _lines_buf);
 
-    if (_frames_lines_buf.num_frames - _start_frame_index > 0) {
-      _traces[trace_index].num_tracelines = _frames_lines_buf.num_frames - _start_frame_index;
+    if (_buf_num_frames > 0) {
+      _traces[_buf_trace_index].num_tracelines = _buf_num_frames;
 
-      for (i = _start_frame_index; i < _frames_lines_buf.num_frames; i++) {
+      for (_buf_i = 0; _buf_i < _buf_num_frames; _buf_i++) {
 
-        file = rb_profile_frame_absolute_path(_frames_lines_buf.frames[i]);
-        if (TYPE(file) == T_STRING) {
-          _traces[trace_index].tracelines[i].file  = StringValuePtr(file);
-          _traces[trace_index].tracelines[i].file_len  = RSTRING_LEN(file);
+        _buf_file = rb_profile_frame_absolute_path(_frames_buf[_buf_i]);
+        if (NIL_P(_buf_file)) {
+          _buf_file = rb_profile_frame_path(_frames_buf[_buf_i]);
+        }
+        if (!NIL_P(_buf_file) && TYPE(_buf_file) == T_STRING) {
+          _traces[_buf_trace_index].tracelines[_buf_i].file  = RSTRING_PTR(_buf_file);
+          _traces[_buf_trace_index].tracelines[_buf_i].file_len  = RSTRING_LEN(_buf_file);
         } else {
-          _traces[trace_index].tracelines[i].file  = " ";
-          _traces[trace_index].tracelines[i].file_len  = (long)1;
+          _traces[_buf_trace_index].tracelines[_buf_i].file  = " ";
+          _traces[_buf_trace_index].tracelines[_buf_i].file_len  = (long)1;
         }
 
-        _traces[trace_index].tracelines[i].line  = _frames_lines_buf.lines[i];
+        _traces[_buf_trace_index].tracelines[_buf_i].line  = _lines_buf[_buf_i];
 
-        klass = rb_profile_frame_classpath(_frames_lines_buf.frames[i]);
-        //if (TYPE(klass) == T_STRING) {
-        //  _traces[trace_index].tracelines[i].klass = StringValuePtr(klass);
-        //  _traces[trace_index].tracelines[i].klass_len = RSTRING_LEN(klass);
+        //_buf_klass = rb_profile_frame_full_label(_frames_buf[_buf_i]);
+        //if (!NIL_P(_buf_klass) && TYPE(_buf_klass) == T_STRING) {
+        //  _traces[_buf_trace_index].tracelines[_buf_i].klass = RSTRING_PTR(_buf_klass);
+        //  _traces[_buf_trace_index].tracelines[_buf_i].klass_len = RSTRING_LEN(_buf_klass);
         //} else {
-          _traces[trace_index].tracelines[i].klass = " ";
-          _traces[trace_index].tracelines[i].klass_len = (long)1;
+          _traces[_buf_trace_index].tracelines[_buf_i].klass = " ";
+          _traces[_buf_trace_index].tracelines[_buf_i].klass_len = (long)1;
         //}
 
-        label = rb_profile_frame_label(_frames_lines_buf.frames[i]);
-        if (TYPE(label) == T_STRING) {
-          _traces[trace_index].tracelines[i].label = StringValuePtr(label);
-          _traces[trace_index].tracelines[i].label_len = RSTRING_LEN(label);
+        _buf_label = rb_profile_frame_label(_frames_buf[_buf_i]);
+        if (!NIL_P(_buf_label) && TYPE(_buf_label) == T_STRING) {
+          _traces[_buf_trace_index].tracelines[_buf_i].label = RSTRING_PTR(_buf_label);
+          _traces[_buf_trace_index].tracelines[_buf_i].label_len = RSTRING_LEN(_buf_label);
         } else {
-          _traces[trace_index].tracelines[i].label = " ";
-          _traces[trace_index].tracelines[i].label_len = (long)1;
+          _traces[_buf_trace_index].tracelines[_buf_i].label = " ";
+          _traces[_buf_trace_index].tracelines[_buf_i].label_len = (long)1;
         }
       }
       _cur_traces_num++;
@@ -205,6 +203,8 @@ static VALUE rb_scout_profile_frames(VALUE self)
 
   fprintf(stderr, "TOTAL TRACES COUNT: %d\n", _cur_traces_num);
   if (_cur_traces_num - _start_trace_index > 0) {
+    fprintf(stderr, "CUR TRACES: %d\n", _cur_traces_num);
+    fprintf(stderr, "START TRACE IDX: %d\n", _start_trace_index);
     fprintf(stderr, "TRACES COUNT: %d\n", _cur_traces_num - _start_trace_index);
     for(i = _start_trace_index; i < _cur_traces_num; i++) {
       fprintf(stderr, "TRACELINES COUNT: %d\n", _traces[i].num_tracelines);
@@ -231,22 +231,22 @@ static VALUE rb_scout_profile_frames(VALUE self)
 static void
 scout_profile_job_handler(void *data)
 {
-  static int in_signal_handler = 0;
-  if (in_signal_handler) return;
-
-  in_signal_handler++;
   scout_record_sample();
-  in_signal_handler--;
 }
 
 static void
 scout_profile_broadcast_signal_handler(int sig)
 {
+  static int in_signal_handler = 0;
+  if (in_signal_handler) return;
+
+  in_signal_handler++;
   if (rb_during_gc()) {
     // _stackprof.during_gc++, _stackprof.overall_samples++;
   } else {
     rb_postponed_job_register(0, scout_profile_job_handler, 0);
   }
+  in_signal_handler--;
 }
 
 //scout_profile_signal_handler(int sig, siginfo_t *sinfo, void *ucontext)

@@ -135,14 +135,20 @@ module ScoutApm
     end
 
     def start_sampling
-      ScoutApm::Instruments::Stacks.update_indexes(frame_index, trace_index)
-      ScoutApm::Instruments::Stacks.start_sampling
+      if traced?
+        ScoutApm::Instruments::Stacks.update_indexes(frame_index, trace_index)
+        ScoutApm::Instruments::Stacks.start_sampling
+      else
+        ScoutApm::Instruments::Stacks.stop_sampling(false)
+      end
     end
 
     def record_traces!
       ScoutApm::Instruments::Stacks.stop_sampling(false)
-      ScoutApm::Instruments::Stacks.profile_frames.each do |trace|
-        @traces.add(trace)
+      if traced?
+        ScoutApm::Instruments::Stacks.profile_frames.each do |trace|
+          @traces.add(trace)
+        end
       end
     end
 
