@@ -224,7 +224,6 @@ static VALUE rb_scout_profile_frames(VALUE self)
     }
   }
   _cur_traces_num = _start_trace_index;
-  fprintf(stderr, "TOTAL TRACES COUNT AFTER PROFILE: %d\n", _cur_traces_num);
   return traces;
 }
 
@@ -389,28 +388,27 @@ rb_scout_start_sampling(VALUE self)
 }
 
 static VALUE
-rb_scout_stop_sampling(VALUE self)
+rb_scout_stop_sampling(VALUE self, VALUE reset)
 {
   _ok_to_sample = 0;
+  if (TYPE(reset) == T_TRUE) {
+    _cur_traces_num = 0;
+  }
   return Qtrue;
 }
 
 static VALUE
 rb_scout_update_indexes(VALUE self, VALUE frame_index, VALUE trace_index)
 {
-  _ok_to_sample = 0;
   _start_trace_index = NUM2INT(trace_index);
   _start_frame_index = NUM2INT(frame_index);
-  _ok_to_sample = 1;
   return Qtrue;
 }
 
 static VALUE
 rb_scout_current_trace_index(VALUE self)
 {
-  _ok_to_sample = 0;
   return INT2NUM(_cur_traces_num);
-  _ok_to_sample = 1;
 }
 
 void Init_stacks()
@@ -442,7 +440,7 @@ void Init_stacks()
     rb_define_singleton_method(cStacks, "remove_profiled_thread", rb_scout_remove_profiled_thread, 0);
     rb_define_singleton_method(cStacks, "profile_frames", rb_scout_profile_frames, 0);
     rb_define_singleton_method(cStacks, "start_sampling", rb_scout_start_sampling, 0);
-    rb_define_singleton_method(cStacks, "stop_sampling", rb_scout_stop_sampling, 0);
+    rb_define_singleton_method(cStacks, "stop_sampling", rb_scout_stop_sampling, 1);
     rb_define_singleton_method(cStacks, "update_indexes", rb_scout_update_indexes, 2);
     rb_define_singleton_method(cStacks, "current_trace_index", rb_scout_current_trace_index, 0);
 

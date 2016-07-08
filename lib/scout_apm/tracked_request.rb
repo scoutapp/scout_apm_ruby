@@ -59,6 +59,8 @@ module ScoutApm
         return
       end
 
+      layer.start_sampling
+
       start_request(layer) unless @root_layer
       @layers[-1].add_child(layer) if @layers.any?
       @layers.push(layer)
@@ -79,9 +81,9 @@ module ScoutApm
         return
       end
 
+      layer.record_traces!
       layer.record_stop_time!
       layer.record_allocations!
-      layer.record_traces!
 
       if layer.type == "Controller"
         ScoutApm::Agent.instance.logger.info "****** Controller Traces (#{layer.name}):\n#{layer.traces.inspect}"
@@ -96,6 +98,8 @@ module ScoutApm
 
       if finalized?
         stop_request
+      else
+        continue_sampling_for_layers
       end
     end
 
@@ -156,12 +160,15 @@ module ScoutApm
       @layers.none?
     end
 
+    def continue_sampling_for_layers
+        ScoutApm::Instruments::Stacks.update_indexes(@layers.last.frame_index, @layers.last.trace_index)
+        ScoutApm::Instruments::Stacks.start_sampling
+    end
+
     # Run at the beginning of the whole request
     #
     # * Capture the first layer as the root_layer
     def start_request(layer)
-      ScoutApm::Instruments::Stacks.update_indexes(0,0)
-      ScoutApm::Instruments::Stacks.start_sampling
       @root_layer = layer unless @root_layer # capture root layer
     end
 
@@ -169,9 +176,9 @@ module ScoutApm
     #
     # * Send the request off to be stored
     def stop_request
+      ScoutApm::Instruments::Stacks.stop_sampling(true)
+      ScoutApm::Instruments::Stacks.update_indexes(0, 0)
       record!
-      ScoutApm::Instruments::Stacks.update_indexes(0,0)
-      ScoutApm::Instruments::Stacks.stop_sampling
     end
 
     ###################################

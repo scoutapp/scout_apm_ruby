@@ -45,7 +45,7 @@ module ScoutApm
     # focuses on Controller layers, and requires a native extension and a
     # reasonably recent Ruby.
     attr_reader :trace_index
-    attr_reader :stack_index
+    attr_reader :frame_index
     attr_reader :traces
 
     BACKTRACE_CALLER_LIMIT = 50 # maximum number of lines to send thru for backtrace analysis
@@ -61,9 +61,8 @@ module ScoutApm
       @desc = nil
 
       @traces = ScoutApm::TraceSet.new
-      @stack_index = stack_index
+      @frame_index = frame_index
       @trace_index = ScoutApm::Instruments::Stacks.current_trace_index
-      ScoutApm::Instruments::Stacks.update_indexes(@stack_index, @trace_index)
     end
 
     def add_child(child)
@@ -131,22 +130,20 @@ module ScoutApm
       @traces.set_controller_file(file)
     end
 
-    def stack_index
-      puts "STACK INDEX #{caller(3).size}"
-      @stack_index ||= caller(3).size
+    def frame_index
+      @frame_index ||= caller(3).size
+    end
+
+    def start_sampling
+      ScoutApm::Instruments::Stacks.update_indexes(frame_index, trace_index)
+      ScoutApm::Instruments::Stacks.start_sampling
     end
 
     def record_traces!
-      ScoutApm::Instruments::Stacks.stop_sampling
+      ScoutApm::Instruments::Stacks.stop_sampling(false)
       ScoutApm::Instruments::Stacks.profile_frames.each do |trace|
         @traces.add(trace)
       end
-      if children.any?
-        ScoutApm::Instruments::Stacks.update_indexes(children.first.stack_index, children.first.trace_index)
-      else
-        ScoutApm::Instruments::Stacks.update_indexes(0, 0)
-      end
-      ScoutApm::Instruments::Stacks.start_sampling
     end
 
 
