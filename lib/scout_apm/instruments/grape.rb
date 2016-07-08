@@ -41,12 +41,17 @@ module ScoutApm
         req.set_headers(request.headers)
         req.web!
 
-        name = ["Grape",
-                self.options[:method].first,
-                self.options[:for].to_s,
-                self.namespace.sub(%r{\A/}, ''), # removing leading slashes
-                self.options[:path].first,
-        ].compact.map{ |n| n.to_s }.join("/")
+        begin
+          name = ["Grape",
+                  self.options[:method].first,
+                  self.options[:for].to_s,
+                  self.namespace.sub(%r{\A/}, ''), # removing leading slashes
+                  self.options[:path].first,
+          ].compact.map{ |n| n.to_s }.join("/")
+        rescue => e
+          ScoutApm::Agent.instance.logger.info("Error getting Grape Endpoint Name. Error: #{e.message}. Options: #{self.options.inspect}")
+          name = "Grape/Unknown"
+        end
 
         req.start_layer( ScoutApm::Layer.new("Controller", name) )
         begin
