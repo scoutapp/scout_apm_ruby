@@ -1,4 +1,3 @@
-
 # 2.0.0
 
 * Reporting object allocation metrics and mem delta with slow requests and jobs.
@@ -10,6 +9,10 @@
 * Collect 95th percentiles
 * Remove unused & old references to Stackprof
 * Fixing exception on load if no config file is provided
+
+# 1.6.3
+
+* Handle nil ignore_traces when ignoring trace patterns
 
 # 1.6.2
 

@@ -39,7 +39,7 @@ module ScoutApm
           allocation_metrics = {}
         end
 
-        ScoutApm::Agent.instance.config.value("ignore_traces").each do |pattern|
+        (ScoutApm::Agent.instance.config.value("ignore_traces") || []).each do |pattern|
           if /#{pattern}/ =~ uri
             ScoutApm::Agent.instance.logger.debug("Skipped recording a trace for #{uri} due to `ignore_traces` pattern: #{pattern}")
             return nil
