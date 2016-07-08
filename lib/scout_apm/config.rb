@@ -40,10 +40,10 @@ module ScoutApm
     # Load up a config instance, attempting to load a yaml file.  Allows a
     # definite location if requested, or will attempt to load the default
     # configuration file: APP_ROOT/config/scout_apm.yml
-    def self.with_file(file_path=nil)
+    def self.with_file(file_path=nil, config={})
       overlays = [
         ConfigEnvironment.new,
-        ConfigFile.new(file_path),
+        ConfigFile.new(file_path, config[:file]),
         ConfigDefaults.new,
       ]
       new(overlays)
@@ -104,7 +104,8 @@ module ScoutApm
     # is not found, inaccessbile, or unparsable, log a message to that effect,
     # and move on.
     class ConfigFile
-      def initialize(file_path=nil)
+      def initialize(file_path=nil, config={})
+        @config = config || {}
         @resolved_file_path = file_path || determine_file_path
         load_file(@resolved_file_path)
       end
@@ -162,9 +163,8 @@ module ScoutApm
       end
 
       def app_environment
-        ScoutApm::Environment.instance.env
+        @config[:environment] || ScoutApm::Environment.instance.env
       end
-
       def logger
         if ScoutApm::Agent.instance.logger
           return ScoutApm::Agent.instance.logger
