@@ -34,7 +34,7 @@ module ScoutApm
 
       def database_engine
         return @database_engine if @database_engine
-        default = :mysql
+        default = :postgres
 
         @database_engine = if defined?(ActiveRecord::Base)
           adapter = get_database_adapter # can be nil
@@ -54,7 +54,17 @@ module ScoutApm
       end
 
       def get_database_adapter
-        ActiveRecord::Base.configurations[env]["adapter"]
+        adapter = if ActiveRecord::Base.respond_to?(:connection_config)
+                    ActiveRecord::Base.connection_config[:adapter].to_s
+                  else
+                    nil
+                  end
+
+        if adapter.nil?
+          adapter = ActiveRecord::Base.configurations[env]["adapter"]
+        end
+
+        return adapter
       rescue # this would throw an exception if ActiveRecord::Base is defined but no configuration exists.
         nil
       end

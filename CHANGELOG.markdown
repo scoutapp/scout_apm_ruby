@@ -1,4 +1,3 @@
-
 # 2.0.0
 
 * Reporting object allocation metrics and mem delta with slow requests and jobs.
@@ -9,6 +8,17 @@
 * Initial support for instant traces
 * Collect 95th percentiles
 * Remove unused & old references to Stackprof
+* Fixing exception on load if no config file is provided
+
+# 1.6.4
+
+* Add Grape instrumentation
+* Handle DATABASE_URL configurations better
+* Change default (undeteced) database to Postgres (was Mysql)
+
+# 1.6.3
+
+* Handle nil ignore_traces when ignoring trace patterns
 
 # 1.6.2
 
