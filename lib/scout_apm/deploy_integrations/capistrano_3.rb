@@ -58,7 +58,7 @@ module ScoutApm
       end
 
       def reporter
-        config =  if env.blank?
+        config =  if env == '' 
                     ScoutApm::Agent.instance.config
                   else
                     ScoutApm::Config.with_file(nil, {:file => { :environment => env }}) # instantiate our own config, with an overridden environment for the deploy-to app name instead of deploy-from app name)
