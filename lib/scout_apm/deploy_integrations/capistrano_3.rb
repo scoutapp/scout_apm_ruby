@@ -58,7 +58,13 @@ module ScoutApm
       end
 
       def reporter
-        @reporter ||= ScoutApm::Reporter.new(:deploy_hook, ScoutApm::Agent.instance.config, @logger)
+        config =  if env.blank?
+                    ScoutApm::Agent.instance.config
+                  else
+                    ScoutApm::Config.with_file(nil, {:file => { :environment => env }}) # instantiate our own config, with an overridden environment for the deploy-to app name instead of deploy-from app name)
+                  end
+
+        @reporter ||= ScoutApm::Reporter.new(:deploy_hook, config, @logger)
       end
 
       def deploy_data
