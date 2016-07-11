@@ -154,10 +154,7 @@ scout_record_sample()
       for (_buf_i = 0; _buf_i < _buf_num_frames; _buf_i++) {
 
         _buf_file = rb_profile_frame_absolute_path(_frames_buf[_buf_i]);
-        if (NIL_P(_buf_file)) {
-          _buf_file = rb_profile_frame_path(_frames_buf[_buf_i]);
-        }
-        if (!NIL_P(_buf_file) && TYPE(_buf_file) == T_STRING) {
+        if (TYPE(_buf_file) == T_STRING) {
           _traces[_buf_trace_index].tracelines[_buf_i].file  = RSTRING_PTR(_buf_file);
           _traces[_buf_trace_index].tracelines[_buf_i].file_len  = RSTRING_LEN(_buf_file);
         } else {
@@ -167,17 +164,17 @@ scout_record_sample()
 
         _traces[_buf_trace_index].tracelines[_buf_i].line  = _lines_buf[_buf_i];
 
-        //_buf_klass = rb_profile_frame_full_label(_frames_buf[_buf_i]);
-        //if (!NIL_P(_buf_klass) && TYPE(_buf_klass) == T_STRING) {
-        //  _traces[_buf_trace_index].tracelines[_buf_i].klass = RSTRING_PTR(_buf_klass);
-        //  _traces[_buf_trace_index].tracelines[_buf_i].klass_len = RSTRING_LEN(_buf_klass);
-        //} else {
+        _buf_klass = rb_profile_frame_classpath(_frames_buf[_buf_i]);
+        if (TYPE(_buf_klass) == T_STRING) {
+          _traces[_buf_trace_index].tracelines[_buf_i].klass = RSTRING_PTR(_buf_klass);
+          _traces[_buf_trace_index].tracelines[_buf_i].klass_len = RSTRING_LEN(_buf_klass);
+        } else {
           _traces[_buf_trace_index].tracelines[_buf_i].klass = " ";
           _traces[_buf_trace_index].tracelines[_buf_i].klass_len = (long)1;
-        //}
+        }
 
         _buf_label = rb_profile_frame_label(_frames_buf[_buf_i]);
-        if (!NIL_P(_buf_label) && TYPE(_buf_label) == T_STRING) {
+        if (TYPE(_buf_label) == T_STRING) {
           _traces[_buf_trace_index].tracelines[_buf_i].label = RSTRING_PTR(_buf_label);
           _traces[_buf_trace_index].tracelines[_buf_i].label_len = RSTRING_LEN(_buf_label);
         } else {
@@ -201,13 +198,13 @@ static VALUE rb_scout_profile_frames(VALUE self)
 
   traces = rb_ary_new2(0); //_cur_traces_num - _start_trace_index);
 
-  fprintf(stderr, "TOTAL TRACES COUNT: %d\n", _cur_traces_num);
+  //fprintf(stderr, "TOTAL TRACES COUNT: %d\n", _cur_traces_num);
   if (_cur_traces_num - _start_trace_index > 0) {
-    fprintf(stderr, "CUR TRACES: %d\n", _cur_traces_num);
-    fprintf(stderr, "START TRACE IDX: %d\n", _start_trace_index);
-    fprintf(stderr, "TRACES COUNT: %d\n", _cur_traces_num - _start_trace_index);
+    //fprintf(stderr, "CUR TRACES: %d\n", _cur_traces_num);
+    //fprintf(stderr, "START TRACE IDX: %d\n", _start_trace_index);
+    //fprintf(stderr, "TRACES COUNT: %d\n", _cur_traces_num - _start_trace_index);
     for(i = _start_trace_index; i < _cur_traces_num; i++) {
-      fprintf(stderr, "TRACELINES COUNT: %d\n", _traces[i].num_tracelines);
+      //fprintf(stderr, "TRACELINES COUNT: %d\n", _traces[i].num_tracelines);
       if (_traces[i].num_tracelines > 0) {
         trace = rb_ary_new2(_traces[i].num_tracelines);
         for(n = 0; n < _traces[i].num_tracelines; n++) {
