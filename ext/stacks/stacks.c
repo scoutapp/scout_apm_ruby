@@ -44,10 +44,47 @@ VALUE interval;
 
 #ifdef RUBY_INTERNAL_EVENT_NEWOBJ
 
+// Forward Declarations
+static void init_thread_vars();
+static void scout_profile_timer_signal_handler(int sig);
+static void scout_profile_broadcast_signal_handler(int sig);
+void scout_record_sample();
+
 // #include <sys/resource.h> // is this needed?
 
+
 ////////////////////////////////////////////////////////////////////////////////////////
-// Thread Liinked List
+// Per-Thread variables
+////////////////////////////////////////////////////////////////////////////////////////
+
+struct c_traceline {
+  char *file;
+  long file_len;
+  int line;
+  char *klass;
+  long klass_len;
+  char *label;
+  long label_len;
+};
+
+struct c_trace {
+  int num_tracelines;
+  struct c_traceline tracelines[BUF_SIZE];
+};
+
+static __thread int _buf_i, _buf_trace_index, _buf_num_frames;
+static __thread VALUE _buf_file, _buf_klass, _buf_label;
+static __thread VALUE _frames_buf[BUF_SIZE];
+static __thread int _lines_buf[BUF_SIZE];
+
+static __thread struct c_trace _traces[MAX_TRACES]; // perhaps make this a pointer to malloc'ed data - this can be a large structure
+static __thread int _ok_to_sample;  // used as a mutex to control the async interrupt handler
+static __thread int _start_frame_index;
+static __thread int _start_trace_index;
+static __thread int _cur_traces_num;
+
+////////////////////////////////////////////////////////////////////////////////////////
+// Thread Linked List
 ////////////////////////////////////////////////////////////////////////////////////////
 
 /*
@@ -84,10 +121,7 @@ pthread_mutex_t profiled_threads_mutex;
 static VALUE rb_scout_add_profiled_thread(VALUE self)
 {
   struct profiled_thread *thr;
-  _ok_to_sample = 0;
-  _start_frame_index = 0;
-  _start_trace_index = 0;
-  _cur_traces_num = 0;
+  init_thread_vars();
 
   pthread_mutex_lock(&profiled_threads_mutex);
 
@@ -308,32 +342,16 @@ rb_scout_uninstall_profiling(VALUE self)
 // Per-Thread Handler
 ////////////////////////////////////////////////////////////////////////////////////////
 
-struct c_traceline {
-  char *file;
-  long file_len;
-  int line;
-  char *klass;
-  long klass_len;
-  char *label;
-  long label_len;
-};
 
-struct c_trace {
-  int num_tracelines;
-  struct c_traceline tracelines[BUF_SIZE];
-};
-
-static __thread int _buf_i, _buf_trace_index, _buf_num_frames;
-static __thread VALUE _buf_file, _buf_klass, _buf_label;
-static __thread VALUE _frames_buf[BUF_SIZE];
-static __thread int _lines_buf[BUF_SIZE];
-
-static __thread struct c_trace _traces[MAX_TRACES]; // perhaps make this a pointer to malloc'ed data - this can be a large structure
-static __thread int _ok_to_sample;  // used as a mutex to control the async interrupt handler
-static __thread int _start_frame_index;
-static __thread int _start_trace_index;
-static __thread int _cur_traces_num;
-
+static void
+init_thread_vars()
+{
+  _ok_to_sample = 0;
+  _start_frame_index = 0;
+  _start_trace_index = 0;
+  _cur_traces_num = 0;
+  return;
+}
 
 /* scout_profile_job_handler: 
  *
