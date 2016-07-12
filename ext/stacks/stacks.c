@@ -37,8 +37,8 @@ VALUE mInstruments;
 VALUE cStacks;
 
 #define BUF_SIZE 512
-#define INTERVAL 5000
-#define MAX_TRACES 3000
+#define INTERVAL 1500
+#define MAX_TRACES 5000
 
 VALUE interval;
 
@@ -57,13 +57,17 @@ void scout_record_sample();
 // Per-Thread variables
 ////////////////////////////////////////////////////////////////////////////////////////
 
+#define FILE_LEN_MAX 200
+#define KLASS_LEN_MAX 100
+#define LABEL_LEN_MAX 100
+
 struct c_traceline {
-  char *file;
+  char file[FILE_LEN_MAX];
   long file_len;
   int line;
-  char *klass;
+  char klass[KLASS_LEN_MAX];
   long klass_len;
-  char *label;
+  char label[LABEL_LEN_MAX];
   long label_len;
 };
 
@@ -77,11 +81,12 @@ static __thread VALUE _buf_file, _buf_klass, _buf_label;
 static __thread VALUE _frames_buf[BUF_SIZE];
 static __thread int _lines_buf[BUF_SIZE];
 
-static __thread struct c_trace _traces[MAX_TRACES]; // perhaps make this a pointer to malloc'ed data - this can be a large structure
+static __thread struct c_trace *_traces[MAX_TRACES];
 static __thread int _ok_to_sample;  // used as a mutex to control the async interrupt handler
 static __thread int _start_frame_index;
 static __thread int _start_trace_index;
 static __thread int _cur_traces_num;
+static __thread int _job_registered;
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // Thread Linked List
@@ -120,10 +125,16 @@ pthread_mutex_t profiled_threads_mutex;
  */
 static VALUE rb_scout_add_profiled_thread(VALUE self)
 {
+  int i;
   struct profiled_thread *thr;
   init_thread_vars();
 
   pthread_mutex_lock(&profiled_threads_mutex);
+
+  for (i = 0; i < MAX_TRACES; i++) {
+    _traces[i] = malloc(sizeof(struct c_trace));
+  }
+  //fprintf(stderr, "Done mallocing\n");
 
   thr = (struct profiled_thread *) malloc(sizeof(struct profiled_thread));
   thr->th = pthread_self();
@@ -350,6 +361,7 @@ init_thread_vars()
   _start_frame_index = 0;
   _start_trace_index = 0;
   _cur_traces_num = 0;
+  _job_registered = 0;
   return;
 }
 
@@ -361,6 +373,7 @@ static void
 scout_profile_job_handler(void *data)
 {
   scout_record_sample();
+  _job_registered = 0;
 }
 
 /* scout_profile_broadcast_signal_handler: Signal handler for each thread. 
@@ -372,16 +385,39 @@ scout_profile_broadcast_signal_handler(int sig)
 {
   static int in_signal_handler = 0;
   if (in_signal_handler) return;
+  if (_job_registered) return;
+  if (!_ok_to_sample) return;
 
   in_signal_handler++;
   if (rb_during_gc()) {
     // _stackprof.during_gc++, _stackprof.overall_samples++;
   } else {
-    rb_postponed_job_register(0, scout_profile_job_handler, 0);
+    if (rb_postponed_job_register(0, scout_profile_job_handler, 0) == 1) {
+      _job_registered = 1;
+    }
   }
   in_signal_handler--;
 }
 
+static long
+scout_string_copy(VALUE src_string, char *dest_buffer, long dest_len , long *length_buffer)
+{
+  long copy_len, src_len;
+  if (TYPE(src_string) != T_STRING) {
+    *dest_buffer = " ";
+    *length_buffer = (long)1;
+    return -1;
+  }
+  src_len = RSTRING_LEN(src_string);
+  if ( src_len < dest_len ) {
+    copy_len = src_len;
+  } else {
+    copy_len = dest_len;
+  }
+  memcpy(dest_buffer, RSTRING_PTR(src_string), (size_t)copy_len);
+  *length_buffer = copy_len;
+  return copy_len;
+}
 
 /*
  * scout_record_sample: Defered function run from the per-thread handler
@@ -402,55 +438,38 @@ scout_record_sample()
   if (!_ok_to_sample || rb_during_gc()) {
     return;
   }
-
   _buf_trace_index = _cur_traces_num;
   if (_cur_traces_num < MAX_TRACES) {
+    //fprintf(stderr, "SAMPLING\n\n");
     _buf_num_frames = rb_profile_frames(0, sizeof(_frames_buf) / sizeof(VALUE), _frames_buf, _lines_buf);
 
+    //fprintf(stderr, "\n\nBuf liunes is: %d\n\n", _buf_num_frames);
+
     if (_buf_num_frames > 0) {
-      _traces[_buf_trace_index].num_tracelines = _buf_num_frames;
+      _traces[_buf_trace_index]->num_tracelines = _buf_num_frames;
+      //fprintf(stderr, "\n\nNum tracelins is: %d\n\n", _traces[_buf_trace_index]->num_tracelines);
 
       for (_buf_i = 0; _buf_i < _buf_num_frames; _buf_i++) {
 
         // Extract File
         _buf_file = rb_profile_frame_absolute_path(_frames_buf[_buf_i]);
-        if (TYPE(_buf_file) == T_STRING) {
-          _traces[_buf_trace_index].tracelines[_buf_i].file  = RSTRING_PTR(_buf_file);
-          _traces[_buf_trace_index].tracelines[_buf_i].file_len  = RSTRING_LEN(_buf_file);
-        } else {
-          _traces[_buf_trace_index].tracelines[_buf_i].file  = " ";
-          _traces[_buf_trace_index].tracelines[_buf_i].file_len  = (long)1;
-        }
+        scout_string_copy(_buf_file, &_traces[_buf_trace_index]->tracelines[_buf_i].file[0], (long)FILE_LEN_MAX, &_traces[_buf_trace_index]->tracelines[_buf_i].file_len);
 
         // Extract Line number
-        _traces[_buf_trace_index].tracelines[_buf_i].line  = _lines_buf[_buf_i];
+        _traces[_buf_trace_index]->tracelines[_buf_i].line  = _lines_buf[_buf_i];
 
         // Extract Class
         _buf_klass = rb_profile_frame_classpath(_frames_buf[_buf_i]);
-        if (TYPE(_buf_klass) == T_STRING) {
-          _traces[_buf_trace_index].tracelines[_buf_i].klass = RSTRING_PTR(_buf_klass);
-          _traces[_buf_trace_index].tracelines[_buf_i].klass_len = RSTRING_LEN(_buf_klass);
-        } else {
-          _traces[_buf_trace_index].tracelines[_buf_i].klass = " ";
-          _traces[_buf_trace_index].tracelines[_buf_i].klass_len = (long)1;
-        }
+        scout_string_copy(_buf_klass, &_traces[_buf_trace_index]->tracelines[_buf_i].klass[0], (long)KLASS_LEN_MAX, &_traces[_buf_trace_index]->tracelines[_buf_i].klass_len);
 
         // Extract Method
         _buf_label = rb_profile_frame_label(_frames_buf[_buf_i]);
-        if (TYPE(_buf_label) == T_STRING) {
-          _traces[_buf_trace_index].tracelines[_buf_i].label = RSTRING_PTR(_buf_label);
-          _traces[_buf_trace_index].tracelines[_buf_i].label_len = RSTRING_LEN(_buf_label);
-        } else {
-          _traces[_buf_trace_index].tracelines[_buf_i].label = " ";
-          _traces[_buf_trace_index].tracelines[_buf_i].label_len = (long)1;
-        }
+        scout_string_copy(_buf_label, &_traces[_buf_trace_index]->tracelines[_buf_i].label[0], (long)LABEL_LEN_MAX, &_traces[_buf_trace_index]->tracelines[_buf_i].label_len);
       }
-
       _cur_traces_num++;
     }
   }
 }
-
 
 /* rb_scout_profile_frames: retreive the traces for the layer that is exiting
  *
@@ -465,22 +484,23 @@ static VALUE rb_scout_profile_frames(VALUE self)
 
   traces = rb_ary_new2(0); //_cur_traces_num - _start_trace_index);
 
+  //fprintf(stderr, "OK to TRACE is: %d\n", _ok_to_sample);
   //fprintf(stderr, "TOTAL TRACES COUNT: %d\n", _cur_traces_num);
   if (_cur_traces_num - _start_trace_index > 0) {
     //fprintf(stderr, "CUR TRACES: %d\n", _cur_traces_num);
     //fprintf(stderr, "START TRACE IDX: %d\n", _start_trace_index);
     //fprintf(stderr, "TRACES COUNT: %d\n", _cur_traces_num - _start_trace_index);
     for(i = _start_trace_index; i < _cur_traces_num; i++) {
-      //fprintf(stderr, "TRACELINES COUNT: %d\n", _traces[i].num_tracelines);
-      if (_traces[i].num_tracelines > 0) {
-        trace = rb_ary_new2(_traces[i].num_tracelines);
-        for(n = 0; n < _traces[i].num_tracelines; n++) {
+      //fprintf(stderr, "TRACELINES COUNT: %d\n", _traces[i]->num_tracelines);
+      if (_traces[i]->num_tracelines > 0) {
+        trace = rb_ary_new2(0);
+        for(n = 0; n < _traces[i]->num_tracelines; n++) {
           //fprintf(stderr, ".");
           trace_line = rb_ary_new2(4);
-          rb_ary_store(trace_line, 0, rb_funcall(rb_enc_str_new(_traces[i].tracelines[n].file, _traces[i].tracelines[n].file_len, enc_UTF8), sym_scrub_bang, 1, scrub_replace));
-          rb_ary_store(trace_line, 1, INT2FIX(_traces[i].tracelines[n].line));
-          rb_ary_store(trace_line, 2, rb_funcall(rb_enc_str_new(_traces[i].tracelines[n].klass, _traces[i].tracelines[n].klass_len, enc_UTF8), sym_scrub_bang, 1, scrub_replace));
-          rb_ary_store(trace_line, 3, rb_funcall(rb_enc_str_new(_traces[i].tracelines[n].label, _traces[i].tracelines[n].label_len, enc_UTF8), sym_scrub_bang, 1, scrub_replace));
+          rb_ary_store(trace_line, 0, rb_funcall(rb_enc_str_new(&_traces[i]->tracelines[n].file[0], _traces[i]->tracelines[n].file_len, enc_UTF8), sym_scrub_bang, 1, scrub_replace));
+          rb_ary_store(trace_line, 1, INT2FIX(_traces[i]->tracelines[n].line));
+          rb_ary_store(trace_line, 2, rb_funcall(rb_enc_str_new(&_traces[i]->tracelines[n].klass[0], _traces[i]->tracelines[n].klass_len, enc_UTF8), sym_scrub_bang, 1, scrub_replace));
+          rb_ary_store(trace_line, 3, rb_funcall(rb_enc_str_new(&_traces[i]->tracelines[n].label[0], _traces[i]->tracelines[n].label_len, enc_UTF8), sym_scrub_bang, 1, scrub_replace));
           rb_ary_push(trace, trace_line);
         }
         rb_ary_push(traces, trace);
