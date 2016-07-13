@@ -25,6 +25,10 @@ const char *single_space = " ";
 int scout_profiling_installed = 0;
 int scout_profiling_running = 0;
 
+static __thread uint64_t _skipped_in_gc;
+static __thread uint64_t _skipped_in_interrupt;
+static __thread uint64_t _skipped_job_registered;
+
 ID sym_ScoutApm;
 ID sym_Stacks;
 ID sym_collect;
@@ -386,13 +390,22 @@ static void
 scout_profile_broadcast_signal_handler(int sig)
 {
   static int in_signal_handler = 0;
-  if (in_signal_handler) return;
-  if (_job_registered) return;
+
+  if (in_signal_handler) {
+    _skipped_in_interrupt++;
+    return;
+  }
+
+  if (_job_registered) {
+    _skipped_job_registered++;
+    return;
+  }
+
   if (!_ok_to_sample) return;
 
   in_signal_handler++;
   if (rb_during_gc()) {
-    // _stackprof.during_gc++, _stackprof.overall_samples++;
+    _skipped_in_gc++;
   } else {
     if (rb_postponed_job_register(0, scout_profile_job_handler, 0) == 1) {
       _job_registered = 1;
@@ -437,7 +450,9 @@ scout_string_copy(VALUE src_string, char *dest_buffer, long dest_len , long *len
 void
 scout_record_sample()
 {
-  if (!_ok_to_sample || rb_during_gc()) {
+  if (!_ok_to_sample) return;
+  if (rb_during_gc()) {
+    _skipped_in_gc++;
     return;
   }
   _buf_trace_index = _cur_traces_num;
@@ -534,7 +549,11 @@ rb_scout_stop_sampling(VALUE self, VALUE reset)
   _ok_to_sample = 0;
   // TODO: I think this can be (reset == Qtrue)
   if (TYPE(reset) == T_TRUE) {
+    //fprintf(stderr, "Skipped - GC: %lld - Interrupt: %lld - Job Registered %lld\n", _skipped_in_gc, _skipped_in_interrupt, _skipped_job_registered);
     _cur_traces_num = 0;
+    _skipped_job_registered = 0;
+    _skipped_in_gc = 0;
+    _skipped_in_interrupt = 0;
   }
   return Qtrue;
 }
