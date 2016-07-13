@@ -20,6 +20,8 @@
 #include <pthread.h>
 #include <semaphore.h>
 
+const char *single_space = " ";
+
 int scout_profiling_installed = 0;
 int scout_profiling_running = 0;
 
@@ -404,7 +406,7 @@ scout_string_copy(VALUE src_string, char *dest_buffer, long dest_len , long *len
 {
   long copy_len, src_len;
   if (TYPE(src_string) != T_STRING) {
-    *dest_buffer = " ";
+    *dest_buffer = *single_space;
     *length_buffer = (long)1;
     return -1;
   }
