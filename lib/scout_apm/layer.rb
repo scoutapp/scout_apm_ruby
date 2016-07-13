@@ -40,12 +40,18 @@ module ScoutApm
     #   :class_name   - The ActiveRecord class name (From notification instantiation.active_record)
     attr_reader :annotations
 
+    # ScoutProf - trace_index is an index into the Stack structure in the C
+    # code, used to store captured traces.
+    attr_reader :trace_index
+
+    # ScoutProf - frame_index is an optimization to not capture a few frames
+    # during scoutprof instrumentation
+    attr_reader :frame_index
+
     # Captured backtraces from ScoutProf. This is distinct from the backtrace
     # attribute, which gets the ruby backtrace of any given layer. StackProf
     # focuses on Controller layers, and requires a native extension and a
     # reasonably recent Ruby.
-    attr_reader :trace_index
-    attr_reader :frame_index
     attr_reader :traces
 
     BACKTRACE_CALLER_LIMIT = 50 # maximum number of lines to send thru for backtrace analysis
@@ -61,7 +67,7 @@ module ScoutApm
       @desc = nil
 
       @traces = ScoutApm::TraceSet.new
-      @frame_index = frame_index
+      @frame_index = caller(3).size # default frame_index?
       @trace_index = ScoutApm::Instruments::Stacks.current_trace_index
     end
 
@@ -128,10 +134,6 @@ module ScoutApm
     # TraceSet uses this to more accurately filter backtraces
     def set_controller_file(file)
       @traces.set_controller_file(file)
-    end
-
-    def frame_index
-      @frame_index ||= caller(3).size
     end
 
     def start_sampling

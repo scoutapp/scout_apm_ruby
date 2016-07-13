@@ -126,11 +126,6 @@ module ScoutApm
       @started = true
       logger.info "Starting monitoring for [#{environment.application_name}]. Framework [#{environment.framework}] App Server [#{environment.app_server}] Background Job Framework [#{environment.background_job_name}]."
 
-
-      ScoutApm::Instruments::Stacks.install
-      ScoutApm::Instruments::Stacks.start
-      ScoutApm::Instruments::Stacks.add_profiled_thread
-
       [ ScoutApm::Instruments::Process::ProcessCpu.new(environment.processors, logger),
         ScoutApm::Instruments::Process::ProcessMemory.new(logger),
         ScoutApm::Instruments::PercentileSampler.new(logger, 95),
@@ -245,7 +240,10 @@ module ScoutApm
       logger.info "Initializing worker thread."
 
       install_exit_handler
+
+      # After we fork, setup the handlers here.
       ScoutApm::Instruments::Stacks.install
+      ScoutApm::Instruments::Stacks.start
 
       @background_worker = ScoutApm::BackgroundWorker.new
       @background_worker_thread = Thread.new do

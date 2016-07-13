@@ -161,10 +161,10 @@ module ScoutApm
     end
 
     def continue_sampling_for_layers
-        if last_traced_layer = @layers.select{|layer| layer.traced?}.last
-          ScoutApm::Instruments::Stacks.update_indexes(@layers.last.frame_index, @layers.last.trace_index)
-          ScoutApm::Instruments::Stacks.start_sampling
-        end
+      if last_traced_layer = @layers.select{|layer| layer.traced?}.last
+        ScoutApm::Instruments::Stacks.update_indexes(@layers.last.frame_index, @layers.last.trace_index)
+        ScoutApm::Instruments::Stacks.start_sampling
+      end
     end
 
     # Run at the beginning of the whole request

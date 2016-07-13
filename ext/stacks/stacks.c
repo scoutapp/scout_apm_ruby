@@ -429,8 +429,10 @@ scout_string_copy(VALUE src_string, char *dest_buffer, long dest_len , long *len
   } else {
     copy_len = dest_len;
   }
+
   memcpy(dest_buffer, RSTRING_PTR(src_string), (size_t)copy_len);
   *length_buffer = copy_len;
+
   return copy_len;
 }
 
