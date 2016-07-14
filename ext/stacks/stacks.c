@@ -25,10 +25,6 @@ const char *single_space = " ";
 int scout_profiling_installed = 0;
 int scout_profiling_running = 0;
 
-static __thread uint64_t _skipped_in_gc;
-static __thread uint64_t _skipped_in_interrupt;
-static __thread uint64_t _skipped_job_registered;
-
 ID sym_ScoutApm;
 ID sym_Stacks;
 ID sym_collect;
@@ -43,8 +39,11 @@ VALUE mInstruments;
 VALUE cStacks;
 
 #define BUF_SIZE 512
-#define INTERVAL 1500
-#define MAX_TRACES 5000
+#define MAX_TRACES 2000
+
+//#define INTERVAL 5000 // in microseconds
+#define NANO_SECOND_MULTIPLIER  1000000  // 1 millisecond = 1,000,000 Nanoseconds
+const long INTERVAL = 1 * NANO_SECOND_MULTIPLIER; // milliseconds * NANO_SECOND_MULTIPLIER
 
 VALUE interval;
 
@@ -52,7 +51,6 @@ VALUE interval;
 
 // Forward Declarations
 static void init_thread_vars();
-static void scout_profile_timer_signal_handler(int sig);
 static void scout_profile_broadcast_signal_handler(int sig);
 void scout_record_sample();
 
@@ -92,7 +90,8 @@ static __thread int _ok_to_sample;  // used as a mutex to control the async inte
 static __thread int _start_frame_index;
 static __thread int _start_trace_index;
 static __thread int _cur_traces_num;
-static __thread int _job_registered;
+
+static int _job_registered;
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // Thread Linked List
@@ -120,6 +119,11 @@ struct profiled_thread *head_thread = NULL;
 
 // Mutex around editing of the thread linked list
 pthread_mutex_t profiled_threads_mutex;
+
+
+// Background controller thread ID
+pthread_t btid;
+
 
 /*
  * rb_scout_add_profiled_thread: adds the currently running thread to the head of the linked list
@@ -212,54 +216,8 @@ static VALUE rb_scout_remove_profiled_thread(VALUE self)
 // Global timer
 ////////////////////////////////////////////////////////////////////////////////////////
 
-static VALUE
-rb_scout_install_profiling(VALUE self)
-{
-  struct sigaction new_action, old_action;
-  struct sigaction new_vtaction, old_vtaction;
-  interval = INT2FIX(INTERVAL);
-
-  // We can only install once. If uninstall is called, we will NOT be able to call install again.
-  // Instead, stop/start should be used to temporarily disable all ScoutProf sampling.
-  if (scout_profiling_installed) {
-    return Qfalse;
-  }
-
-  // Useful docs on signal handling:
-  //   http://www.gnu.org/software/libc/manual/html_node/Signal-Handling.html#Signal-Handling
-  //
-  // This seciton of code sets up a new signal handler
-  //
-  // SA_RESTART means to continue any primitive lib functions that were aborted
-  // when the timer fired. So an open() call that we interrupt will still
-  // happen, rather than returning an error where it was called (perhaps
-  // breaking poorly written code in other places that didn't think to check).
-  new_action.sa_handler = scout_profile_timer_signal_handler;
-  new_action.sa_flags = SA_RESTART;
-  sigemptyset(&new_action.sa_mask);
-  sigaction(SIGALRM, &new_action, &old_action);
-
-
-  // Also set up an interrupt handler for when we broadcast an alarm
-  new_vtaction.sa_handler = scout_profile_broadcast_signal_handler;
-  new_vtaction.sa_flags = SA_RESTART;
-  sigemptyset(&new_vtaction.sa_mask);
-  sigaction(SIGVTALRM, &new_vtaction, &old_vtaction);
-
-  rb_define_const(cStacks, "INSTALLED", Qtrue);
-  scout_profiling_installed = 1;
-
-  // VALUE must be returned, just return nil
-  return Qnil;
-}
-
-/*
- * scout_profile_timer_signal_handler: The signal handler that reacts to the global SIGALRM
- *
- * Notifies all threads with SIGVTALRM
- */
 static void
-scout_profile_timer_signal_handler(int sig)
+scout_signal_threads_to_profile()
 {
     struct profiled_thread *ptr, *next;
     ptr = head_thread;
@@ -267,14 +225,54 @@ scout_profile_timer_signal_handler(int sig)
     while(ptr != NULL) {
       if (pthread_kill(ptr->th, SIGVTALRM) == ESRCH) { // Send signal to the specific thread. If ESRCH is returned, remove the dead thread
         next = ptr->next;
-        remove_profiled_thread(ptr->th);
+        //remove_profiled_thread(ptr->th);
         ptr = next;
       } else {
         ptr = ptr->next;
       }
     }
+    _job_registered = 0;
 }
 
+// Should we block signals to this thread?
+void *
+background_worker()
+{
+  int clock_result, register_result, prio_result;
+  struct timespec clock_remaining;
+  struct timespec sleep_time = {.tv_sec = 0, .tv_nsec = INTERVAL};
+
+  prio_result = pthread_setschedprio(pthread_self(), (int)20);
+  if (prio_result == 0) {
+    fprintf(stderr, "Set proprity for background thread successfully!\n");
+  } else {
+    fprintf(stderr, "Failed to set background thread priority! Error: %d\n", prio_result);
+  }
+
+  while (1) {
+    //check to see if we should change values, exit, etc
+    SNOOZE:
+    clock_result = clock_nanosleep(CLOCK_MONOTONIC, 0, &sleep_time, &clock_remaining);
+    if (clock_result == 0) {
+      if (rb_during_gc()) {
+        //_skipped_in_gc++;
+      } else {
+        register_result = rb_postponed_job_register_one(0, scout_signal_threads_to_profile, 0);
+        if ((register_result == 1) || (register_result == 2)) {
+          _job_registered = 1;
+        } else {
+          fprintf(stderr, "Error: job was not registered! Result: %d\n", register_result);
+        }
+      }
+    } else if (clock_result == EINTR) {
+      fprintf(stderr, "Clock was interrupted!\n");
+      sleep_time = clock_remaining;
+      goto SNOOZE;
+    } else {
+      fprintf(stderr, "Error: nanosleep returned value : %d\n", clock_result);
+    }
+  }
+}
 
 /* rb_scout_start_profiling: Installs the global timer
  */
@@ -354,6 +352,31 @@ rb_scout_uninstall_profiling(VALUE self)
   return Qnil;
 }
 
+static VALUE
+rb_scout_install_profiling(VALUE self)
+{
+  struct sigaction new_vtaction, old_vtaction;
+
+  // We can only install once. If uninstall is called, we will NOT be able to call install again.
+  // Instead, stop/start should be used to temporarily disable all ScoutProf sampling.
+  if (scout_profiling_installed) {
+    return Qfalse;
+  }
+
+  pthread_create(&btid, NULL, background_worker, NULL);
+
+  // Also set up an interrupt handler for when we broadcast an alarm
+  new_vtaction.sa_handler = scout_profile_broadcast_signal_handler;
+  new_vtaction.sa_flags = SA_RESTART;
+  sigemptyset(&new_vtaction.sa_mask);
+  sigaction(SIGVTALRM, &new_vtaction, &old_vtaction);
+
+  rb_define_const(cStacks, "INSTALLED", Qtrue);
+  scout_profiling_installed = 1;
+
+  // VALUE must be returned, just return nil
+  return Qnil;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // Per-Thread Handler
@@ -367,19 +390,7 @@ init_thread_vars()
   _start_frame_index = 0;
   _start_trace_index = 0;
   _cur_traces_num = 0;
-  _job_registered = 0;
   return;
-}
-
-/* scout_profile_job_handler: 
- *
- * TODO: why the indirection? Could we call scout_record_sample() directly instead?
- */
-static void
-scout_profile_job_handler(void *data)
-{
-  scout_record_sample();
-  _job_registered = 0;
 }
 
 /* scout_profile_broadcast_signal_handler: Signal handler for each thread. 
@@ -392,12 +403,7 @@ scout_profile_broadcast_signal_handler(int sig)
   static int in_signal_handler = 0;
 
   if (in_signal_handler) {
-    _skipped_in_interrupt++;
-    return;
-  }
-
-  if (_job_registered) {
-    _skipped_job_registered++;
+    fprintf(stderr, "IN SIGNAL HANDLER!?\n");
     return;
   }
 
@@ -405,11 +411,9 @@ scout_profile_broadcast_signal_handler(int sig)
 
   in_signal_handler++;
   if (rb_during_gc()) {
-    _skipped_in_gc++;
+    //_skipped_in_gc++;
   } else {
-    if (rb_postponed_job_register(0, scout_profile_job_handler, 0) == 1) {
-      _job_registered = 1;
-    }
+    scout_record_sample();
   }
   in_signal_handler--;
 }
@@ -454,7 +458,6 @@ scout_record_sample()
 {
   if (!_ok_to_sample) return;
   if (rb_during_gc()) {
-    _skipped_in_gc++;
     return;
   }
   _buf_trace_index = _cur_traces_num;
@@ -463,7 +466,6 @@ scout_record_sample()
     _buf_num_frames = rb_profile_frames(0, sizeof(_frames_buf) / sizeof(VALUE), _frames_buf, _lines_buf);
 
     //fprintf(stderr, "\n\nBuf liunes is: %d\n\n", _buf_num_frames);
-
     if (_buf_num_frames > 0) {
       _traces[_buf_trace_index]->num_tracelines = _buf_num_frames;
       //fprintf(stderr, "\n\nNum tracelins is: %d\n\n", _traces[_buf_trace_index]->num_tracelines);
@@ -497,9 +499,7 @@ scout_record_sample()
 static VALUE rb_scout_profile_frames(VALUE self)
 {
   int i, n;
-  VALUE traces, trace, trace_line, scrub_replace;
-
-  scrub_replace = rb_str_new2("");
+  VALUE traces, trace, trace_line;
 
   traces = rb_ary_new2(0); //_cur_traces_num - _start_trace_index);
 
@@ -516,10 +516,10 @@ static VALUE rb_scout_profile_frames(VALUE self)
         for(n = 0; n < _traces[i]->num_tracelines; n++) {
           //fprintf(stderr, ".");
           trace_line = rb_ary_new2(4);
-          rb_ary_store(trace_line, 0, rb_funcall(rb_enc_str_new(&_traces[i]->tracelines[n].file[0], _traces[i]->tracelines[n].file_len, enc_UTF8), sym_scrub_bang, 1, scrub_replace));
+          rb_ary_store(trace_line, 0, rb_enc_str_new(&_traces[i]->tracelines[n].file[0], _traces[i]->tracelines[n].file_len, enc_UTF8));
           rb_ary_store(trace_line, 1, INT2FIX(_traces[i]->tracelines[n].line));
-          rb_ary_store(trace_line, 2, rb_funcall(rb_enc_str_new(&_traces[i]->tracelines[n].klass[0], _traces[i]->tracelines[n].klass_len, enc_UTF8), sym_scrub_bang, 1, scrub_replace));
-          rb_ary_store(trace_line, 3, rb_funcall(rb_enc_str_new(&_traces[i]->tracelines[n].label[0], _traces[i]->tracelines[n].label_len, enc_UTF8), sym_scrub_bang, 1, scrub_replace));
+          rb_ary_store(trace_line, 2, rb_enc_str_new(&_traces[i]->tracelines[n].klass[0], _traces[i]->tracelines[n].klass_len, enc_UTF8));
+          rb_ary_store(trace_line, 3, rb_enc_str_new(&_traces[i]->tracelines[n].label[0], _traces[i]->tracelines[n].label_len, enc_UTF8));
           rb_ary_push(trace, trace_line);
         }
         rb_ary_push(traces, trace);
@@ -553,9 +553,6 @@ rb_scout_stop_sampling(VALUE self, VALUE reset)
   if (TYPE(reset) == T_TRUE) {
     //fprintf(stderr, "Skipped - GC: %lld - Interrupt: %lld - Job Registered %lld\n", _skipped_in_gc, _skipped_in_interrupt, _skipped_job_registered);
     _cur_traces_num = 0;
-    _skipped_job_registered = 0;
-    _skipped_in_gc = 0;
-    _skipped_in_interrupt = 0;
   }
   return Qtrue;
 }
