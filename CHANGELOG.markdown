@@ -1,3 +1,7 @@
+# 1.6.6
+
+* Bugfix related to DB detection
+
 # 1.6.5
 
 * Add Mongoid 5.x support
