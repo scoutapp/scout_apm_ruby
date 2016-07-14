@@ -37,18 +37,14 @@ module ScoutApm
         default = :mysql
 
         if defined?(ActiveRecord::Base)
-          if config && config["adapter"]
-            case config["adapter"].to_s
-            when "postgres"   then :postgres
-            when "postgresql" then :postgres
-            when "postgis"    then :postgres
-            when "sqlite3"    then :sqlite
-            when "mysql"      then :mysql
-            when "mysql2"     then :mysql
-            else default
-            end
-          else
-            default
+          case raw_database_adapter
+          when "postgres"   then :postgres
+          when "postgresql" then :postgres
+          when "postgis"    then :postgres
+          when "sqlite3"    then :sqlite
+          when "mysql"      then :mysql
+          when "mysql2"     then :mysql
+          else default
           end
         else
           default
