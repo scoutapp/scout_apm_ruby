@@ -1,3 +1,8 @@
+# 1.6.5
+
+* Add Mongoid 5.x support
+* Fix autodetection of mysql databases
+
 # 1.6.4
 
 * Add Grape instrumentation
