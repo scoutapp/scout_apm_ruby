@@ -30,6 +30,10 @@ module ScoutApm
       def database_engine
         :mysql
       end
+
+      def raw_database_adapter
+        :mysql
+      end
     end
   end
 end

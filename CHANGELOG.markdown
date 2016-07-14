@@ -10,6 +10,15 @@
 * Remove unused & old references to Stackprof
 * Fixing exception on load if no config file is provided
 
+# 1.6.6
+
+* Bugfix related to DB detection
+
+# 1.6.5
+
+* Add Mongoid 5.x support
+* Fix autodetection of mysql databases
+
 # 1.6.4
 
 * Add Grape instrumentation
