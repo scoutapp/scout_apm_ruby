@@ -279,34 +279,11 @@ background_worker()
 static VALUE
 rb_scout_start_profiling(VALUE self)
 {
-  struct itimerval timer;
-  struct itimerval testTimer;
-  int getResult;
-
   if (scout_profiling_running) {
     return Qtrue;
   }
 
   rb_warn("Starting Profiling");
-
-  // This section of code sets up a timer that sends SIGALRM every <INTERVAL>
-  // amount of time
-  //
-  // First Check for an existing timer
-  getResult = getitimer(ITIMER_REAL, &testTimer);
-  if (getResult != 0) {
-    rb_warn("Failed in call to getitimer: %d", getResult);
-  }
-
-  if (testTimer.it_value.tv_sec != 0 && testTimer.it_value.tv_usec != 0) {
-    rb_warn("Timer appears to already exist before setting Scout's");
-  }
-
-  // Then make the timer
-  timer.it_interval.tv_sec = 0;
-  timer.it_interval.tv_usec = INTERVAL; //FIX2INT(interval);
-  timer.it_value = timer.it_interval;
-  setitimer(ITIMER_REAL, &timer, 0);
   scout_profiling_running = 1;
 
   // VALUE must be returned, just return nil
@@ -318,19 +295,6 @@ rb_scout_start_profiling(VALUE self)
 static VALUE
 rb_scout_stop_profiling(VALUE self)
 {
-  // Wipe timer
-  struct itimerval timer;
-
-  if (!scout_profiling_running) {
-    return Qtrue;
-  }
-
-  timer.it_interval.tv_sec = 0;
-  timer.it_interval.tv_usec = 0;
-  timer.it_value = timer.it_interval;
-  setitimer(ITIMER_REAL, &timer, 0);
-  scout_profiling_running = 0;
-
   return Qnil;
 }
 
@@ -339,16 +303,6 @@ rb_scout_stop_profiling(VALUE self)
 static VALUE
 rb_scout_uninstall_profiling(VALUE self)
 {
-  // Wipe timer
-  struct itimerval timer;
-  timer.it_interval.tv_sec = 0;
-  timer.it_interval.tv_usec = 0;
-  timer.it_value = timer.it_interval;
-  setitimer(ITIMER_REAL, &timer, 0);
-
-  // Clear signal handler for ALRM. Do this after the timer is reset
-  signal(SIGALRM, SIG_DFL);
-
   return Qnil;
 }
 
@@ -403,7 +357,7 @@ scout_profile_broadcast_signal_handler(int sig)
   static int in_signal_handler = 0;
 
   if (in_signal_handler) {
-    fprintf(stderr, "IN SIGNAL HANDLER!?\n");
+    fprintf(stderr, "IN SIGNAL HANDLER!? Value: %d\n", in_signal_handler);
     return;
   }
 
