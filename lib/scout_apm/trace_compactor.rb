@@ -15,7 +15,7 @@ class TraceSet
   attr_reader :cube
 
   def initialize
-    @clean_traces = []
+    @raw_traces = []
     @cube = TraceCube.new
   end
 
@@ -27,6 +27,7 @@ class TraceSet
 
   def to_a
     res = []
+    create_cube!
     @cube.each do |(trace, count)|
       res << [trace.to_a, count]
     end
@@ -36,6 +37,7 @@ class TraceSet
 
   def as_json
     res = []
+    create_cube!
     @cube.each do |(trace, count)|
       res << [trace.as_json, count]
     end
@@ -44,17 +46,26 @@ class TraceSet
   end
 
   def add(raw_trace)
-    clean_trace = ScoutApm::CleanTrace.new(raw_trace, @controller_file)
-    @cube << clean_trace
+    @raw_traces << raw_trace
+  end
+
+  def create_cube!
+    while raw_trace = @raw_traces.shift
+      clean_trace = ScoutApm::CleanTrace.new(raw_trace, @controller_file)
+      @cube << clean_trace
+    end
+    @raw_traces = []
   end
 
   def total_count
+    create_cube!
     cube.inject(0) do |sum, (_, count)|
       sum + count
     end
   end
 
   def inspect
+    create_cube!
     cube.map do |(trace, count)|
       "\t#{count} -- #{trace.first.klass}##{trace.first.method}\n\t\t#{trace.to_a[1].try(:klass)}##{trace.to_a[1].try(:method)}"
     end.join("\n")
