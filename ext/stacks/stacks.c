@@ -110,6 +110,7 @@ struct profiled_thread
 {
   pthread_t th;
   struct profiled_thread *next;
+  int *ok_to_sample;
 };
 
 /*
@@ -143,6 +144,7 @@ static VALUE rb_scout_add_profiled_thread(VALUE self)
   thr = (struct profiled_thread *) malloc(sizeof(struct profiled_thread));
   thr->th = pthread_self();
   thr->next = NULL;
+  thr->ok_to_sample = &_ok_to_sample;
   if (head_thread == NULL) {
     head_thread = thr;
   } else {
@@ -217,7 +219,7 @@ scout_signal_threads_to_profile()
     ptr = head_thread;
     next = NULL;
     while(ptr != NULL) {
-      if (pthread_kill(ptr->th, SIGVTALRM) == ESRCH) { // Send signal to the specific thread. If ESRCH is returned, remove the dead thread
+      if ((*ptr->ok_to_sample) && (pthread_kill(ptr->th, SIGVTALRM) == ESRCH)) { // Send signal to the specific thread. If ESRCH is returned, remove the dead thread
         next = ptr->next;
         //remove_profiled_thread(ptr->th);
         ptr = next;
