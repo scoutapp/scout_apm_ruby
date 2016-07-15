@@ -135,6 +135,7 @@ require 'scout_apm/serializers/deploy_serializer'
 require 'scout_apm/middleware'
 
 if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR) && Rails::VERSION::MAJOR >= 3 && defined?(Rails::Railtie)
+  $STDOUT.puts "[Scout] Loading via Rails hooks"
   module ScoutApm
     class Railtie < Rails::Railtie
       initializer "scout_apm.start" do |app|
@@ -148,8 +149,15 @@ if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR
 
       end
     end
+    class Railtie < Rails::Railtie
+      initializer "scout_apm.start" do |app|
+        if Rails.env.development?
+          app.middleware.use ScoutApm::Instant::Middleware
+        end
+      end
+    end
   end
 else
+  $STDOUT.puts "[Scout] Loading without Rails hooks"
   ScoutApm::Agent.instance.start
 end
-

@@ -8,7 +8,16 @@ module ScoutApm
       end
 
       def present?
-        defined?(::Sidekiq) && (File.basename($0) =~ /\Asidekiq/)
+        sidekiq_defined = defined?(::Sidekiq)
+        ScoutApm::Agent.instance.logger.info("Sidekiq Defined? #{sidekiq_defined.inspect}")
+
+        app_basename = File.basename($0)
+        ScoutApm::Agent.instance.logger.info("App Basename: #{app_basename.inspect}")
+
+        app_is_sidekiq = (app_basename =~ /\Asidekiq/)
+        ScoutApm::Agent.instance.logger.info("App Is Sidekiq? #{app_is_sidekiq.inspect}")
+
+        !! (sidekiq_defined && app_is_sidekiq)
       end
 
       def forking?

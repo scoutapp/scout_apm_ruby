@@ -35,8 +35,8 @@ module ScoutApm
       def log_level
         case config.value('log_level').downcase
           when "debug" then Logger::DEBUG
-          when "info" then Logger::INFO
-          when "warn" then Logger::WARN
+          when "info"  then Logger::INFO
+          when "warn"  then Logger::WARN
           when "error" then Logger::ERROR
           when "fatal" then Logger::FATAL
           else Logger::INFO
