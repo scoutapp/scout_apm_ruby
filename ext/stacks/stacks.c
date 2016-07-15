@@ -125,6 +125,9 @@ pthread_mutex_t profiled_threads_mutex;
 // Background controller thread ID
 pthread_t btid;
 
+// Background dead thread sweeper
+pthread_t thread_sweeper_id;
+
 
 /*
  * rb_scout_add_profiled_thread: adds the currently running thread to the head of the linked list
@@ -215,19 +218,62 @@ static VALUE rb_scout_remove_profiled_thread(VALUE self)
 static void
 scout_signal_threads_to_profile()
 {
-    struct profiled_thread *ptr, *next;
-    ptr = head_thread;
-    next = NULL;
-    while(ptr != NULL) {
-      if ((*ptr->ok_to_sample) && (pthread_kill(ptr->th, SIGVTALRM) == ESRCH)) { // Send signal to the specific thread. If ESRCH is returned, remove the dead thread
-        next = ptr->next;
-        //remove_profiled_thread(ptr->th);
-        ptr = next;
-      } else {
+    struct profiled_thread *ptr;
+
+    if (pthread_mutex_trylock(&profiled_threads_mutex) == 0) { // Only run if we get the mutex.
+      ptr = head_thread;
+      while(ptr != NULL) {
+        if ((*ptr->ok_to_sample) && (pthread_kill(ptr->th, 0) != ESRCH)) { // Check for existence of thread. If ESRCH is returned, don't send the real signal!
+          pthread_kill(ptr->th, SIGVTALRM);
+        }
         ptr = ptr->next;
       }
+      pthread_mutex_unlock(&profiled_threads_mutex);
     }
+
     _job_registered = 0;
+}
+
+static int sweep_dead_threads() {
+  struct profiled_thread *ptr, *next;
+
+  pthread_mutex_lock(&profiled_threads_mutex);
+
+  ptr = head_thread;
+  next = NULL;
+  while(ptr != NULL) {
+    if (pthread_kill(ptr->th, 0) != ESRCH) { // Check for existence of thread.
+      next = ptr->next;
+      remove_profiled_thread(ptr->th);
+      ptr = next;
+    } else {
+      ptr = ptr->next;
+    }
+  }
+
+  pthread_mutex_unlock(&profiled_threads_mutex);
+  return 0;
+}
+
+void *
+dead_thread_sweeper() {
+  int clock_result;
+  struct timespec clock_remaining;
+  struct timespec sleep_time = {.tv_sec = 1, .tv_nsec = 0};
+
+  while (1) {
+    //check to see if we should change values, exit, etc
+    SNOOZE:
+    clock_result = clock_nanosleep(CLOCK_MONOTONIC, 0, &sleep_time, &clock_remaining);
+    if (clock_result == 0) {
+      //sweep_dead_threads(); // needs recursive lock...
+    } else if (clock_result == EINTR) {
+      sleep_time = clock_remaining;
+      goto SNOOZE;
+    } else {
+      fprintf(stderr, "Error: nanosleep returned value : %d\n", clock_result);
+    }
+  }
 }
 
 // Should we block signals to this thread?
@@ -246,12 +292,14 @@ background_worker()
       if (rb_during_gc()) {
         //_skipped_in_gc++;
       } else {
-        register_result = rb_postponed_job_register_one(0, scout_signal_threads_to_profile, 0);
-        if ((register_result == 1) || (register_result == 2)) {
-          _job_registered = 1;
-        } else {
-          fprintf(stderr, "Error: job was not registered! Result: %d\n", register_result);
-        }
+        if (!_job_registered) {
+          register_result = rb_postponed_job_register_one(0, scout_signal_threads_to_profile, 0);
+          if ((register_result == 1) || (register_result == 2)) {
+            _job_registered = 1;
+          } else {
+            fprintf(stderr, "Error: job was not registered! Result: %d\n", register_result);
+          }
+        } // !_job_registered
       }
     } else if (clock_result == EINTR) {
       fprintf(stderr, "Clock was interrupted!\n");
@@ -307,6 +355,7 @@ rb_scout_install_profiling(VALUE self)
   }
 
   pthread_create(&btid, NULL, background_worker, NULL);
+  pthread_create(&thread_sweeper_id, NULL, dead_thread_sweeper, NULL);
 
   // Also set up an interrupt handler for when we broadcast an alarm
   new_vtaction.sa_handler = scout_profile_broadcast_signal_handler;
