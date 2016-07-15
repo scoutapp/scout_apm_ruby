@@ -81,7 +81,7 @@ struct c_trace {
   VALUE _frames_buf[BUF_SIZE];
 };
 
-static __thread int _buf_i, _buf_trace_index, _buf_num_frames;
+static __thread int _buf_trace_index, _buf_num_frames;
 
 static __thread struct c_trace *_traces;
 static __thread int _ok_to_sample;  // used as a mutex to control the async interrupt handler
@@ -232,16 +232,9 @@ scout_signal_threads_to_profile()
 void *
 background_worker()
 {
-  int clock_result, register_result, prio_result;
+  int clock_result, register_result;
   struct timespec clock_remaining;
   struct timespec sleep_time = {.tv_sec = 0, .tv_nsec = INTERVAL};
-
-  prio_result = pthread_setschedprio(pthread_self(), (int)20);
-  if (prio_result == 0) {
-    fprintf(stderr, "Set proprity for background thread successfully!\n");
-  } else {
-    fprintf(stderr, "Failed to set background thread priority! Error: %d\n", prio_result);
-  }
 
   while (1) {
     //check to see if we should change values, exit, etc
@@ -346,7 +339,6 @@ scoutprof_gc_mark(void *data)
 static void
 init_thread_vars()
 {
-  int i;
   _ok_to_sample = 0;
   _start_frame_index = 0;
   _start_trace_index = 0;
@@ -383,28 +375,6 @@ scout_profile_broadcast_signal_handler(int sig)
     scout_record_sample();
   }
   in_signal_handler--;
-}
-
-static long
-scout_string_copy(VALUE src_string, char *dest_buffer, long dest_len , long *length_buffer)
-{
-  long copy_len, src_len;
-  if (TYPE(src_string) != T_STRING) {
-    *dest_buffer = *single_space;
-    *length_buffer = (long)1;
-    return -1;
-  }
-  src_len = RSTRING_LEN(src_string);
-  if ( src_len < dest_len ) {
-    copy_len = src_len;
-  } else {
-    copy_len = dest_len;
-  }
-
-  memcpy(dest_buffer, RSTRING_PTR(src_string), (size_t)copy_len);
-  *length_buffer = copy_len;
-
-  return copy_len;
 }
 
 /*
@@ -447,7 +417,7 @@ scout_record_sample()
  */
 static VALUE rb_scout_profile_frames(VALUE self)
 {
-  int i, n, line;
+  int i, n;
   VALUE file, klass, label;
   VALUE traces, trace, trace_line;
 
