@@ -53,10 +53,15 @@ module ScoutApm
             slow_converter = LayerConverters::SlowRequestConverter.new(req)
             trace = slow_converter.call
             if trace
+              metadata = {
+                  :app_root      => ScoutApm::Environment.instance.root.to_s,
+                  :unique_id     => env['action_dispatch.request_id'], # note, this is a different unique_id than what "normal" payloads use
+                  :agent_version => ScoutApm::VERSION,
+                  :platform      => "ruby",
+              }
               hash = ScoutApm::Serializers::PayloadSerializerToJson.rearrange_slow_transaction(trace)
-              hash.merge!(id:env['action_dispatch.request_id']) # TODO: this could be separated into a metadata section
+              hash.merge!(metadata:metadata)
               payload = ScoutApm::Serializers::PayloadSerializerToJson.jsonify_hash(hash)
-
 
               if env['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest'
                 # Add the payload as a header if it's an AJAX call
