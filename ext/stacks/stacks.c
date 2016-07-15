@@ -39,7 +39,7 @@ VALUE mInstruments;
 VALUE cStacks;
 
 #define BUF_SIZE 512
-#define MAX_TRACES 2000
+#define MAX_TRACES 4000
 
 //#define INTERVAL 5000 // in microseconds
 #define NANO_SECOND_MULTIPLIER  1000000  // 1 millisecond = 1,000,000 Nanoseconds
@@ -77,21 +77,21 @@ struct c_traceline {
 
 struct c_trace {
   int num_tracelines;
-  struct c_traceline tracelines[BUF_SIZE];
+  int _lines_buf[BUF_SIZE];
+  VALUE _frames_buf[BUF_SIZE];
 };
 
 static __thread int _buf_i, _buf_trace_index, _buf_num_frames;
-static __thread VALUE _buf_file, _buf_klass, _buf_label;
-static __thread VALUE _frames_buf[BUF_SIZE];
-static __thread int _lines_buf[BUF_SIZE];
 
-static __thread struct c_trace *_traces[MAX_TRACES];
+static __thread struct c_trace *_traces;
 static __thread int _ok_to_sample;  // used as a mutex to control the async interrupt handler
 static __thread int _start_frame_index;
 static __thread int _start_trace_index;
 static __thread int _cur_traces_num;
 
 static int _job_registered;
+
+static __thread VALUE gc_hook;
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // Thread Linked List
@@ -135,16 +135,10 @@ pthread_t btid;
  */
 static VALUE rb_scout_add_profiled_thread(VALUE self)
 {
-  int i;
   struct profiled_thread *thr;
   init_thread_vars();
 
   pthread_mutex_lock(&profiled_threads_mutex);
-
-  for (i = 0; i < MAX_TRACES; i++) {
-    _traces[i] = malloc(sizeof(struct c_trace));
-  }
-  //fprintf(stderr, "Done mallocing\n");
 
   thr = (struct profiled_thread *) malloc(sizeof(struct profiled_thread));
   thr->th = pthread_self();
@@ -336,14 +330,33 @@ rb_scout_install_profiling(VALUE self)
 // Per-Thread Handler
 ////////////////////////////////////////////////////////////////////////////////////////
 
+static void
+scoutprof_gc_mark(void *data)
+{
+  int i, n;
+  for (i = 0; i < _cur_traces_num; i++) {
+    for (n = 0; n < _traces[i].num_tracelines; n++) {
+      //fprintf(stderr, "GC MARK _cur_traces_num = %d, i = %d, num_tracelines = %d, n = %d\n", _cur_traces_num, i, _traces[i].num_tracelines, n);
+      //fprintf(stderr, "GC MARK _cur_traces_num = %d, i = %d, num_tracelines = %d, n = %d\n", _cur_traces_num, i, _traces[i].num_tracelines, n);
+      rb_gc_mark(_traces[i]._frames_buf[n]);
+    }
+  }
+}
 
 static void
 init_thread_vars()
 {
+  int i;
   _ok_to_sample = 0;
   _start_frame_index = 0;
   _start_trace_index = 0;
   _cur_traces_num = 0;
+
+  _traces = ALLOC_N(struct c_trace, MAX_TRACES); // TODO Check return
+
+  gc_hook = Data_Wrap_Struct(rb_cObject, &scoutprof_gc_mark, NULL, &_traces);
+  rb_global_variable(&gc_hook);
+
   return;
 }
 
@@ -354,7 +367,7 @@ init_thread_vars()
 static void
 scout_profile_broadcast_signal_handler(int sig)
 {
-  static int in_signal_handler = 0;
+  static __thread int in_signal_handler = 0;
 
   if (in_signal_handler) {
     fprintf(stderr, "IN SIGNAL HANDLER!? Value: %d\n", in_signal_handler);
@@ -417,30 +430,12 @@ scout_record_sample()
   _buf_trace_index = _cur_traces_num;
   if (_cur_traces_num < MAX_TRACES) {
     //fprintf(stderr, "SAMPLING\n\n");
-    _buf_num_frames = rb_profile_frames(0, sizeof(_frames_buf) / sizeof(VALUE), _frames_buf, _lines_buf);
+    _buf_num_frames = rb_profile_frames(0, sizeof(_traces[_buf_trace_index]._frames_buf) / sizeof(VALUE), _traces[_buf_trace_index]._frames_buf, _traces[_buf_trace_index]._lines_buf);
 
     //fprintf(stderr, "\n\nBuf liunes is: %d\n\n", _buf_num_frames);
     if (_buf_num_frames > 0) {
-      _traces[_buf_trace_index]->num_tracelines = _buf_num_frames;
-      //fprintf(stderr, "\n\nNum tracelins is: %d\n\n", _traces[_buf_trace_index]->num_tracelines);
-
-      for (_buf_i = 0; _buf_i < _buf_num_frames; _buf_i++) {
-
-        // Extract File
-        _buf_file = rb_profile_frame_absolute_path(_frames_buf[_buf_i]);
-        scout_string_copy(_buf_file, &_traces[_buf_trace_index]->tracelines[_buf_i].file[0], (long)FILE_LEN_MAX, &_traces[_buf_trace_index]->tracelines[_buf_i].file_len);
-
-        // Extract Line number
-        _traces[_buf_trace_index]->tracelines[_buf_i].line  = _lines_buf[_buf_i];
-
-        // Extract Class
-        _buf_klass = rb_profile_frame_classpath(_frames_buf[_buf_i]);
-        scout_string_copy(_buf_klass, &_traces[_buf_trace_index]->tracelines[_buf_i].klass[0], (long)KLASS_LEN_MAX, &_traces[_buf_trace_index]->tracelines[_buf_i].klass_len);
-
-        // Extract Method
-        _buf_label = rb_profile_frame_label(_frames_buf[_buf_i]);
-        scout_string_copy(_buf_label, &_traces[_buf_trace_index]->tracelines[_buf_i].label[0], (long)LABEL_LEN_MAX, &_traces[_buf_trace_index]->tracelines[_buf_i].label_len);
-      }
+      _traces[_buf_trace_index].num_tracelines = _buf_num_frames;
+      //fprintf(stderr, "\n\nNum tracelins is: %d\n\n", _traces[_buf_trace_index].num_tracelines);
       _cur_traces_num++;
     }
   }
@@ -452,7 +447,8 @@ scout_record_sample()
  */
 static VALUE rb_scout_profile_frames(VALUE self)
 {
-  int i, n;
+  int i, n, line;
+  VALUE file, klass, label;
   VALUE traces, trace, trace_line;
 
   traces = rb_ary_new2(0); //_cur_traces_num - _start_trace_index);
@@ -460,21 +456,33 @@ static VALUE rb_scout_profile_frames(VALUE self)
   //fprintf(stderr, "OK to TRACE is: %d\n", _ok_to_sample);
   //fprintf(stderr, "TOTAL TRACES COUNT: %d\n", _cur_traces_num);
   if (_cur_traces_num - _start_trace_index > 0) {
-    //fprintf(stderr, "CUR TRACES: %d\n", _cur_traces_num);
-    //fprintf(stderr, "START TRACE IDX: %d\n", _start_trace_index);
-    //fprintf(stderr, "TRACES COUNT: %d\n", _cur_traces_num - _start_trace_index);
+    fprintf(stderr, "CUR TRACES: %d\n", _cur_traces_num);
+    fprintf(stderr, "START TRACE IDX: %d\n", _start_trace_index);
+    fprintf(stderr, "TRACES COUNT: %d\n", _cur_traces_num - _start_trace_index);
     for(i = _start_trace_index; i < _cur_traces_num; i++) {
-      //fprintf(stderr, "TRACELINES COUNT: %d\n", _traces[i]->num_tracelines);
-      if (_traces[i]->num_tracelines > 0) {
+      //fprintf(stderr, "TRACELINES COUNT: %d\n", _traces[i].num_tracelines);
+      if (_traces[i].num_tracelines > 0) {
         trace = rb_ary_new2(0);
-        for(n = 0; n < _traces[i]->num_tracelines; n++) {
+        for(n = 0; n < _traces[i].num_tracelines; n++) {
+          //fprintf(stderr, "PROFILE _cur_traces_num = %d, i = %d, num_tracelines = %d, n = %d\n", _cur_traces_num, i, _traces[i].num_tracelines, n);
+          // Extract File
+          file = rb_profile_frame_absolute_path(_traces[i]._frames_buf[n]);
+
+
+          // Extract Class
+          klass = rb_profile_frame_classpath(_traces[i]._frames_buf[n]);
+
+          // Extract Method
+          label = rb_profile_frame_label(_traces[i]._frames_buf[n]);
+
           //fprintf(stderr, ".");
           trace_line = rb_ary_new2(4);
-          rb_ary_store(trace_line, 0, rb_enc_str_new(&_traces[i]->tracelines[n].file[0], _traces[i]->tracelines[n].file_len, enc_UTF8));
-          rb_ary_store(trace_line, 1, INT2FIX(_traces[i]->tracelines[n].line));
-          rb_ary_store(trace_line, 2, rb_enc_str_new(&_traces[i]->tracelines[n].klass[0], _traces[i]->tracelines[n].klass_len, enc_UTF8));
-          rb_ary_store(trace_line, 3, rb_enc_str_new(&_traces[i]->tracelines[n].label[0], _traces[i]->tracelines[n].label_len, enc_UTF8));
+          rb_ary_store(trace_line, 0, file);
+          rb_ary_store(trace_line, 1, INT2FIX(_traces[i]._lines_buf[n]));
+          rb_ary_store(trace_line, 2, klass);
+          rb_ary_store(trace_line, 3, label);
           rb_ary_push(trace, trace_line);
+          
         }
         rb_ary_push(traces, trace);
       }
