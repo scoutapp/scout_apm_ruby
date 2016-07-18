@@ -34,7 +34,8 @@ module ScoutApm
         :app_server         => ScoutApm::Environment.instance.app_server,
         :ruby_version       => RUBY_VERSION,
         :hostname           => ScoutApm::Environment.instance.hostname,
-        :database_engine    => ScoutApm::Environment.instance.database_engine,
+        :database_engine    => ScoutApm::Environment.instance.database_engine,      # Detected
+        :database_adapter   => ScoutApm::Environment.instance.raw_database_adapter, # Raw
         :application_name   => ScoutApm::Environment.instance.application_name,
         :libraries          => ScoutApm::Utils::InstalledGems.new.run,
         :paas               => ScoutApm::Environment.instance.platform_integration.name

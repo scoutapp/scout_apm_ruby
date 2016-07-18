@@ -37,14 +37,16 @@ module ScoutApm
         default = :postgres
 
         @database_engine = if defined?(ActiveRecord::Base)
-          adapter = get_database_adapter # can be nil
+          adapter = raw_database_adapter # can be nil
 
           case adapter.to_s
           when "postgres"   then :postgres
           when "postgresql" then :postgres
           when "postgis"    then :postgres
           when "sqlite3"    then :sqlite
+          when "sqlite"     then :sqlite
           when "mysql"      then :mysql
+          when "mysql2"     then :mysql
           else default
           end
         else
@@ -53,7 +55,7 @@ module ScoutApm
         end
       end
 
-      def get_database_adapter
+      def raw_database_adapter
         adapter = if ActiveRecord::Base.respond_to?(:connection_config)
                     ActiveRecord::Base.connection_config[:adapter].to_s
                   else
