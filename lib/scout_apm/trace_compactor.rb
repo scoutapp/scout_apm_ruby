@@ -14,6 +14,9 @@ class TraceSet
   # collect up the count of each unique trace we've seen
   attr_reader :cube
 
+  # Allow layer to set the raw traces
+  attr_accessor :raw_traces
+
   def initialize
     @raw_traces = []
     @cube = TraceCube.new
@@ -43,10 +46,6 @@ class TraceSet
     end
 
     res
-  end
-
-  def add(raw_trace)
-    @raw_traces << raw_trace
   end
 
   def create_cube!
@@ -86,7 +85,7 @@ class CleanTrace
   attr_reader :lines
 
   def initialize(raw_trace, controller_file=nil)
-    @lines = Array(raw_trace).map {|(file, line, klass, meth)| TraceLine.new(file, line, klass, meth)}
+    @lines = Array(raw_trace).map {|iseq, line_no| TraceLine.new(iseq, line_no)}
     @controller_file = controller_file
 
     # A trace has interesting data in the middle of it, since normally it'll go
@@ -147,18 +146,11 @@ class CleanTrace
 end
 
 class TraceLine
-  attr_reader :file
-  attr_reader :line
-  attr_reader :klass
-  attr_reader :method
+  attr_reader :iseq
 
-  def initialize(file, line, klass, method)
-    @file = file
-    @line = line
-    @klass = klass
-    @method = method
-
-    trim_file!
+  def initialize(iseq, line_no)
+    @iseq = iseq
+    @line_no = line_no
   end
 
   # Returns the name of the last gem in the line
@@ -182,6 +174,23 @@ class TraceLine
                   end
   end
 
+  def file
+    #trim_file!(@iseq.absolute_path)
+    @iseq.absolute_path
+  end
+
+  def line
+    @iseq.first_lineno
+  end
+
+  def klass
+    ScoutApm::Instruments::Stacks.klass_for_frame(@iseq)
+  end
+
+  def method
+    @iseq.label
+  end
+
   def gem?
     !!gem_name
   end
@@ -194,27 +203,22 @@ class TraceLine
     !gem_name && !stdlib_name
   end
 
-  def trim_file!
-    return if file.nil?
+  def trim_file!(file_path)
+    return if file_path.nil?
     if gem?
       r = %r{.*gems/.*?/}.freeze
-      @file = file.sub(r, "/")
+      file_path.sub(r, "/")
     elsif stdlib?
-      @file = file.sub(RbConfig::TOPDIR, '')
+      file_path.sub(RbConfig::TOPDIR, '')
     elsif app?
-      @file = file.sub(ScoutApm::Environment.instance.root.to_s, '')
+      file_path.sub(ScoutApm::Environment.instance.root.to_s, '')
     end
   end
 
   # If controller_file is provided, just see if this is exactly that file. If not use a cheesy regex.
   def controller?(controller_file)
     return false if file.nil? # main function doesn't have a file associated
-
-    if controller_file
-      file == controller_file
-    else
-      file.match(%r|_controller.rb|)
-    end
+    app?
   end
 
   def formatted_to_s

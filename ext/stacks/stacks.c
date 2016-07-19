@@ -20,8 +20,6 @@
 #include <pthread.h>
 #include <semaphore.h>
 
-const char *single_space = " ";
-
 int scout_profiling_installed = 0;
 int scout_profiling_running = 0;
 
@@ -32,20 +30,20 @@ ID sym_scrub_bang;
 VALUE ScoutApm;
 VALUE Stacks;
 
-rb_encoding *enc_UTF8;
-
 VALUE mScoutApm;
 VALUE mInstruments;
 VALUE cStacks;
 
+VALUE interval;
+
 #define BUF_SIZE 512
 #define MAX_TRACES 4000
 
-//#define INTERVAL 5000 // in microseconds
 #define NANO_SECOND_MULTIPLIER  1000000  // 1 millisecond = 1,000,000 Nanoseconds
 const long INTERVAL = 1 * NANO_SECOND_MULTIPLIER; // milliseconds * NANO_SECOND_MULTIPLIER
 
-VALUE interval;
+// Max threads to remove each dead_thread_sweeper interval
+#define MAX_REMOVES_PER_SWEEP 5
 
 #ifdef RUBY_INTERNAL_EVENT_NEWOBJ
 
@@ -54,44 +52,25 @@ static void init_thread_vars();
 static void scout_profile_broadcast_signal_handler(int sig);
 void scout_record_sample();
 
-// #include <sys/resource.h> // is this needed?
-
-
 ////////////////////////////////////////////////////////////////////////////////////////
 // Per-Thread variables
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#define FILE_LEN_MAX 200
-#define KLASS_LEN_MAX 100
-#define LABEL_LEN_MAX 100
-
-struct c_traceline {
-  char file[FILE_LEN_MAX];
-  long file_len;
-  int line;
-  char klass[KLASS_LEN_MAX];
-  long klass_len;
-  char label[LABEL_LEN_MAX];
-  long label_len;
-};
-
 struct c_trace {
   int num_tracelines;
-  int _lines_buf[BUF_SIZE];
-  VALUE _frames_buf[BUF_SIZE];
+  int lines_buf[BUF_SIZE];
+  VALUE frames_buf[BUF_SIZE];
 };
 
-static __thread int _buf_trace_index, _buf_num_frames;
-
 static __thread struct c_trace *_traces;
-static __thread int _ok_to_sample;  // used as a mutex to control the async interrupt handler
-static __thread int _start_frame_index;
-static __thread int _start_trace_index;
-static __thread int _cur_traces_num;
+static __thread int _ok_to_sample, _start_frame_index, _start_trace_index, _cur_traces_num, _in_signal_handler;
+static __thread VALUE gc_hook;
+
+////////////////////////////////////////////////////////////////////////////////////////
+// Globald variables
+////////////////////////////////////////////////////////////////////////////////////////
 
 static int _job_registered;
-
-static __thread VALUE gc_hook;
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // Thread Linked List
@@ -165,10 +144,12 @@ static VALUE rb_scout_add_profiled_thread(VALUE self)
  */
 static int remove_profiled_thread(pthread_t th)
 {
-  struct profiled_thread *ptr = head_thread;
-  struct profiled_thread *prev = NULL;
+  struct profiled_thread *ptr, *prev;
 
   pthread_mutex_lock(&profiled_threads_mutex);
+
+  ptr = head_thread;
+  prev = NULL;
 
   while(ptr != NULL) {
     if (pthread_equal(th, ptr->th)) {
@@ -192,6 +173,7 @@ static int remove_profiled_thread(pthread_t th)
         ptr = NULL;
       }
     } else { // pthread_equal()
+      prev = ptr;
       ptr = ptr->next;
     }
   } // while (ptr != NULL)
@@ -223,7 +205,7 @@ scout_signal_threads_to_profile()
     if (pthread_mutex_trylock(&profiled_threads_mutex) == 0) { // Only run if we get the mutex.
       ptr = head_thread;
       while(ptr != NULL) {
-        if ((*ptr->ok_to_sample) && (pthread_kill(ptr->th, 0) != ESRCH)) { // Check for existence of thread. If ESRCH is returned, don't send the real signal!
+        if ((pthread_kill(ptr->th, 0) != ESRCH) && (*ptr->ok_to_sample)) { // Check for existence of thread. If ESRCH is returned, don't send the real signal!
           pthread_kill(ptr->th, SIGVTALRM);
         }
         ptr = ptr->next;
@@ -235,23 +217,30 @@ scout_signal_threads_to_profile()
 }
 
 static int sweep_dead_threads() {
-  struct profiled_thread *ptr, *next;
+  int i;
+  struct profiled_thread *ptr;
+  pthread_t dead_thread_ids[MAX_REMOVES_PER_SWEEP];
+  int dead_count = 0;
 
   pthread_mutex_lock(&profiled_threads_mutex);
 
   ptr = head_thread;
-  next = NULL;
-  while(ptr != NULL) {
-    if (pthread_kill(ptr->th, 0) != ESRCH) { // Check for existence of thread.
-      next = ptr->next;
-      remove_profiled_thread(ptr->th);
-      ptr = next;
-    } else {
-      ptr = ptr->next;
+  while((ptr != NULL) && (dead_count < MAX_REMOVES_PER_SWEEP)) {
+    if (pthread_kill(ptr->th, 0) == ESRCH) { // Check for existence of thread.
+      dead_thread_ids[dead_count] = ptr->th; // if dead, add the id to the array
+      dead_count++;                          // and increment counter.
     }
+    ptr = ptr->next;
   }
 
   pthread_mutex_unlock(&profiled_threads_mutex);
+
+  // Remove the dead threads outside of the simple mutex.
+  for (i = 0; i < dead_count; i++) {
+    fprintf(stderr, "Removing thread\n");
+    remove_profiled_thread(dead_thread_ids[i]);
+  }
+
   return 0;
 }
 
@@ -259,17 +248,16 @@ void *
 dead_thread_sweeper() {
   int clock_result;
   struct timespec clock_remaining;
-  struct timespec sleep_time = {.tv_sec = 1, .tv_nsec = 0};
+  struct timespec sleep_time = {.tv_sec = 5, .tv_nsec = 0};
 
   while (1) {
-    //check to see if we should change values, exit, etc
-    SNOOZE:
+    SWEEP_SNOOZE:
     clock_result = clock_nanosleep(CLOCK_MONOTONIC, 0, &sleep_time, &clock_remaining);
     if (clock_result == 0) {
-      //sweep_dead_threads(); // needs recursive lock...
+      sweep_dead_threads();
     } else if (clock_result == EINTR) {
       sleep_time = clock_remaining;
-      goto SNOOZE;
+      goto SWEEP_SNOOZE;
     } else {
       fprintf(stderr, "Error: nanosleep returned value : %d\n", clock_result);
     }
@@ -302,7 +290,6 @@ background_worker()
         } // !_job_registered
       }
     } else if (clock_result == EINTR) {
-      fprintf(stderr, "Clock was interrupted!\n");
       sleep_time = clock_remaining;
       goto SNOOZE;
     } else {
@@ -323,8 +310,7 @@ rb_scout_start_profiling(VALUE self)
   rb_warn("Starting Profiling");
   scout_profiling_running = 1;
 
-  // VALUE must be returned, just return nil
-  return Qnil;
+  return Qtrue;
 }
 
 /* rb_scout_stop_profiling: Removes the global timer
@@ -366,8 +352,7 @@ rb_scout_install_profiling(VALUE self)
   rb_define_const(cStacks, "INSTALLED", Qtrue);
   scout_profiling_installed = 1;
 
-  // VALUE must be returned, just return nil
-  return Qnil;
+  return Qtrue;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -380,9 +365,7 @@ scoutprof_gc_mark(void *data)
   int i, n;
   for (i = 0; i < _cur_traces_num; i++) {
     for (n = 0; n < _traces[i].num_tracelines; n++) {
-      //fprintf(stderr, "GC MARK _cur_traces_num = %d, i = %d, num_tracelines = %d, n = %d\n", _cur_traces_num, i, _traces[i].num_tracelines, n);
-      //fprintf(stderr, "GC MARK _cur_traces_num = %d, i = %d, num_tracelines = %d, n = %d\n", _cur_traces_num, i, _traces[i].num_tracelines, n);
-      rb_gc_mark(_traces[i]._frames_buf[n]);
+      rb_gc_mark(_traces[i].frames_buf[n]);
     }
   }
 }
@@ -394,6 +377,7 @@ init_thread_vars()
   _start_frame_index = 0;
   _start_trace_index = 0;
   _cur_traces_num = 0;
+  _in_signal_handler = 0;
 
   _traces = ALLOC_N(struct c_trace, MAX_TRACES); // TODO Check return
 
@@ -410,22 +394,19 @@ init_thread_vars()
 static void
 scout_profile_broadcast_signal_handler(int sig)
 {
-  static __thread int in_signal_handler = 0;
-
-  if (in_signal_handler) {
-    fprintf(stderr, "IN SIGNAL HANDLER!? Value: %d\n", in_signal_handler);
+  if (_in_signal_handler) {
     return;
   }
 
   if (!_ok_to_sample) return;
 
-  in_signal_handler++;
+  _in_signal_handler = 1;
   if (rb_during_gc()) {
     //_skipped_in_gc++;
   } else {
     scout_record_sample();
   }
-  in_signal_handler--;
+  _in_signal_handler = 0;
 }
 
 /*
@@ -444,19 +425,17 @@ scout_profile_broadcast_signal_handler(int sig)
 void
 scout_record_sample()
 {
+  int num_frames;
+
   if (!_ok_to_sample) return;
   if (rb_during_gc()) {
     return;
   }
-  _buf_trace_index = _cur_traces_num;
-  if (_cur_traces_num < MAX_TRACES) {
-    //fprintf(stderr, "SAMPLING\n\n");
-    _buf_num_frames = rb_profile_frames(0, sizeof(_traces[_buf_trace_index]._frames_buf) / sizeof(VALUE), _traces[_buf_trace_index]._frames_buf, _traces[_buf_trace_index]._lines_buf);
 
-    //fprintf(stderr, "\n\nBuf liunes is: %d\n\n", _buf_num_frames);
-    if (_buf_num_frames > 0) {
-      _traces[_buf_trace_index].num_tracelines = _buf_num_frames;
-      //fprintf(stderr, "\n\nNum tracelins is: %d\n\n", _traces[_buf_trace_index].num_tracelines);
+  if (_cur_traces_num < MAX_TRACES) {
+    num_frames = rb_profile_frames(0, _start_frame_index, _traces[_cur_traces_num].frames_buf, _traces[_cur_traces_num].lines_buf);
+    if (num_frames > 0) {
+      _traces[_cur_traces_num].num_tracelines = num_frames;
       _cur_traces_num++;
     }
   }
@@ -469,45 +448,28 @@ scout_record_sample()
 static VALUE rb_scout_profile_frames(VALUE self)
 {
   int i, n;
-  VALUE file, klass, label;
   VALUE traces, trace, trace_line;
 
-  traces = rb_ary_new2(0); //_cur_traces_num - _start_trace_index);
-
-  //fprintf(stderr, "OK to TRACE is: %d\n", _ok_to_sample);
-  //fprintf(stderr, "TOTAL TRACES COUNT: %d\n", _cur_traces_num);
   if (_cur_traces_num - _start_trace_index > 0) {
     fprintf(stderr, "CUR TRACES: %d\n", _cur_traces_num);
     fprintf(stderr, "START TRACE IDX: %d\n", _start_trace_index);
     fprintf(stderr, "TRACES COUNT: %d\n", _cur_traces_num - _start_trace_index);
+    traces = rb_ary_new2(_cur_traces_num - _start_trace_index);
     for(i = _start_trace_index; i < _cur_traces_num; i++) {
-      //fprintf(stderr, "TRACELINES COUNT: %d\n", _traces[i].num_tracelines);
       if (_traces[i].num_tracelines > 0) {
-        trace = rb_ary_new2(0);
+        trace = rb_ary_new2(_traces[i].num_tracelines);
         for(n = 0; n < _traces[i].num_tracelines; n++) {
-          //fprintf(stderr, "PROFILE _cur_traces_num = %d, i = %d, num_tracelines = %d, n = %d\n", _cur_traces_num, i, _traces[i].num_tracelines, n);
-          // Extract File
-          file = rb_profile_frame_absolute_path(_traces[i]._frames_buf[n]);
-
-
-          // Extract Class
-          klass = rb_profile_frame_classpath(_traces[i]._frames_buf[n]);
-
-          // Extract Method
-          label = rb_profile_frame_label(_traces[i]._frames_buf[n]);
-
-          //fprintf(stderr, ".");
-          trace_line = rb_ary_new2(4);
-          rb_ary_store(trace_line, 0, file);
-          rb_ary_store(trace_line, 1, INT2FIX(_traces[i]._lines_buf[n]));
-          rb_ary_store(trace_line, 2, klass);
-          rb_ary_store(trace_line, 3, label);
+          trace_line = rb_ary_new2(2);
+          rb_ary_store(trace_line, 0, _traces[i].frames_buf[n]);
+          rb_ary_store(trace_line, 1, INT2FIX(_traces[i].lines_buf[n]));
           rb_ary_push(trace, trace_line);
           
         }
         rb_ary_push(traces, trace);
       }
     }
+  } else {
+    traces = rb_ary_new();
   }
   _cur_traces_num = _start_trace_index;
   return traces;
@@ -534,7 +496,6 @@ rb_scout_stop_sampling(VALUE self, VALUE reset)
   _ok_to_sample = 0;
   // TODO: I think this can be (reset == Qtrue)
   if (TYPE(reset) == T_TRUE) {
-    //fprintf(stderr, "Skipped - GC: %lld - Interrupt: %lld - Job Registered %lld\n", _skipped_in_gc, _skipped_in_interrupt, _skipped_job_registered);
     _cur_traces_num = 0;
   }
   return Qtrue;
@@ -549,12 +510,28 @@ rb_scout_update_indexes(VALUE self, VALUE frame_index, VALUE trace_index)
   return Qtrue;
 }
 
-
 // rb_scout_current_trace_index: Get the current top of the trace stack
 static VALUE
 rb_scout_current_trace_index(VALUE self)
 {
   return INT2NUM(_cur_traces_num);
+}
+
+// rb_scout_current_trace_index: Get the current top of the trace stack
+static VALUE
+rb_scout_current_frame_index(VALUE self)
+{
+  int num_frames;
+  VALUE frames_buf[BUF_SIZE];
+  int lines_buf[BUF_SIZE];
+  num_frames = rb_profile_frames(0, sizeof(frames_buf) / sizeof(VALUE), frames_buf, lines_buf);
+  return INT2NUM(num_frames);
+}
+
+static VALUE
+rb_scout_klass_for_frame(VALUE self, VALUE frame)
+{
+  return rb_profile_frame_classpath(frame);
 }
 
 // Gem Init. Set up constants, attach methods
@@ -568,9 +545,6 @@ void Init_stacks()
     sym_Stacks = rb_intern("Stacks");
     sym_collect = rb_intern("collect");
 
-    sym_scrub_bang = rb_intern("scrub!");
-    enc_UTF8 = rb_enc_find("UTF-8");
-
     ScoutApm = rb_const_get(rb_cObject, sym_ScoutApm);
     Stacks = rb_const_get(ScoutApm, sym_Stacks);
     rb_warn("Init_stacks");
@@ -579,33 +553,25 @@ void Init_stacks()
     rb_define_singleton_method(cStacks, "install", rb_scout_install_profiling, 0);
     rb_define_singleton_method(cStacks, "uninstall", rb_scout_uninstall_profiling, 0);
 
-    // Starts/removes the timer tick, leaving the sighandler.
     rb_define_singleton_method(cStacks, "start", rb_scout_start_profiling, 0);
     rb_define_singleton_method(cStacks, "stop", rb_scout_stop_profiling, 0);
 
     rb_define_singleton_method(cStacks, "add_profiled_thread", rb_scout_add_profiled_thread, 0);
     rb_define_singleton_method(cStacks, "remove_profiled_thread", rb_scout_remove_profiled_thread, 0);
+
     rb_define_singleton_method(cStacks, "profile_frames", rb_scout_profile_frames, 0);
     rb_define_singleton_method(cStacks, "start_sampling", rb_scout_start_sampling, 0);
     rb_define_singleton_method(cStacks, "stop_sampling", rb_scout_stop_sampling, 1);
     rb_define_singleton_method(cStacks, "update_indexes", rb_scout_update_indexes, 2);
     rb_define_singleton_method(cStacks, "current_trace_index", rb_scout_current_trace_index, 0);
+    rb_define_singleton_method(cStacks, "current_frame_index", rb_scout_current_frame_index, 0);
+    rb_define_singleton_method(cStacks, "klass_for_frame", rb_scout_klass_for_frame, 1);
 
     rb_define_const(cStacks, "ENABLED", Qtrue);
     rb_warn("Finished Initializing ScoutProf Native Extension");
 }
 
 #else
-
-void rb_scout_add_profiled_thread(VALUE module)
-{
-  return Qnil;
-}
-
-void rb_scout_remove_profiled_thread(VALUE module)
-{
-  return Qnil;
-}
 
 void scout_install_profiling(VALUE module)
 {
@@ -627,6 +593,59 @@ void scout_stop_profiling(VALUE module)
   return Qnil;
 }
 
+void rb_scout_add_profiled_thread(VALUE module)
+{
+  return Qnil;
+}
+
+void rb_scout_remove_profiled_thread(VALUE module)
+{
+  return Qnil;
+}
+
+static VALUE rb_scout_profile_frames(VALUE self)
+{
+  return rb_ary_new();
+}
+
+static VALUE
+rb_scout_start_sampling(VALUE self)
+{
+  return Qtrue;
+}
+
+static VALUE
+rb_scout_stop_sampling(VALUE self, VALUE reset)
+{
+  return Qtrue;
+}
+
+static VALUE
+rb_scout_update_indexes(VALUE self, VALUE frame_index, VALUE trace_index)
+{
+  return Qtrue;
+}
+
+// rb_scout_current_trace_index: Get the current top of the trace stack
+static VALUE
+rb_scout_current_trace_index(VALUE self)
+{
+  return INT2NUM(0);
+}
+
+// rb_scout_current_trace_index: Get the current top of the trace stack
+static VALUE
+rb_scout_current_frame_index(VALUE self)
+{
+  return INT2NUM(0);
+}
+
+static VALUE
+rb_scout_klass_for_frame(VALUE self, VALUE frame)
+{
+  return Qnil;
+}
+
 void Init_stacks()
 {
     mScoutApm = rb_define_module("ScoutApm");
@@ -643,6 +662,14 @@ void Init_stacks()
 
     rb_define_singleton_method(cStacks, "add_profiled_thread", rb_scout_add_profiled_thread, 0);
     rb_define_singleton_method(cStacks, "remove_profiled_thread", rb_scout_remove_profiled_thread, 0);
+
+    rb_define_singleton_method(cStacks, "profile_frames", rb_scout_profile_frames, 0);
+    rb_define_singleton_method(cStacks, "start_sampling", rb_scout_start_sampling, 0);
+    rb_define_singleton_method(cStacks, "stop_sampling", rb_scout_stop_sampling, 1);
+    rb_define_singleton_method(cStacks, "update_indexes", rb_scout_update_indexes, 2);
+    rb_define_singleton_method(cStacks, "current_trace_index", rb_scout_current_trace_index, 0);
+    rb_define_singleton_method(cStacks, "current_frame_index", rb_scout_current_frame_index, 0);
+    rb_define_singleton_method(cStacks, "klass_for_frame", rb_scout_klass_for_frame, 1);
 
     rb_define_const(cStacks, "ENABLED", Qfalse);
     rb_define_const(cStacks, "INSTALLED", Qfalse);

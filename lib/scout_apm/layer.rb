@@ -67,7 +67,8 @@ module ScoutApm
       @desc = nil
 
       @traces = ScoutApm::TraceSet.new
-      @frame_index = caller(3).size # default frame_index?
+      @raw_frames = []
+      @frame_index = ScoutApm::Instruments::Stacks.current_frame_index #caller(3).try(:size) || 0 # For efficiency sake, try to skip the bottom X frames when collecting traces
       @trace_index = ScoutApm::Instruments::Stacks.current_trace_index
     end
 
@@ -138,6 +139,7 @@ module ScoutApm
 
     def start_sampling
       if traced?
+        puts "SETTING FRAME INDEX: #{frame_index}"
         ScoutApm::Instruments::Stacks.update_indexes(frame_index, trace_index)
         ScoutApm::Instruments::Stacks.start_sampling
       else
@@ -148,9 +150,7 @@ module ScoutApm
     def record_traces!
       ScoutApm::Instruments::Stacks.stop_sampling(false)
       if traced?
-        ScoutApm::Instruments::Stacks.profile_frames.each do |trace|
-          @traces.add(trace)
-        end
+        @traces.raw_traces = ScoutApm::Instruments::Stacks.profile_frames
       end
     end
 
