@@ -156,7 +156,7 @@ class TraceLine
   # Returns the name of the last gem in the line
   def gem_name
     @gem_name ||= begin
-                    r = %r{gems/(.*?)/}
+                    r = %r{\/gems/(.*?)/}.freeze
                     results = file.scan(r)
                     results[-1][0] # Scan will return a nested array, so extract out that nesting
                   rescue
@@ -166,7 +166,7 @@ class TraceLine
 
   def stdlib_name
     @stdlib_name ||= begin
-                    r = %r{#{Regexp.escape(RbConfig::TOPDIR)}/(.*?)}
+                    r = %r{#{Regexp.escape(RbConfig::TOPDIR)}/(.*?)}.freeze
                     results = file.scan(r)
                     results[-1][0] # Scan will return a nested array, so extract out that nesting
                   rescue
@@ -175,7 +175,6 @@ class TraceLine
   end
 
   def file
-    #trim_file!(@iseq.absolute_path)
     @iseq.absolute_path
   end
 
@@ -200,10 +199,11 @@ class TraceLine
   end
 
   def app?
-    !gem_name && !stdlib_name
+    r = %r|^#{Regexp.escape(ScoutApm::Environment.instance.root.to_s)}/|.freeze
+    !gem_name && !stdlib_name && file =~ r
   end
 
-  def trim_file!(file_path)
+  def trim_file(file_path)
     return if file_path.nil?
     if gem?
       r = %r{.*gems/.*?/}.freeze
@@ -226,7 +226,7 @@ class TraceLine
   end
 
   def as_json
-    [ file, line, klass, method, app?, gem_name, stdlib_name ]
+    [ trim_file(file), line, klass, method, app?, gem_name, stdlib_name ]
   end
 
   ###############################

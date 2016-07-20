@@ -207,7 +207,7 @@ module ScoutApm
         logger.debug "Joining background worker thread"
         @background_worker_thread.join if @background_worker_thread
       end
-      ScoutApm::Instruments::Stacks.remove_profiled_thread
+      ScoutApm::Instruments::Stacks.uninstall
     end
 
     def started?

@@ -70,7 +70,7 @@ static __thread VALUE gc_hook;
 // Globald variables
 ////////////////////////////////////////////////////////////////////////////////////////
 
-static int _job_registered;
+static int _job_registered = 0;
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // Thread Linked List
@@ -89,7 +89,6 @@ struct profiled_thread
 {
   pthread_t th;
   struct profiled_thread *next;
-  int *ok_to_sample;
 };
 
 /*
@@ -126,7 +125,6 @@ static VALUE rb_scout_add_profiled_thread(VALUE self)
   thr = (struct profiled_thread *) malloc(sizeof(struct profiled_thread));
   thr->th = pthread_self();
   thr->next = NULL;
-  thr->ok_to_sample = &_ok_to_sample;
   if (head_thread == NULL) {
     head_thread = thr;
   } else {
@@ -148,35 +146,19 @@ static int remove_profiled_thread(pthread_t th)
 
   pthread_mutex_lock(&profiled_threads_mutex);
 
-  ptr = head_thread;
   prev = NULL;
 
-  while(ptr != NULL) {
+  for(ptr = head_thread; ptr != NULL; prev = ptr, ptr = ptr->next) {
     if (pthread_equal(th, ptr->th)) {
-      if (head_thread == ptr) { // we're the head_thread
-        if (head_thread->next == NULL) { // we're also the last
-          head_thread = NULL;
-          free(ptr);
-          ptr = NULL;
-        } else { // Just the head, not the last. Reassign head_thread to next
-          head_thread = ptr->next;
-          free(ptr);
-          ptr = NULL;
-        } // if head_thread->next == NULL
-      } else if (ptr->next == NULL) { // we're the last thread, but not the head_thread
-        prev->next = NULL;
-        free(ptr);
-        ptr = NULL;
-      } else { // we're not the head_thread or last thread
-        prev->next = ptr->next; // cut ptr out of the linked list
-        free(ptr);
-        ptr = NULL;
+      if (prev == NULL) {
+        head_thread = ptr->next; // We are head_thread
+      } else {
+        prev->next = ptr->next; // We are not head thread
       }
-    } else { // pthread_equal()
-      prev = ptr;
-      ptr = ptr->next;
+      free(ptr);
+      break;
     }
-  } // while (ptr != NULL)
+  }
 
   pthread_mutex_unlock(&profiled_threads_mutex);
   return 0;
@@ -205,7 +187,7 @@ scout_signal_threads_to_profile()
     if (pthread_mutex_trylock(&profiled_threads_mutex) == 0) { // Only run if we get the mutex.
       ptr = head_thread;
       while(ptr != NULL) {
-        if ((pthread_kill(ptr->th, 0) != ESRCH) && (*ptr->ok_to_sample)) { // Check for existence of thread. If ESRCH is returned, don't send the real signal!
+        if (pthread_kill(ptr->th, 0) != ESRCH) { // Check for existence of thread. If ESRCH is returned, don't send the real signal!
           pthread_kill(ptr->th, SIGVTALRM);
         }
         ptr = ptr->next;
@@ -313,19 +295,28 @@ rb_scout_start_profiling(VALUE self)
   return Qtrue;
 }
 
-/* rb_scout_stop_profiling: Removes the global timer
- */
-static VALUE
-rb_scout_stop_profiling(VALUE self)
-{
-  return Qnil;
-}
-
 /* rb_scout_uninstall_profiling: removes global timer, and removes global SIGALRM handler
  */
 static VALUE
 rb_scout_uninstall_profiling(VALUE self)
 {
+  struct profiled_thread *ptr, *next;
+
+  pthread_mutex_lock(&profiled_threads_mutex);
+
+  // stop background worker threads
+  pthread_cancel(btid); // TODO: doing a pthread_join after cancel is the only way to wait and know if the thread actually exited.
+  pthread_cancel(thread_sweeper_id); // TODO: doing a pthread_join after cancel is the only way to wait and know if the thread actually exited.
+
+  // Free all profiled_threads
+  next = NULL;
+  for (ptr = head_thread; ptr != NULL; ptr = next) {
+    next = ptr->next;
+    free(ptr);
+  }
+
+  pthread_mutex_unlock(&profiled_threads_mutex);
+
   return Qnil;
 }
 
@@ -433,11 +424,12 @@ scout_record_sample()
   }
 
   if (_cur_traces_num < MAX_TRACES) {
-    num_frames = rb_profile_frames(0, _start_frame_index, _traces[_cur_traces_num].frames_buf, _traces[_cur_traces_num].lines_buf);
-    if (num_frames > 0) {
-      _traces[_cur_traces_num].num_tracelines = num_frames;
+    num_frames = rb_profile_frames(0, sizeof(_traces[_cur_traces_num].frames_buf) / sizeof(VALUE), _traces[_cur_traces_num].frames_buf, _traces[_cur_traces_num].lines_buf);
+    if (num_frames - _start_frame_index > 2) {
+      _traces[_cur_traces_num].num_tracelines = num_frames - _start_frame_index - 2; // The extra -2 is because there's a bug when reading the very first (bottom) 2 iseq objects for some reason
       _cur_traces_num++;
     }
+    // TODO: add an else with a counter so we can track if we skipped profiling here
   }
 }
 
@@ -525,7 +517,11 @@ rb_scout_current_frame_index(VALUE self)
   VALUE frames_buf[BUF_SIZE];
   int lines_buf[BUF_SIZE];
   num_frames = rb_profile_frames(0, sizeof(frames_buf) / sizeof(VALUE), frames_buf, lines_buf);
-  return INT2NUM(num_frames);
+  if (num_frames > 1) {
+    return INT2NUM(num_frames - 1);
+  } else {
+    return INT2NUM(0);
+  }
 }
 
 static VALUE
@@ -554,7 +550,6 @@ void Init_stacks()
     rb_define_singleton_method(cStacks, "uninstall", rb_scout_uninstall_profiling, 0);
 
     rb_define_singleton_method(cStacks, "start", rb_scout_start_profiling, 0);
-    rb_define_singleton_method(cStacks, "stop", rb_scout_stop_profiling, 0);
 
     rb_define_singleton_method(cStacks, "add_profiled_thread", rb_scout_add_profiled_thread, 0);
     rb_define_singleton_method(cStacks, "remove_profiled_thread", rb_scout_remove_profiled_thread, 0);
@@ -610,12 +605,6 @@ static VALUE rb_scout_profile_frames(VALUE self)
 
 static VALUE
 rb_scout_start_sampling(VALUE self)
-{
-  return Qtrue;
-}
-
-static VALUE
-rb_scout_stop_sampling(VALUE self, VALUE reset)
 {
   return Qtrue;
 }
