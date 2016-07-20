@@ -15,16 +15,20 @@
     return send.apply(this, arguments);
   }
   function onLoadReplacement() {
-    try {
-      traceText = this.getResponseHeader("X-scoutapminstant");
-      if(traceText){
-        //console.info("Got an AJAX instrumentation with "+traceText.length.toString()+" characters.")
-        setTimeout(function(){ window.scoutInstant("addTrace",traceText) },0);
+    // only extract the header if it's a local request (no host specified), or the host IS specified, and it's the same as the window's host
+    if(this._url.startsWith(window.location.protocol+"//"+window.location.host) || !this._url.startsWith("http")){
+      try {
+        traceText = this.getResponseHeader("X-scoutapminstant");
+        if(traceText){
+          //console.info("Got an AJAX instrumentation with "+traceText.length.toString()+" characters.")
+          setTimeout(function(){ window.scoutInstant("addTrace",traceText) },0);
+        }
+      } catch(e){
+        console.debug("Problem getting X-scoutapminstant header");
+        console.debug(e);
       }
-    } catch(e){
-      console.debug("Problem getting X-scoutapminstant header");
-      console.debug(e);
     }
+
     if (this._onload) {
       return this._onload.apply(this, arguments);
     }
