@@ -88,7 +88,7 @@ module ScoutApm
       if layer.type == "Controller"
         ScoutApm::Agent.instance.logger.debug do
           traces_inspect = layer.traces.inspect
-          "****** Controller Traces (#{layer.name}, tet: #{layer.total_exclusive_time}, tct: #{layer.total_call_time}), total raw traces: #{layer.traces.cube.total_count}, total clean traces: #{layer.traces.total_count}:\n#{traces_inspect}"}
+          "****** Controller Traces (#{layer.name}, tet: #{layer.total_exclusive_time}, tct: #{layer.total_call_time}), total raw traces: #{layer.traces.cube.total_count}, total clean traces: #{layer.traces.total_count}:\n#{traces_inspect}"
         end
       end
 
