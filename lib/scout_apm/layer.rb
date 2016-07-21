@@ -68,7 +68,7 @@ module ScoutApm
 
       @traces = ScoutApm::TraceSet.new
       @raw_frames = []
-      @frame_index = ScoutApm::Instruments::Stacks.current_frame_index #caller(3).try(:size) || 0 # For efficiency sake, try to skip the bottom X frames when collecting traces
+      @frame_index = ScoutApm::Instruments::Stacks.current_frame_index # For efficiency sake, try to skip the bottom X frames when collecting traces
       @trace_index = ScoutApm::Instruments::Stacks.current_trace_index
     end
 
