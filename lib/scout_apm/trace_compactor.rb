@@ -104,9 +104,14 @@ class CleanTrace
     drop_above_app
   end
 
-  # TODO: Write the more-verbose version that doesn't do unnecessary reverses
+  # Iterate starting at END of array until a controller line is found. Pop off at that index - 1.
   def drop_below_app
-    @lines = @lines.reverse.drop_while{|l| ! l.controller?(@controller_file) }.reverse
+    (@lines.size..0).each do |line_index|
+      if @lines[line_index].controller?(@controller_file)
+        @lines.pop(@lines.size - (line_index - 1))
+        break # (@lines.size..0).each
+      end
+    end
   end
 
   # Find the closest mention of the application code from the currently-running method.
