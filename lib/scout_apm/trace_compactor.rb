@@ -14,8 +14,11 @@ class TraceSet
   # collect up the count of each unique trace we've seen
   attr_reader :cube
 
+  # Allow layer to set the raw traces
+  attr_accessor :raw_traces
+
   def initialize
-    @clean_traces = []
+    @raw_traces = []
     @cube = TraceCube.new
   end
 
@@ -27,6 +30,7 @@ class TraceSet
 
   def to_a
     res = []
+    create_cube!
     @cube.each do |(trace, count)|
       res << [trace.to_a, count]
     end
@@ -36,6 +40,7 @@ class TraceSet
 
   def as_json
     res = []
+    create_cube!
     @cube.each do |(trace, count)|
       res << [trace.as_json, count]
     end
@@ -43,18 +48,23 @@ class TraceSet
     res
   end
 
-  def add(raw_trace)
-    clean_trace = ScoutApm::CleanTrace.new(raw_trace, @controller_file)
-    @cube << clean_trace
+  def create_cube!
+    while raw_trace = @raw_traces.shift
+      clean_trace = ScoutApm::CleanTrace.new(raw_trace, @controller_file)
+      @cube << clean_trace
+    end
+    @raw_traces = []
   end
 
   def total_count
+    create_cube!
     cube.inject(0) do |sum, (_, count)|
       sum + count
     end
   end
 
   def inspect
+    create_cube!
     cube.map do |(trace, count)|
       "\t#{count} -- #{trace.first.klass}##{trace.first.method}\n\t\t#{trace.to_a[1].try(:klass)}##{trace.to_a[1].try(:method)}"
     end.join("\n")
@@ -75,7 +85,7 @@ class CleanTrace
   attr_reader :lines
 
   def initialize(raw_trace, controller_file=nil)
-    @lines = Array(raw_trace).map {|(file, line, klass, meth)| TraceLine.new(file, line, klass, meth)}
+    @lines = Array(raw_trace).map {|iseq, line_no| TraceLine.new(iseq, line_no)}
     @controller_file = controller_file
 
     # A trace has interesting data in the middle of it, since normally it'll go
@@ -94,9 +104,14 @@ class CleanTrace
     drop_above_app
   end
 
-  # TODO: Write the more-verbose version that doesn't do unnecessary reverses
+  # Iterate starting at END of array until a controller line is found. Pop off at that index - 1.
   def drop_below_app
-    @lines = @lines.reverse.drop_while{|l| ! l.controller?(@controller_file) }.reverse
+    (@lines.size..0).each do |line_index|
+      if @lines[line_index].controller?(@controller_file)
+        @lines.pop(@lines.size - (line_index - 1))
+        break # (@lines.size..0).each
+      end
+    end
   end
 
   # Find the closest mention of the application code from the currently-running method.
@@ -136,24 +151,17 @@ class CleanTrace
 end
 
 class TraceLine
-  attr_reader :file
-  attr_reader :line
-  attr_reader :klass
-  attr_reader :method
+  attr_reader :iseq
 
-  def initialize(file, line, klass, method)
-    @file = file
-    @line = line
-    @klass = klass
-    @method = method
-
-    trim_file!
+  def initialize(iseq, line_no)
+    @iseq = iseq
+    @line_no = line_no
   end
 
   # Returns the name of the last gem in the line
   def gem_name
     @gem_name ||= begin
-                    r = %r{gems/(.*?)/}
+                    r = %r{\/gems/(.*?)/}.freeze
                     results = file.scan(r)
                     results[-1][0] # Scan will return a nested array, so extract out that nesting
                   rescue
@@ -163,12 +171,28 @@ class TraceLine
 
   def stdlib_name
     @stdlib_name ||= begin
-                    r = %r{#{Regexp.escape(RbConfig::TOPDIR)}/(.*?)}
+                    r = %r{#{Regexp.escape(RbConfig::TOPDIR)}/(.*?)}.freeze
                     results = file.scan(r)
                     results[-1][0] # Scan will return a nested array, so extract out that nesting
                   rescue
                     nil
                   end
+  end
+
+  def file
+    @iseq.absolute_path
+  end
+
+  def line
+    @iseq.first_lineno
+  end
+
+  def klass
+    ScoutApm::Instruments::Stacks.klass_for_frame(@iseq)
+  end
+
+  def method
+    @iseq.label
   end
 
   def gem?
@@ -180,30 +204,26 @@ class TraceLine
   end
 
   def app?
-    !gem_name && !stdlib_name
+    r = %r|^#{Regexp.escape(ScoutApm::Environment.instance.root.to_s)}/|.freeze
+    !gem_name && !stdlib_name && file =~ r
   end
 
-  def trim_file!
-    return if file.nil?
+  def trim_file(file_path)
+    return if file_path.nil?
     if gem?
       r = %r{.*gems/.*?/}.freeze
-      @file = file.sub(r, "/")
+      file_path.sub(r, "/")
     elsif stdlib?
-      @file = file.sub(RbConfig::TOPDIR, '')
+      file_path.sub(RbConfig::TOPDIR, '')
     elsif app?
-      @file = file.sub(ScoutApm::Environment.instance.root.to_s, '')
+      file_path.sub(ScoutApm::Environment.instance.root.to_s, '')
     end
   end
 
   # If controller_file is provided, just see if this is exactly that file. If not use a cheesy regex.
   def controller?(controller_file)
     return false if file.nil? # main function doesn't have a file associated
-
-    if controller_file
-      file == controller_file
-    else
-      file.match(%r|_controller.rb|)
-    end
+    app?
   end
 
   def formatted_to_s
@@ -211,7 +231,7 @@ class TraceLine
   end
 
   def as_json
-    [ file, line, klass, method, app?, gem_name, stdlib_name ]
+    [ trim_file(file), line, klass, method, app?, gem_name, stdlib_name ]
   end
 
   ###############################

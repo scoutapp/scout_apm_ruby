@@ -54,8 +54,14 @@ module ScoutApm
         req.job!
         req.annotate_request(:queue_latency => latency)
 
-        req.start_layer( ScoutApm::Layer.new("Queue", queue) )
-        req.start_layer( ScoutApm::Layer.new("Job", job_class) )
+        queue_layer = ScoutApm::Layer.new("Queue", queue)
+        job_layer = ScoutApm::Layer.new("Job", job_class)
+
+        queue_layer.traced! # capture scoutprof
+        job_layer.traced!   # capture scoutprof
+
+        req.start_layer(queue_layer)
+        req.start_layer(job_layer)
 
         begin
           yield

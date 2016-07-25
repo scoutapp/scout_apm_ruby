@@ -135,6 +135,14 @@ module ScoutApm
           stat.update!(layer.total_call_time, layer.total_exclusive_time)
           stat.add_traces(layer.traces.as_json)
 
+          # Debug logging for scoutprof traces
+          if layer.type =~ %r{^(Controller|Queue|Job)$}.freeze
+            ScoutApm::Agent.instance.logger.debug do
+              traces_inspect = layer.traces.inspect
+              "****** Slow Request #{layer.type} Traces (#{layer.name}, tet: #{layer.total_exclusive_time}, tct: #{layer.total_call_time}), total raw traces: #{layer.traces.cube.total_count}, total clean traces: #{layer.traces.total_count}:\n#{traces_inspect}"
+            end
+          end
+
           # allocations
           stat = allocation_metric_hash[meta]
           stat.update!(layer.total_allocations, layer.total_exclusive_allocations)

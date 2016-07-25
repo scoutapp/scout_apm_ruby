@@ -126,7 +126,6 @@ module ScoutApm
       @started = true
       logger.info "Starting monitoring for [#{environment.application_name}]. Framework [#{environment.framework}] App Server [#{environment.app_server}] Background Job Framework [#{environment.background_job_name}]."
 
-
       [ ScoutApm::Instruments::Process::ProcessCpu.new(environment.processors, logger),
         ScoutApm::Instruments::Process::ProcessMemory.new(logger),
         ScoutApm::Instruments::PercentileSampler.new(logger, 95),
@@ -178,8 +177,6 @@ module ScoutApm
       logger.debug "Installing Shutdown Handler"
 
       at_exit do
-        ScoutApm::Instruments::Stacks.uninstall
-
         logger.info "Shutting down Scout Agent"
         # MRI 1.9 bug drops exit codes.
         # http://bugs.ruby-lang.org/issues/5218
@@ -210,6 +207,7 @@ module ScoutApm
         logger.debug "Joining background worker thread"
         @background_worker_thread.join if @background_worker_thread
       end
+      ScoutApm::Instruments::Stacks.uninstall
     end
 
     def started?
@@ -242,7 +240,10 @@ module ScoutApm
       logger.info "Initializing worker thread."
 
       install_exit_handler
+
+      # After we fork, setup the handlers here.
       ScoutApm::Instruments::Stacks.install
+      ScoutApm::Instruments::Stacks.start
 
       @background_worker = ScoutApm::BackgroundWorker.new
       @background_worker_thread = Thread.new do

@@ -70,6 +70,10 @@ module ScoutApm
       framework_integration.database_engine
     end
 
+    def raw_database_adapter
+      framework_integration.raw_database_adapter
+    end
+
     def processors
       @processors ||= begin
                         proc_file = '/proc/cpuinfo'
