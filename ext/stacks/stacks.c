@@ -184,6 +184,8 @@ scout_signal_threads_to_profile()
 {
     struct profiled_thread *ptr;
 
+    fprintf(stderr, "In Scout Signal Threads\n");
+
     if (pthread_mutex_trylock(&profiled_threads_mutex) == 0) { // Only run if we get the mutex.
       ptr = head_thread;
       while(ptr != NULL) {
@@ -234,7 +236,17 @@ dead_thread_sweeper() {
 
   while (1) {
     SWEEP_SNOOZE:
+
+#ifdef CLOCK_MONOTONIC
     clock_result = clock_nanosleep(CLOCK_MONOTONIC, 0, &sleep_time, &clock_remaining);
+#else
+    clock_result = nanosleep(&sleep_time, &clock_remaining);
+    fprintf(stderr, "DEAD THREAD: Finished sleep, result: %d, errno: %d\n", clock_result, errno);
+    if (clock_result == -1) {
+      clock_result = errno;
+    }
+#endif
+
     if (clock_result == 0) {
       sweep_dead_threads();
     } else if (clock_result == EINTR) {
@@ -257,14 +269,26 @@ background_worker()
   while (1) {
     //check to see if we should change values, exit, etc
     SNOOZE:
+#ifdef CLOCK_MONOTONIC
     clock_result = clock_nanosleep(CLOCK_MONOTONIC, 0, &sleep_time, &clock_remaining);
+#else
+    clock_result = nanosleep(&sleep_time, &clock_remaining);
+    fprintf(stderr, ".");
+    if (clock_result == -1) {
+      clock_result = errno;
+    }
+#endif
+
     if (clock_result == 0) {
       if (rb_during_gc()) {
+        fprintf(stderr, "DURING GC\n");
+
         //_skipped_in_gc++;
       } else {
         if (!_job_registered) {
           register_result = rb_postponed_job_register_one(0, scout_signal_threads_to_profile, 0);
           if ((register_result == 1) || (register_result == 2)) {
+            fprintf(stderr, "REGISTERED JOB\n");
             _job_registered = 1;
           } else {
             fprintf(stderr, "Error: job was not registered! Result: %d\n", register_result);
