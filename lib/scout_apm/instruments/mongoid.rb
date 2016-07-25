@@ -33,7 +33,7 @@ module ScoutApm
 
           ### 5.x Mongoid
           if mongoid_v5? && defined?(::Mongoid::Contextual::Mongo)
-            STDOUT.puts "Instrumenting Mongoid 5.x"
+            ScoutApm::Agent.instance.logger.info "Instrumenting Mongoid 5.x"
             # All the public methods from Mongoid::Contextual::Mongo.
             # TODO: Geo and MapReduce support (?). They are in other Contextual::* classes
             methods = [
