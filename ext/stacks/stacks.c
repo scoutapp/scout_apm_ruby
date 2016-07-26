@@ -108,7 +108,7 @@ struct profiled_thread
 struct profiled_thread *head_thread = NULL;
 
 // Mutex around editing of the thread linked list
-pthread_mutex_t profiled_threads_mutex;
+pthread_mutex_t profiled_threads_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
 // Background controller thread ID
