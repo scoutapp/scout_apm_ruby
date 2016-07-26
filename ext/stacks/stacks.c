@@ -250,7 +250,6 @@ dead_thread_sweeper() {
     clock_result = clock_nanosleep(CLOCK_MONOTONIC, 0, &sleep_time, &clock_remaining);
 #else
     clock_result = nanosleep(&sleep_time, &clock_remaining);
-    fprintf(stderr, "DEAD THREAD: Finished sleep, result: %d, errno: %d\n", clock_result, errno);
     if (clock_result == -1) {
       clock_result = errno;
     }
