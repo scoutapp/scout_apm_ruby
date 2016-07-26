@@ -109,7 +109,7 @@ struct profiled_thread
 struct profiled_thread *head_thread = NULL;
 
 // Mutex around editing of the thread linked list
-pthread_mutex_t profiled_threads_mutex;
+pthread_mutex_t profiled_threads_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
 // Background controller thread ID
@@ -248,7 +248,16 @@ dead_thread_sweeper() {
 
   while (1) {
     SWEEP_SNOOZE:
+
+#ifdef CLOCK_MONOTONIC
     clock_result = clock_nanosleep(CLOCK_MONOTONIC, 0, &sleep_time, &clock_remaining);
+#else
+    clock_result = nanosleep(&sleep_time, &clock_remaining);
+    if (clock_result == -1) {
+      clock_result = errno;
+    }
+#endif
+
     if (clock_result == 0) {
       sweep_dead_threads();
     } else if (clock_result == EINTR) {
@@ -271,7 +280,15 @@ background_worker()
   while (1) {
     //check to see if we should change values, exit, etc
     SNOOZE:
+#ifdef CLOCK_MONOTONIC
     clock_result = clock_nanosleep(CLOCK_MONOTONIC, 0, &sleep_time, &clock_remaining);
+#else
+    clock_result = nanosleep(&sleep_time, &clock_remaining);
+    if (clock_result == -1) {
+      clock_result = errno;
+    }
+#endif
+
     if (clock_result == 0) {
       if (rb_during_gc()) {
         //_skipped_in_gc++;
@@ -479,7 +496,6 @@ static VALUE rb_scout_profile_frames(VALUE self)
           rb_ary_store(trace_line, 0, _traces[i].frames_buf[n]);
           rb_ary_store(trace_line, 1, INT2FIX(_traces[i].lines_buf[n]));
           rb_ary_push(trace, trace_line);
-          
         }
         rb_ary_push(traces, trace);
       }
