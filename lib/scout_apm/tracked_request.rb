@@ -39,8 +39,6 @@ module ScoutApm
     # this is set in the controller instumentation (ActionControllerRails3Rails4 according)
     attr_accessor :instant_key
 
-    BACKTRACE_THRESHOLD = 0.5 # the minimum threshold in seconds to record the backtrace for a metric.
-
     def initialize(store)
       @store = store #this is passed in so we can use a real store (normal operation) or fake store (instant mode only)
       @layers = []
@@ -118,7 +116,7 @@ module ScoutApm
       return false unless (web? || job?)
 
       # Capture any individually slow layer.
-      return true if layer.total_exclusive_time > BACKTRACE_THRESHOLD
+      return true if layer.total_exclusive_time > backtrace_threshold
 
       # Capture any layer that we've seen many times. Captures n+1 problems
       return true if @call_set[layer.name].capture_backtrace?
@@ -308,5 +306,11 @@ module ScoutApm
     def ignoring_children?
       @ignoring_children
     end
+
+    # Grab backtraces more aggressively when running in dev trace mode
+    def backtrace_threshold
+      instant? ? 0.1 : 0.5 # the minimum threshold in seconds to record the backtrace for a metric.
+    end
+
   end
 end
