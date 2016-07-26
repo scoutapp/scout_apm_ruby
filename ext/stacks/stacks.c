@@ -195,8 +195,6 @@ scout_signal_threads_to_profile()
 {
     struct profiled_thread *ptr;
 
-    fprintf(stderr, "In Scout Signal Threads\n");
-
     if (pthread_mutex_trylock(&profiled_threads_mutex) == 0) { // Only run if we get the mutex.
       ptr = head_thread;
       while(ptr != NULL) {
@@ -284,7 +282,6 @@ background_worker()
     clock_result = clock_nanosleep(CLOCK_MONOTONIC, 0, &sleep_time, &clock_remaining);
 #else
     clock_result = nanosleep(&sleep_time, &clock_remaining);
-    fprintf(stderr, ".");
     if (clock_result == -1) {
       clock_result = errno;
     }
@@ -292,8 +289,6 @@ background_worker()
 
     if (clock_result == 0) {
       if (rb_during_gc()) {
-        fprintf(stderr, "DURING GC\n");
-
         //_skipped_in_gc++;
       } else {
         if (atomic_load(&_job_registered) == false){
@@ -495,7 +490,6 @@ static VALUE rb_scout_profile_frames(VALUE self)
           rb_ary_store(trace_line, 0, _traces[i].frames_buf[n]);
           rb_ary_store(trace_line, 1, INT2FIX(_traces[i].lines_buf[n]));
           rb_ary_push(trace, trace_line);
-          
         }
         rb_ary_push(traces, trace);
       }
