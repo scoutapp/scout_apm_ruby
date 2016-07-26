@@ -75,6 +75,7 @@ struct c_trace {
 static __thread struct c_trace *_traces;
 static __thread atomic_bool _ok_to_sample, _in_signal_handler = ATOMIC_VAR_INIT(false);
 static __thread atomic_uint_fast16_t _start_frame_index, _start_trace_index, _cur_traces_num = ATOMIC_VAR_INIT(0);
+static __thread atomic_uint_fast32_t _skipped_in_gc, _skipped_in_signal_handler = ATOMIC_VAR_INIT(0);
 static __thread VALUE gc_hook;
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -142,6 +143,7 @@ static VALUE rb_scout_add_profiled_thread(VALUE self)
     thr->next = head_thread;
     head_thread = thr; // now we're head_thread
   }
+  fprintf(stderr, "APM DEBUG: Added thread id: %li\n", (unsigned long int)thr->th);
 
   pthread_mutex_unlock(&profiled_threads_mutex);
   return Qtrue;
@@ -161,6 +163,7 @@ static int remove_profiled_thread(pthread_t th)
 
   for(ptr = head_thread; ptr != NULL; prev = ptr, ptr = ptr->next) {
     if (pthread_equal(th, ptr->th)) {
+      fprintf(stderr, "APM DEBUG: Would remove thread id: %li\n", (unsigned long int)ptr->th);
       if (prev == NULL) {
         head_thread = ptr->next; // We are head_thread
       } else {
@@ -230,8 +233,8 @@ static int sweep_dead_threads() {
 
   // Remove the dead threads outside of the simple mutex.
   for (i = 0; i < dead_count; i++) {
-    fprintf(stderr, "Removing thread\n");
-    remove_profiled_thread(dead_thread_ids[i]);
+    fprintf(stderr, "APM DEBUG: Sweeper would remove thread id: %li\n", (unsigned long int)dead_thread_ids[i]);
+    //remove_profiled_thread(dead_thread_ids[i]);
   }
 
   return 0;
@@ -322,6 +325,7 @@ rb_scout_uninstall_profiling(VALUE self)
   // Free all profiled_threads
   next = NULL;
   for (ptr = head_thread; ptr != NULL; ptr = next) {
+    fprintf(stderr, "APM DEBUG: Shutdown removed thread id: %li\n", (unsigned long int)ptr->th);
     next = ptr->next;
     free(ptr);
   }
@@ -397,15 +401,17 @@ init_thread_vars()
 static void
 scout_profile_broadcast_signal_handler(int sig)
 {
-  if (atomic_load(&_in_signal_handler) == true) return;
   if (atomic_load(&_ok_to_sample) == false) return;
 
-  atomic_store(&_in_signal_handler, true);
-  if (rb_during_gc()) {
-    //_skipped_in_gc++;
-  } else {
-    scout_record_sample();
+  if (atomic_load(&_in_signal_handler) == true) {
+    atomic_fetch_add(&_skipped_in_signal_handler, 1);
+    return;
   }
+
+  atomic_store(&_in_signal_handler, true);
+
+  scout_record_sample();
+
   atomic_store(&_in_signal_handler, false);
 }
 
@@ -430,6 +436,7 @@ scout_record_sample()
 
   if (atomic_load(&_ok_to_sample) == false) return;
   if (rb_during_gc()) {
+    atomic_fetch_add(&_skipped_in_gc, 1);
     return;
   }
 
@@ -506,6 +513,8 @@ rb_scout_stop_sampling(VALUE self, VALUE reset)
   // TODO: I think this can be (reset == Qtrue)
   if (TYPE(reset) == T_TRUE) {
     atomic_store(&_cur_traces_num, 0);
+    atomic_store(&_skipped_in_gc, 0);
+    atomic_store(&_skipped_in_signal_handler, 0);
   }
   return Qtrue;
 }
