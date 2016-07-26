@@ -9,16 +9,26 @@
  *     trace
  */
 
+/*
+ * Ruby lib
+ */
 #include <ruby/ruby.h>
 #include <ruby/debug.h>
 #include <ruby/st.h>
 #include <ruby/io.h>
 #include <ruby/intern.h>
-#include <signal.h>
-#include <sys/time.h>
+
+/*
+ * Std lib
+ */
 #include <errno.h>
+#include <inttypes.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <signal.h>
+#include <stdatomic.h>
+#include <stdbool.h>
+#include <sys/time.h>
 
 int scout_profiling_installed = 0;
 int scout_profiling_running = 0;
@@ -37,7 +47,7 @@ VALUE cStacks;
 VALUE interval;
 
 #define BUF_SIZE 512
-#define MAX_TRACES 4000
+#define MAX_TRACES 2000
 
 #define NANO_SECOND_MULTIPLIER  1000000  // 1 millisecond = 1,000,000 Nanoseconds
 const long INTERVAL = 1 * NANO_SECOND_MULTIPLIER; // milliseconds * NANO_SECOND_MULTIPLIER
@@ -63,14 +73,15 @@ struct c_trace {
 };
 
 static __thread struct c_trace *_traces;
-static __thread int _ok_to_sample, _start_frame_index, _start_trace_index, _cur_traces_num, _in_signal_handler;
+static __thread atomic_bool _ok_to_sample, _in_signal_handler = ATOMIC_VAR_INIT(false);
+static __thread atomic_uint_fast16_t _start_frame_index, _start_trace_index, _cur_traces_num = ATOMIC_VAR_INIT(0);
 static __thread VALUE gc_hook;
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // Globald variables
 ////////////////////////////////////////////////////////////////////////////////////////
 
-static int _job_registered = 0;
+static atomic_bool _job_registered = ATOMIC_VAR_INIT(false);
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // Thread Linked List
@@ -170,7 +181,7 @@ static int remove_profiled_thread(pthread_t th)
  */
 static VALUE rb_scout_remove_profiled_thread(VALUE self)
 {
-  _ok_to_sample = 0;
+  atomic_store(&_ok_to_sample, false);
   remove_profiled_thread(pthread_self());
   return Qtrue;
 }
@@ -197,7 +208,7 @@ scout_signal_threads_to_profile()
       pthread_mutex_unlock(&profiled_threads_mutex);
     }
 
-    _job_registered = 0;
+    atomic_store(&_job_registered, false);
 }
 
 static int sweep_dead_threads() {
@@ -285,11 +296,10 @@ background_worker()
 
         //_skipped_in_gc++;
       } else {
-        if (!_job_registered) {
+        if (atomic_load(&_job_registered) == false){
           register_result = rb_postponed_job_register_one(0, scout_signal_threads_to_profile, 0);
           if ((register_result == 1) || (register_result == 2)) {
-            fprintf(stderr, "REGISTERED JOB\n");
-            _job_registered = 1;
+            atomic_store(&_job_registered, true);
           } else {
             fprintf(stderr, "Error: job was not registered! Result: %d\n", register_result);
           }
@@ -377,8 +387,9 @@ rb_scout_install_profiling(VALUE self)
 static void
 scoutprof_gc_mark(void *data)
 {
-  int i, n;
-  for (i = 0; i < _cur_traces_num; i++) {
+  uint_fast16_t i;
+  int n;
+  for (i = 0; i < atomic_load(&_cur_traces_num); i++) {
     for (n = 0; n < _traces[i].num_tracelines; n++) {
       rb_gc_mark(_traces[i].frames_buf[n]);
     }
@@ -388,11 +399,11 @@ scoutprof_gc_mark(void *data)
 static void
 init_thread_vars()
 {
-  _ok_to_sample = 0;
-  _start_frame_index = 0;
-  _start_trace_index = 0;
-  _cur_traces_num = 0;
-  _in_signal_handler = 0;
+  atomic_store(&_ok_to_sample, false);
+  atomic_store(&_in_signal_handler, false);
+  atomic_store(&_start_frame_index, 0);
+  atomic_store(&_start_trace_index, 0);
+  atomic_store(&_cur_traces_num, 0);
 
   _traces = ALLOC_N(struct c_trace, MAX_TRACES); // TODO Check return
 
@@ -409,19 +420,16 @@ init_thread_vars()
 static void
 scout_profile_broadcast_signal_handler(int sig)
 {
-  if (_in_signal_handler) {
-    return;
-  }
+  if (atomic_load(&_in_signal_handler) == true) return;
+  if (atomic_load(&_ok_to_sample) == false) return;
 
-  if (!_ok_to_sample) return;
-
-  _in_signal_handler = 1;
+  atomic_store(&_in_signal_handler, true);
   if (rb_during_gc()) {
     //_skipped_in_gc++;
   } else {
     scout_record_sample();
   }
-  _in_signal_handler = 0;
+  atomic_store(&_in_signal_handler, false);
 }
 
 /*
@@ -441,17 +449,21 @@ void
 scout_record_sample()
 {
   int num_frames;
+  uint_fast16_t cur_traces_num, start_frame_index;
 
-  if (!_ok_to_sample) return;
+  if (atomic_load(&_ok_to_sample) == false) return;
   if (rb_during_gc()) {
     return;
   }
 
-  if (_cur_traces_num < MAX_TRACES) {
-    num_frames = rb_profile_frames(0, sizeof(_traces[_cur_traces_num].frames_buf) / sizeof(VALUE), _traces[_cur_traces_num].frames_buf, _traces[_cur_traces_num].lines_buf);
-    if (num_frames - _start_frame_index > 2) {
-      _traces[_cur_traces_num].num_tracelines = num_frames - _start_frame_index - 2; // The extra -2 is because there's a bug when reading the very first (bottom) 2 iseq objects for some reason
-      _cur_traces_num++;
+  cur_traces_num = atomic_load(&_cur_traces_num);
+  start_frame_index = atomic_load(&_start_frame_index);
+
+  if (cur_traces_num < MAX_TRACES) {
+    num_frames = rb_profile_frames(0, sizeof(_traces[cur_traces_num].frames_buf) / sizeof(VALUE), _traces[cur_traces_num].frames_buf, _traces[cur_traces_num].lines_buf);
+    if (num_frames - start_frame_index > 2) {
+      _traces[cur_traces_num].num_tracelines = num_frames - start_frame_index - 2; // The extra -2 is because there's a bug when reading the very first (bottom) 2 iseq objects for some reason
+      atomic_fetch_add(&_cur_traces_num, 1);
     }
     // TODO: add an else with a counter so we can track if we skipped profiling here
   }
@@ -463,15 +475,19 @@ scout_record_sample()
  */
 static VALUE rb_scout_profile_frames(VALUE self)
 {
-  int i, n;
+  int n;
+  uint_fast16_t i, cur_traces_num, start_trace_index;
   VALUE traces, trace, trace_line;
 
-  if (_cur_traces_num - _start_trace_index > 0) {
-    fprintf(stderr, "CUR TRACES: %d\n", _cur_traces_num);
-    fprintf(stderr, "START TRACE IDX: %d\n", _start_trace_index);
-    fprintf(stderr, "TRACES COUNT: %d\n", _cur_traces_num - _start_trace_index);
-    traces = rb_ary_new2(_cur_traces_num - _start_trace_index);
-    for(i = _start_trace_index; i < _cur_traces_num; i++) {
+  cur_traces_num = atomic_load(&_cur_traces_num);
+  start_trace_index = atomic_load(&_start_trace_index);
+
+  if (cur_traces_num - start_trace_index > 0) {
+    fprintf(stderr, "CUR TRACES: %"PRIuFAST16"\n", cur_traces_num);
+    fprintf(stderr, "START TRACE IDX: %"PRIuFAST16"\n", start_trace_index);
+    fprintf(stderr, "TRACES COUNT: %"PRIuFAST16"\n", cur_traces_num - start_trace_index);
+    traces = rb_ary_new2(cur_traces_num - start_trace_index);
+    for(i = start_trace_index; i < cur_traces_num; i++) {
       if (_traces[i].num_tracelines > 0) {
         trace = rb_ary_new2(_traces[i].num_tracelines);
         for(n = 0; n < _traces[i].num_tracelines; n++) {
@@ -487,7 +503,7 @@ static VALUE rb_scout_profile_frames(VALUE self)
   } else {
     traces = rb_ary_new();
   }
-  _cur_traces_num = _start_trace_index;
+  atomic_store(&_cur_traces_num, start_trace_index);
   return traces;
 }
 
@@ -501,7 +517,7 @@ static VALUE rb_scout_profile_frames(VALUE self)
 static VALUE
 rb_scout_start_sampling(VALUE self)
 {
-  _ok_to_sample = 1;
+  atomic_store(&_ok_to_sample, true);
   return Qtrue;
 }
 
@@ -509,10 +525,10 @@ rb_scout_start_sampling(VALUE self)
 static VALUE
 rb_scout_stop_sampling(VALUE self, VALUE reset)
 {
-  _ok_to_sample = 0;
+  atomic_store(&_ok_to_sample, false);
   // TODO: I think this can be (reset == Qtrue)
   if (TYPE(reset) == T_TRUE) {
-    _cur_traces_num = 0;
+    atomic_store(&_cur_traces_num, 0);
   }
   return Qtrue;
 }
@@ -521,8 +537,8 @@ rb_scout_stop_sampling(VALUE self, VALUE reset)
 static VALUE
 rb_scout_update_indexes(VALUE self, VALUE frame_index, VALUE trace_index)
 {
-  _start_trace_index = NUM2INT(trace_index);
-  _start_frame_index = NUM2INT(frame_index);
+  atomic_store(&_start_trace_index, NUM2INT(trace_index));
+  atomic_store(&_start_frame_index, NUM2INT(frame_index));
   return Qtrue;
 }
 
@@ -530,7 +546,7 @@ rb_scout_update_indexes(VALUE self, VALUE frame_index, VALUE trace_index)
 static VALUE
 rb_scout_current_trace_index(VALUE self)
 {
-  return INT2NUM(_cur_traces_num);
+  return INT2NUM(atomic_load(&_cur_traces_num));
 }
 
 // rb_scout_current_trace_index: Get the current top of the trace stack
