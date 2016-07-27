@@ -78,6 +78,7 @@ module ScoutApm
         layer = ScoutApm::Layer.new("Controller", "#{controller_path}/#{action_name}")
 
         # Capture ScoutProf if we can
+        req.enable_profiled_thread!
         layer.set_root_class(self.class)
         layer.traced!
 
