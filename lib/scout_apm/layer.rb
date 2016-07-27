@@ -150,7 +150,9 @@ module ScoutApm
     def record_traces!
       ScoutApm::Instruments::Stacks.stop_sampling(false)
       if traced?
-        @traces.raw_traces = ScoutApm::Instruments::Stacks.profile_frames
+        traces.raw_traces = ScoutApm::Instruments::Stacks.profile_frames
+        traces.skipped_in_gc = ScoutApm::Instruments::Stacks.skipped_in_gc
+        traces.skipped_in_handler = ScoutApm::Instruments::Stacks.skipped_in_handler
       end
     end
 

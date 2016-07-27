@@ -14,8 +14,10 @@ class TraceSet
   # collect up the count of each unique trace we've seen
   attr_reader :cube
 
-  # Allow layer to set the raw traces
+  # Allow layer to push values in
   attr_accessor :raw_traces
+  attr_accessor :skipped_in_gc
+  attr_accessor :skipped_in_handler
 
   def initialize
     @raw_traces = []

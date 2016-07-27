@@ -566,11 +566,26 @@ rb_scout_current_frame_index(VALUE self)
   }
 }
 
+
 static VALUE
 rb_scout_klass_for_frame(VALUE self, VALUE frame)
 {
   return rb_profile_frame_classpath(frame);
 }
+
+static VALUE
+rb_scout_skipped_in_gc(VALUE self)
+{
+  return INT2NUM(atomic_load(&_skipped_in_gc));
+}
+
+static VALUE
+rb_scout_skipped_in_handler(VALUE self)
+{
+  return INT2NUM(atomic_load(&_skipped_in_signal_handler));
+}
+
+
 
 // Gem Init. Set up constants, attach methods
 void Init_stacks()
@@ -603,6 +618,9 @@ void Init_stacks()
     rb_define_singleton_method(cStacks, "current_trace_index", rb_scout_current_trace_index, 0);
     rb_define_singleton_method(cStacks, "current_frame_index", rb_scout_current_frame_index, 0);
     rb_define_singleton_method(cStacks, "klass_for_frame", rb_scout_klass_for_frame, 1);
+
+    rb_define_singleton_method(cStacks, "skipped_in_gc", rb_scout_skipped_in_gc, 0);
+    rb_define_singleton_method(cStacks, "skipped_in_handler", rb_scout_skipped_in_handler, 0);
 
     rb_define_const(cStacks, "ENABLED", Qtrue);
     rb_warn("Finished Initializing ScoutProf Native Extension");
@@ -677,6 +695,18 @@ rb_scout_klass_for_frame(VALUE self, VALUE frame)
   return Qnil;
 }
 
+static VALUE
+rb_scout_skipped_in_gc(VALUE self)
+{
+  return INT2NUM(0);
+}
+
+static VALUE
+rb_scout_skipped_in_handler(VALUE self)
+{
+  return INT2NUM(0);
+}
+
 void Init_stacks()
 {
     mScoutApm = rb_define_module("ScoutApm");
@@ -701,6 +731,9 @@ void Init_stacks()
     rb_define_singleton_method(cStacks, "current_trace_index", rb_scout_current_trace_index, 0);
     rb_define_singleton_method(cStacks, "current_frame_index", rb_scout_current_frame_index, 0);
     rb_define_singleton_method(cStacks, "klass_for_frame", rb_scout_klass_for_frame, 1);
+
+    rb_define_singleton_method(cStacks, "skipped_in_gc", rb_scout_skipped_in_gc, 0);
+    rb_define_singleton_method(cStacks, "skipped_in_handler", rb_scout_skipped_in_handler, 0);
 
     rb_define_const(cStacks, "ENABLED", Qfalse);
     rb_define_const(cStacks, "INSTALLED", Qfalse);
