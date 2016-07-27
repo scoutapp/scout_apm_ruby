@@ -1,3 +1,7 @@
+# 1.6.7
+
+* Mongoid bugfixes
+
 # 1.6.6
 
 * Bugfix related to DB detection
