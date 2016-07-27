@@ -113,7 +113,6 @@ class CleanTrace
 
   # Iterate starting at END of array until a controller line is found. Pop off at that index - 1.
   def drop_below_app
-    binding.pry
     pops = 0
     index = lines.size - 1 # last index, not size.
 
@@ -123,9 +122,6 @@ class CleanTrace
     end
 
     lines.pop(pops)
-
-    binding.pry
-
   end
 
   # Find the closest mention of the application code from the currently-running method.
