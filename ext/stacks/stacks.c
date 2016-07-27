@@ -73,9 +73,17 @@ struct c_trace {
 };
 
 static __thread struct c_trace *_traces;
-static __thread atomic_bool _ok_to_sample, _in_signal_handler = ATOMIC_VAR_INIT(false);
-static __thread atomic_uint_fast16_t _start_frame_index, _start_trace_index, _cur_traces_num = ATOMIC_VAR_INIT(0);
-static __thread atomic_uint_fast32_t _skipped_in_gc, _skipped_in_signal_handler = ATOMIC_VAR_INIT(0);
+
+static __thread atomic_bool _ok_to_sample = ATOMIC_VAR_INIT(false);
+static __thread atomic_bool _in_signal_handler = ATOMIC_VAR_INIT(false);
+
+static __thread atomic_uint_fast16_t _start_frame_index = ATOMIC_VAR_INIT(0);
+static __thread atomic_uint_fast16_t _start_trace_index = ATOMIC_VAR_INIT(0);
+static __thread atomic_uint_fast16_t _cur_traces_num = ATOMIC_VAR_INIT(0);
+
+static __thread atomic_uint_fast32_t _skipped_in_gc = ATOMIC_VAR_INIT(0);
+static __thread atomic_uint_fast32_t _skipped_in_signal_handler = ATOMIC_VAR_INIT(0);
+
 static __thread VALUE gc_hook;
 
 ////////////////////////////////////////////////////////////////////////////////////////
