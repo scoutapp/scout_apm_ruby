@@ -260,7 +260,7 @@ module ScoutApm
     # If we want to skip the app_server_check, then we must load it.
     def should_load_instruments?(options={})
       return true if options[:skip_app_server_check]
-      return true if config.value('instant')
+      return true if config.value('dev_trace')
       return false if !apm_enabled?
       environment.app_server_integration.found? || !background_job_missing?
     end
