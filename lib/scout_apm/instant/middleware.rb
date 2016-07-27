@@ -47,7 +47,7 @@ module ScoutApm
       def call(env)
         status, headers, response = @app.call(env)
 
-        if ScoutApm::Agent.instance.config.value('instant')
+        if ScoutApm::Agent.instance.config.value('dev_trace')
           if response.respond_to?(:body)
             req = ScoutApm::RequestManager.lookup
             slow_converter = LayerConverters::SlowRequestConverter.new(req)
