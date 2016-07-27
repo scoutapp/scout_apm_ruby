@@ -39,6 +39,9 @@ module ScoutApm
     # this is set in the controller instumentation (ActionControllerRails3Rails4 according)
     attr_accessor :instant_key
 
+    # Whereas the instant_key gets set per-request in reponse to a URL param, dev_trace is set in the config file
+    attr_accessor :dev_trace
+
     def initialize(store)
       @store = store #this is passed in so we can use a real store (normal operation) or fake store (instant mode only)
       @layers = []
@@ -50,6 +53,7 @@ module ScoutApm
       @error = false
       @instant_key = nil
       @mem_start = mem_usage
+      @dev_trace =  ScoutApm::Agent.instance.config.value('dev_trace') && Rails.env.development?
     end
 
     def start_layer(layer)
@@ -309,7 +313,7 @@ module ScoutApm
 
     # Grab backtraces more aggressively when running in dev trace mode
     def backtrace_threshold
-      instant? ? 0.1 : 0.5 # the minimum threshold in seconds to record the backtrace for a metric.
+      dev_trace ? 0.05 : 0.5 # the minimum threshold in seconds to record the backtrace for a metric.
     end
 
   end
