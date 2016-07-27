@@ -22,10 +22,17 @@ class TraceSet
     @cube = TraceCube.new
   end
 
-  # We need to know what the controller file we're in is in order to accurately
-  # make CleanTraces.
-  def set_controller_file(file)
-    @controller_file = file
+  # We need to know what the "Start" of this trace is.  An untrimmed trace generally is:
+  #
+  # Gem
+  # Gem
+  # App
+  # App
+  # App <---- set root_class of this.
+  # Rails
+  # Rails
+  def set_root_class(klass_name)
+    @root_klass = klass_name.to_s
   end
 
   def to_a
@@ -50,7 +57,7 @@ class TraceSet
 
   def create_cube!
     while raw_trace = @raw_traces.shift
-      clean_trace = ScoutApm::CleanTrace.new(raw_trace, @controller_file)
+      clean_trace = ScoutApm::CleanTrace.new(raw_trace, @root_klass)
       @cube << clean_trace
     end
     @raw_traces = []
@@ -84,9 +91,9 @@ class CleanTrace
 
   attr_reader :lines
 
-  def initialize(raw_trace, controller_file=nil)
+  def initialize(raw_trace, root_klass=nil)
     @lines = Array(raw_trace).map {|iseq, line_no| TraceLine.new(iseq, line_no)}
-    @controller_file = controller_file
+    @root_klass = root_klass
 
     # A trace has interesting data in the middle of it, since normally it'll go
     # RailsCode -> App Code -> Gem Code.
@@ -106,12 +113,19 @@ class CleanTrace
 
   # Iterate starting at END of array until a controller line is found. Pop off at that index - 1.
   def drop_below_app
-    (@lines.size..0).each do |line_index|
-      if @lines[line_index].controller?(@controller_file)
-        @lines.pop(@lines.size - (line_index - 1))
-        break # (@lines.size..0).each
-      end
+    binding.pry
+    pops = 0
+    index = lines.size - 1 # last index, not size.
+
+    while index >= 0 && !lines[index].controller?(@root_klass)
+      index -= 1
+      pops += 1
     end
+
+    lines.pop(pops)
+
+    binding.pry
+
   end
 
   # Find the closest mention of the application code from the currently-running method.
@@ -220,10 +234,16 @@ class TraceLine
     end
   end
 
-  # If controller_file is provided, just see if this is exactly that file. If not use a cheesy regex.
-  def controller?(controller_file)
-    return false if file.nil? # main function doesn't have a file associated
-    app?
+  # If root_klass is provided, just see if this is exactly that class. If not,
+  # fall back on "is this in the app"
+  def controller?(root_klass)
+    return false if klass.nil? # main function doesn't have a file associated
+
+    if root_klass
+      klass == root_klass
+    else
+      app?
+    end
   end
 
   def formatted_to_s

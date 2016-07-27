@@ -76,8 +76,12 @@ module ScoutApm
         req.web!
 
         layer = ScoutApm::Layer.new("Controller", "#{controller_path}/#{action_name}")
-        layer.traced! # Capture ScoutProf if we can
 
+        # Capture ScoutProf if we can
+        layer.set_root_class(self.class)
+        layer.traced!
+
+        # Start the layer, then execute the user's code
         req.start_layer(layer)
         begin
           super

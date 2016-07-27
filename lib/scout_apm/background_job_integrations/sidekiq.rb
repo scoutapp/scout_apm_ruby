@@ -57,7 +57,7 @@ module ScoutApm
         queue_layer = ScoutApm::Layer.new("Queue", queue)
         job_layer = ScoutApm::Layer.new("Job", job_class)
 
-        queue_layer.traced! # capture scoutprof
+        job_layer.set_root_class(job_class)
         job_layer.traced!   # capture scoutprof
 
         req.start_layer(queue_layer)

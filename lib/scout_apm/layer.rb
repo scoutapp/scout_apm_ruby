@@ -133,8 +133,8 @@ module ScoutApm
 
     # Set the name of the file that this action is coming from.
     # TraceSet uses this to more accurately filter backtraces
-    def set_controller_file(file)
-      @traces.set_controller_file(file)
+    def set_root_class(klass_name)
+      @traces.set_root_class(klass_name)
     end
 
     def start_sampling
