@@ -52,6 +52,9 @@ VALUE interval;
 #define NANO_SECOND_MULTIPLIER  1000000  // 1 millisecond = 1,000,000 Nanoseconds
 const long INTERVAL = 1 * NANO_SECOND_MULTIPLIER; // milliseconds * NANO_SECOND_MULTIPLIER
 
+// Max threads to remove each dead_thread_sweeper interval
+#define MAX_REMOVES_PER_SWEEP 5
+
 #ifdef RUBY_INTERNAL_EVENT_NEWOBJ
 
 // Forward Declarations
@@ -73,7 +76,7 @@ static __thread struct c_trace *_traces;
 static __thread atomic_bool _ok_to_sample, _in_signal_handler = ATOMIC_VAR_INIT(false);
 static __thread atomic_uint_fast16_t _start_frame_index, _start_trace_index, _cur_traces_num = ATOMIC_VAR_INIT(0);
 static __thread atomic_uint_fast32_t _skipped_in_gc, _skipped_in_signal_handler = ATOMIC_VAR_INIT(0);
-static __thread VALUE _gc_hook;
+static __thread VALUE gc_hook;
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // Globald variables
@@ -112,6 +115,9 @@ pthread_mutex_t profiled_threads_mutex = PTHREAD_MUTEX_INITIALIZER;
 // Background controller thread ID
 pthread_t btid;
 
+// Background dead thread sweeper
+pthread_t thread_sweeper_id;
+
 
 /*
  * rb_scout_add_profiled_thread: adds the currently running thread to the head of the linked list
@@ -137,6 +143,7 @@ static VALUE rb_scout_add_profiled_thread(VALUE self)
     thr->next = head_thread;
     head_thread = thr; // now we're head_thread
   }
+  fprintf(stderr, "APM DEBUG: Added thread id: %li\n", (unsigned long int)thr->th);
 
   pthread_mutex_unlock(&profiled_threads_mutex);
   return Qtrue;
@@ -146,12 +153,9 @@ static VALUE rb_scout_add_profiled_thread(VALUE self)
  * remove_profiled_thread: removes a thread from the linked list.
  * if the linked list is empty, this is a noop
  */
-static int remove_profiled_thread()
+static int remove_profiled_thread(pthread_t th)
 {
   struct profiled_thread *ptr, *prev;
-  pthread_t th = pthread_self();
-
-  atomic_store(&_ok_to_sample, false);
 
   pthread_mutex_lock(&profiled_threads_mutex);
 
@@ -159,6 +163,7 @@ static int remove_profiled_thread()
 
   for(ptr = head_thread; ptr != NULL; prev = ptr, ptr = ptr->next) {
     if (pthread_equal(th, ptr->th)) {
+      fprintf(stderr, "APM DEBUG: Would remove thread id: %li\n", (unsigned long int)ptr->th);
       if (prev == NULL) {
         head_thread = ptr->next; // We are head_thread
       } else {
@@ -170,10 +175,6 @@ static int remove_profiled_thread()
   }
 
   pthread_mutex_unlock(&profiled_threads_mutex);
-
-  rb_gc_unregister_address(&_gc_hook);
-  xfree(&_traces);
-
   return 0;
 }
 
@@ -183,20 +184,9 @@ static int remove_profiled_thread()
  */
 static VALUE rb_scout_remove_profiled_thread(VALUE self)
 {
-  remove_profiled_thread();
+  atomic_store(&_ok_to_sample, false);
+  remove_profiled_thread(pthread_self());
   return Qtrue;
-}
-
-
-/*
- *  The thread_cleanup_handler is pushed onto every registered thread's cancellation cleanup handlers.
- *  This lets us run cleanup in the context of the exiting thread since we may have no way to hook into
- *  the thread exit in ruby.
- */
-static void
-thread_cleanup_handler(void *arg)
-{
-  remove_profiled_thread();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -220,6 +210,63 @@ scout_signal_threads_to_profile()
     }
 
     atomic_store(&_job_registered, false);
+}
+
+static int sweep_dead_threads() {
+  int i;
+  struct profiled_thread *ptr;
+  pthread_t dead_thread_ids[MAX_REMOVES_PER_SWEEP];
+  int dead_count = 0;
+
+  pthread_mutex_lock(&profiled_threads_mutex);
+
+  ptr = head_thread;
+  while((ptr != NULL) && (dead_count < MAX_REMOVES_PER_SWEEP)) {
+    if (pthread_kill(ptr->th, 0) == ESRCH) { // Check for existence of thread.
+      dead_thread_ids[dead_count] = ptr->th; // if dead, add the id to the array
+      dead_count++;                          // and increment counter.
+    }
+    ptr = ptr->next;
+  }
+
+  pthread_mutex_unlock(&profiled_threads_mutex);
+
+  // Remove the dead threads outside of the simple mutex.
+  for (i = 0; i < dead_count; i++) {
+    fprintf(stderr, "APM DEBUG: Sweeper would remove thread id: %li\n", (unsigned long int)dead_thread_ids[i]);
+    //remove_profiled_thread(dead_thread_ids[i]);
+  }
+
+  return 0;
+}
+
+void *
+dead_thread_sweeper() {
+  int clock_result;
+  struct timespec clock_remaining;
+  struct timespec sleep_time = {.tv_sec = 5, .tv_nsec = 0};
+
+  while (1) {
+    SWEEP_SNOOZE:
+
+#ifdef CLOCK_MONOTONIC
+    clock_result = clock_nanosleep(CLOCK_MONOTONIC, 0, &sleep_time, &clock_remaining);
+#else
+    clock_result = nanosleep(&sleep_time, &clock_remaining);
+    if (clock_result == -1) {
+      clock_result = errno;
+    }
+#endif
+
+    if (clock_result == 0) {
+      sweep_dead_threads();
+    } else if (clock_result == EINTR) {
+      sleep_time = clock_remaining;
+      goto SWEEP_SNOOZE;
+    } else {
+      fprintf(stderr, "Error: nanosleep returned value : %d\n", clock_result);
+    }
+  }
 }
 
 // Should we block signals to this thread?
@@ -284,8 +331,23 @@ rb_scout_start_profiling(VALUE self)
 static VALUE
 rb_scout_uninstall_profiling(VALUE self)
 {
+  struct profiled_thread *ptr, *next;
+
+  pthread_mutex_lock(&profiled_threads_mutex);
+
   // stop background worker threads
   pthread_cancel(btid); // TODO: doing a pthread_join after cancel is the only way to wait and know if the thread actually exited.
+  pthread_cancel(thread_sweeper_id); // TODO: doing a pthread_join after cancel is the only way to wait and know if the thread actually exited.
+
+  // Free all profiled_threads
+  next = NULL;
+  for (ptr = head_thread; ptr != NULL; ptr = next) {
+    fprintf(stderr, "APM DEBUG: Shutdown removed thread id: %li\n", (unsigned long int)ptr->th);
+    next = ptr->next;
+    free(ptr);
+  }
+
+  pthread_mutex_unlock(&profiled_threads_mutex);
 
   return Qnil;
 }
@@ -302,6 +364,7 @@ rb_scout_install_profiling(VALUE self)
   }
 
   pthread_create(&btid, NULL, background_worker, NULL);
+  pthread_create(&thread_sweeper_id, NULL, dead_thread_sweeper, NULL);
 
   // Also set up an interrupt handler for when we broadcast an alarm
   new_vtaction.sa_handler = scout_profile_broadcast_signal_handler;
@@ -342,10 +405,8 @@ init_thread_vars()
 
   _traces = ALLOC_N(struct c_trace, MAX_TRACES); // TODO Check return
 
-  _gc_hook = Data_Wrap_Struct(rb_cObject, &scoutprof_gc_mark, NULL, &_traces);
-  rb_gc_register_address(&_gc_hook);
-
-  //pthread_cleanup_push(thread_cleanup_handler, NULL);
+  gc_hook = Data_Wrap_Struct(rb_cObject, &scoutprof_gc_mark, NULL, &_traces);
+  rb_global_variable(&gc_hook);
 
   return;
 }
