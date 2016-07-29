@@ -12,6 +12,7 @@ if can_compile_extensions &&
    have_func('rb_profile_frame_absolute_path') &&
    have_func('rb_profile_frame_label') &&
    have_func('rb_profile_frame_classpath')
+  $defs.push "-ggdb -O0" # Include debug symbols, no optimization.
   create_makefile('stacks')
 else
   # Create a dummy Makefile, to satisfy Gem::Installer#install
