@@ -192,19 +192,19 @@ class TraceLine
   end
 
   def file
-    @iseq.absolute_path
+    iseq.absolute_path
   end
 
   def line
-    @iseq.first_lineno
+    iseq.first_lineno
   end
 
   def klass
-    ScoutApm::Instruments::Stacks.klass_for_frame(@iseq)
+    ScoutApm::Instruments::Stacks.klass_for_frame(iseq)
   end
 
   def method
-    @iseq.label
+    iseq.label
   end
 
   def gem?
