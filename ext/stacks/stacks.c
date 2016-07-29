@@ -53,7 +53,7 @@ VALUE interval;
 const long INTERVAL = 1 * NANO_SECOND_MULTIPLIER; // milliseconds * NANO_SECOND_MULTIPLIER
 
 // Max threads to remove each dead_thread_sweeper interval
-#define MAX_REMOVES_PER_SWEEP 5
+#define MAX_REMOVES_PER_SWEEP 100
 
 #ifdef RUBY_INTERNAL_EVENT_NEWOBJ
 
@@ -84,7 +84,7 @@ static __thread atomic_uint_fast16_t _cur_traces_num = ATOMIC_VAR_INIT(0);
 static __thread atomic_uint_fast32_t _skipped_in_gc = ATOMIC_VAR_INIT(0);
 static __thread atomic_uint_fast32_t _skipped_in_signal_handler = ATOMIC_VAR_INIT(0);
 
-static __thread VALUE gc_hook;
+static __thread VALUE _gc_hook;
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // Globald variables
@@ -109,6 +109,12 @@ struct profiled_thread
 {
   pthread_t th;
   struct profiled_thread *next;
+
+  // Keep a pointer to the thread-local data that we ALLOC and wrap for Ruby Objectspace.
+  // We need this so we can free the thread local data from the dead thread sweeper, since we don't
+  // hook into a thread exiting in ruby to do it in the threads own context.
+  struct c_trace *_traces;
+  VALUE *_gc_hook;
 };
 
 /*
@@ -143,8 +149,12 @@ static VALUE rb_scout_add_profiled_thread(VALUE self)
   pthread_mutex_lock(&profiled_threads_mutex);
 
   thr = (struct profiled_thread *) malloc(sizeof(struct profiled_thread));
+
   thr->th = pthread_self();
+  thr->_traces = _traces;
+  thr->_gc_hook = &_gc_hook;
   thr->next = NULL;
+
   if (head_thread == NULL) {
     head_thread = thr;
   } else {
@@ -172,6 +182,12 @@ static int remove_profiled_thread(pthread_t th)
   for(ptr = head_thread; ptr != NULL; prev = ptr, ptr = ptr->next) {
     if (pthread_equal(th, ptr->th)) {
       fprintf(stderr, "APM DEBUG: Would remove thread id: %li\n", (unsigned long int)ptr->th);
+
+      // Unregister the _gc_hook from Ruby ObjectSpace, then free it as well as the _traces struct it wrapped.
+      rb_gc_unregister_address(ptr->_gc_hook);
+      xfree(ptr->_gc_hook);
+      xfree(ptr->_traces);
+
       if (prev == NULL) {
         head_thread = ptr->next; // We are head_thread
       } else {
@@ -413,8 +429,8 @@ init_thread_vars()
 
   _traces = ALLOC_N(struct c_trace, MAX_TRACES); // TODO Check return
 
-  gc_hook = Data_Wrap_Struct(rb_cObject, &scoutprof_gc_mark, NULL, &_traces);
-  rb_global_variable(&gc_hook);
+  _gc_hook = Data_Wrap_Struct(rb_cObject, &scoutprof_gc_mark, NULL, &_traces);
+  rb_gc_register_address(&_gc_hook);
 
   return;
 }
