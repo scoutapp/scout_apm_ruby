@@ -29,22 +29,82 @@
 #include <stdbool.h>
 #include <sys/time.h>
 
+/////////////////////////////////////////////////////////////////////////////////
+// ATOMIC DEFS
+//
+// GCC added C11 atomics in 4.9, which is after ubuntu 14.04's version. Provide
+// typedefs around what we really use to allow compatibility
+/////////////////////////////////////////////////////////////////////////////////
 
 // TODO: Check for GCC 4.9+, where C11 atomics were implemented
-#if 1
+#if 0
 
 // We have c11 atomics
 #include <stdatomic.h>
-#define ATOMIC_STORE(var, value) atomic_store(var, value)
+#define ATOMIC_STORE_BOOL(var, value) atomic_store(var, value)
+#define ATOMIC_STORE_INT16(var, value) atomic_store(var, value)
+#define ATOMIC_STORE_INT32(var, value) atomic_store(var, value)
 #define ATOMIC_LOAD(var) atomic_load(var)
 #define ATOMIC_ADD(var, value) atomic_fetch_add(var, value)
-#define ATOMIC_INIT(val) ATOMIC_VAR_INIT(val)
+#define ATOMIC_INIT(value) ATOMIC_VAR_INIT(value)
+
+typedef atomic_bool atomic_bool_t;
+typedef atomic_uint_fast16_t atomic_uint16_t;
+typedef atomic_uint_fast32_t atomic_uint32_t;
 
 #else
 
-// TODO: Figure out GCC non-C11 atomics
+typedef bool atomic_bool_t;
+typedef uint16_t atomic_uint16_t;
+typedef uint32_t atomic_uint32_t;
+
+// Function which abuses compare&swap to set the value to what you want.
+void scout_macro_fn_atomic_store_bool(bool* p_ai, bool val)
+{
+  bool ai_was;
+  ai_was = *p_ai;
+
+  do {
+    ai_was = __sync_val_compare_and_swap (p_ai, ai_was, val);
+  } while (ai_was != *p_ai);
+}
+
+// Function which abuses compare&swap to set the value to what you want.
+void scout_macro_fn_atomic_store_int16(atomic_uint16_t* p_ai, atomic_uint16_t val)
+{
+  atomic_uint16_t ai_was;
+  ai_was = *p_ai;
+
+  do {
+    ai_was = __sync_val_compare_and_swap (p_ai, ai_was, val);
+  } while (ai_was != *p_ai);
+}
+
+// Function which abuses compare&swap to set the value to what you want.
+void scout_macro_fn_atomic_store_int32(atomic_uint32_t* p_ai, atomic_uint32_t val)
+{
+  atomic_uint32_t ai_was;
+  ai_was = *p_ai;
+
+  do {
+    ai_was = __sync_val_compare_and_swap (p_ai, ai_was, val);
+  } while (ai_was != *p_ai);
+}
+
+
+#define ATOMIC_STORE_BOOL(var, value) scout_macro_fn_atomic_store_bool(var, value)
+#define ATOMIC_STORE_INT16(var, value) scout_macro_fn_atomic_store_int16(var, value)
+#define ATOMIC_STORE_INT32(var, value) scout_macro_fn_atomic_store_int32(var, value)
+#define ATOMIC_LOAD(var) __sync_fetch_and_add((var),0)
+#define ATOMIC_ADD(var, value) __sync_fetch_and_add((var), value)
+#define ATOMIC_INIT(value) value
+
 
 #endif
+
+/////////////////////////////////////////////////////////////////////////////////
+// END ATOMIC DEFS
+/////////////////////////////////////////////////////////////////////////////////
 
 
 
@@ -92,15 +152,15 @@ struct c_trace {
 
 static __thread struct c_trace *_traces;
 
-static __thread atomic_bool _ok_to_sample = ATOMIC_INIT(false);
-static __thread atomic_bool _in_signal_handler = ATOMIC_INIT(false);
+static __thread atomic_bool_t _ok_to_sample = ATOMIC_INIT(false);
+static __thread atomic_bool_t _in_signal_handler = ATOMIC_INIT(false);
 
-static __thread atomic_uint_fast16_t _start_frame_index = ATOMIC_INIT(0);
-static __thread atomic_uint_fast16_t _start_trace_index = ATOMIC_INIT(0);
-static __thread atomic_uint_fast16_t _cur_traces_num = ATOMIC_INIT(0);
+static __thread atomic_uint16_t _start_frame_index = ATOMIC_INIT(0);
+static __thread atomic_uint16_t _start_trace_index = ATOMIC_INIT(0);
+static __thread atomic_uint16_t _cur_traces_num = ATOMIC_INIT(0);
 
-static __thread atomic_uint_fast32_t _skipped_in_gc = ATOMIC_INIT(0);
-static __thread atomic_uint_fast32_t _skipped_in_signal_handler = ATOMIC_INIT(0);
+static __thread atomic_uint32_t _skipped_in_gc = ATOMIC_INIT(0);
+static __thread atomic_uint32_t _skipped_in_signal_handler = ATOMIC_INIT(0);
 
 static __thread VALUE _gc_hook;
 
@@ -108,7 +168,7 @@ static __thread VALUE _gc_hook;
 // Globald variables
 ////////////////////////////////////////////////////////////////////////////////////////
 
-static atomic_bool _job_registered = ATOMIC_VAR_INIT(false);
+static atomic_bool_t _job_registered = ATOMIC_INIT(false);
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // Thread Linked List
@@ -226,7 +286,7 @@ static int remove_profiled_thread(pthread_t th)
  */
 static VALUE rb_scout_remove_profiled_thread(VALUE self)
 {
-  ATOMIC_STORE(&_ok_to_sample, false);
+  ATOMIC_STORE_BOOL(&_ok_to_sample, false);
   remove_profiled_thread(pthread_self());
   return Qtrue;
 }
@@ -251,7 +311,7 @@ scout_signal_threads_to_profile()
       pthread_mutex_unlock(&profiled_threads_mutex);
     }
 
-    ATOMIC_STORE(&_job_registered, false);
+    ATOMIC_STORE_BOOL(&_job_registered, false);
 }
 
 static int sweep_dead_threads() {
@@ -338,7 +398,7 @@ background_worker()
         if (ATOMIC_LOAD(&_job_registered) == false){
           register_result = rb_postponed_job_register_one(0, scout_signal_threads_to_profile, 0);
           if ((register_result == 1) || (register_result == 2)) {
-            ATOMIC_STORE(&_job_registered, true);
+            ATOMIC_STORE_BOOL(&_job_registered, true);
           } else {
             fprintf(stderr, "Error: job was not registered! Result: %d\n", register_result);
           }
@@ -439,11 +499,11 @@ scoutprof_gc_mark(void *data)
 static void
 init_thread_vars()
 {
-  ATOMIC_STORE(&_ok_to_sample, false);
-  ATOMIC_STORE(&_in_signal_handler, false);
-  ATOMIC_STORE(&_start_frame_index, 0);
-  ATOMIC_STORE(&_start_trace_index, 0);
-  ATOMIC_STORE(&_cur_traces_num, 0);
+  ATOMIC_STORE_BOOL(&_ok_to_sample, false);
+  ATOMIC_STORE_BOOL(&_in_signal_handler, false);
+  ATOMIC_STORE_INT16(&_start_frame_index, 0);
+  ATOMIC_STORE_INT16(&_start_trace_index, 0);
+  ATOMIC_STORE_INT16(&_cur_traces_num, 0);
 
   _traces = ALLOC_N(struct c_trace, MAX_TRACES); // TODO Check return
 
@@ -467,11 +527,11 @@ scout_profile_broadcast_signal_handler(int sig)
     return;
   }
 
-  ATOMIC_STORE(&_in_signal_handler, true);
+  ATOMIC_STORE_BOOL(&_in_signal_handler, true);
 
   scout_record_sample();
 
-  ATOMIC_STORE(&_in_signal_handler, false);
+  ATOMIC_STORE_BOOL(&_in_signal_handler, false);
 }
 
 /*
@@ -545,7 +605,7 @@ static VALUE rb_scout_profile_frames(VALUE self)
   } else {
     traces = rb_ary_new();
   }
-  ATOMIC_STORE(&_cur_traces_num, start_trace_index);
+  ATOMIC_STORE_INT16(&_cur_traces_num, start_trace_index);
   return traces;
 }
 
@@ -559,7 +619,7 @@ static VALUE rb_scout_profile_frames(VALUE self)
 static VALUE
 rb_scout_start_sampling(VALUE self)
 {
-  ATOMIC_STORE(&_ok_to_sample, true);
+  ATOMIC_STORE_BOOL(&_ok_to_sample, true);
   return Qtrue;
 }
 
@@ -567,12 +627,12 @@ rb_scout_start_sampling(VALUE self)
 static VALUE
 rb_scout_stop_sampling(VALUE self, VALUE reset)
 {
-  ATOMIC_STORE(&_ok_to_sample, false);
+  ATOMIC_STORE_BOOL(&_ok_to_sample, false);
   // TODO: I think this can be (reset == Qtrue)
   if (TYPE(reset) == T_TRUE) {
-    ATOMIC_STORE(&_cur_traces_num, 0);
-    ATOMIC_STORE(&_skipped_in_gc, 0);
-    ATOMIC_STORE(&_skipped_in_signal_handler, 0);
+    ATOMIC_STORE_INT16(&_cur_traces_num, 0);
+    ATOMIC_STORE_INT32(&_skipped_in_gc, 0);
+    ATOMIC_STORE_INT32(&_skipped_in_signal_handler, 0);
   }
   return Qtrue;
 }
@@ -581,8 +641,8 @@ rb_scout_stop_sampling(VALUE self, VALUE reset)
 static VALUE
 rb_scout_update_indexes(VALUE self, VALUE frame_index, VALUE trace_index)
 {
-  ATOMIC_STORE(&_start_trace_index, NUM2INT(trace_index));
-  ATOMIC_STORE(&_start_frame_index, NUM2INT(frame_index));
+  ATOMIC_STORE_INT16(&_start_trace_index, NUM2INT(trace_index));
+  ATOMIC_STORE_INT16(&_start_frame_index, NUM2INT(frame_index));
   return Qtrue;
 }
 
