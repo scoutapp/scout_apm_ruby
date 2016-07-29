@@ -593,11 +593,6 @@ rb_scout_current_frame_index(VALUE self)
 }
 
 
-static VALUE
-rb_scout_klass_for_frame(VALUE self, VALUE frame)
-{
-  return rb_profile_frame_classpath(frame);
-}
 
 static VALUE
 rb_scout_skipped_in_gc(VALUE self)
@@ -611,7 +606,38 @@ rb_scout_skipped_in_handler(VALUE self)
   return INT2NUM(ATOMIC_LOAD(&_skipped_in_signal_handler));
 }
 
+////////////////////////////////////////////////////////////////
+// Fetch details from a frame
+////////////////////////////////////////////////////////////////
 
+static VALUE
+rb_scout_frame_klass(VALUE self, VALUE frame)
+{
+  return rb_profile_frame_classpath(frame);
+}
+
+static VALUE
+rb_scout_frame_method(VALUE self, VALUE frame)
+{
+  return rb_profile_frame_label(frame);
+}
+
+static VALUE
+rb_scout_frame_file(VALUE self, VALUE frame)
+{
+  return rb_profile_frame_absolute_path(frame);
+}
+
+static VALUE
+rb_scout_frame_lineno(VALUE self, VALUE frame)
+{
+  return rb_profile_frame_first_lineno(frame);
+
+}
+
+
+////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
 
 // Gem Init. Set up constants, attach methods
 void Init_stacks()
@@ -643,7 +669,11 @@ void Init_stacks()
     rb_define_singleton_method(cStacks, "update_indexes", rb_scout_update_indexes, 2);
     rb_define_singleton_method(cStacks, "current_trace_index", rb_scout_current_trace_index, 0);
     rb_define_singleton_method(cStacks, "current_frame_index", rb_scout_current_frame_index, 0);
-    rb_define_singleton_method(cStacks, "klass_for_frame", rb_scout_klass_for_frame, 1);
+
+    rb_define_singleton_method(cStacks, "frame_klass", rb_scout_frame_klass, 1);
+    rb_define_singleton_method(cStacks, "frame_method", rb_scout_frame_method, 1);
+    rb_define_singleton_method(cStacks, "frame_file", rb_scout_frame_file, 1);
+    rb_define_singleton_method(cStacks, "frame_lineno", rb_scout_frame_lineno, 1);
 
     rb_define_singleton_method(cStacks, "skipped_in_gc", rb_scout_skipped_in_gc, 0);
     rb_define_singleton_method(cStacks, "skipped_in_handler", rb_scout_skipped_in_handler, 0);
@@ -733,6 +763,30 @@ rb_scout_skipped_in_handler(VALUE self)
   return INT2NUM(0);
 }
 
+static VALUE
+rb_scout_frame_klass(VALUE self, VALUE frame)
+{
+  return Qnil;
+}
+
+static VALUE
+rb_scout_frame_method(VALUE self, VALUE frame)
+{
+  return Qnil;
+}
+
+static VALUE
+rb_scout_frame_file(VALUE self, VALUE frame)
+{
+  return Qnil;
+}
+
+static VALUE
+rb_scout_frame_lineno(VALUE self, VALUE frame)
+{
+  return Qnil;
+}
+
 void Init_stacks()
 {
     mScoutApm = rb_define_module("ScoutApm");
@@ -756,7 +810,11 @@ void Init_stacks()
     rb_define_singleton_method(cStacks, "update_indexes", rb_scout_update_indexes, 2);
     rb_define_singleton_method(cStacks, "current_trace_index", rb_scout_current_trace_index, 0);
     rb_define_singleton_method(cStacks, "current_frame_index", rb_scout_current_frame_index, 0);
-    rb_define_singleton_method(cStacks, "klass_for_frame", rb_scout_klass_for_frame, 1);
+
+    rb_define_singleton_method(cStacks, "frame_klass", rb_scout_frame_klass, 1);
+    rb_define_singleton_method(cStacks, "frame_method", rb_scout_frame_method, 1);
+    rb_define_singleton_method(cStacks, "frame_file", rb_scout_frame_file, 1);
+    rb_define_singleton_method(cStacks, "frame_lineno", rb_scout_frame_lineno, 1);
 
     rb_define_singleton_method(cStacks, "skipped_in_gc", rb_scout_skipped_in_gc, 0);
     rb_define_singleton_method(cStacks, "skipped_in_handler", rb_scout_skipped_in_handler, 0);

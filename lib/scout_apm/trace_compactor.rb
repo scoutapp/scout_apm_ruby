@@ -94,7 +94,7 @@ class CleanTrace
   attr_reader :lines
 
   def initialize(raw_trace, root_klass=nil)
-    @lines = Array(raw_trace).map {|iseq, line_no| TraceLine.new(iseq, line_no)}
+    @lines = Array(raw_trace).map {|frame, lineno| TraceLine.new(frame, lineno)}
     @root_klass = root_klass
 
     # A trace has interesting data in the middle of it, since normally it'll go
@@ -163,11 +163,15 @@ class CleanTrace
 end
 
 class TraceLine
-  attr_reader :iseq
+  # An opaque C object, only call Stacks#frame_* methods on this.
+  attr_reader :frame
 
-  def initialize(iseq, line_no)
-    @iseq = iseq
-    @line_no = line_no
+  # The line number. This doesn't appear to be obtainable from the frame itself
+  attr_reader :lineno
+
+  def initialize(frame, lineno)
+    @frame = frame
+    @lineno = lineno
   end
 
   # Returns the name of the last gem in the line
@@ -192,19 +196,21 @@ class TraceLine
   end
 
   def file
-    iseq.absolute_path
+    ScoutApm::Instruments::Stacks.frame_file(frame)
   end
 
+
+  # If we ever want to get the "first line of the method" - ScoutApm::Instruments::Stacks.frame_lineno(frame)
   def line
-    iseq.first_lineno
+    lineno
   end
 
   def klass
-    ScoutApm::Instruments::Stacks.klass_for_frame(iseq)
+    ScoutApm::Instruments::Stacks.frame_klass(frame)
   end
 
   def method
-    iseq.label
+    ScoutApm::Instruments::Stacks.frame_method(frame)
   end
 
   def gem?
