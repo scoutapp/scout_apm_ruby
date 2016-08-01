@@ -1,3 +1,7 @@
+# 1.6.8
+
+* Don't wait on a sleeping thread during shutdown
+
 # 1.6.7
 
 * Mongoid bugfixes
