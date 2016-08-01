@@ -38,22 +38,7 @@
 /////////////////////////////////////////////////////////////////////////////////
 
 // TODO: Check for GCC 4.9+, where C11 atomics were implemented
-#if 1
-
-// We have c11 atomics
-#include <stdatomic.h>
-#define ATOMIC_STORE_BOOL(var, value) atomic_store(var, value)
-#define ATOMIC_STORE_INT16(var, value) atomic_store(var, value)
-#define ATOMIC_STORE_INT32(var, value) atomic_store(var, value)
-#define ATOMIC_LOAD(var) atomic_load(var)
-#define ATOMIC_ADD(var, value) atomic_fetch_add(var, value)
-#define ATOMIC_INIT(value) ATOMIC_VAR_INIT(value)
-
-typedef atomic_bool atomic_bool_t;
-typedef atomic_uint_fast16_t atomic_uint16_t;
-typedef atomic_uint_fast32_t atomic_uint32_t;
-
-#else
+#ifdef __STDC_NO_ATOMICS__
 
 typedef bool atomic_bool_t;
 typedef uint16_t atomic_uint16_t;
@@ -100,6 +85,21 @@ void scout_macro_fn_atomic_store_int32(atomic_uint32_t* p_ai, atomic_uint32_t va
 #define ATOMIC_ADD(var, value) __sync_fetch_and_add((var), value)
 #define ATOMIC_INIT(value) value
 
+
+#else
+
+// We have c11 atomics
+#include <stdatomic.h>
+#define ATOMIC_STORE_BOOL(var, value) atomic_store(var, value)
+#define ATOMIC_STORE_INT16(var, value) atomic_store(var, value)
+#define ATOMIC_STORE_INT32(var, value) atomic_store(var, value)
+#define ATOMIC_LOAD(var) atomic_load(var)
+#define ATOMIC_ADD(var, value) atomic_fetch_add(var, value)
+#define ATOMIC_INIT(value) ATOMIC_VAR_INIT(value)
+
+typedef atomic_bool atomic_bool_t;
+typedef atomic_uint_fast16_t atomic_uint16_t;
+typedef atomic_uint_fast32_t atomic_uint32_t;
 
 #endif
 
