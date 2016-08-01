@@ -340,8 +340,8 @@ static int sweep_dead_threads() {
 
   // Remove the dead threads outside of the simple mutex.
   for (i = 0; i < dead_count; i++) {
-    fprintf(stderr, "APM DEBUG: Sweeper would remove thread id: %li\n", (unsigned long int)dead_thread_ids[i]);
-    //remove_profiled_thread(dead_thread_ids[i]);
+    fprintf(stderr, "APM DEBUG: Sweeper removed thread id: %li\n", (unsigned long int)dead_thread_ids[i]);
+    remove_profiled_thread(dead_thread_ids[i]);
   }
 
   return 0;
