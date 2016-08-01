@@ -1,9 +1,45 @@
-All components of this product, except where noted, are Copyright (c) 2013-2016 Zimuth, Inc DBA Scout. All rights reserved.
+# Scout Software Agent License 
 
-Certain inventions disclosed in this file may be claimed within patents owned or patent applications filed by Zimuth, Inc. or third parties.
+Subject to and conditioned upon your continued compliance with the terms and conditions of this license, Zimuth, Inc. grants you a non-exclusive, non-sublicensable and non-transferable, limited license to install, use and run one copy of this software on each of your and your affiliate’s computers.  This license also grants you the limited right to distribute verbatim copies of this software and documentation to third parties provided the software and documentation will (a) remain the exclusive property of Zimuth; (b) be subject to the terms and conditions of this license; and (c) include a complete and unaltered copy of this license and all other copyright or other intellectual property rights notices contained in the original.
 
-Subject to the terms of this notice, Zimuth grants you a nonexclusive, nontransferable license, without the right to sublicense, to (a) install and execute one copy of these files on any number of workstations owned or controlled by you and (b) distribute verbatim copies of these files to third parties. As a condition to the foregoing grant, you must provide this notice along with each copy you distribute and you must not remove, alter, or obscure this notice. All other use, reproduction, modification, distribution, or other exploitation of these files is strictly prohibited, except as may be set forth in a separate written license agreement between you and Zimuth. The terms of any such license agreement will control over this notice. The license stated above will be automatically terminated and revoked if you exceed its scope or violate any of the terms of this notice.
+The software includes the open-source components listed below. Any use of the open-source components by you shall be governed by, and subject to, the terms and conditions of the applicable open-source licenses.
 
-This License does not grant permission to use the trade names, trademarks, service marks, or product names of Zimuth, except as required for reasonable and customary use in describing the origin of this file and reproducing the content of this notice. You may not mark or brand this file with any trade name, trademarks, service marks, or product names other than the original brand (if any) provided by Zimuth.
+Except as this license expressly permits, you may not:
 
-Unless otherwise expressly agreed by Zimuth in a separate written license agreement, these files are provided AS IS, WITHOUT WARRANTY OF ANY KIND, including without any implied warranties of MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, or NON-INFRINGEMENT. As a condition to your use of these files, you are solely responsible for such use. Zimuth will have no liability to you for direct, indirect, consequential, incidental, special, or punitive damages or for lost profits or data.
+* copy the software, in whole or in part; 
+* modify, correct, adapt, translate, enhance or otherwise prepare derivative works or improvements of the software; 
+* sell, sublicense, assign, distribute, publish, transfer or otherwise make available the software to any person or entity; 
+* remove, delete, efface, alter, obscure, translate, combine, supplement or otherwise change any trademarks, terms of the documentation, warranties, disclaimers, or intellectual property rights, or other symbols, notices, marks or serial numbers on or relating to any copy of the software or documentation; or
+use the software in any manner or for any purpose that infringes, misappropriates or otherwise violates any intellectual property right or other right of any person or entity, or that violates any applicable law;
+
+By using the software, you acknowledge and agree that:
+
+* the software and documentation are licensed, not sold, to you by Zimuth and you do not and will not have or acquire under or in connection with this license any ownership interest in the software or documentation, or in any related intellectual property rights; and
+* Zimuth will remain the sole and exclusive owner of all right, title and interest in and to the software and documentation, including all related intellectual property rights, subject only to the rights of third parties in open-source components and the limited license granted to you under this license; and
+
+Except for the limited rights and licenses expressly granted to you under this agreement, nothing in this license grants, by implication, waiver, estoppel or otherwise, to you or any third party any intellectual property rights or other right, title, or interest in or to any of the software or documentation.
+ 
+This license shall be automatically terminated and revoked if you exceed the scope or violate any terms and conditions of this license. 
+
+ALL LICENSED SOFTWARE, DOCUMENTATION AND OTHER PRODUCTS, INFORMATION, MATERIALS AND SERVICES PROVIDED BY ZIMUTH ARE PROVIDED HERE “AS IS.” ZIMUTH DISCLAIMS ALL WARRANTIES, WHETHER EXPRESS, IMPLIED, STATUTORY OR OTHER (INCLUDING ALL WARRANTIES ARISING FROM COURSE OF DEALING, USAGE OR TRADE PRACTICE), AND SPECIFICALLY DISCLAIMS ALL IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. WITHOUT LIMITING THE FOREGOING, ZIMUTH MAKES NO WARRANTY OF ANY KIND THAT THE LICENSED SOFTWARE OR DOCUMENTATION, OR ANY OTHER LICENSOR OR THIRD-PARTY GOODS, SERVICES, TECHNOLOGIES OR MATERIALS, WILL MEET YOUR REQUIREMENTS, OPERATE WITHOUT INTERRUPTION, ACHIEVE ANY INTENDED RESULT, BE COMPATIBLE OR WORK WITH ANY OTHER GOODS, SERVICES, TECHNOLOGIES OR MATERIALS (INCLUDING ANY SOFTWARE, HARDWARE, SYSTEM OR NETWORK) EXCEPT IF AND TO THE EXTENT EXPRESSLY SET FORTH IN THE DOCUMENTATION, OR BE SECURE, ACCURATE, COMPLETE, FREE OF HARMFUL CODE OR ERROR FREE. ALL OPEN-SOURCE COMPONENTS AND OTHER THIRD-PARTY MATERIALS ARE PROVIDED “AS IS” AND ANY REPRESENTATION OR WARRANTY OF OR CONCERNING ANY OF THEM IS STRICTLY BETWEEN LICENSEE AND THE THIRD-PARTY OWNER OR DISTRIBUTOR OF SUCH OPEN-SOURCE COMPONENTS AND THIRD-PARTY MATERIALS.
+ 
+IN NO EVENT WILL ZIMUTH BE LIABLE UNDER OR IN CONNECTION WITH THIS LICENSE OR ITS SUBJECT MATTER UNDER ANY LEGAL OR EQUITABLE THEORY, INCLUDING BREACH OF CONTRACT, TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY AND OTHERWISE, FOR ANY CONSEQUENTIAL, INCIDENTAL, INDIRECT, EXEMPLARY, SPECIAL, ENHANCED OR PUNITIVE DAMAGES, IN EACH CASE REGARDLESS OF WHETHER SUCH PERSONS WERE ADVISED OF THE POSSIBILITY OF SUCH LOSSES OR DAMAGES OR SUCH LOSSES OR DAMAGES WERE OTHERWISE FORESEEABLE, AND NOTWITHSTANDING THE FAILURE OF ANY AGREED OR OTHER REMEDY OF ITS ESSENTIAL PURPOSE.
+
+## OPEN SOURCE COMPONENTS
+
+This product includes `rusage`, distributed under the ISC license.
+See https://github.com/bnoordhuis/node-rusage
+
+    Copyright (c) 2013, Ben Noordhuis <info@bnoordhuis.nl>
+
+    Permission to use, copy, modify, and/or distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+    MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
