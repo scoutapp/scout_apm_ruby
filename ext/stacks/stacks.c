@@ -167,7 +167,7 @@ static __thread atomic_uint32_t _rescued_profile_frames = ATOMIC_INIT(0);
 static __thread VALUE _gc_hook;
 
 static __thread jmp_buf _return_to_profile_handler;
-static __thread sig_t _saved_segv_handler = NULL;
+static __thread sig_t _saved_abrt_handler = NULL;
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // Globald variables
@@ -433,26 +433,18 @@ rb_scout_start_profiling(VALUE self)
   return Qtrue;
 }
 
-/* rb_scout_uninstall_profiling: removes global timer, and removes global SIGALRM handler
+/*  rb_scout_uninstall_profiling: called when ruby is shutting down.
+ *  NOTE: If ever this method should be called where Ruby should continue to run, we need to free our
+ *        memory allocated in each profiled thread.
  */
 static VALUE
 rb_scout_uninstall_profiling(VALUE self)
 {
-  struct profiled_thread *ptr, *next;
-
   pthread_mutex_lock(&profiled_threads_mutex);
 
   // stop background worker threads
   pthread_cancel(btid); // TODO: doing a pthread_join after cancel is the only way to wait and know if the thread actually exited.
   pthread_cancel(thread_sweeper_id); // TODO: doing a pthread_join after cancel is the only way to wait and know if the thread actually exited.
-
-  // Free all profiled_threads
-  next = NULL;
-  for (ptr = head_thread; ptr != NULL; ptr = next) {
-    fprintf(stderr, "APM DEBUG: Shutdown removed thread id: %li\n", (unsigned long int)ptr->th);
-    next = ptr->next;
-    free(ptr);
-  }
 
   pthread_mutex_unlock(&profiled_threads_mutex);
 
@@ -542,7 +534,7 @@ scout_profile_broadcast_signal_handler(int sig)
  *  If this method is called, lngjmp to scout_record_sample()
  */
 static void
-segv_handler(int sig)
+scout_abrt_handler(int sig)
 {
   longjmp(_return_to_profile_handler, 1);
 }
@@ -570,12 +562,12 @@ scout_record_sample()
   start_frame_index = ATOMIC_LOAD(&_start_frame_index);
 
   if (cur_traces_num < MAX_TRACES) {
-    // NOTE: We are capturing any SIGSEGV raised by Ruby during the call to rb_profile_frames.
-    // Using setjmp/lngjmp causes intermediate frames to be **skipped at the point of the SIGSEGV call
+    // NOTE: We are capturing any SIGABRT raised by Ruby during the call to rb_profile_frames.
+    // Using setjmp/lngjmp causes intermediate frames to be **skipped at the point of the SIGABRT call
     // to where the setjmp is fist called**. This is safe to do for rb_profile_frames since it does not
     // do any allocations or need any cleanup if there is a jump.
     // setjmp returns 0 when it sets the jmp buffer
-    _saved_segv_handler = signal(SIGSEGV, segv_handler);
+    _saved_abrt_handler = signal(SIGABRT, scout_abrt_handler);
     if (setjmp(_return_to_profile_handler) == 0) {
       num_frames = rb_profile_frames(0, sizeof(_traces[cur_traces_num].frames_buf) / sizeof(VALUE), _traces[cur_traces_num].frames_buf, _traces[cur_traces_num].lines_buf);
       if (num_frames - start_frame_index > 2) {
@@ -584,8 +576,8 @@ scout_record_sample()
       } // TODO: add an else with a counter so we can track if we skipped profiling here
     } else {
       // We are returning to this frame from a lngjmp
-      signal(SIGSEGV, _saved_segv_handler);
-      _saved_segv_handler = NULL;
+      signal(SIGABRT, _saved_abrt_handler);
+      _saved_abrt_handler = NULL;
       ATOMIC_ADD(&_rescued_profile_frames, 1);
     }
   }
@@ -608,6 +600,7 @@ static VALUE rb_scout_profile_frames(VALUE self)
     fprintf(stderr, "CUR TRACES: %"PRIuFAST16"\n", cur_traces_num);
     fprintf(stderr, "START TRACE IDX: %"PRIuFAST16"\n", start_trace_index);
     fprintf(stderr, "TRACES COUNT: %"PRIuFAST16"\n", cur_traces_num - start_trace_index);
+    fprintf(stderr, "RESCUED IN ABRT: %"PRIuFAST32"\n", _rescued_profile_frames);
     traces = rb_ary_new2(cur_traces_num - start_trace_index);
     for(i = start_trace_index; i < cur_traces_num; i++) {
       if (_traces[i].num_tracelines > 0) {
