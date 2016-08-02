@@ -12,6 +12,7 @@ module ScoutApm
     end
 
     def stop
+      ScoutApm::Agent.instance.logger.debug "Background Worker: stop requested"
       @keep_running = false
     end
 
@@ -25,23 +26,26 @@ module ScoutApm
       @task = block
 
       begin
-        ScoutApm::Agent.instance.logger.debug "Starting Background Worker, running every #{period} seconds"
+        ScoutApm::Agent.instance.logger.debug "Background Worker: Starting Background Worker, running every #{period} seconds"
 
         # The first run should be 1 period of time from now
         next_time = Time.now + period
 
         loop do
+          # Bail out if @keep_running is false
+          unless @keep_running
+            ScoutApm::Agent.instance.logger.debug "Background Worker: breaking from loop"
+            break
+          end
+
           now = Time.now
 
           # Sleep the correct amount of time to reach next_time
-          while now < next_time
+          while now < next_time && @keep_running
             sleep_time = next_time - now
             sleep(sleep_time) if sleep_time > 0
             now = Time.now
           end
-
-          # Bail out if @keep_running is false
-          break unless @keep_running
 
           @task.call
 
@@ -49,7 +53,6 @@ module ScoutApm
           while next_time <= now
             next_time += period
           end
-
         end
       rescue
         ScoutApm::Agent.instance.logger.debug "Background Worker Exception!"

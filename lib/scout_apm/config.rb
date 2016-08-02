@@ -16,6 +16,7 @@ require 'scout_apm/environment'
 # name             - override the name reported to APM. This is the name that shows in the Web UI
 # uri_reporting    - 'path' or 'full_path' default is 'full_path', which reports URL params as well as the path.
 # report_format    - 'json' or 'marshal'. Marshal is legacy and will be removed.
+# dev_trace        - true or false. Enables always-on tracing in development environmen only
 #
 # Any of these config settings can be set with an environment variable prefixed
 # by SCOUT_ and uppercasing the key: SCOUT_LOG_LEVEL for instance.
@@ -73,7 +74,7 @@ module ScoutApm
         'disabled_instruments'   => [],
         'enable_background_jobs' => true,
         'ignore_traces' => [],
-        'instant' => false, # false for now so code can live in main branch
+        'dev_trace' => false, # false for now so code can live in main branch
       }.freeze
 
       def value(key)

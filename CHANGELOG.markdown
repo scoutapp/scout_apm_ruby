@@ -10,6 +10,14 @@
 * Remove unused & old references to Stackprof
 * Fixing exception on load if no config file is provided
 
+# 1.6.8
+
+* Don't wait on a sleeping thread during shutdown
+
+# 1.6.7
+
+* Mongoid bugfixes
+
 # 1.6.6
 
 * Bugfix related to DB detection
