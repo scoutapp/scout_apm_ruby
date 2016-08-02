@@ -166,14 +166,16 @@ static __thread atomic_uint32_t _rescued_profile_frames = ATOMIC_INIT(0);
 
 static __thread VALUE _gc_hook;
 
+static __thread atomic_bool_t _job_registered = ATOMIC_INIT(false);
+
 static __thread jmp_buf _return_to_profile_handler;
 static __thread sig_t _saved_abrt_handler = NULL;
 
 ////////////////////////////////////////////////////////////////////////////////////////
-// Globald variables
+// Global variables
 ////////////////////////////////////////////////////////////////////////////////////////
 
-static atomic_bool_t _job_registered = ATOMIC_INIT(false);
+
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // Thread Linked List
@@ -303,20 +305,18 @@ static VALUE rb_scout_remove_profiled_thread(VALUE self)
 static void
 scout_signal_threads_to_profile()
 {
-    struct profiled_thread *ptr;
+  struct profiled_thread *ptr;
 
-    if (pthread_mutex_trylock(&profiled_threads_mutex) == 0) { // Only run if we get the mutex.
-      ptr = head_thread;
-      while(ptr != NULL) {
-        if (pthread_kill(ptr->th, 0) != ESRCH) { // Check for existence of thread. If ESRCH is returned, don't send the real signal!
-          pthread_kill(ptr->th, SIGVTALRM);
-        }
-        ptr = ptr->next;
+  if (pthread_mutex_trylock(&profiled_threads_mutex) == 0) { // Only run if we get the mutex.
+    ptr = head_thread;
+    while(ptr != NULL) {
+      if (pthread_kill(ptr->th, 0) != ESRCH) { // Check for existence of thread. If ESRCH is returned, don't send the real signal!
+        pthread_kill(ptr->th, SIGVTALRM);
       }
-      pthread_mutex_unlock(&profiled_threads_mutex);
+      ptr = ptr->next;
     }
-
-    ATOMIC_STORE_BOOL(&_job_registered, false);
+    pthread_mutex_unlock(&profiled_threads_mutex);
+  }
 }
 
 static int sweep_dead_threads() {
@@ -380,7 +380,7 @@ dead_thread_sweeper() {
 void *
 background_worker()
 {
-  int clock_result, register_result;
+  int clock_result;
   struct timespec clock_remaining;
   struct timespec sleep_time = {.tv_sec = 0, .tv_nsec = INTERVAL};
 
@@ -397,18 +397,7 @@ background_worker()
 #endif
 
     if (clock_result == 0) {
-      if (rb_during_gc()) {
-        //_skipped_in_gc++;
-      } else {
-        if (ATOMIC_LOAD(&_job_registered) == false){
-          register_result = rb_postponed_job_register_one(0, scout_signal_threads_to_profile, 0);
-          if ((register_result == 1) || (register_result == 2)) {
-            ATOMIC_STORE_BOOL(&_job_registered, true);
-          } else {
-            fprintf(stderr, "Error: job was not registered! Result: %d\n", register_result);
-          }
-        } // !_job_registered
-      }
+      scout_signal_threads_to_profile();
     } else if (clock_result == EINTR) {
       sleep_time = clock_remaining;
       goto SNOOZE;
@@ -516,6 +505,8 @@ init_thread_vars()
 static void
 scout_profile_broadcast_signal_handler(int sig)
 {
+  int register_result;
+
   if (ATOMIC_LOAD(&_ok_to_sample) == false) return;
 
   if (ATOMIC_LOAD(&_in_signal_handler) == true) {
@@ -525,7 +516,18 @@ scout_profile_broadcast_signal_handler(int sig)
 
   ATOMIC_STORE_BOOL(&_in_signal_handler, true);
 
-  scout_record_sample();
+  if (rb_during_gc()) {
+    ATOMIC_ADD(&_skipped_in_gc, 1);
+  } else {
+    if (ATOMIC_LOAD(&_job_registered) == false){
+      register_result = rb_postponed_job_register(0, scout_record_sample, 0);
+      if ((register_result == 1) || (register_result == 2)) {
+        ATOMIC_STORE_BOOL(&_job_registered, true);
+      } else {
+        fprintf(stderr, "Error: job was not registered! Result: %d\n", register_result);
+      }
+    } // !_job_registered
+  }
 
   ATOMIC_STORE_BOOL(&_in_signal_handler, false);
 }
@@ -581,6 +583,7 @@ scout_record_sample()
       ATOMIC_ADD(&_rescued_profile_frames, 1);
     }
   }
+  ATOMIC_STORE_BOOL(&_job_registered, false);
 }
 
 /* rb_scout_profile_frames: retreive the traces for the layer that is exiting
