@@ -197,15 +197,17 @@ module ScoutApm
     def shutdown
       logger.info "Shutting down ScoutApm"
       return if !started?
+
       if @background_worker
+        logger.info("Stopping background worker")
         @background_worker.stop
         store.write_to_layaway(layaway, :force)
       end
 
-      # make sure we don't exit the process while the background worker is running its task. Bypass this step in development.
-      if environment.env != 'development'
-        logger.debug "Joining background worker thread"
-        @background_worker_thread.join if @background_worker_thread
+      logger.debug "Joining background worker thread"
+      if @background_worker_thread
+        @background_worker_thread.wakeup
+        @background_worker_thread.join
       end
       ScoutApm::Instruments::Stacks.uninstall
     end

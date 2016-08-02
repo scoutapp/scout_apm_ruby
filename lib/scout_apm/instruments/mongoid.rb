@@ -17,7 +17,7 @@ module ScoutApm
 
         # Mongoid versions that use Moped should instrument Moped.
         if defined?(::Mongoid) and !defined?(::Moped)
-          ScoutApm::Agent.instance.logger.info "Instrumenting Mongoid"
+          ScoutApm::Agent.instance.logger.info "Instrumenting Mongoid 2.x"
 
           ### OLD (2.x) mongoids
           if defined?(::Mongoid::Collection)
@@ -33,6 +33,7 @@ module ScoutApm
 
           ### 5.x Mongoid
           if mongoid_v5? && defined?(::Mongoid::Contextual::Mongo)
+            ScoutApm::Agent.instance.logger.info "Instrumenting Mongoid 5.x"
             # All the public methods from Mongoid::Contextual::Mongo.
             # TODO: Geo and MapReduce support (?). They are in other Contextual::* classes
             methods = [
@@ -46,8 +47,8 @@ module ScoutApm
 
             methods.each do |method|
               if ::Mongoid::Contextual::Mongo.method_defined?(method)
-                with_scout_instruments = %Q|
-                def #{method}_with_scout_instruments(*args)
+                with_scout_instruments = %Q[
+                def #{method}_with_scout_instruments(*args, &block)
 
                   req = ScoutApm::RequestManager.lookup
                   *db, collection = view.collection.namespace.split(".")
@@ -60,7 +61,7 @@ module ScoutApm
 
                   req.start_layer( layer )
                   begin
-                    #{method}_without_scout_instruments
+                    #{method}_without_scout_instruments(*args, &block)
                   ensure
                     req.stop_layer
                   end
@@ -68,7 +69,7 @@ module ScoutApm
 
                 alias_method :#{method}_without_scout_instruments, :#{method}
                 alias_method :#{method}, :#{method}_with_scout_instruments
-                |
+                ]
 
                 ::Mongoid::Contextual::Mongo.class_eval(with_scout_instruments)
               end
