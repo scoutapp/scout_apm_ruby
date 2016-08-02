@@ -645,6 +645,10 @@ rb_scout_stop_sampling(VALUE self, VALUE reset)
   ATOMIC_STORE_BOOL(&_ok_to_sample, false);
   // TODO: I think this can be (reset == Qtrue)
   if (TYPE(reset) == T_TRUE) {
+    ATOMIC_STORE_BOOL(&_job_registered, 0);
+    ATOMIC_STORE_BOOL(&_in_signal_handler, 0);
+    ATOMIC_STORE_INT16(&_start_trace_index, 0);
+    ATOMIC_STORE_INT16(&_start_frame_index, 0);
     ATOMIC_STORE_INT16(&_cur_traces_num, 0);
     ATOMIC_STORE_INT32(&_skipped_in_gc, 0);
     ATOMIC_STORE_INT32(&_skipped_in_signal_handler, 0);
