@@ -25,26 +25,87 @@
 #include <inttypes.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <setjmp.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <sys/time.h>
 
+/////////////////////////////////////////////////////////////////////////////////
+// ATOMIC DEFS
+//
+// GCC added C11 atomics in 4.9, which is after ubuntu 14.04's version. Provide
+// typedefs around what we really use to allow compatibility
+/////////////////////////////////////////////////////////////////////////////////
 
 // TODO: Check for GCC 4.9+, where C11 atomics were implemented
 #if 1
 
 // We have c11 atomics
 #include <stdatomic.h>
-#define ATOMIC_STORE(var, value) atomic_store(var, value)
+#define ATOMIC_STORE_BOOL(var, value) atomic_store(var, value)
+#define ATOMIC_STORE_INT16(var, value) atomic_store(var, value)
+#define ATOMIC_STORE_INT32(var, value) atomic_store(var, value)
 #define ATOMIC_LOAD(var) atomic_load(var)
 #define ATOMIC_ADD(var, value) atomic_fetch_add(var, value)
-#define ATOMIC_INIT(val) ATOMIC_VAR_INIT(val)
+#define ATOMIC_INIT(value) ATOMIC_VAR_INIT(value)
+
+typedef atomic_bool atomic_bool_t;
+typedef atomic_uint_fast16_t atomic_uint16_t;
+typedef atomic_uint_fast32_t atomic_uint32_t;
 
 #else
 
-// TODO: Figure out GCC non-C11 atomics
+typedef bool atomic_bool_t;
+typedef uint16_t atomic_uint16_t;
+typedef uint32_t atomic_uint32_t;
+
+// Function which abuses compare&swap to set the value to what you want.
+void scout_macro_fn_atomic_store_bool(bool* p_ai, bool val)
+{
+  bool ai_was;
+  ai_was = *p_ai;
+
+  do {
+    ai_was = __sync_val_compare_and_swap (p_ai, ai_was, val);
+  } while (ai_was != *p_ai);
+}
+
+// Function which abuses compare&swap to set the value to what you want.
+void scout_macro_fn_atomic_store_int16(atomic_uint16_t* p_ai, atomic_uint16_t val)
+{
+  atomic_uint16_t ai_was;
+  ai_was = *p_ai;
+
+  do {
+    ai_was = __sync_val_compare_and_swap (p_ai, ai_was, val);
+  } while (ai_was != *p_ai);
+}
+
+// Function which abuses compare&swap to set the value to what you want.
+void scout_macro_fn_atomic_store_int32(atomic_uint32_t* p_ai, atomic_uint32_t val)
+{
+  atomic_uint32_t ai_was;
+  ai_was = *p_ai;
+
+  do {
+    ai_was = __sync_val_compare_and_swap (p_ai, ai_was, val);
+  } while (ai_was != *p_ai);
+}
+
+
+#define ATOMIC_STORE_BOOL(var, value) scout_macro_fn_atomic_store_bool(var, value)
+#define ATOMIC_STORE_INT16(var, value) scout_macro_fn_atomic_store_int16(var, value)
+#define ATOMIC_STORE_INT32(var, value) scout_macro_fn_atomic_store_int32(var, value)
+#define ATOMIC_LOAD(var) __sync_fetch_and_add((var),0)
+#define ATOMIC_ADD(var, value) __sync_fetch_and_add((var), value)
+#define ATOMIC_INIT(value) value
+
 
 #endif
+
+/////////////////////////////////////////////////////////////////////////////////
+// END ATOMIC DEFS
+/////////////////////////////////////////////////////////////////////////////////
 
 
 
@@ -71,7 +132,7 @@ VALUE interval;
 const long INTERVAL = 1 * NANO_SECOND_MULTIPLIER; // milliseconds * NANO_SECOND_MULTIPLIER
 
 // Max threads to remove each dead_thread_sweeper interval
-#define MAX_REMOVES_PER_SWEEP 5
+#define MAX_REMOVES_PER_SWEEP 100
 
 #ifdef RUBY_INTERNAL_EVENT_NEWOBJ
 
@@ -92,23 +153,29 @@ struct c_trace {
 
 static __thread struct c_trace *_traces;
 
-static __thread atomic_bool _ok_to_sample = ATOMIC_INIT(false);
-static __thread atomic_bool _in_signal_handler = ATOMIC_INIT(false);
+static __thread atomic_bool_t _ok_to_sample = ATOMIC_INIT(false);
+static __thread atomic_bool_t _in_signal_handler = ATOMIC_INIT(false);
 
-static __thread atomic_uint_fast16_t _start_frame_index = ATOMIC_INIT(0);
-static __thread atomic_uint_fast16_t _start_trace_index = ATOMIC_INIT(0);
-static __thread atomic_uint_fast16_t _cur_traces_num = ATOMIC_INIT(0);
+static __thread atomic_uint16_t _start_frame_index = ATOMIC_INIT(0);
+static __thread atomic_uint16_t _start_trace_index = ATOMIC_INIT(0);
+static __thread atomic_uint16_t _cur_traces_num = ATOMIC_INIT(0);
 
-static __thread atomic_uint_fast32_t _skipped_in_gc = ATOMIC_INIT(0);
-static __thread atomic_uint_fast32_t _skipped_in_signal_handler = ATOMIC_INIT(0);
+static __thread atomic_uint32_t _skipped_in_gc = ATOMIC_INIT(0);
+static __thread atomic_uint32_t _skipped_in_signal_handler = ATOMIC_INIT(0);
+static __thread atomic_uint32_t _rescued_profile_frames = ATOMIC_INIT(0);
 
-static __thread VALUE gc_hook;
+static __thread VALUE _gc_hook;
+
+static __thread atomic_bool_t _job_registered = ATOMIC_INIT(false);
+
+static __thread jmp_buf _return_to_profile_handler;
+static __thread sig_t _saved_abrt_handler = NULL;
 
 ////////////////////////////////////////////////////////////////////////////////////////
-// Globald variables
+// Global variables
 ////////////////////////////////////////////////////////////////////////////////////////
 
-static atomic_bool _job_registered = ATOMIC_VAR_INIT(false);
+
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // Thread Linked List
@@ -127,6 +194,12 @@ struct profiled_thread
 {
   pthread_t th;
   struct profiled_thread *next;
+
+  // Keep a pointer to the thread-local data that we ALLOC and wrap for Ruby Objectspace.
+  // We need this so we can free the thread local data from the dead thread sweeper, since we don't
+  // hook into a thread exiting in ruby to do it in the threads own context.
+  struct c_trace *_traces;
+  VALUE *_gc_hook;
 };
 
 /*
@@ -161,8 +234,12 @@ static VALUE rb_scout_add_profiled_thread(VALUE self)
   pthread_mutex_lock(&profiled_threads_mutex);
 
   thr = (struct profiled_thread *) malloc(sizeof(struct profiled_thread));
+
   thr->th = pthread_self();
+  thr->_traces = _traces;
+  thr->_gc_hook = &_gc_hook;
   thr->next = NULL;
+
   if (head_thread == NULL) {
     head_thread = thr;
   } else {
@@ -190,6 +267,12 @@ static int remove_profiled_thread(pthread_t th)
   for(ptr = head_thread; ptr != NULL; prev = ptr, ptr = ptr->next) {
     if (pthread_equal(th, ptr->th)) {
       fprintf(stderr, "APM DEBUG: Would remove thread id: %li\n", (unsigned long int)ptr->th);
+
+      // Unregister the _gc_hook from Ruby ObjectSpace, then free it as well as the _traces struct it wrapped.
+      rb_gc_unregister_address(ptr->_gc_hook);
+      xfree(ptr->_gc_hook);
+      xfree(ptr->_traces);
+
       if (prev == NULL) {
         head_thread = ptr->next; // We are head_thread
       } else {
@@ -210,7 +293,7 @@ static int remove_profiled_thread(pthread_t th)
  */
 static VALUE rb_scout_remove_profiled_thread(VALUE self)
 {
-  ATOMIC_STORE(&_ok_to_sample, false);
+  ATOMIC_STORE_BOOL(&_ok_to_sample, false);
   remove_profiled_thread(pthread_self());
   return Qtrue;
 }
@@ -222,20 +305,19 @@ static VALUE rb_scout_remove_profiled_thread(VALUE self)
 static void
 scout_signal_threads_to_profile()
 {
-    struct profiled_thread *ptr;
+  struct profiled_thread *ptr;
 
-    if (pthread_mutex_trylock(&profiled_threads_mutex) == 0) { // Only run if we get the mutex.
-      ptr = head_thread;
-      while(ptr != NULL) {
-        if (pthread_kill(ptr->th, 0) != ESRCH) { // Check for existence of thread. If ESRCH is returned, don't send the real signal!
-          pthread_kill(ptr->th, SIGVTALRM);
-        }
-        ptr = ptr->next;
+  if (pthread_mutex_trylock(&profiled_threads_mutex) == 0) { // Only run if we get the mutex.
+    ptr = head_thread;
+    while(ptr != NULL) {
+      if (pthread_kill(ptr->th, 0) != ESRCH) { // Check for existence of thread. If ESRCH is returned, don't send the real signal!
+        pthread_kill(ptr->th, SIGVTALRM);
       }
-      pthread_mutex_unlock(&profiled_threads_mutex);
+      ptr = ptr->next;
     }
 
-    ATOMIC_STORE(&_job_registered, false);
+    pthread_mutex_unlock(&profiled_threads_mutex);
+  }
 }
 
 static int sweep_dead_threads() {
@@ -259,8 +341,8 @@ static int sweep_dead_threads() {
 
   // Remove the dead threads outside of the simple mutex.
   for (i = 0; i < dead_count; i++) {
-    fprintf(stderr, "APM DEBUG: Sweeper would remove thread id: %li\n", (unsigned long int)dead_thread_ids[i]);
-    //remove_profiled_thread(dead_thread_ids[i]);
+    fprintf(stderr, "APM DEBUG: Sweeper removed thread id: %li\n", (unsigned long int)dead_thread_ids[i]);
+    remove_profiled_thread(dead_thread_ids[i]);
   }
 
   return 0;
@@ -299,7 +381,7 @@ dead_thread_sweeper() {
 void *
 background_worker()
 {
-  int clock_result, register_result;
+  int clock_result;
   struct timespec clock_remaining;
   struct timespec sleep_time = {.tv_sec = 0, .tv_nsec = INTERVAL};
 
@@ -316,18 +398,7 @@ background_worker()
 #endif
 
     if (clock_result == 0) {
-      if (rb_during_gc()) {
-        //_skipped_in_gc++;
-      } else {
-        if (ATOMIC_LOAD(&_job_registered) == false){
-          register_result = rb_postponed_job_register_one(0, scout_signal_threads_to_profile, 0);
-          if ((register_result == 1) || (register_result == 2)) {
-            ATOMIC_STORE(&_job_registered, true);
-          } else {
-            fprintf(stderr, "Error: job was not registered! Result: %d\n", register_result);
-          }
-        } // !_job_registered
-      }
+      scout_signal_threads_to_profile();
     } else if (clock_result == EINTR) {
       sleep_time = clock_remaining;
       goto SNOOZE;
@@ -352,26 +423,18 @@ rb_scout_start_profiling(VALUE self)
   return Qtrue;
 }
 
-/* rb_scout_uninstall_profiling: removes global timer, and removes global SIGALRM handler
+/*  rb_scout_uninstall_profiling: called when ruby is shutting down.
+ *  NOTE: If ever this method should be called where Ruby should continue to run, we need to free our
+ *        memory allocated in each profiled thread.
  */
 static VALUE
 rb_scout_uninstall_profiling(VALUE self)
 {
-  struct profiled_thread *ptr, *next;
-
   pthread_mutex_lock(&profiled_threads_mutex);
 
   // stop background worker threads
   pthread_cancel(btid); // TODO: doing a pthread_join after cancel is the only way to wait and know if the thread actually exited.
   pthread_cancel(thread_sweeper_id); // TODO: doing a pthread_join after cancel is the only way to wait and know if the thread actually exited.
-
-  // Free all profiled_threads
-  next = NULL;
-  for (ptr = head_thread; ptr != NULL; ptr = next) {
-    fprintf(stderr, "APM DEBUG: Shutdown removed thread id: %li\n", (unsigned long int)ptr->th);
-    next = ptr->next;
-    free(ptr);
-  }
 
   pthread_mutex_unlock(&profiled_threads_mutex);
 
@@ -423,27 +486,28 @@ scoutprof_gc_mark(void *data)
 static void
 init_thread_vars()
 {
-  ATOMIC_STORE(&_ok_to_sample, false);
-  ATOMIC_STORE(&_in_signal_handler, false);
-  ATOMIC_STORE(&_start_frame_index, 0);
-  ATOMIC_STORE(&_start_trace_index, 0);
-  ATOMIC_STORE(&_cur_traces_num, 0);
+  ATOMIC_STORE_BOOL(&_ok_to_sample, false);
+  ATOMIC_STORE_BOOL(&_in_signal_handler, false);
+  ATOMIC_STORE_INT16(&_start_frame_index, 0);
+  ATOMIC_STORE_INT16(&_start_trace_index, 0);
+  ATOMIC_STORE_INT16(&_cur_traces_num, 0);
 
   _traces = ALLOC_N(struct c_trace, MAX_TRACES); // TODO Check return
 
-  gc_hook = Data_Wrap_Struct(rb_cObject, &scoutprof_gc_mark, NULL, &_traces);
-  rb_global_variable(&gc_hook);
+  _gc_hook = Data_Wrap_Struct(rb_cObject, &scoutprof_gc_mark, NULL, &_traces);
+  rb_gc_register_address(&_gc_hook);
 
   return;
 }
 
-/* scout_profile_broadcast_signal_handler: Signal handler for each thread. 
- *
- * proxies off to scout_profile_job_handler via Ruby's rb_postponed_job_register
+/*
+ *  Signal handler for each thread. Invoked from a signal when a job is run within Ruby's postponed_job queue
  */
 static void
 scout_profile_broadcast_signal_handler(int sig)
 {
+  int register_result;
+
   if (ATOMIC_LOAD(&_ok_to_sample) == false) return;
 
   if (ATOMIC_LOAD(&_in_signal_handler) == true) {
@@ -451,11 +515,32 @@ scout_profile_broadcast_signal_handler(int sig)
     return;
   }
 
-  ATOMIC_STORE(&_in_signal_handler, true);
 
-  scout_record_sample();
+  ATOMIC_STORE_BOOL(&_in_signal_handler, true);
 
-  ATOMIC_STORE(&_in_signal_handler, false);
+  if (rb_during_gc()) {
+    ATOMIC_ADD(&_skipped_in_gc, 1);
+  } else {
+    if (ATOMIC_LOAD(&_job_registered) == false){
+      register_result = rb_postponed_job_register(0, scout_record_sample, 0);
+      if ((register_result == 1) || (register_result == 2)) {
+        ATOMIC_STORE_BOOL(&_job_registered, true);
+      } else {
+        fprintf(stderr, "Error: job was not registered! Result: %d\n", register_result);
+      }
+    } // !_job_registered
+  }
+
+  ATOMIC_STORE_BOOL(&_in_signal_handler, false);
+}
+
+/*
+ *  If this method is called, lngjmp to scout_record_sample()
+ */
+static void
+scout_abrt_handler(int sig)
+{
+  longjmp(_return_to_profile_handler, 1);
 }
 
 /*
@@ -464,12 +549,6 @@ scout_profile_broadcast_signal_handler(int sig)
  * Note: that this is called from *EVERY PROFILED THREAD FOR EACH CLOCK TICK
  *       INTERVAL*, so the performance of this method is crucial.
  *
- *  A fair bit of code, but fairly simple logic:
- *   * bail out early if we have sampling off
- *   * bail out early if GC is running
- *   * bail out early if we've filled the traces buffer
- *   * run rb_profile_frames
- *   * extract various info from the frames, and store it in _traces
  */
 void
 scout_record_sample()
@@ -487,13 +566,26 @@ scout_record_sample()
   start_frame_index = ATOMIC_LOAD(&_start_frame_index);
 
   if (cur_traces_num < MAX_TRACES) {
-    num_frames = rb_profile_frames(0, sizeof(_traces[cur_traces_num].frames_buf) / sizeof(VALUE), _traces[cur_traces_num].frames_buf, _traces[cur_traces_num].lines_buf);
-    if (num_frames - start_frame_index > 2) {
-      _traces[cur_traces_num].num_tracelines = num_frames - start_frame_index - 2; // The extra -2 is because there's a bug when reading the very first (bottom) 2 iseq objects for some reason
-      ATOMIC_ADD(&_cur_traces_num, 1);
+    // NOTE: We are capturing any SIGABRT raised by Ruby during the call to rb_profile_frames.
+    // Using setjmp/lngjmp causes intermediate frames to be **skipped at the point of the SIGABRT call
+    // to where the setjmp is fist called**. This is safe to do for rb_profile_frames since it does not
+    // do any allocations or need any cleanup if there is a jump.
+    // setjmp returns 0 when it sets the jmp buffer
+    _saved_abrt_handler = signal(SIGABRT, scout_abrt_handler);
+    if (setjmp(_return_to_profile_handler) == 0) {
+      num_frames = rb_profile_frames(0, sizeof(_traces[cur_traces_num].frames_buf) / sizeof(VALUE), _traces[cur_traces_num].frames_buf, _traces[cur_traces_num].lines_buf);
+      if (num_frames - start_frame_index > 2) {
+        _traces[cur_traces_num].num_tracelines = num_frames - start_frame_index - 2; // The extra -2 is because there's a bug when reading the very first (bottom) 2 iseq objects for some reason
+        ATOMIC_ADD(&_cur_traces_num, 1);
+      } // TODO: add an else with a counter so we can track if we skipped profiling here
+    } else {
+      // We are returning to this frame from a lngjmp
+      signal(SIGABRT, _saved_abrt_handler);
+      _saved_abrt_handler = NULL;
+      ATOMIC_ADD(&_rescued_profile_frames, 1);
     }
-    // TODO: add an else with a counter so we can track if we skipped profiling here
   }
+  ATOMIC_STORE_BOOL(&_job_registered, false);
 }
 
 /* rb_scout_profile_frames: retreive the traces for the layer that is exiting
@@ -513,6 +605,7 @@ static VALUE rb_scout_profile_frames(VALUE self)
     fprintf(stderr, "CUR TRACES: %"PRIuFAST16"\n", cur_traces_num);
     fprintf(stderr, "START TRACE IDX: %"PRIuFAST16"\n", start_trace_index);
     fprintf(stderr, "TRACES COUNT: %"PRIuFAST16"\n", cur_traces_num - start_trace_index);
+    fprintf(stderr, "RESCUED IN ABRT: %"PRIuFAST32"\n", _rescued_profile_frames);
     traces = rb_ary_new2(cur_traces_num - start_trace_index);
     for(i = start_trace_index; i < cur_traces_num; i++) {
       if (_traces[i].num_tracelines > 0) {
@@ -529,7 +622,7 @@ static VALUE rb_scout_profile_frames(VALUE self)
   } else {
     traces = rb_ary_new();
   }
-  ATOMIC_STORE(&_cur_traces_num, start_trace_index);
+  ATOMIC_STORE_INT16(&_cur_traces_num, start_trace_index);
   return traces;
 }
 
@@ -543,7 +636,7 @@ static VALUE rb_scout_profile_frames(VALUE self)
 static VALUE
 rb_scout_start_sampling(VALUE self)
 {
-  ATOMIC_STORE(&_ok_to_sample, true);
+  ATOMIC_STORE_BOOL(&_ok_to_sample, true);
   return Qtrue;
 }
 
@@ -551,12 +644,17 @@ rb_scout_start_sampling(VALUE self)
 static VALUE
 rb_scout_stop_sampling(VALUE self, VALUE reset)
 {
-  ATOMIC_STORE(&_ok_to_sample, false);
+  ATOMIC_STORE_BOOL(&_ok_to_sample, false);
   // TODO: I think this can be (reset == Qtrue)
   if (TYPE(reset) == T_TRUE) {
-    ATOMIC_STORE(&_cur_traces_num, 0);
-    ATOMIC_STORE(&_skipped_in_gc, 0);
-    ATOMIC_STORE(&_skipped_in_signal_handler, 0);
+    ATOMIC_STORE_BOOL(&_job_registered, 0);
+    ATOMIC_STORE_BOOL(&_in_signal_handler, 0);
+    ATOMIC_STORE_INT16(&_start_trace_index, 0);
+    ATOMIC_STORE_INT16(&_start_frame_index, 0);
+    ATOMIC_STORE_INT16(&_cur_traces_num, 0);
+    ATOMIC_STORE_INT32(&_skipped_in_gc, 0);
+    ATOMIC_STORE_INT32(&_skipped_in_signal_handler, 0);
+    ATOMIC_STORE_INT32(&_rescued_profile_frames, 0);
   }
   return Qtrue;
 }
@@ -565,8 +663,8 @@ rb_scout_stop_sampling(VALUE self, VALUE reset)
 static VALUE
 rb_scout_update_indexes(VALUE self, VALUE frame_index, VALUE trace_index)
 {
-  ATOMIC_STORE(&_start_trace_index, NUM2INT(trace_index));
-  ATOMIC_STORE(&_start_frame_index, NUM2INT(frame_index));
+  ATOMIC_STORE_INT16(&_start_trace_index, NUM2INT(trace_index));
+  ATOMIC_STORE_INT16(&_start_frame_index, NUM2INT(frame_index));
   return Qtrue;
 }
 
@@ -606,6 +704,12 @@ rb_scout_skipped_in_handler(VALUE self)
   return INT2NUM(ATOMIC_LOAD(&_skipped_in_signal_handler));
 }
 
+static VALUE
+rb_scout_rescued_profile_frames(VALUE self)
+{
+  return INT2NUM(ATOMIC_LOAD(&_rescued_profile_frames));
+}
+
 ////////////////////////////////////////////////////////////////
 // Fetch details from a frame
 ////////////////////////////////////////////////////////////////
@@ -632,9 +736,17 @@ static VALUE
 rb_scout_frame_lineno(VALUE self, VALUE frame)
 {
   return rb_profile_frame_first_lineno(frame);
+}
+
+static VALUE
+rb_scout_frame_lineno(VALUE self, VALUE frame)
+{
+  return rb_profile_frame_first_lineno(frame);
 
 }
 
+////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////
@@ -677,6 +789,7 @@ void Init_stacks()
 
     rb_define_singleton_method(cStacks, "skipped_in_gc", rb_scout_skipped_in_gc, 0);
     rb_define_singleton_method(cStacks, "skipped_in_handler", rb_scout_skipped_in_handler, 0);
+    rb_define_singleton_method(cStacks, "rescued_profile_frames", rb_scout_rescued_profile_frames, 0);
 
     rb_define_const(cStacks, "ENABLED", Qtrue);
     rb_warn("Finished Initializing ScoutProf Native Extension");
@@ -764,6 +877,12 @@ rb_scout_skipped_in_handler(VALUE self)
 }
 
 static VALUE
+rb_scout_rescued_profile_frames(VALUE self)
+{
+  return INT2NUM(0);
+}
+
+static VALUE
 rb_scout_frame_klass(VALUE self, VALUE frame)
 {
   return Qnil;
@@ -818,6 +937,7 @@ void Init_stacks()
 
     rb_define_singleton_method(cStacks, "skipped_in_gc", rb_scout_skipped_in_gc, 0);
     rb_define_singleton_method(cStacks, "skipped_in_handler", rb_scout_skipped_in_handler, 0);
+    rb_define_singleton_method(cStacks, "rescued_profile_frames", rb_scout_rescued_profile_frames, 0);
 
     rb_define_const(cStacks, "ENABLED", Qfalse);
     rb_define_const(cStacks, "INSTALLED", Qfalse);
