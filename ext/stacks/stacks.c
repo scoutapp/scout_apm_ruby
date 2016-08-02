@@ -738,13 +738,6 @@ rb_scout_frame_lineno(VALUE self, VALUE frame)
   return rb_profile_frame_first_lineno(frame);
 }
 
-static VALUE
-rb_scout_frame_lineno(VALUE self, VALUE frame)
-{
-  return rb_profile_frame_first_lineno(frame);
-
-}
-
 ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////
 
