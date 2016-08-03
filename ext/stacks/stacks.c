@@ -163,14 +163,11 @@ static __thread atomic_uint16_t _cur_traces_num = ATOMIC_INIT(0);
 
 static __thread atomic_uint32_t _skipped_in_gc = ATOMIC_INIT(0);
 static __thread atomic_uint32_t _skipped_in_signal_handler = ATOMIC_INIT(0);
-static __thread atomic_uint32_t _rescued_profile_frames = ATOMIC_INIT(0);
 
 static __thread VALUE _gc_hook;
 
 static __thread atomic_bool_t _job_registered = ATOMIC_INIT(false);
 
-static __thread jmp_buf _return_to_profile_handler;
-static __thread sig_t _saved_abrt_handler = NULL;
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // Global variables
@@ -550,15 +547,6 @@ scout_profile_broadcast_signal_handler(int sig)
 }
 
 /*
- *  If this method is called, lngjmp to scout_record_sample()
- */
-static void
-scout_abrt_handler(int sig)
-{
-  longjmp(_return_to_profile_handler, 1);
-}
-
-/*
  * scout_record_sample: Defered function run from the per-thread handler
  *
  * Note: that this is called from *EVERY PROFILED THREAD FOR EACH CLOCK TICK
@@ -581,24 +569,11 @@ scout_record_sample()
   start_frame_index = ATOMIC_LOAD(&_start_frame_index);
 
   if (cur_traces_num < MAX_TRACES) {
-    // NOTE: We are capturing any SIGABRT raised by Ruby during the call to rb_profile_frames.
-    // Using setjmp/lngjmp causes intermediate frames to be **skipped at the point of the SIGABRT call
-    // to where the setjmp is fist called**. This is safe to do for rb_profile_frames since it does not
-    // do any allocations or need any cleanup if there is a jump.
-    // setjmp returns 0 when it sets the jmp buffer
-    _saved_abrt_handler = signal(SIGABRT, scout_abrt_handler);
-    if (setjmp(_return_to_profile_handler) == 0) {
-      num_frames = rb_profile_frames(0, sizeof(_traces[cur_traces_num].frames_buf) / sizeof(VALUE), _traces[cur_traces_num].frames_buf, _traces[cur_traces_num].lines_buf);
-      if (num_frames - start_frame_index > 2) {
-        _traces[cur_traces_num].num_tracelines = num_frames - start_frame_index - 2; // The extra -2 is because there's a bug when reading the very first (bottom) 2 iseq objects for some reason
-        ATOMIC_ADD(&_cur_traces_num, 1);
-      } // TODO: add an else with a counter so we can track if we skipped profiling here
-    } else {
-      // We are returning to this frame from a lngjmp
-      signal(SIGABRT, _saved_abrt_handler);
-      _saved_abrt_handler = NULL;
-      ATOMIC_ADD(&_rescued_profile_frames, 1);
-    }
+    num_frames = rb_profile_frames(0, sizeof(_traces[cur_traces_num].frames_buf) / sizeof(VALUE), _traces[cur_traces_num].frames_buf, _traces[cur_traces_num].lines_buf);
+    if (num_frames - start_frame_index > 2) {
+      _traces[cur_traces_num].num_tracelines = num_frames - start_frame_index - 2; // The extra -2 is because there's a bug when reading the very first (bottom) 2 iseq objects for some reason
+      ATOMIC_ADD(&_cur_traces_num, 1);
+    } // TODO: add an else with a counter so we can track if we skipped profiling here
   }
   ATOMIC_STORE_BOOL(&_job_registered, false);
 }
@@ -620,7 +595,6 @@ static VALUE rb_scout_profile_frames(VALUE self)
     fprintf(stderr, "CUR TRACES: %"PRIuFAST16"\n", cur_traces_num);
     fprintf(stderr, "START TRACE IDX: %"PRIuFAST16"\n", start_trace_index);
     fprintf(stderr, "TRACES COUNT: %"PRIuFAST16"\n", cur_traces_num - start_trace_index);
-    fprintf(stderr, "RESCUED IN ABRT: %"PRIuFAST32"\n", _rescued_profile_frames);
     traces = rb_ary_new2(cur_traces_num - start_trace_index);
     for(i = start_trace_index; i < cur_traces_num; i++) {
       if (_traces[i].num_tracelines > 0) {
@@ -669,7 +643,6 @@ rb_scout_stop_sampling(VALUE self, VALUE reset)
     ATOMIC_STORE_INT16(&_cur_traces_num, 0);
     ATOMIC_STORE_INT32(&_skipped_in_gc, 0);
     ATOMIC_STORE_INT32(&_skipped_in_signal_handler, 0);
-    ATOMIC_STORE_INT32(&_rescued_profile_frames, 0);
   }
   return Qtrue;
 }
@@ -717,12 +690,6 @@ static VALUE
 rb_scout_skipped_in_handler(VALUE self)
 {
   return INT2NUM(ATOMIC_LOAD(&_skipped_in_signal_handler));
-}
-
-static VALUE
-rb_scout_rescued_profile_frames(VALUE self)
-{
-  return INT2NUM(ATOMIC_LOAD(&_rescued_profile_frames));
 }
 
 ////////////////////////////////////////////////////////////////
@@ -796,7 +763,6 @@ void Init_stacks()
 
     rb_define_singleton_method(cStacks, "skipped_in_gc", rb_scout_skipped_in_gc, 0);
     rb_define_singleton_method(cStacks, "skipped_in_handler", rb_scout_skipped_in_handler, 0);
-    rb_define_singleton_method(cStacks, "rescued_profile_frames", rb_scout_rescued_profile_frames, 0);
 
     rb_define_const(cStacks, "ENABLED", Qtrue);
     rb_warn("Finished Initializing ScoutProf Native Extension");
@@ -884,12 +850,6 @@ rb_scout_skipped_in_handler(VALUE self)
 }
 
 static VALUE
-rb_scout_rescued_profile_frames(VALUE self)
-{
-  return INT2NUM(0);
-}
-
-static VALUE
 rb_scout_frame_klass(VALUE self, VALUE frame)
 {
   return Qnil;
@@ -944,7 +904,6 @@ void Init_stacks()
 
     rb_define_singleton_method(cStacks, "skipped_in_gc", rb_scout_skipped_in_gc, 0);
     rb_define_singleton_method(cStacks, "skipped_in_handler", rb_scout_skipped_in_handler, 0);
-    rb_define_singleton_method(cStacks, "rescued_profile_frames", rb_scout_rescued_profile_frames, 0);
 
     rb_define_const(cStacks, "ENABLED", Qfalse);
     rb_define_const(cStacks, "INSTALLED", Qfalse);

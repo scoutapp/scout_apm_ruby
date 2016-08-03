@@ -153,7 +153,6 @@ module ScoutApm
         traces.raw_traces = ScoutApm::Instruments::Stacks.profile_frames
         traces.skipped_in_gc = ScoutApm::Instruments::Stacks.skipped_in_gc
         traces.skipped_in_handler = ScoutApm::Instruments::Stacks.skipped_in_handler
-        traces.rescued_profile_frames = ScoutApm::Instruments::Stacks.rescued_profile_frames
       end
     end
 
