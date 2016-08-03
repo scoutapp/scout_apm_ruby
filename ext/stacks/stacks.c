@@ -439,7 +439,7 @@ rb_scout_start_sampling(VALUE self)
   sigemptyset(&mask);
   sigaddset(&mask, SIGVTALRM);
   if (sigprocmask(SIG_SETMASK, &mask, NULL) == -1) {
-    fprintf(stderr, "Block mask failed in start sampling!\n");
+    fprintf(stderr, "Block mask failed in start sampling: %d\n", errno);
   }
 
   its.it_value.tv_sec = 0;
@@ -448,11 +448,11 @@ rb_scout_start_sampling(VALUE self)
   its.it_interval.tv_nsec = its.it_value.tv_nsec;
 
   if (timer_settime(_timerid, 0, &its, NULL) == -1) {
-    fprintf(stderr, "Timer set failed!\n");
+    fprintf(stderr, "Timer set failed in start sampling: %d\n", errno);
   }
 
   if (sigprocmask(SIG_UNBLOCK, &mask, NULL) == -1) {
-    fprintf(stderr, "UNBlock mask failed in start sampling!\n");
+    fprintf(stderr, "UNBlock mask failed in start sampling: %d\n", errno);
   }
 
   return Qtrue;
@@ -465,24 +465,14 @@ rb_scout_stop_sampling(VALUE self, VALUE reset)
   struct itimerspec its;
   sigset_t mask;
 
+  if(ATOMIC_LOAD(&_ok_to_sample) == true ) {
+    memset((void*)&its, 0, sizeof(its));
+    if (timer_settime(_timerid, 0, &its, NULL) == -1 ) {
+      fprintf(stderr, "Timer set failed in stop sampling: %d\n", errno);
+    }
+  }
+
   ATOMIC_STORE_BOOL(&_ok_to_sample, false);
-
-  sigemptyset(&mask);
-  sigaddset(&mask, SIGVTALRM);
-  if (sigprocmask(SIG_SETMASK, &mask, NULL) == -1) {
-    fprintf(stderr, "Block mask failed in stop sampling!\n");
-  }
-
-  its.it_value.tv_sec = 0;
-  its.it_value.tv_nsec = (long long)0;
-  its.it_interval.tv_sec = its.it_value.tv_sec;
-  its.it_interval.tv_nsec = its.it_value.tv_nsec;
-
-  //timer_settime(_timerid, 0, &its, NULL); // TODO check return
-
-  if (sigprocmask(SIG_UNBLOCK, &mask, NULL) == -1) {
-    fprintf(stderr, "UNBlock mask failed in stop sampling!\n");
-  }
 
   // TODO: I think this can be (reset == Qtrue)
   if (TYPE(reset) == T_TRUE) {
