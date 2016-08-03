@@ -153,6 +153,7 @@ struct c_trace {
 
 static __thread struct c_trace *_traces;
 
+static __thread atomic_bool_t _thread_registered = ATOMIC_INIT(false);
 static __thread atomic_bool_t _ok_to_sample = ATOMIC_INIT(false);
 static __thread atomic_bool_t _in_signal_handler = ATOMIC_INIT(false);
 
@@ -232,6 +233,9 @@ pthread_t thread_sweeper_id;
 static VALUE rb_scout_add_profiled_thread(VALUE self)
 {
   struct profiled_thread *thr;
+
+  if (ATOMIC_LOAD(&_thread_registered) == true) return 0;
+
   init_thread_vars();
 
   pthread_mutex_lock(&profiled_threads_mutex);
@@ -250,6 +254,9 @@ static VALUE rb_scout_add_profiled_thread(VALUE self)
     thr->next = head_thread;
     head_thread = thr; // now we're head_thread
   }
+
+  ATOMIC_STORE_BOOL(&_thread_registered, true);
+
   fprintf(stderr, "APM DEBUG: Added thread id: %li\n", (unsigned long int)thr->th);
 
   pthread_mutex_unlock(&profiled_threads_mutex);
@@ -264,7 +271,11 @@ static int remove_profiled_thread(pthread_t th)
 {
   struct profiled_thread *ptr, *prev;
 
+  if (ATOMIC_LOAD(&_thread_registered) == false) return 0;
+
   pthread_mutex_lock(&profiled_threads_mutex);
+
+  ATOMIC_STORE_BOOL(&_ok_to_sample, false);
 
   prev = NULL;
 
@@ -287,17 +298,17 @@ static int remove_profiled_thread(pthread_t th)
     }
   }
 
+  ATOMIC_STORE_BOOL(&_thread_registered, false);
+
   pthread_mutex_unlock(&profiled_threads_mutex);
   return 0;
 }
 
 /* rb_scout_remove_profiled_thread: removes a thread from the linked list
  *
- * Turns off _ok_to_sample, then proxies to remove_profiled_thread
  */
 static VALUE rb_scout_remove_profiled_thread(VALUE self)
 {
-  ATOMIC_STORE_BOOL(&_ok_to_sample, false);
   remove_profiled_thread(pthread_self());
   return Qtrue;
 }
