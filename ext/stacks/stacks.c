@@ -35,9 +35,19 @@
 //
 // GCC added C11 atomics in 4.9, which is after ubuntu 14.04's version. Provide
 // typedefs around what we really use to allow compatibility
+//
+// Conditions for figuring out new vs. old:
+//
+// C11?
+//   - no: Old
+//   - yes: NO_ATOMICS defined?
+//       - no: GCC 4.8?
+//         - no: New
+//         - yes: Old
+//       - yes: Old
+//
 /////////////////////////////////////////////////////////////////////////////////
 
-// TODO: Check for GCC 4.9+, where C11 atomics were implemented
 
 #if (__STDC_VERSION >= 20112L)
 
