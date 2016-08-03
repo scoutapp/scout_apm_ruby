@@ -200,6 +200,9 @@ struct profiled_thread
   // hook into a thread exiting in ruby to do it in the threads own context.
   struct c_trace *_traces;
   VALUE *_gc_hook;
+
+  // Store a pointer to the thread-local var so we can skip signaling if the thread isn't ready to profile anyway.
+  atomic_bool_t *_ok_to_sample;
 };
 
 /*
@@ -239,6 +242,7 @@ static VALUE rb_scout_add_profiled_thread(VALUE self)
   thr->_traces = _traces;
   thr->_gc_hook = &_gc_hook;
   thr->next = NULL;
+  thr->_ok_to_sample = &_ok_to_sample;
 
   if (head_thread == NULL) {
     head_thread = thr;
@@ -311,7 +315,9 @@ scout_signal_threads_to_profile()
     ptr = head_thread;
     while(ptr != NULL) {
       if (pthread_kill(ptr->th, 0) != ESRCH) { // Check for existence of thread. If ESRCH is returned, don't send the real signal!
-        pthread_kill(ptr->th, SIGVTALRM);
+        if (ATOMIC_LOAD(ptr->_ok_to_sample)) {
+          pthread_kill(ptr->th, SIGVTALRM);
+        }
       }
       ptr = ptr->next;
     }
