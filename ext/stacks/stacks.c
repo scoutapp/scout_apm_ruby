@@ -28,6 +28,11 @@
 #include <setjmp.h>
 #include <signal.h>
 #include <stdbool.h>
+
+/*
+ *  System
+ */
+#include <sys/syscall.h>
 #include <sys/time.h>
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -310,9 +315,9 @@ init_thread_vars()
   rb_gc_register_address(&_gc_hook);
 
   // Create timer to target this thread
-  sev.sigev_notify = SIGEV_SIGNAL;
+  sev.sigev_notify = SIGEV_THREAD_ID;
   sev.sigev_signo = SIGVTALRM;
-  //sev.sigev_notify_thread_id = (pid_t)pthread_self();
+  sev.sigev_notify_thread_id = syscall(SYS_gettid);
   sev.sigev_value.sival_ptr = &_timerid;
   if (timer_create(CLOCK_MONOTONIC, &sev, &_timerid) == -1) {
     fprintf(stderr, "Time create failed: %d\n", errno);
@@ -463,7 +468,6 @@ static VALUE
 rb_scout_stop_sampling(VALUE self, VALUE reset)
 {
   struct itimerspec its;
-  sigset_t mask;
 
   if(ATOMIC_LOAD(&_ok_to_sample) == true ) {
     memset((void*)&its, 0, sizeof(its));
