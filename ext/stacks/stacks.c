@@ -770,32 +770,32 @@ void Init_stacks()
 
 #else
 
-void scout_install_profiling(VALUE module)
+static VALUE rb_scout_install_profiling(VALUE module)
 {
   return Qnil;
 }
 
-void scout_uninstall_profiling(VALUE module)
+static VALUE rb_scout_uninstall_profiling(VALUE module)
 {
   return Qnil;
 }
 
-void scout_start_profiling(VALUE module)
+static VALUE rb_scout_start_profiling(VALUE module)
 {
   return Qnil;
 }
 
-void scout_stop_profiling(VALUE module)
+static VALUE rb_scout_stop_profiling(VALUE module)
 {
   return Qnil;
 }
 
-void rb_scout_add_profiled_thread(VALUE module)
+static VALUE rb_scout_add_profiled_thread(VALUE module)
 {
   return Qnil;
 }
 
-void rb_scout_remove_profiled_thread(VALUE module)
+static VALUE rb_scout_remove_profiled_thread(VALUE module)
 {
   return Qnil;
 }
@@ -807,6 +807,12 @@ static VALUE rb_scout_profile_frames(VALUE self)
 
 static VALUE
 rb_scout_start_sampling(VALUE self)
+{
+  return Qtrue;
+}
+
+static VALUE
+rb_scout_stop_sampling(VALUE self)
 {
   return Qtrue;
 }
@@ -829,12 +835,6 @@ static VALUE
 rb_scout_current_frame_index(VALUE self)
 {
   return INT2NUM(0);
-}
-
-static VALUE
-rb_scout_klass_for_frame(VALUE self, VALUE frame)
-{
-  return Qnil;
 }
 
 static VALUE
