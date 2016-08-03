@@ -183,18 +183,12 @@ module ScoutApm
 
     # Enable ScoutProf for this thread
     def enable_profiled_thread!
-      if ! Thread.current[:scout_profiled_thread]
-        Thread.current[:scout_profiled_thread] = true
         ScoutApm::Instruments::Stacks.add_profiled_thread
-      end
     end
 
     # Disable ScoutProf for this thread
     def disable_profiled_thread!
-      if Thread.current[:scout_profiled_thread]
-        Thread.current[:scout_profiled_thread] = false
         ScoutApm::Instruments::Stacks.remove_profiled_thread
-      end
     end
 
     ###################################
