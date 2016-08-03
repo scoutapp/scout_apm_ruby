@@ -592,9 +592,6 @@ static VALUE rb_scout_profile_frames(VALUE self)
   start_trace_index = ATOMIC_LOAD(&_start_trace_index);
 
   if (cur_traces_num - start_trace_index > 0) {
-    fprintf(stderr, "CUR TRACES: %"PRIuFAST16"\n", cur_traces_num);
-    fprintf(stderr, "START TRACE IDX: %"PRIuFAST16"\n", start_trace_index);
-    fprintf(stderr, "TRACES COUNT: %"PRIuFAST16"\n", cur_traces_num - start_trace_index);
     traces = rb_ary_new2(cur_traces_num - start_trace_index);
     for(i = start_trace_index; i < cur_traces_num; i++) {
       if (_traces[i].num_tracelines > 0) {

@@ -139,7 +139,6 @@ module ScoutApm
 
     def start_sampling
       if traced?
-        puts "SETTING FRAME INDEX: #{frame_index}"
         ScoutApm::Instruments::Stacks.update_indexes(frame_index, trace_index)
         ScoutApm::Instruments::Stacks.start_sampling
       else
