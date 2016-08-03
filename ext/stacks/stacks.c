@@ -134,6 +134,9 @@ const long INTERVAL = 1 * NANO_SECOND_MULTIPLIER; // milliseconds * NANO_SECOND_
 // Max threads to remove each dead_thread_sweeper interval
 #define MAX_REMOVES_PER_SWEEP 100
 
+// For support of thread id in timer_create
+#define sigev_notify_thread_id _sigev_un._tid
+
 #ifdef RUBY_INTERNAL_EVENT_NEWOBJ
 
 // Forward Declarations
@@ -168,55 +171,13 @@ static __thread VALUE _gc_hook;
 
 static __thread atomic_bool_t _job_registered = ATOMIC_INIT(false);
 
+static __thread timer_t _timerid;
+static __thread struct sigevent sev;
+
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // Global variables
 ////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-////////////////////////////////////////////////////////////////////////////////////////
-// Thread Linked List
-////////////////////////////////////////////////////////////////////////////////////////
-
-/*
- * Because of how rb_profile_frames works, we need to call it from inside of each thread
- * in ScoutProf.  To do this, we have a global linked list.  Each thread needs to register itself
- * via rb_scout_add_profiled_thread()
- */
-
-/*
- * profiled_thread is a node in the linked list of threads.
- */
-struct profiled_thread
-{
-  pthread_t th;
-  struct profiled_thread *next;
-
-  // Keep a pointer to the thread-local data that we ALLOC and wrap for Ruby Objectspace.
-  // We need this so we can free the thread local data from the dead thread sweeper, since we don't
-  // hook into a thread exiting in ruby to do it in the threads own context.
-  struct c_trace *_traces;
-  VALUE *_gc_hook;
-
-  // Store a pointer to the thread-local var so we can skip signaling if the thread isn't ready to profile anyway.
-  atomic_bool_t *_ok_to_sample;
-};
-
-/*
- * head_thread: The head of the linked list
- */
-struct profiled_thread *head_thread = NULL;
-
-// Mutex around editing of the thread linked list
-pthread_mutex_t profiled_threads_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-
-// Background controller thread ID
-pthread_t btid;
-
-// Background dead thread sweeper
-pthread_t thread_sweeper_id;
 
 
 /*
@@ -229,34 +190,13 @@ pthread_t thread_sweeper_id;
  */
 static VALUE rb_scout_add_profiled_thread(VALUE self)
 {
-  struct profiled_thread *thr;
-
   if (ATOMIC_LOAD(&_thread_registered) == true) return 0;
 
   init_thread_vars();
-
-  pthread_mutex_lock(&profiled_threads_mutex);
-
-  thr = (struct profiled_thread *) malloc(sizeof(struct profiled_thread));
-
-  thr->th = pthread_self();
-  thr->_traces = _traces;
-  thr->_gc_hook = &_gc_hook;
-  thr->next = NULL;
-  thr->_ok_to_sample = &_ok_to_sample;
-
-  if (head_thread == NULL) {
-    head_thread = thr;
-  } else {
-    thr->next = head_thread;
-    head_thread = thr; // now we're head_thread
-  }
-
   ATOMIC_STORE_BOOL(&_thread_registered, true);
 
-  fprintf(stderr, "APM DEBUG: Added thread id: %li\n", (unsigned long int)thr->th);
+  fprintf(stderr, "APM DEBUG: Added thread id: %li\n", (unsigned long int)pthread_self());
 
-  pthread_mutex_unlock(&profiled_threads_mutex);
   return Qtrue;
 }
 
@@ -266,38 +206,18 @@ static VALUE rb_scout_add_profiled_thread(VALUE self)
  */
 static int remove_profiled_thread(pthread_t th)
 {
-  struct profiled_thread *ptr, *prev;
-
   if (ATOMIC_LOAD(&_thread_registered) == false) return 0;
-
-  pthread_mutex_lock(&profiled_threads_mutex);
 
   ATOMIC_STORE_BOOL(&_ok_to_sample, false);
 
-  prev = NULL;
+  fprintf(stderr, "APM DEBUG: Would remove thread id: %li\n", (unsigned long int)th);
 
-  for(ptr = head_thread; ptr != NULL; prev = ptr, ptr = ptr->next) {
-    if (pthread_equal(th, ptr->th)) {
-      fprintf(stderr, "APM DEBUG: Would remove thread id: %li\n", (unsigned long int)ptr->th);
-
-      // Unregister the _gc_hook from Ruby ObjectSpace, then free it as well as the _traces struct it wrapped.
-      rb_gc_unregister_address(ptr->_gc_hook);
-      xfree(ptr->_gc_hook);
-      xfree(ptr->_traces);
-
-      if (prev == NULL) {
-        head_thread = ptr->next; // We are head_thread
-      } else {
-        prev->next = ptr->next; // We are not head thread
-      }
-      free(ptr);
-      break;
-    }
-  }
+  // Unregister the _gc_hook from Ruby ObjectSpace, then free it as well as the _traces struct it wrapped.
+  rb_gc_unregister_address(&_gc_hook);
+  xfree(&_gc_hook);
+  xfree(&_traces);
 
   ATOMIC_STORE_BOOL(&_thread_registered, false);
-
-  pthread_mutex_unlock(&profiled_threads_mutex);
   return 0;
 }
 
@@ -310,117 +230,6 @@ static VALUE rb_scout_remove_profiled_thread(VALUE self)
   return Qtrue;
 }
 
-////////////////////////////////////////////////////////////////////////////////////////
-// Global timer
-////////////////////////////////////////////////////////////////////////////////////////
-
-static void
-scout_signal_threads_to_profile()
-{
-  struct profiled_thread *ptr;
-
-  if (pthread_mutex_trylock(&profiled_threads_mutex) == 0) { // Only run if we get the mutex.
-    ptr = head_thread;
-    while(ptr != NULL) {
-      if (pthread_kill(ptr->th, 0) != ESRCH) { // Check for existence of thread. If ESRCH is returned, don't send the real signal!
-        if (ATOMIC_LOAD(ptr->_ok_to_sample)) {
-          pthread_kill(ptr->th, SIGVTALRM);
-        }
-      }
-      ptr = ptr->next;
-    }
-
-    pthread_mutex_unlock(&profiled_threads_mutex);
-  }
-}
-
-static int sweep_dead_threads() {
-  int i;
-  struct profiled_thread *ptr;
-  pthread_t dead_thread_ids[MAX_REMOVES_PER_SWEEP];
-  int dead_count = 0;
-
-  pthread_mutex_lock(&profiled_threads_mutex);
-
-  ptr = head_thread;
-  while((ptr != NULL) && (dead_count < MAX_REMOVES_PER_SWEEP)) {
-    if (pthread_kill(ptr->th, 0) == ESRCH) { // Check for existence of thread.
-      dead_thread_ids[dead_count] = ptr->th; // if dead, add the id to the array
-      dead_count++;                          // and increment counter.
-    }
-    ptr = ptr->next;
-  }
-
-  pthread_mutex_unlock(&profiled_threads_mutex);
-
-  // Remove the dead threads outside of the simple mutex.
-  for (i = 0; i < dead_count; i++) {
-    fprintf(stderr, "APM DEBUG: Sweeper removed thread id: %li\n", (unsigned long int)dead_thread_ids[i]);
-    remove_profiled_thread(dead_thread_ids[i]);
-  }
-
-  return 0;
-}
-
-void *
-dead_thread_sweeper() {
-  int clock_result;
-  struct timespec clock_remaining;
-  struct timespec sleep_time = {.tv_sec = 5, .tv_nsec = 0};
-
-  while (1) {
-    SWEEP_SNOOZE:
-
-#ifdef CLOCK_MONOTONIC
-    clock_result = clock_nanosleep(CLOCK_MONOTONIC, 0, &sleep_time, &clock_remaining);
-#else
-    clock_result = nanosleep(&sleep_time, &clock_remaining);
-    if (clock_result == -1) {
-      clock_result = errno;
-    }
-#endif
-
-    if (clock_result == 0) {
-      sweep_dead_threads();
-    } else if (clock_result == EINTR) {
-      sleep_time = clock_remaining;
-      goto SWEEP_SNOOZE;
-    } else {
-      fprintf(stderr, "Error: nanosleep returned value : %d\n", clock_result);
-    }
-  }
-}
-
-// Should we block signals to this thread?
-void *
-background_worker()
-{
-  int clock_result;
-  struct timespec clock_remaining;
-  struct timespec sleep_time = {.tv_sec = 0, .tv_nsec = INTERVAL};
-
-  while (1) {
-    //check to see if we should change values, exit, etc
-    SNOOZE:
-#ifdef CLOCK_MONOTONIC
-    clock_result = clock_nanosleep(CLOCK_MONOTONIC, 0, &sleep_time, &clock_remaining);
-#else
-    clock_result = nanosleep(&sleep_time, &clock_remaining);
-    if (clock_result == -1) {
-      clock_result = errno;
-    }
-#endif
-
-    if (clock_result == 0) {
-      scout_signal_threads_to_profile();
-    } else if (clock_result == EINTR) {
-      sleep_time = clock_remaining;
-      goto SNOOZE;
-    } else {
-      fprintf(stderr, "Error: nanosleep returned value : %d\n", clock_result);
-    }
-  }
-}
 
 /* rb_scout_start_profiling: Installs the global timer
  */
@@ -444,14 +253,6 @@ rb_scout_start_profiling(VALUE self)
 static VALUE
 rb_scout_uninstall_profiling(VALUE self)
 {
-  pthread_mutex_lock(&profiled_threads_mutex);
-
-  // stop background worker threads
-  pthread_cancel(btid); // TODO: doing a pthread_join after cancel is the only way to wait and know if the thread actually exited.
-  pthread_cancel(thread_sweeper_id); // TODO: doing a pthread_join after cancel is the only way to wait and know if the thread actually exited.
-
-  pthread_mutex_unlock(&profiled_threads_mutex);
-
   return Qnil;
 }
 
@@ -465,9 +266,6 @@ rb_scout_install_profiling(VALUE self)
   if (scout_profiling_installed) {
     return Qfalse;
   }
-
-  pthread_create(&btid, NULL, background_worker, NULL);
-  pthread_create(&thread_sweeper_id, NULL, dead_thread_sweeper, NULL);
 
   // Also set up an interrupt handler for when we broadcast an alarm
   new_vtaction.sa_handler = scout_profile_broadcast_signal_handler;
@@ -510,6 +308,15 @@ init_thread_vars()
 
   _gc_hook = Data_Wrap_Struct(rb_cObject, &scoutprof_gc_mark, NULL, &_traces);
   rb_gc_register_address(&_gc_hook);
+
+  // Create timer to target this thread
+  sev.sigev_notify = SIGEV_SIGNAL;
+  sev.sigev_signo = SIGVTALRM;
+  //sev.sigev_notify_thread_id = (pid_t)pthread_self();
+  sev.sigev_value.sival_ptr = &_timerid;
+  if (timer_create(CLOCK_MONOTONIC, &sev, &_timerid) == -1) {
+    fprintf(stderr, "Time create failed: %d\n", errno);
+  }
 
   return;
 }
@@ -624,7 +431,30 @@ static VALUE rb_scout_profile_frames(VALUE self)
 static VALUE
 rb_scout_start_sampling(VALUE self)
 {
+  struct itimerspec its;
+  sigset_t mask;
+
   ATOMIC_STORE_BOOL(&_ok_to_sample, true);
+
+  sigemptyset(&mask);
+  sigaddset(&mask, SIGVTALRM);
+  if (sigprocmask(SIG_SETMASK, &mask, NULL) == -1) {
+    fprintf(stderr, "Block mask failed in start sampling!\n");
+  }
+
+  its.it_value.tv_sec = 0;
+  its.it_value.tv_nsec = INTERVAL;
+  its.it_interval.tv_sec = its.it_value.tv_sec;
+  its.it_interval.tv_nsec = its.it_value.tv_nsec;
+
+  if (timer_settime(_timerid, 0, &its, NULL) == -1) {
+    fprintf(stderr, "Timer set failed!\n");
+  }
+
+  if (sigprocmask(SIG_UNBLOCK, &mask, NULL) == -1) {
+    fprintf(stderr, "UNBlock mask failed in start sampling!\n");
+  }
+
   return Qtrue;
 }
 
@@ -632,7 +462,28 @@ rb_scout_start_sampling(VALUE self)
 static VALUE
 rb_scout_stop_sampling(VALUE self, VALUE reset)
 {
+  struct itimerspec its;
+  sigset_t mask;
+
   ATOMIC_STORE_BOOL(&_ok_to_sample, false);
+
+  sigemptyset(&mask);
+  sigaddset(&mask, SIGVTALRM);
+  if (sigprocmask(SIG_SETMASK, &mask, NULL) == -1) {
+    fprintf(stderr, "Block mask failed in stop sampling!\n");
+  }
+
+  its.it_value.tv_sec = 0;
+  its.it_value.tv_nsec = (long long)0;
+  its.it_interval.tv_sec = its.it_value.tv_sec;
+  its.it_interval.tv_nsec = its.it_value.tv_nsec;
+
+  //timer_settime(_timerid, 0, &its, NULL); // TODO check return
+
+  if (sigprocmask(SIG_UNBLOCK, &mask, NULL) == -1) {
+    fprintf(stderr, "UNBlock mask failed in stop sampling!\n");
+  }
+
   // TODO: I think this can be (reset == Qtrue)
   if (TYPE(reset) == T_TRUE) {
     ATOMIC_STORE_BOOL(&_job_registered, 0);
