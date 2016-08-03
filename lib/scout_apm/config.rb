@@ -75,6 +75,13 @@ module ScoutApm
       end
     end
 
+    # Simply returns the passed in value, without change
+    class NullCoercion
+      def coerce(val)
+        val
+      end
+    end
+
     SETTING_COERCIONS = {
       "monitor"                => BooleanCoercion.new,
       "enable_background_jobs" => BooleanCoercion.new,
@@ -92,6 +99,7 @@ module ScoutApm
       overlays = [
         ConfigEnvironment.new,
         ConfigDefaults.new,
+        ConfigNull.new,
       ]
       new(overlays)
     end
@@ -104,6 +112,7 @@ module ScoutApm
         ConfigEnvironment.new,
         ConfigFile.new(file_path, config[:file]),
         ConfigDefaults.new,
+        ConfigNull.new,
       ]
       new(overlays)
     end
@@ -113,21 +122,10 @@ module ScoutApm
     end
 
     def value(key)
-      raw_value = nil
+      raw_value = @overlays.detect{ |overlay| overlay.has_key?(key) }.value(key)
 
-      @overlays.each do |overlay|
-        if overlay.has_key?(key)
-          raw_value = overlay.value(key)
-        end
-      end
-
-      coercion = SETTING_COERCIONS[key]
-      if coercion
-        val = coercion.coerce(raw_value)
-        return val
-      else
-        return raw_value
-      end
+      coercion = SETTING_COERCIONS[key] || NullCoercion.new
+      coercion.coerce(raw_value)
     end
 
     class ConfigDefaults
@@ -149,6 +147,20 @@ module ScoutApm
 
       def has_key?(key)
         DEFAULTS.has_key?(key)
+      end
+    end
+
+
+    # Good News: It has every config value you could want
+    # Bad News: The content of that config value is always nil
+    # Used for the null-object pattern
+    class ConfigNull
+      def value(*)
+        nil
+      end
+
+      def has_key?(*)
+        true
       end
     end
 
