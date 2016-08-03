@@ -38,7 +38,35 @@
 /////////////////////////////////////////////////////////////////////////////////
 
 // TODO: Check for GCC 4.9+, where C11 atomics were implemented
+
+#if (__STDC_VERSION >= 20112L)
+
 #ifdef __STDC_NO_ATOMICS__
+
+#define SCOUT_USE_OLD_ATOMICS // c11 && stdc_no_atomics is explicitly set, so use old atomics
+
+#else
+
+#if (__GNUC_MINOR__ <= 8)
+// GCC 4.8 lies, says it has atomics, doesn't. The less-than part can't happen afaik, but added to be safer
+#define SCOUT_USE_OLD_ATOMICS
+
+#else
+
+#define SCOUT_USE_NEW_ATOMICS
+
+#endif // GCC 4.8
+
+#endif // __STDC_NO_ATOMICS__
+
+#else // this is not c11
+#define SCOUT_USE_OLD_ATOMICS
+#endif
+
+
+//// Now actually apply the choice.
+
+#ifdef SCOUT_USE_OLD_ATOMICS
 
 typedef bool atomic_bool_t;
 typedef uint16_t atomic_uint16_t;
@@ -85,8 +113,11 @@ void scout_macro_fn_atomic_store_int32(atomic_uint32_t* p_ai, atomic_uint32_t va
 #define ATOMIC_ADD(var, value) __sync_fetch_and_add((var), value)
 #define ATOMIC_INIT(value) value
 
+#endif
 
-#else
+
+
+#ifdef SCOUT_USE_NEW_ATOMICS
 
 // We have c11 atomics
 #include <stdatomic.h>
