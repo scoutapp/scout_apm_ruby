@@ -274,7 +274,7 @@ rb_scout_install_profiling(VALUE self)
   new_vtaction.sa_handler = scout_profile_broadcast_signal_handler;
   new_vtaction.sa_flags = SA_RESTART;
   sigemptyset(&new_vtaction.sa_mask);
-  sigaction(SIGVTALRM, &new_vtaction, &old_vtaction);
+  sigaction(SIGALRM, &new_vtaction, &old_vtaction);
 
   rb_define_const(cStacks, "INSTALLED", Qtrue);
   scout_profiling_installed = 1;
@@ -314,7 +314,7 @@ init_thread_vars()
 
   // Create timer to target this thread
   _sev.sigev_notify = SIGEV_THREAD_ID;
-  _sev.sigev_signo = SIGVTALRM;
+  _sev.sigev_signo = SIGALRM;
   _sev.sigev_notify_thread_id = syscall(SYS_gettid);
   _sev.sigev_value.sival_ptr = &_timerid;
   if (timer_create(CLOCK_MONOTONIC, &_sev, &_timerid) == -1) {
@@ -440,7 +440,7 @@ rb_scout_start_sampling(VALUE self)
   ATOMIC_STORE_BOOL(&_ok_to_sample, true);
 
   sigemptyset(&mask);
-  sigaddset(&mask, SIGVTALRM);
+  sigaddset(&mask, SIGALRM);
   if (sigprocmask(SIG_SETMASK, &mask, NULL) == -1) {
     fprintf(stderr, "Block mask failed in start sampling: %d\n", errno);
   }
