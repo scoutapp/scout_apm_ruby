@@ -485,6 +485,7 @@ rb_scout_stop_sampling(VALUE self, VALUE reset)
     ATOMIC_STORE_INT16(&_cur_traces_num, 0);
     ATOMIC_STORE_INT32(&_skipped_in_gc, 0);
     ATOMIC_STORE_INT32(&_skipped_in_signal_handler, 0);
+    ATOMIC_STORE_INT32(&_skipped_in_job_registered, 0);
   }
   return Qtrue;
 }
@@ -760,7 +761,7 @@ void Init_stacks()
 
     rb_define_singleton_method(cStacks, "skipped_in_gc", rb_scout_skipped_in_gc, 0);
     rb_define_singleton_method(cStacks, "skipped_in_handler", rb_scout_skipped_in_handler, 0);
-    rb_define_singleton_method(cStacks, "skipped_in_job_registered", rb_scout_skipped_in_handler, 0);
+    rb_define_singleton_method(cStacks, "skipped_in_job_registered", rb_scout_skipped_in_job_registered, 0);
 
     rb_define_const(cStacks, "ENABLED", Qfalse);
     rb_define_const(cStacks, "INSTALLED", Qfalse);
