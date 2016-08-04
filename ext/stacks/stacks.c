@@ -136,9 +136,6 @@ VALUE interval;
 #define NANO_SECOND_MULTIPLIER  1000000  // 1 millisecond = 1,000,000 Nanoseconds
 const long INTERVAL = 1 * NANO_SECOND_MULTIPLIER; // milliseconds * NANO_SECOND_MULTIPLIER
 
-// Max threads to remove each dead_thread_sweeper interval
-#define MAX_REMOVES_PER_SWEEP 100
-
 // For support of thread id in timer_create
 #define sigev_notify_thread_id _sigev_un._tid
 
@@ -171,13 +168,14 @@ static __thread atomic_uint16_t _cur_traces_num = ATOMIC_INIT(0);
 
 static __thread atomic_uint32_t _skipped_in_gc = ATOMIC_INIT(0);
 static __thread atomic_uint32_t _skipped_in_signal_handler = ATOMIC_INIT(0);
+static __thread atomic_uint32_t _skipped_in_job_registered = ATOMIC_INIT(0);
 
 static __thread VALUE _gc_hook;
 
 static __thread atomic_bool_t _job_registered = ATOMIC_INIT(false);
 
 static __thread timer_t _timerid;
-static __thread struct sigevent sev;
+static __thread struct sigevent _sev;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -315,11 +313,11 @@ init_thread_vars()
   rb_gc_register_address(&_gc_hook);
 
   // Create timer to target this thread
-  sev.sigev_notify = SIGEV_THREAD_ID;
-  sev.sigev_signo = SIGVTALRM;
-  sev.sigev_notify_thread_id = syscall(SYS_gettid);
-  sev.sigev_value.sival_ptr = &_timerid;
-  if (timer_create(CLOCK_MONOTONIC, &sev, &_timerid) == -1) {
+  _sev.sigev_notify = SIGEV_THREAD_ID;
+  _sev.sigev_signo = SIGVTALRM;
+  _sev.sigev_notify_thread_id = syscall(SYS_gettid);
+  _sev.sigev_value.sival_ptr = &_timerid;
+  if (timer_create(CLOCK_MONOTONIC, &_sev, &_timerid) == -1) {
     fprintf(stderr, "Time create failed: %d\n", errno);
   }
 
@@ -352,7 +350,7 @@ scout_profile_broadcast_signal_handler(int sig)
       if ((register_result == 1) || (register_result == 2)) {
         ATOMIC_STORE_BOOL(&_job_registered, true);
       } else {
-        fprintf(stderr, "Error: job was not registered! Result: %d\n", register_result);
+        ATOMIC_ADD(&_skipped_in_job_registered, 1);
       }
     } // !_job_registered
   }
@@ -536,6 +534,12 @@ rb_scout_skipped_in_handler(VALUE self)
   return INT2NUM(ATOMIC_LOAD(&_skipped_in_signal_handler));
 }
 
+static VALUE
+rb_scout_skipped_in_job_registered(VALUE self)
+{
+  return INT2NUM(ATOMIC_LOAD(&_skipped_in_job_registered));
+}
+
 ////////////////////////////////////////////////////////////////
 // Fetch details from a frame
 ////////////////////////////////////////////////////////////////
@@ -608,6 +612,7 @@ void Init_stacks()
 
     rb_define_singleton_method(cStacks, "skipped_in_gc", rb_scout_skipped_in_gc, 0);
     rb_define_singleton_method(cStacks, "skipped_in_handler", rb_scout_skipped_in_handler, 0);
+    rb_define_singleton_method(cStacks, "skipped_in_job_registered", rb_scout_skipped_in_job_registered, 0);
 
     rb_define_const(cStacks, "ENABLED", Qtrue);
     rb_warn("Finished Initializing ScoutProf Native Extension");
@@ -695,6 +700,12 @@ rb_scout_skipped_in_handler(VALUE self)
 }
 
 static VALUE
+rb_scout_skipped_in_job_registered(VALUE self)
+{
+  return INT2NUM(0);
+}
+
+static VALUE
 rb_scout_frame_klass(VALUE self, VALUE frame)
 {
   return Qnil;
@@ -749,6 +760,7 @@ void Init_stacks()
 
     rb_define_singleton_method(cStacks, "skipped_in_gc", rb_scout_skipped_in_gc, 0);
     rb_define_singleton_method(cStacks, "skipped_in_handler", rb_scout_skipped_in_handler, 0);
+    rb_define_singleton_method(cStacks, "skipped_in_job_registered", rb_scout_skipped_in_handler, 0);
 
     rb_define_const(cStacks, "ENABLED", Qfalse);
     rb_define_const(cStacks, "INSTALLED", Qfalse);

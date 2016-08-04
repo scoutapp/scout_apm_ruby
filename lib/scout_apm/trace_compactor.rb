@@ -18,6 +18,7 @@ class TraceSet
   attr_accessor :raw_traces
   attr_accessor :skipped_in_gc
   attr_accessor :skipped_in_handler
+  attr_accessor :skipped_in_job_registered
 
   def initialize
     @raw_traces = []
