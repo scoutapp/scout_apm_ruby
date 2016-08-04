@@ -11,8 +11,8 @@ if can_compile_extensions &&
    have_func('rb_profile_frames') &&
    have_func('rb_profile_frame_absolute_path') &&
    have_func('rb_profile_frame_label') &&
-   have_func('rb_profile_frame_classpath')
-  $defs.push "-lrt" # for timer_create, timer_settime
+   have_func('rb_profile_frame_classpath') &&
+   have_library('rt') # for timer_create, timer_settime
   create_makefile('stacks')
 else
   # Create a dummy Makefile, to satisfy Gem::Installer#install
