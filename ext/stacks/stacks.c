@@ -145,8 +145,8 @@ const long INTERVAL = 1 * NANO_SECOND_MULTIPLIER; // milliseconds * NANO_SECOND_
 static void init_thread_vars();
 static void scout_profile_broadcast_signal_handler(int sig);
 void scout_record_sample();
-static void start_thread_timer();
-static void stop_thread_timer();
+static void scout_start_thread_timer();
+static void scout_stop_thread_timer();
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // Per-Thread variables
@@ -310,16 +310,20 @@ scoutprof_gc_mark(void *data)
 }
 
 static void
-parent_atfork_prepare()
+scout_parent_atfork_prepare()
 {
   // TODO: Should we track how much time the fork took?
-  stop_thread_timer();
+  if (ATOMIC_LOAD(&_ok_to_sample) == true) {
+    scout_stop_thread_timer();
+  }
 }
 
 static void
-parent_atfork_finish()
+scout_parent_atfork_finish()
 {
-  start_thread_timer();
+  if (ATOMIC_LOAD(&_ok_to_sample) == true) {
+    scout_start_thread_timer();
+  }
 }
 
 static void
@@ -338,7 +342,7 @@ init_thread_vars()
   _gc_hook = Data_Wrap_Struct(rb_cObject, &scoutprof_gc_mark, NULL, &_traces);
   rb_gc_register_address(&_gc_hook);
 
-  res = pthread_atfork(parent_atfork_prepare, parent_atfork_finish, NULL);
+  res = pthread_atfork(scout_parent_atfork_prepare, scout_parent_atfork_finish, NULL);
   if (res != 0) {
     fprintf(stderr, "Pthread_atfork failed: %d\n", res);
   }
@@ -468,10 +472,12 @@ static VALUE rb_scout_profile_frames(VALUE self)
 /*****************************************************/
 
 static void
-start_thread_timer()
+scout_start_thread_timer()
 {
   struct itimerspec its;
   sigset_t mask;
+
+  if (ATOMIC_LOAD(&_thread_registered) == false) return;
 
   sigemptyset(&mask);
   sigaddset(&mask, SIGALRM);
@@ -494,9 +500,11 @@ start_thread_timer()
 }
 
 static void
-stop_thread_timer()
+scout_stop_thread_timer()
 {
   struct itimerspec its;
+
+  if (ATOMIC_LOAD(&_thread_registered) == false) return;
 
   memset((void*)&its, 0, sizeof(its));
   if (timer_settime(_timerid, 0, &its, NULL) == -1 ) {
@@ -510,7 +518,7 @@ rb_scout_start_sampling(VALUE self)
 {
   scout_add_profiled_thread(pthread_self());
   ATOMIC_STORE_BOOL(&_ok_to_sample, true);
-  start_thread_timer();
+  scout_start_thread_timer();
   return Qtrue;
 }
 
@@ -519,7 +527,7 @@ static VALUE
 rb_scout_stop_sampling(VALUE self, VALUE reset)
 {
   if(ATOMIC_LOAD(&_ok_to_sample) == true ) {
-    stop_thread_timer();
+    scout_stop_thread_timer();
   }
 
   ATOMIC_STORE_BOOL(&_ok_to_sample, false);
