@@ -4,51 +4,12 @@
 // GCC added C11 atomics in 4.9, which is after ubuntu 14.04's version. Provide
 // typedefs around what we really use to allow compatibility
 //
-// Conditions for figuring out new vs. old:
-//
-// C11?
-//   - no: Old
-//   - yes: NO_ATOMICS defined?
-//       - no: GCC 4.8?
-//         - no: New
-//         - yes: Old
-//       - yes: Old
-//
 /////////////////////////////////////////////////////////////////////////////////
 
 
 /////////////////////////////////////////////////////////////////////////////////
-// Macro checking to figure out which atomic implementation to use
-/////////////////////////////////////////////////////////////////////////////////
-
-#if (__STDC_VERSION >= 20112L)
-
-#ifdef __STDC_NO_ATOMICS__
-
-#define SCOUT_USE_OLD_ATOMICS // c11 && stdc_no_atomics is explicitly set, so use old atomics
-
-#else
-
-#if (__GNUC_MINOR__ <= 8)
-// GCC 4.8 lies, says it has atomics, doesn't. The less-than part can't happen afaik, but added to be safer
-#define SCOUT_USE_OLD_ATOMICS
-
-#else
-
-#define SCOUT_USE_NEW_ATOMICS
-
-#endif // GCC 4.8
-
-#endif // __STDC_NO_ATOMICS__
-
-#else // this is not c11
-#define SCOUT_USE_OLD_ATOMICS
-#endif
-
-
-
-/////////////////////////////////////////////////////////////////////////////////
-//// Now implement atomics based on the decision above
+// Build system MUST set either SCOUT_USE_OLD_ATOMICS or SCOUT_USE_NEW_ATOMICS,
+// but not both
 /////////////////////////////////////////////////////////////////////////////////
 
 
