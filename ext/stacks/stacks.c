@@ -184,6 +184,17 @@ static __thread struct sigevent _sev;
 // Global variables
 ////////////////////////////////////////////////////////////////////////////////////////
 
+static int
+scout_add_profiled_thread(pthread_t th)
+{
+  if (ATOMIC_LOAD(&_thread_registered) == true) return 1;
+
+  init_thread_vars();
+  ATOMIC_STORE_BOOL(&_thread_registered, true);
+
+  fprintf(stderr, "APM DEBUG: Added thread id: %li\n", (unsigned long int)pthread_self());
+  return 1;
+}
 
 /*
  * rb_scout_add_profiled_thread: adds the currently running thread to the head of the linked list
@@ -193,15 +204,10 @@ static __thread struct sigevent _sev;
  *   - start_frame_index and start_trace_index to 0
  *   - cur_traces_num to 0
  */
-static VALUE rb_scout_add_profiled_thread(VALUE self)
+static VALUE
+rb_scout_add_profiled_thread(VALUE self)
 {
-  if (ATOMIC_LOAD(&_thread_registered) == true) return 0;
-
-  init_thread_vars();
-  ATOMIC_STORE_BOOL(&_thread_registered, true);
-
-  fprintf(stderr, "APM DEBUG: Added thread id: %li\n", (unsigned long int)pthread_self());
-
+  scout_add_profiled_thread(pthread_self());
   return Qtrue;
 }
 
@@ -209,9 +215,10 @@ static VALUE rb_scout_add_profiled_thread(VALUE self)
  * remove_profiled_thread: removes a thread from the linked list.
  * if the linked list is empty, this is a noop
  */
-static int remove_profiled_thread(pthread_t th)
+static int
+remove_profiled_thread(pthread_t th)
 {
-  if (ATOMIC_LOAD(&_thread_registered) == false) return 0;
+  if (ATOMIC_LOAD(&_thread_registered) == false) return 1;
 
   ATOMIC_STORE_BOOL(&_ok_to_sample, false);
 
@@ -424,6 +431,12 @@ static VALUE rb_scout_profile_frames(VALUE self)
   uint_fast16_t i, cur_traces_num, start_trace_index;
   VALUE traces, trace, trace_line;
 
+  if (ATOMIC_LOAD(&_thread_registered) == false) {
+    fprintf(stderr, "Error: trying to get profiled frames on a non-profiled thread!\n");
+    ATOMIC_STORE_INT16(&_cur_traces_num, 0);
+    return rb_ary_new();
+  }
+
   cur_traces_num = ATOMIC_LOAD(&_cur_traces_num);
   start_trace_index = ATOMIC_LOAD(&_start_trace_index);
 
@@ -495,6 +508,7 @@ stop_thread_timer()
 static VALUE
 rb_scout_start_sampling(VALUE self)
 {
+  scout_add_profiled_thread(pthread_self());
   ATOMIC_STORE_BOOL(&_ok_to_sample, true);
   start_thread_timer();
   return Qtrue;
