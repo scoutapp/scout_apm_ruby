@@ -145,6 +145,8 @@ const long INTERVAL = 1 * NANO_SECOND_MULTIPLIER; // milliseconds * NANO_SECOND_
 static void init_thread_vars();
 static void scout_profile_broadcast_signal_handler(int sig);
 void scout_record_sample();
+static void start_thread_timer();
+static void stop_thread_timer();
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // Per-Thread variables
@@ -219,6 +221,8 @@ static int remove_profiled_thread(pthread_t th)
   rb_gc_unregister_address(&_gc_hook);
   xfree(&_gc_hook);
   xfree(&_traces);
+
+  timer_delete(_timerid);
 
   ATOMIC_STORE_BOOL(&_thread_registered, false);
   return 0;
@@ -299,8 +303,23 @@ scoutprof_gc_mark(void *data)
 }
 
 static void
+parent_atfork_prepare()
+{
+  // TODO: Should we track how much time the fork took?
+  stop_thread_timer();
+}
+
+static void
+parent_atfork_finish()
+{
+  start_thread_timer();
+}
+
+static void
 init_thread_vars()
 {
+  int res;
+
   ATOMIC_STORE_BOOL(&_ok_to_sample, false);
   ATOMIC_STORE_BOOL(&_in_signal_handler, false);
   ATOMIC_STORE_INT16(&_start_frame_index, 0);
@@ -311,6 +330,11 @@ init_thread_vars()
 
   _gc_hook = Data_Wrap_Struct(rb_cObject, &scoutprof_gc_mark, NULL, &_traces);
   rb_gc_register_address(&_gc_hook);
+
+  res = pthread_atfork(parent_atfork_prepare, parent_atfork_finish, NULL);
+  if (res != 0) {
+    fprintf(stderr, "Pthread_atfork failed: %d\n", res);
+  }
 
   // Create timer to target this thread
   _sev.sigev_notify = SIGEV_THREAD_ID;
@@ -430,19 +454,16 @@ static VALUE rb_scout_profile_frames(VALUE self)
 /* Control code */
 /*****************************************************/
 
-/* Per thread start sampling */
-static VALUE
-rb_scout_start_sampling(VALUE self)
+static void
+start_thread_timer()
 {
   struct itimerspec its;
   sigset_t mask;
 
-  ATOMIC_STORE_BOOL(&_ok_to_sample, true);
-
   sigemptyset(&mask);
   sigaddset(&mask, SIGALRM);
   if (sigprocmask(SIG_SETMASK, &mask, NULL) == -1) {
-    fprintf(stderr, "Block mask failed in start sampling: %d\n", errno);
+    fprintf(stderr, "Block mask failed: %d\n", errno);
   }
 
   its.it_value.tv_sec = 0;
@@ -455,9 +476,27 @@ rb_scout_start_sampling(VALUE self)
   }
 
   if (sigprocmask(SIG_UNBLOCK, &mask, NULL) == -1) {
-    fprintf(stderr, "UNBlock mask failed in start sampling: %d\n", errno);
+    fprintf(stderr, "UNBlock mask failed: %d\n", errno);
   }
+}
 
+static void
+stop_thread_timer()
+{
+  struct itimerspec its;
+
+  memset((void*)&its, 0, sizeof(its));
+  if (timer_settime(_timerid, 0, &its, NULL) == -1 ) {
+    fprintf(stderr, "Timer set failed: %d\n", errno);
+  }
+}
+
+/* Per thread start sampling */
+static VALUE
+rb_scout_start_sampling(VALUE self)
+{
+  ATOMIC_STORE_BOOL(&_ok_to_sample, true);
+  start_thread_timer();
   return Qtrue;
 }
 
@@ -465,13 +504,8 @@ rb_scout_start_sampling(VALUE self)
 static VALUE
 rb_scout_stop_sampling(VALUE self, VALUE reset)
 {
-  struct itimerspec its;
-
   if(ATOMIC_LOAD(&_ok_to_sample) == true ) {
-    memset((void*)&its, 0, sizeof(its));
-    if (timer_settime(_timerid, 0, &its, NULL) == -1 ) {
-      fprintf(stderr, "Timer set failed in stop sampling: %d\n", errno);
-    }
+    stop_thread_timer();
   }
 
   ATOMIC_STORE_BOOL(&_ok_to_sample, false);
