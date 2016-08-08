@@ -158,35 +158,26 @@ struct c_trace {
   VALUE frames_buf[BUF_SIZE];
 };
 
+static __thread struct c_trace *_traces;
+
 static __thread atomic_bool_t _thread_registered = ATOMIC_INIT(false);
+static __thread atomic_bool_t _ok_to_sample = ATOMIC_INIT(false);
+static __thread atomic_bool_t _in_signal_handler = ATOMIC_INIT(false);
 
-typedef struct _scoutprof _scoutprof;
+static __thread atomic_uint16_t _start_frame_index = ATOMIC_INIT(0);
+static __thread atomic_uint16_t _start_trace_index = ATOMIC_INIT(0);
+static __thread atomic_uint16_t _cur_traces_num = ATOMIC_INIT(0);
 
-struct _scoutprof {
-  struct c_trace *traces;
-  atomic_bool_t ok_to_sample;
-  atomic_bool_t in_signal_handler;
+static __thread atomic_uint32_t _skipped_in_gc = ATOMIC_INIT(0);
+static __thread atomic_uint32_t _skipped_in_signal_handler = ATOMIC_INIT(0);
+static __thread atomic_uint32_t _skipped_in_job_registered = ATOMIC_INIT(0);
 
-  atomic_uint16_t start_frame_index;
-  atomic_uint16_t start_trace_index;
-  atomic_uint16_t cur_traces_num;
+static __thread VALUE _gc_hook;
 
-  atomic_uint32_t skipped_in_gc;
-  atomic_uint32_t skipped_in_signal_handler;
-  atomic_uint32_t skipped_in_job_registered;
+static __thread atomic_bool_t _job_registered = ATOMIC_INIT(false);
 
-  VALUE gc_hook;
-
-  atomic_bool_t job_registered;
-
-  timer_t timerid;
-  struct sigevent sev;
-};
-
-static __thread _scoutprof *_sp;
-
-static pthread_key_t _sp_key;
-static pthread_once_t _sp_key_once = PTHREAD_ONCE_INIT;
+static __thread timer_t _timerid;
+static __thread struct sigevent _sev;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -194,7 +185,7 @@ static pthread_once_t _sp_key_once = PTHREAD_ONCE_INIT;
 ////////////////////////////////////////////////////////////////////////////////////////
 
 static int
-scout_add_profiled_thread()
+scout_add_profiled_thread(pthread_t th)
 {
   if (ATOMIC_LOAD(&_thread_registered) == true) return 1;
 
@@ -216,7 +207,7 @@ scout_add_profiled_thread()
 static VALUE
 rb_scout_add_profiled_thread(VALUE self)
 {
-  scout_add_profiled_thread();
+  scout_add_profiled_thread(pthread_self());
   return Qtrue;
 }
 
@@ -225,26 +216,22 @@ rb_scout_add_profiled_thread(VALUE self)
  * if the linked list is empty, this is a noop
  */
 static int
-remove_profiled_thread()
+remove_profiled_thread(pthread_t th)
 {
   if (ATOMIC_LOAD(&_thread_registered) == false) return 1;
 
-  ATOMIC_STORE_BOOL(&_thread_registered, false);
+  ATOMIC_STORE_BOOL(&_ok_to_sample, false);
 
-  ATOMIC_STORE_BOOL(&_sp->ok_to_sample, false);
-
-  fprintf(stderr, "APM DEBUG: Removed thread id: %li\n", (unsigned long int)pthread_self());
+  fprintf(stderr, "APM DEBUG: Would remove thread id: %li\n", (unsigned long int)th);
 
   // Unregister the _gc_hook from Ruby ObjectSpace, then free it as well as the _traces struct it wrapped.
-  rb_gc_unregister_address(&_sp->gc_hook);
-  xfree(&_sp->gc_hook);
-  xfree(&_sp->traces);
+  rb_gc_unregister_address(&_gc_hook);
+  xfree(&_gc_hook);
+  xfree(&_traces);
 
-  timer_delete(_sp->timerid);
+  timer_delete(_timerid);
 
-  free(_sp);
-  _sp = NULL;
-
+  ATOMIC_STORE_BOOL(&_thread_registered, false);
   return 0;
 }
 
@@ -253,7 +240,7 @@ remove_profiled_thread()
  */
 static VALUE rb_scout_remove_profiled_thread(VALUE self)
 {
-  remove_profiled_thread();
+  remove_profiled_thread(pthread_self());
   return Qtrue;
 }
 
@@ -315,9 +302,9 @@ scoutprof_gc_mark(void *data)
 {
   uint_fast16_t i;
   int n;
-  for (i = 0; i < ATOMIC_LOAD(&_sp->cur_traces_num); i++) {
-    for (n = 0; n < _sp->traces[i].num_tracelines; n++) {
-      rb_gc_mark(_sp->traces[i].frames_buf[n]);
+  for (i = 0; i < ATOMIC_LOAD(&_cur_traces_num); i++) {
+    for (n = 0; n < _traces[i].num_tracelines; n++) {
+      rb_gc_mark(_traces[i].frames_buf[n]);
     }
   }
 }
@@ -326,7 +313,7 @@ static void
 scout_parent_atfork_prepare()
 {
   // TODO: Should we track how much time the fork took?
-  if (ATOMIC_LOAD(&_sp->ok_to_sample) == true) {
+  if (ATOMIC_LOAD(&_ok_to_sample) == true) {
     scout_stop_thread_timer();
   }
 }
@@ -334,22 +321,9 @@ scout_parent_atfork_prepare()
 static void
 scout_parent_atfork_finish()
 {
-  if (ATOMIC_LOAD(&_sp->ok_to_sample) == true) {
+  if (ATOMIC_LOAD(&_ok_to_sample) == true) {
     scout_start_thread_timer();
   }
-}
-
-
-static void
-pthread_sp_destructor()
-{
-  remove_profiled_thread();
-}
-
-static void
-make_sp_key()
-{
-  pthread_key_create(&_sp_key, pthread_sp_destructor);
 }
 
 static void
@@ -357,30 +331,16 @@ init_thread_vars()
 {
   int res;
 
-  fprintf(stderr, "INITIALIZED A THREAD");
+  ATOMIC_STORE_BOOL(&_ok_to_sample, false);
+  ATOMIC_STORE_BOOL(&_in_signal_handler, false);
+  ATOMIC_STORE_INT16(&_start_frame_index, 0);
+  ATOMIC_STORE_INT16(&_start_trace_index, 0);
+  ATOMIC_STORE_INT16(&_cur_traces_num, 0);
 
-  pthread_once(&_sp_key_once, make_sp_key);
-  if ((_sp = pthread_getspecific(_sp_key)) == NULL) {
-      _sp = malloc(sizeof(struct _scoutprof));
-      pthread_setspecific(_sp_key, _sp);
-  }
+  _traces = ALLOC_N(struct c_trace, MAX_TRACES); // TODO Check return
 
-  ATOMIC_STORE_BOOL(&_sp->ok_to_sample, false);
-  ATOMIC_STORE_BOOL(&_sp->in_signal_handler, false);
-  ATOMIC_STORE_BOOL(&_sp->job_registered, false);
-
-  ATOMIC_STORE_INT16(&_sp->start_frame_index, 0);
-  ATOMIC_STORE_INT16(&_sp->start_trace_index, 0);
-  ATOMIC_STORE_INT16(&_sp->cur_traces_num, 0);
-
-  ATOMIC_STORE_INT32(&_sp->skipped_in_gc, 0);
-  ATOMIC_STORE_INT32(&_sp->skipped_in_signal_handler, 0);
-  ATOMIC_STORE_INT32(&_sp->skipped_in_job_registered, 0);
-
-  _sp->traces = ALLOC_N(struct c_trace, MAX_TRACES); // TODO Check return
-
-  _sp->gc_hook = Data_Wrap_Struct(rb_cObject, &scoutprof_gc_mark, NULL, &_sp->traces);
-  rb_gc_register_address(&_sp->gc_hook);
+  _gc_hook = Data_Wrap_Struct(rb_cObject, &scoutprof_gc_mark, NULL, &_traces);
+  rb_gc_register_address(&_gc_hook);
 
   res = pthread_atfork(scout_parent_atfork_prepare, scout_parent_atfork_finish, NULL);
   if (res != 0) {
@@ -388,11 +348,11 @@ init_thread_vars()
   }
 
   // Create timer to target this thread
-  _sp->sev.sigev_notify = SIGEV_THREAD_ID;
-  _sp->sev.sigev_signo = SIGALRM;
-  _sp->sev.sigev_notify_thread_id = syscall(SYS_gettid);
-  _sp->sev.sigev_value.sival_ptr = &_sp->timerid;
-  if (timer_create(CLOCK_MONOTONIC, &_sp->sev, &_sp->timerid) == -1) {
+  _sev.sigev_notify = SIGEV_THREAD_ID;
+  _sev.sigev_signo = SIGALRM;
+  _sev.sigev_notify_thread_id = syscall(SYS_gettid);
+  _sev.sigev_value.sival_ptr = &_timerid;
+  if (timer_create(CLOCK_MONOTONIC, &_sev, &_timerid) == -1) {
     fprintf(stderr, "Time create failed: %d\n", errno);
   }
 
@@ -407,29 +367,30 @@ scout_profile_broadcast_signal_handler(int sig)
 {
   int register_result;
 
-  if (ATOMIC_LOAD(&_sp->ok_to_sample) == false) return;
+  if (ATOMIC_LOAD(&_ok_to_sample) == false) return;
 
-  if (ATOMIC_LOAD(&_sp->in_signal_handler) == true) {
-    ATOMIC_ADD(&_sp->skipped_in_signal_handler, 1);
+  if (ATOMIC_LOAD(&_in_signal_handler) == true) {
+    ATOMIC_ADD(&_skipped_in_signal_handler, 1);
     return;
   }
 
-  ATOMIC_STORE_BOOL(&_sp->in_signal_handler, true);
+
+  ATOMIC_STORE_BOOL(&_in_signal_handler, true);
 
   if (rb_during_gc()) {
-    ATOMIC_ADD(&_sp->skipped_in_gc, 1);
+    ATOMIC_ADD(&_skipped_in_gc, 1);
   } else {
-    if (ATOMIC_LOAD(&_sp->job_registered) == false){
+    if (ATOMIC_LOAD(&_job_registered) == false){
       register_result = rb_postponed_job_register(0, scout_record_sample, 0);
       if ((register_result == 1) || (register_result == 2)) {
-        ATOMIC_STORE_BOOL(&_sp->job_registered, true);
+        ATOMIC_STORE_BOOL(&_job_registered, true);
       } else {
-        ATOMIC_ADD(&_sp->skipped_in_job_registered, 1);
+        ATOMIC_ADD(&_skipped_in_job_registered, 1);
       }
     } // !_job_registered
   }
 
-  ATOMIC_STORE_BOOL(&_sp->in_signal_handler, false);
+  ATOMIC_STORE_BOOL(&_in_signal_handler, false);
 }
 
 /*
@@ -445,23 +406,23 @@ scout_record_sample()
   int num_frames;
   uint_fast16_t cur_traces_num, start_frame_index;
 
-  if (ATOMIC_LOAD(&_sp->ok_to_sample) == false) return;
+  if (ATOMIC_LOAD(&_ok_to_sample) == false) return;
   if (rb_during_gc()) {
-    ATOMIC_ADD(&_sp->skipped_in_gc, 1);
+    ATOMIC_ADD(&_skipped_in_gc, 1);
     return;
   }
 
-  cur_traces_num = ATOMIC_LOAD(&_sp->cur_traces_num);
-  start_frame_index = ATOMIC_LOAD(&_sp->start_frame_index);
+  cur_traces_num = ATOMIC_LOAD(&_cur_traces_num);
+  start_frame_index = ATOMIC_LOAD(&_start_frame_index);
 
   if (cur_traces_num < MAX_TRACES) {
-    num_frames = rb_profile_frames(0, sizeof(_sp->traces[cur_traces_num].frames_buf) / sizeof(VALUE), _sp->traces[cur_traces_num].frames_buf, _sp->traces[cur_traces_num].lines_buf);
+    num_frames = rb_profile_frames(0, sizeof(_traces[cur_traces_num].frames_buf) / sizeof(VALUE), _traces[cur_traces_num].frames_buf, _traces[cur_traces_num].lines_buf);
     if (num_frames - start_frame_index > 2) {
-      _sp->traces[cur_traces_num].num_tracelines = num_frames - start_frame_index - 2; // The extra -2 is because there's a bug when reading the very first (bottom) 2 iseq objects for some reason
-      ATOMIC_ADD(&_sp->cur_traces_num, 1);
+      _traces[cur_traces_num].num_tracelines = num_frames - start_frame_index - 2; // The extra -2 is because there's a bug when reading the very first (bottom) 2 iseq objects for some reason
+      ATOMIC_ADD(&_cur_traces_num, 1);
     } // TODO: add an else with a counter so we can track if we skipped profiling here
   }
-  ATOMIC_STORE_BOOL(&_sp->job_registered, false);
+  ATOMIC_STORE_BOOL(&_job_registered, false);
 }
 
 /* rb_scout_profile_frames: retreive the traces for the layer that is exiting
@@ -476,21 +437,22 @@ static VALUE rb_scout_profile_frames(VALUE self)
 
   if (ATOMIC_LOAD(&_thread_registered) == false) {
     fprintf(stderr, "Error: trying to get profiled frames on a non-profiled thread!\n");
+    ATOMIC_STORE_INT16(&_cur_traces_num, 0);
     return rb_ary_new();
   }
 
-  cur_traces_num = ATOMIC_LOAD(&_sp->cur_traces_num);
-  start_trace_index = ATOMIC_LOAD(&_sp->start_trace_index);
+  cur_traces_num = ATOMIC_LOAD(&_cur_traces_num);
+  start_trace_index = ATOMIC_LOAD(&_start_trace_index);
 
   if (cur_traces_num - start_trace_index > 0) {
     traces = rb_ary_new2(cur_traces_num - start_trace_index);
     for(i = start_trace_index; i < cur_traces_num; i++) {
-      if (_sp->traces[i].num_tracelines > 0) {
-        trace = rb_ary_new2(_sp->traces[i].num_tracelines);
-        for(n = 0; n < _sp->traces[i].num_tracelines; n++) {
+      if (_traces[i].num_tracelines > 0) {
+        trace = rb_ary_new2(_traces[i].num_tracelines);
+        for(n = 0; n < _traces[i].num_tracelines; n++) {
           trace_line = rb_ary_new2(2);
-          rb_ary_store(trace_line, 0, _sp->traces[i].frames_buf[n]);
-          rb_ary_store(trace_line, 1, INT2FIX(_sp->traces[i].lines_buf[n]));
+          rb_ary_store(trace_line, 0, _traces[i].frames_buf[n]);
+          rb_ary_store(trace_line, 1, INT2FIX(_traces[i].lines_buf[n]));
           rb_ary_push(trace, trace_line);
         }
         rb_ary_push(traces, trace);
@@ -499,7 +461,7 @@ static VALUE rb_scout_profile_frames(VALUE self)
   } else {
     traces = rb_ary_new();
   }
-  ATOMIC_STORE_INT16(&_sp->cur_traces_num, start_trace_index);
+  ATOMIC_STORE_INT16(&_cur_traces_num, start_trace_index);
   return traces;
 }
 
@@ -528,7 +490,7 @@ scout_start_thread_timer()
   its.it_interval.tv_sec = its.it_value.tv_sec;
   its.it_interval.tv_nsec = its.it_value.tv_nsec;
 
-  if (timer_settime(_sp->timerid, 0, &its, NULL) == -1) {
+  if (timer_settime(_timerid, 0, &its, NULL) == -1) {
     fprintf(stderr, "Timer set failed in start sampling: %d\n", errno);
   }
 
@@ -545,7 +507,7 @@ scout_stop_thread_timer()
   if (ATOMIC_LOAD(&_thread_registered) == false) return;
 
   memset((void*)&its, 0, sizeof(its));
-  if (timer_settime(_sp->timerid, 0, &its, NULL) == -1 ) {
+  if (timer_settime(_timerid, 0, &its, NULL) == -1 ) {
     fprintf(stderr, "Timer set failed: %d\n", errno);
   }
 }
@@ -555,7 +517,7 @@ static VALUE
 rb_scout_start_sampling(VALUE self)
 {
   scout_add_profiled_thread(pthread_self());
-  ATOMIC_STORE_BOOL(&_sp->ok_to_sample, true);
+  ATOMIC_STORE_BOOL(&_ok_to_sample, true);
   scout_start_thread_timer();
   return Qtrue;
 }
@@ -564,22 +526,22 @@ rb_scout_start_sampling(VALUE self)
 static VALUE
 rb_scout_stop_sampling(VALUE self, VALUE reset)
 {
-  if(ATOMIC_LOAD(&_sp->ok_to_sample) == true ) {
+  if(ATOMIC_LOAD(&_ok_to_sample) == true ) {
     scout_stop_thread_timer();
   }
 
-  ATOMIC_STORE_BOOL(&_sp->ok_to_sample, false);
+  ATOMIC_STORE_BOOL(&_ok_to_sample, false);
 
   // TODO: I think this can be (reset == Qtrue)
   if (TYPE(reset) == T_TRUE) {
-    ATOMIC_STORE_BOOL(&_sp->job_registered, 0);
-    ATOMIC_STORE_BOOL(&_sp->in_signal_handler, 0);
-    ATOMIC_STORE_INT16(&_sp->start_trace_index, 0);
-    ATOMIC_STORE_INT16(&_sp->start_frame_index, 0);
-    ATOMIC_STORE_INT16(&_sp->cur_traces_num, 0);
-    ATOMIC_STORE_INT32(&_sp->skipped_in_gc, 0);
-    ATOMIC_STORE_INT32(&_sp->skipped_in_signal_handler, 0);
-    ATOMIC_STORE_INT32(&_sp->skipped_in_job_registered, 0);
+    ATOMIC_STORE_BOOL(&_job_registered, 0);
+    ATOMIC_STORE_BOOL(&_in_signal_handler, 0);
+    ATOMIC_STORE_INT16(&_start_trace_index, 0);
+    ATOMIC_STORE_INT16(&_start_frame_index, 0);
+    ATOMIC_STORE_INT16(&_cur_traces_num, 0);
+    ATOMIC_STORE_INT32(&_skipped_in_gc, 0);
+    ATOMIC_STORE_INT32(&_skipped_in_signal_handler, 0);
+    ATOMIC_STORE_INT32(&_skipped_in_job_registered, 0);
   }
   return Qtrue;
 }
@@ -588,8 +550,8 @@ rb_scout_stop_sampling(VALUE self, VALUE reset)
 static VALUE
 rb_scout_update_indexes(VALUE self, VALUE frame_index, VALUE trace_index)
 {
-  ATOMIC_STORE_INT16(&_sp->start_trace_index, NUM2INT(trace_index));
-  ATOMIC_STORE_INT16(&_sp->start_frame_index, NUM2INT(frame_index));
+  ATOMIC_STORE_INT16(&_start_trace_index, NUM2INT(trace_index));
+  ATOMIC_STORE_INT16(&_start_frame_index, NUM2INT(frame_index));
   return Qtrue;
 }
 
@@ -597,8 +559,7 @@ rb_scout_update_indexes(VALUE self, VALUE frame_index, VALUE trace_index)
 static VALUE
 rb_scout_current_trace_index(VALUE self)
 {
-  scout_add_profiled_thread(); // This is the first place non-traced layers will hit. Be sure the thread struct is initialized and ready.
-  return INT2NUM(ATOMIC_LOAD(&_sp->cur_traces_num));
+  return INT2NUM(ATOMIC_LOAD(&_cur_traces_num));
 }
 
 // rb_scout_current_trace_index: Get the current top of the trace stack
@@ -621,19 +582,19 @@ rb_scout_current_frame_index(VALUE self)
 static VALUE
 rb_scout_skipped_in_gc(VALUE self)
 {
-  return INT2NUM(ATOMIC_LOAD(&_sp->skipped_in_gc));
+  return INT2NUM(ATOMIC_LOAD(&_skipped_in_gc));
 }
 
 static VALUE
 rb_scout_skipped_in_handler(VALUE self)
 {
-  return INT2NUM(ATOMIC_LOAD(&_sp->skipped_in_signal_handler));
+  return INT2NUM(ATOMIC_LOAD(&_skipped_in_signal_handler));
 }
 
 static VALUE
 rb_scout_skipped_in_job_registered(VALUE self)
 {
-  return INT2NUM(ATOMIC_LOAD(&_sp->skipped_in_job_registered));
+  return INT2NUM(ATOMIC_LOAD(&_skipped_in_job_registered));
 }
 
 ////////////////////////////////////////////////////////////////
