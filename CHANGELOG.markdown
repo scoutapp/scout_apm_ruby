@@ -9,6 +9,7 @@
 * Collect 95th percentiles
 * Remove unused & old references to Stackprof
 * Fixing exception on load if no config file is provided
+* DevTrace BETA
 
 # 1.6.8
 
