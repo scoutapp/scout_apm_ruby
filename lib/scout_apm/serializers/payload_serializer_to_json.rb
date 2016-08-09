@@ -67,6 +67,10 @@ module ScoutApm
             %Q["#{formatee.iso8601}"]
           when nil
             "null"
+          when TrueClass
+            "true"
+          when FalseClass
+            "false"
           else # strings and everything
             %Q["#{escape(formatee)}"]
           end
