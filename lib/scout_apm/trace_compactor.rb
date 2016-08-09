@@ -224,7 +224,8 @@ class TraceLine
 
   def app?
     r = %r|^#{Regexp.escape(ScoutApm::Environment.instance.root.to_s)}/|.freeze
-    !gem_name && !stdlib_name && file =~ r
+    result = !gem_name && !stdlib_name && file =~ r
+    !!result # coerce to a bool
   end
 
   def trim_file(file_path)
