@@ -2,14 +2,6 @@
 $:.push File.expand_path("../lib", __FILE__)
 require "scout_apm/version"
 
-has_make = false
-ENV['PATH'].split(File::PATH_SEPARATOR).each do |path|
-  if File.exist?(path) && File.directory?(path) && File.readable?(path) && Dir.entries(path).include?('make')
-    has_make = true
-    break
-  end
-end
-
 Gem::Specification.new do |s|
   s.name        = "scout_apm"
   s.version     = ScoutApm::VERSION
@@ -26,11 +18,8 @@ Gem::Specification.new do |s|
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib","data"]
-
-  if has_make
-    s.extensions << 'ext/allocations/extconf.rb'
-    s.extensions << 'ext/stacks/extconf.rb'
-  end
+  s.extensions << 'ext/allocations/extconf.rb'
+  s.extensions << 'ext/stacks/extconf.rb'
 
   s.add_runtime_dependency "rusage", '~> 0.2.0'
 

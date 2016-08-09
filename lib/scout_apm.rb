@@ -85,12 +85,7 @@ require 'scout_apm/instruments/sinatra'
 require 'scout_apm/instruments/process/process_cpu'
 require 'scout_apm/instruments/process/process_memory'
 require 'scout_apm/instruments/percentile_sampler'
-
-begin
-  require 'allocations'
-rescue LoadError
-  require 'scout_apm/utils/fake_allocations'
-end
+require 'allocations'
 
 begin
   require 'scout_apm/stacks'
