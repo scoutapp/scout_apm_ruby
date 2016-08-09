@@ -562,12 +562,6 @@ void Init_stacks()
     mInstruments = rb_define_module_under(mScoutApm, "Instruments");
     cStacks = rb_define_class_under(mInstruments, "Stacks", rb_cObject);
 
-    sym_ScoutApm = rb_intern("ScoutApm");
-    sym_Stacks = rb_intern("Stacks");
-    sym_collect = rb_intern("collect");
-
-    ScoutApm = rb_const_get(rb_cObject, sym_ScoutApm);
-    Stacks = rb_const_get(ScoutApm, sym_Stacks);
     rb_warn("Init_stacks");
 
     // Installs/uninstalls the signal handler.

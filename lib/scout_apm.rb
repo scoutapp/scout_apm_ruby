@@ -88,10 +88,8 @@ require 'scout_apm/instruments/percentile_sampler'
 require 'allocations'
 
 begin
-  require 'scout_apm/stacks'
   require 'stacks'
 rescue LoadError
-  require 'scout_apm/stacks'
   require 'scout_apm/utils/fake_stacks'
 end
 
