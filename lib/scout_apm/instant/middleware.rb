@@ -41,12 +41,13 @@ module ScoutApm
     # Note that this middleware never even gets inserted unless Rails environment is development (See Railtie)
     class Middleware
       def initialize(app)
+        ScoutApm::Agent.instance.logger.info("Activating Scout DevTrace because environment=development and dev_trace=true in scout_apm config")
         @app        = app
       end
 
       def call(env)
         status, headers, response = @app.call(env)
-
+        path, content_type = env['PATH_INFO'], headers['Content-Type']
         if ScoutApm::Agent.instance.config.value('dev_trace')
           if response.respond_to?(:body)
             req = ScoutApm::RequestManager.lookup
@@ -63,8 +64,9 @@ module ScoutApm
               hash.merge!(metadata:metadata)
               payload = ScoutApm::Serializers::PayloadSerializerToJson.jsonify_hash(hash)
 
-              if env['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest'
-                # Add the payload as a header if it's an AJAX call
+              if env['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest' || content_type.include?("application/json")
+                ScoutApm::Agent.instance.logger.debug("DevTrace: in middleware, dev_trace is active, and response has a body. This is either AJAX or JSON. Path=#{path}; ContentType=#{content_type}")
+                # Add the payload as a header if it's an AJAX call or JSON
                 headers['X-scoutapminstant'] = payload
                 [status, headers, response]
               else
@@ -77,24 +79,27 @@ module ScoutApm
                 page.add_to_body("<script src='#{apm_host}/instant/scout_instant.js?cachebust=#{Time.now.to_i}'></script>")
                 page.add_to_body("<script>var scoutInstantPageTrace=#{payload};window.scoutInstant=window.scoutInstant('#{apm_host}', scoutInstantPageTrace)</script>")
 
-
                 if response.is_a?(ActionDispatch::Response)
+                  ScoutApm::Agent.instance.logger.debug("DevTrace: in middleware, dev_trace is active, and response has a body. This appears to be an HTML page and an ActionDispatch::Response. Path=#{path}; ContentType=#{content_type}")
                   # preserve the ActionDispatch::Response when applicable
                   response.body=[page.res]
                   [status, headers, response]
                 else
+                  ScoutApm::Agent.instance.logger.debug("DevTrace: in middleware, dev_trace is active, and response has a body. This appears to be an HTML page but not an ActionDispatch::Response. Path=#{path}; ContentType=#{content_type}")
                   # otherwise, just return an array
-                  # TODO: this will break ActionCable repsponse
                   [status, headers, [page.res]]
                 end
               end
             else
+              ScoutApm::Agent.instance.logger.debug("DevTrace: in middleware, dev_trace is active, and response has a body, but no trace was found. Path=#{path}; ContentType=#{content_type}")
               [status, headers, response]
             end
           else
+            # don't log anything here - this is the path for all assets served in development, and the log would get noisy
             [status, headers, response]
           end
         else
+          ScoutApm::Agent.instance.logger.debug("DevTrace: isn't activated via config. Try: SCOUT_DEV_TRACE=true rails server")
           [status, headers, response]
         end
       end
