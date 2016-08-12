@@ -63,7 +63,7 @@ require 'scout_apm/platform_integrations/server'
 require 'scout_apm/histogram'
 
 require 'scout_apm/deploy_integrations/capistrano_3'
-#require 'scout_apm/deploy_integrations/capistrano_2'
+# require 'scout_apm/deploy_integrations/capistrano_2'
 
 require 'scout_apm/instruments/net_http'
 require 'scout_apm/instruments/http_client'
@@ -88,6 +88,7 @@ require 'allocations'
 
 require 'scout_apm/app_server_load'
 
+require 'scout_apm/ignored_uris.rb'
 require 'scout_apm/utils/active_record_metric_name'
 require 'scout_apm/utils/backtrace_parser'
 require 'scout_apm/utils/installed_gems'
@@ -145,7 +146,7 @@ require 'scout_apm/instant/middleware'
 if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR) && Rails::VERSION::MAJOR >= 3 && defined?(Rails::Railtie)
   module ScoutApm
     class Railtie < Rails::Railtie
-      initializer "scout_apm.start" do |app|
+      initializer 'scout_apm.start' do |app|
         # attempt to start on first-request if not otherwise started, which is
         # a good catch-all for Webrick, and Passenger and similar, where we
         # can't detect the running app server until actual requests come in.
@@ -153,11 +154,10 @@ if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR
 
         # Attempt to start right away, this will work best for preloading apps, Unicorn & Puma & similar
         ScoutApm::Agent.instance.start
-
       end
     end
     class Railtie < Rails::Railtie
-      initializer "scout_apm.start" do |app|
+      initializer 'scout_apm.start' do |app|
         if Rails.env.development?
           app.middleware.use ScoutApm::Instant::Middleware
         end
@@ -167,4 +167,3 @@ if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR
 else
   ScoutApm::Agent.instance.start
 end
-

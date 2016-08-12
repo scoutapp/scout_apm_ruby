@@ -20,6 +20,7 @@ module ScoutApm
     attr_reader :slow_request_policy
     attr_reader :slow_job_policy
     attr_reader :process_start_time # used when creating slow transactions to report how far from startup the transaction was recorded.
+    attr_reader :ignored_uris
 
     # Histogram of the cumulative requests since the start of the process
     attr_reader :request_histograms
@@ -114,6 +115,8 @@ module ScoutApm
       @config = ScoutApm::Config.with_file(@config.value("config_file"))
       init_logger
       logger.info "Attempting to start Scout Agent [#{ScoutApm::VERSION}] on [#{environment.hostname}]"
+
+      @ignored_uris = ScoutApm::IgnoredUris.new(config.value('ignore'))
 
       if environment.deploy_integration
         logger.info "Starting monitoring for [#{environment.deploy_integration.name}]]."

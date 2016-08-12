@@ -75,6 +75,23 @@ module ScoutApm
       end
     end
 
+    # If the passed value is a string, attempt to decode as json
+    # This is a no-op unless the `JSON` constant is defined
+    class JsonCoercion
+      def coerce(val)
+        case val
+        when String
+          if defined?(JSON) && JSON.respond_to?(:parse)
+            JSON.parse(val)
+          else
+            val
+          end
+        else
+          val
+        end
+      end
+    end
+
     # Simply returns the passed in value, without change
     class NullCoercion
       def coerce(val)
@@ -82,10 +99,12 @@ module ScoutApm
       end
     end
 
+
     SETTING_COERCIONS = {
       "monitor"                => BooleanCoercion.new,
       "enable_background_jobs" => BooleanCoercion.new,
       "dev_trace"              => BooleanCoercion.new,
+      "ignore"                 => JsonCoercion.new,
     }
 
 
@@ -137,7 +156,7 @@ module ScoutApm
         'report_format'          => 'json',
         'disabled_instruments'   => [],
         'enable_background_jobs' => true,
-        'ignore_traces' => [],
+        'ignore'                 => [],
         'dev_trace' => false, # false for now so code can live in main branch
       }.freeze
 
