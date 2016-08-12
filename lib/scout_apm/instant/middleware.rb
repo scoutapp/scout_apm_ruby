@@ -64,7 +64,7 @@ module ScoutApm
               hash.merge!(metadata:metadata)
               payload = ScoutApm::Serializers::PayloadSerializerToJson.jsonify_hash(hash)
 
-              if env['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest'
+              if env['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest' || content_type.include?("application/json")
                 ScoutApm::Agent.instance.logger.debug("DevTrace: in middleware, dev_trace is active, and response has a body. This is either AJAX or JSON. Path=#{path}; ContentType=#{content_type}")
                 # Add the payload as a header if it's an AJAX call or JSON
                 headers['X-scoutapminstant'] = payload
