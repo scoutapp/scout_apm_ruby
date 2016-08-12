@@ -1,3 +1,9 @@
+# 2.1.0
+
+* Added ignore key to configuration to entirely ignore an endpoint. No traces
+  or metrics will be collected. Useful for health-check endpoints.
+* Better logging for DevTrace
+
 # 2.0.0
 
 * Reporting object allocation & mem delta metrics and mem delta for requests and jobs.
