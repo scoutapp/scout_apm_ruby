@@ -17,6 +17,7 @@ require 'scout_apm/environment'
 # uri_reporting    - 'path' or 'full_path' default is 'full_path', which reports URL params as well as the path.
 # report_format    - 'json' or 'marshal'. Marshal is legacy and will be removed.
 # dev_trace        - true or false. Enables always-on tracing in development environmen only
+# enable_background_jobs - true or false
 #
 # Any of these config settings can be set with an environment variable prefixed
 # by SCOUT_ and uppercasing the key: SCOUT_LOG_LEVEL for instance.
@@ -28,12 +29,96 @@ require 'scout_apm/environment'
 
 module ScoutApm
   class Config
+
+    ################################################################################
+    # Coersions
+    #
+    # Since we get values from environment variables, which are always strings,
+    # we need to be able to coerce them into the correct data type.  For
+    # instance, setting "SCOUT_ENABLE=false" should be interpreted as being the
+    # boolean false, not a string that is present & true.
+    #
+    # Similarly, this will help parsing YAML configurations if the user has a
+    # key like:
+    #   monitor: "false"
+    ################################################################################
+
+    # Any boolean is passed through
+    # A string is false iff it is 0 length, is "f", or "false" - otherwise true
+    # An number is false if it is exactly 0
+    # Other types are false
+    class BooleanCoercion
+      def coerce(val)
+        case val
+        when NilClass
+          false
+        when TrueClass
+          val
+        when FalseClass
+          val
+        when String
+          coerce_string(val)
+        when Numeric
+          val != 0
+        else
+          false
+        end
+      end
+
+      def coerce_string(val)
+        val = val.downcase.strip
+        return false if val.length == 0
+        return false if val == "f"
+        return false if val == "false"
+
+        true
+      end
+    end
+
+    # If the passed value is a string, attempt to decode as json
+    # This is a no-op unless the `JSON` constant is defined
+    class JsonCoercion
+      def coerce(val)
+        case val
+        when String
+          if defined?(JSON) && JSON.respond_to?(:parse)
+            JSON.parse(val)
+          else
+            val
+          end
+        else
+          val
+        end
+      end
+    end
+
+    # Simply returns the passed in value, without change
+    class NullCoercion
+      def coerce(val)
+        val
+      end
+    end
+
+
+    SETTING_COERCIONS = {
+      "monitor"                => BooleanCoercion.new,
+      "enable_background_jobs" => BooleanCoercion.new,
+      "dev_trace"              => BooleanCoercion.new,
+      "ignore"                 => JsonCoercion.new,
+    }
+
+
+    ################################################################################
+    # Configuration layers & reading
+    ################################################################################
+
     # Load up a config instance without attempting to load a file.
     # Useful for bootstrapping.
     def self.without_file
       overlays = [
         ConfigEnvironment.new,
         ConfigDefaults.new,
+        ConfigNull.new,
       ]
       new(overlays)
     end
@@ -46,6 +131,7 @@ module ScoutApm
         ConfigEnvironment.new,
         ConfigFile.new(file_path, config[:file]),
         ConfigDefaults.new,
+        ConfigNull.new,
       ]
       new(overlays)
     end
@@ -55,13 +141,10 @@ module ScoutApm
     end
 
     def value(key)
-      @overlays.each do |overlay|
-        if overlay.has_key?(key)
-          return overlay.value(key)
-        end
-      end
+      raw_value = @overlays.detect{ |overlay| overlay.has_key?(key) }.value(key)
 
-      nil
+      coercion = SETTING_COERCIONS[key] || NullCoercion.new
+      coercion.coerce(raw_value)
     end
 
     class ConfigDefaults
@@ -73,7 +156,7 @@ module ScoutApm
         'report_format'          => 'json',
         'disabled_instruments'   => [],
         'enable_background_jobs' => true,
-        'ignore_traces' => [],
+        'ignore'                 => [],
         'dev_trace' => false, # false for now so code can live in main branch
         'profile' => true # for scoutprof
       }.freeze
@@ -84,6 +167,20 @@ module ScoutApm
 
       def has_key?(key)
         DEFAULTS.has_key?(key)
+      end
+    end
+
+
+    # Good News: It has every config value you could want
+    # Bad News: The content of that config value is always nil
+    # Used for the null-object pattern
+    class ConfigNull
+      def value(*)
+        nil
+      end
+
+      def has_key?(*)
+        true
       end
     end
 
@@ -167,6 +264,7 @@ module ScoutApm
       def app_environment
         @config[:environment] || ScoutApm::Environment.instance.env
       end
+
       def logger
         if ScoutApm::Agent.instance.logger
           return ScoutApm::Agent.instance.logger

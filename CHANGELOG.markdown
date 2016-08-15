@@ -1,14 +1,18 @@
+# 2.1.0
+
+* Added ignore key to configuration to entirely ignore an endpoint. No traces
+  or metrics will be collected. Useful for health-check endpoints.
+* Better logging for DevTrace
+
 # 2.0.0
 
-* Reporting object allocation metrics and mem delta with slow requests and jobs.
-* Collecting memory metrics on slow transactions
-* Collecting additional fields for slow transactions:
+* Reporting object allocation & mem delta metrics and mem delta for requests and jobs.
+* Collecting additional fields for transactions:
   * hostname
   * seconds_since_startup (larger memory increases and other other odd behavior more common when close to startup)
-* Initial support for instant traces
-* Collect 95th percentiles
 * Remove unused & old references to Stackprof
 * Fixing exception on load if no config file is provided
+* DevTrace BETA
 
 # 1.6.8
 

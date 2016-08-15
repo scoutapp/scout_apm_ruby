@@ -39,13 +39,6 @@ module ScoutApm
           allocation_metrics = {}
         end
 
-        (ScoutApm::Agent.instance.config.value("ignore_traces") || []).each do |pattern|
-          if /#{pattern}/ =~ uri
-            ScoutApm::Agent.instance.logger.debug("Skipped recording a trace for #{uri} due to `ignore_traces` pattern: #{pattern}")
-            return nil
-          end
-        end
-
         SlowTransaction.new(uri,
                             scope.legacy_metric_name,
                             root_layer.total_call_time,
