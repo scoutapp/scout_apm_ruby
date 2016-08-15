@@ -116,7 +116,6 @@ scout_add_profiled_thread(pthread_t th)
   init_thread_vars();
   ATOMIC_STORE_BOOL(&_thread_registered, true);
 
-  fprintf(stderr, "APM DEBUG: Added thread id: %li\n", (unsigned long int)pthread_self());
   return 1;
 }
 
@@ -145,8 +144,6 @@ remove_profiled_thread(pthread_t th)
   if (ATOMIC_LOAD(&_thread_registered) == false) return 1;
 
   ATOMIC_STORE_BOOL(&_ok_to_sample, false);
-
-  fprintf(stderr, "APM DEBUG: Would remove thread id: %li\n", (unsigned long int)th);
 
   // Unregister the _gc_hook from Ruby ObjectSpace, then free it as well as the _traces struct it wrapped.
   rb_gc_unregister_address(&_gc_hook);

@@ -57,12 +57,12 @@ module ScoutApm
         queue_layer = ScoutApm::Layer.new("Queue", queue)
         job_layer = ScoutApm::Layer.new("Job", job_class)
 
-        #if ScoutApm::Agent.instance.config.value('profile')
+        if ScoutApm::Agent.instance.config.value('profile') && SidekiqMiddleware.version_supports_profiling?
           # Capture ScoutProf if we can
           #req.enable_profiled_thread!
           #job_layer.set_root_class(job_class)
           #job_layer.traced!
-        #end
+        end
 
         req.start_layer(queue_layer)
         req.start_layer(job_layer)
@@ -77,6 +77,10 @@ module ScoutApm
         req.stop_layer # Job
         req.stop_layer # Queue
       end
-    end
+
+      def self.version_supports_profiling?
+        @@sidekiq_supports_profling ||= defined?(::Sidekiq::VERSION) && Gem::Dependency.new('', '~> 4.0').match?('', ::Sidekiq::VERSION.to_s)
+      end
+    end # SidekiqMiddleware
   end
 end
