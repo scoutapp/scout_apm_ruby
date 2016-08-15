@@ -61,7 +61,7 @@ module ScoutApm
                   :platform      => "ruby",
               }
               hash = ScoutApm::Serializers::PayloadSerializerToJson.rearrange_slow_transaction(trace)
-              hash.merge!(metadata:metadata)
+              hash.merge!(:metadata => metadata)
               payload = ScoutApm::Serializers::PayloadSerializerToJson.jsonify_hash(hash)
 
               if env['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest' || content_type.include?("application/json")
