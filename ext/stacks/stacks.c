@@ -178,7 +178,6 @@ rb_scout_start_profiling(VALUE self)
     return Qtrue;
   }
 
-  rb_warn("Starting Profiling");
   scout_profiling_running = 1;
 
   return Qtrue;
@@ -562,7 +561,7 @@ void Init_stacks()
     mInstruments = rb_define_module_under(mScoutApm, "Instruments");
     cStacks = rb_define_class_under(mInstruments, "Stacks", rb_cObject);
 
-    rb_warn("Init_stacks");
+    rb_warning("Initializing ScoutProf Native Extension");
 
     // Installs/uninstalls the signal handler.
     rb_define_singleton_method(cStacks, "install", rb_scout_install_profiling, 0);
@@ -590,7 +589,7 @@ void Init_stacks()
     rb_define_singleton_method(cStacks, "skipped_in_job_registered", rb_scout_skipped_in_job_registered, 0);
 
     rb_define_const(cStacks, "ENABLED", Qtrue);
-    rb_warn("Finished Initializing ScoutProf Native Extension");
+    rb_warning("Finished Initializing ScoutProf Native Extension");
 }
 
 #else

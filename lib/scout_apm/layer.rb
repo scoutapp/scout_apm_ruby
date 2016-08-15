@@ -138,7 +138,7 @@ module ScoutApm
     end
 
     def start_sampling
-      if traced?
+      if ScoutApm::Agent.instance.config.value('profile') && traced?
         ScoutApm::Instruments::Stacks.update_indexes(frame_index, trace_index)
         ScoutApm::Instruments::Stacks.start_sampling
       else
@@ -147,12 +147,14 @@ module ScoutApm
     end
 
     def record_traces!
-      ScoutApm::Instruments::Stacks.stop_sampling(false)
-      if traced?
-        traces.raw_traces = ScoutApm::Instruments::Stacks.profile_frames
-        traces.skipped_in_gc = ScoutApm::Instruments::Stacks.skipped_in_gc
-        traces.skipped_in_handler = ScoutApm::Instruments::Stacks.skipped_in_handler
-        traces.skipped_in_job_registered = ScoutApm::Instruments::Stacks.skipped_in_job_registered
+      if ScoutApm::Agent.instance.config.value('profile')
+        ScoutApm::Instruments::Stacks.stop_sampling(false)
+        if traced?
+          traces.raw_traces = ScoutApm::Instruments::Stacks.profile_frames
+          traces.skipped_in_gc = ScoutApm::Instruments::Stacks.skipped_in_gc
+          traces.skipped_in_handler = ScoutApm::Instruments::Stacks.skipped_in_handler
+          traces.skipped_in_job_registered = ScoutApm::Instruments::Stacks.skipped_in_job_registered
+        end
       end
     end
 

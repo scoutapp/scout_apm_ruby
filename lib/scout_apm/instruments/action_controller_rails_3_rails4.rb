@@ -26,6 +26,7 @@ module ScoutApm
             # include ScoutApm::Tracer
             include ScoutApm::Instruments::ActionControllerRails3Rails4Instruments
           end
+          ScoutApm::Agent.instance.logger.info "Installing ScoutProf profiling" if ScoutApm::Agent.instance.config.value('profile')
         end
 
         if defined?(::ActionView) && defined?(::ActionView::PartialRenderer)
@@ -77,10 +78,12 @@ module ScoutApm
 
         layer = ScoutApm::Layer.new("Controller", "#{controller_path}/#{action_name}")
 
-        # Capture ScoutProf if we can
-        req.enable_profiled_thread!
-        layer.set_root_class(self.class)
-        layer.traced!
+        if ScoutApm::Agent.instance.config.value('profile')
+          # Capture ScoutProf if we can
+          req.enable_profiled_thread!
+          layer.set_root_class(self.class)
+          layer.traced!
+        end
 
         # Start the layer, then execute the user's code
         req.start_layer(layer)

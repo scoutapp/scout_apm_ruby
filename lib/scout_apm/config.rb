@@ -75,6 +75,7 @@ module ScoutApm
         'enable_background_jobs' => true,
         'ignore_traces' => [],
         'dev_trace' => false, # false for now so code can live in main branch
+        'profile' => true # for scoutprof
       }.freeze
 
       def value(key)

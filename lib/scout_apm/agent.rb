@@ -243,9 +243,11 @@ module ScoutApm
 
       install_exit_handler
 
-      # After we fork, setup the handlers here.
-      ScoutApm::Instruments::Stacks.install
-      ScoutApm::Instruments::Stacks.start
+      if ScoutApm::Agent.instance.config.value('profile')
+        # After we fork, setup the handlers here.
+        ScoutApm::Instruments::Stacks.install
+        ScoutApm::Instruments::Stacks.start
+      end
 
       @background_worker = ScoutApm::BackgroundWorker.new
       @background_worker_thread = Thread.new do
