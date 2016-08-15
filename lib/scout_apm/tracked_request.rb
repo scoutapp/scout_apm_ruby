@@ -246,12 +246,6 @@ module ScoutApm
     def record!
       @recorded = true
 
-      # Temporarily log any memory increase of >5MB for Scoutprof debug
-      mem_delta_debug = ScoutApm::Instruments::Process::ProcessMemory.rss_to_mb(capture_mem_delta!)
-      if mem_delta_debug >= 5
-        ScoutApm::Agent.instance.logger.debug("Memory increase over 5MB: #{unique_name}: #{mem_delta_debug}MB - context: #{context.inspect}")
-      end
-
       # Update immediate and long-term histograms for both job and web requests
       if unique_name != :unknown
         ScoutApm::Agent.instance.request_histograms.add(unique_name, root_layer.total_call_time)
