@@ -1,3 +1,7 @@
+# 2.2.0
+
+* ScoutProf BETA
+
 # 2.1.0
 
 * Added ignore key to configuration to entirely ignore an endpoint. No traces
