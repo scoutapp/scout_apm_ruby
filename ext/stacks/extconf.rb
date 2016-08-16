@@ -11,7 +11,11 @@ can_compile &&= have_func('rb_profile_frames')
 can_compile &&= have_func('rb_profile_frame_absolute_path')
 can_compile &&= have_func('rb_profile_frame_label')
 can_compile &&= have_func('rb_profile_frame_classpath')
-can_compile &&= have_library('rt') # for timer_create, timer_settime
+
+# Explicitly link against librt
+if have_macro('__linux__')
+  can_compile &&= have_library('rt') # for timer_create, timer_settime
+end
 
 # Pick the atomics implementation
 has_atomics_header = have_header("stdatomic.h")

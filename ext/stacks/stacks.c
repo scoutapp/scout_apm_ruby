@@ -24,15 +24,15 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <pthread.h>
-#include <semaphore.h>
-#include <setjmp.h>
 #include <signal.h>
 #include <stdbool.h>
 
 /*
  *  System
  */
+#ifdef __linux__
 #include <sys/syscall.h>
+#endif
 #include <sys/time.h>
 
 #include "scout_atomics.h"
@@ -57,11 +57,19 @@ VALUE interval;
 #define BUF_SIZE 512
 #define MAX_TRACES 2000
 
+#ifdef __linux__
 #define NANO_SECOND_MULTIPLIER  1000000  // 1 millisecond = 1,000,000 Nanoseconds
 const long INTERVAL = 1 * NANO_SECOND_MULTIPLIER; // milliseconds * NANO_SECOND_MULTIPLIER
-
 // For support of thread id in timer_create
 #define sigev_notify_thread_id _sigev_un._tid
+
+#else // __linux__
+
+const long INTERVAL = 1000; // 1ms
+
+#endif
+
+
 
 #ifdef RUBY_INTERNAL_EVENT_NEWOBJ
 
@@ -100,9 +108,10 @@ static __thread VALUE _gc_hook;
 
 static __thread atomic_bool_t _job_registered = ATOMIC_INIT(false);
 
+#ifdef __linux__
 static __thread timer_t _timerid;
 static __thread struct sigevent _sev;
-
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // Global variables
@@ -150,7 +159,9 @@ remove_profiled_thread(pthread_t th)
   xfree(&_gc_hook);
   xfree(&_traces);
 
+#ifdef __linux__
   timer_delete(_timerid);
+#endif
 
   ATOMIC_STORE_BOOL(&_thread_registered, false);
   return 0;
@@ -193,6 +204,9 @@ rb_scout_uninstall_profiling(VALUE self)
 static VALUE
 rb_scout_install_profiling(VALUE self)
 {
+#ifndef __linux__
+  struct itimerval timer;
+#endif
   struct sigaction new_vtaction, old_vtaction;
 
   // We can only install once. If uninstall is called, we will NOT be able to call install again.
@@ -206,6 +220,13 @@ rb_scout_install_profiling(VALUE self)
   new_vtaction.sa_flags = SA_RESTART;
   sigemptyset(&new_vtaction.sa_mask);
   sigaction(SIGALRM, &new_vtaction, &old_vtaction);
+
+#ifndef __linux__
+  timer.it_interval.tv_sec = 0;
+  timer.it_interval.tv_usec = INTERVAL; //FIX2INT(interval);
+  timer.it_value = timer.it_interval;
+  setitimer(ITIMER_REAL, &timer, 0);
+#endif
 
   rb_define_const(cStacks, "INSTALLED", Qtrue);
   scout_profiling_installed = 1;
@@ -267,6 +288,7 @@ init_thread_vars()
     fprintf(stderr, "Pthread_atfork failed: %d\n", res);
   }
 
+#ifdef __linux__
   // Create timer to target this thread
   _sev.sigev_notify = SIGEV_THREAD_ID;
   _sev.sigev_signo = SIGALRM;
@@ -275,6 +297,7 @@ init_thread_vars()
   if (timer_create(CLOCK_MONOTONIC, &_sev, &_timerid) == -1) {
     fprintf(stderr, "Time create failed: %d\n", errno);
   }
+#endif
 
   return;
 }
@@ -394,9 +417,12 @@ static VALUE rb_scout_profile_frames(VALUE self)
 static void
 scout_start_thread_timer()
 {
+#ifdef __linux__
   struct itimerspec its;
   sigset_t mask;
+#endif
 
+#ifdef __linux__
   if (ATOMIC_LOAD(&_thread_registered) == false) return;
 
   sigemptyset(&mask);
@@ -417,19 +443,24 @@ scout_start_thread_timer()
   if (sigprocmask(SIG_UNBLOCK, &mask, NULL) == -1) {
     fprintf(stderr, "UNBlock mask failed: %d\n", errno);
   }
+#endif
 }
 
 static void
 scout_stop_thread_timer()
 {
+#ifdef __linux__
   struct itimerspec its;
+#endif
 
   if (ATOMIC_LOAD(&_thread_registered) == false) return;
 
+#ifdef __linux__
   memset((void*)&its, 0, sizeof(its));
   if (timer_settime(_timerid, 0, &its, NULL) == -1 ) {
     fprintf(stderr, "Timer set failed: %d\n", errno);
   }
+#endif
 }
 
 /* Per thread start sampling */
@@ -438,7 +469,9 @@ rb_scout_start_sampling(VALUE self)
 {
   scout_add_profiled_thread(pthread_self());
   ATOMIC_STORE_BOOL(&_ok_to_sample, true);
+#ifdef __linux__
   scout_start_thread_timer();
+#endif
   return Qtrue;
 }
 
@@ -447,7 +480,9 @@ static VALUE
 rb_scout_stop_sampling(VALUE self, VALUE reset)
 {
   if(ATOMIC_LOAD(&_ok_to_sample) == true ) {
+#ifdef __linux__
     scout_stop_thread_timer();
+#endif
   }
 
   ATOMIC_STORE_BOOL(&_ok_to_sample, false);
