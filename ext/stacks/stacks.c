@@ -403,10 +403,12 @@ static VALUE rb_scout_profile_frames(VALUE self)
       if (_traces[i].num_tracelines > 0) {
         trace = rb_ary_new2(_traces[i].num_tracelines);
         for(n = 0; n < _traces[i].num_tracelines; n++) {
-          trace_line = rb_ary_new2(2);
-          rb_ary_store(trace_line, 0, _traces[i].frames_buf[n]);
-          rb_ary_store(trace_line, 1, INT2FIX(_traces[i].lines_buf[n]));
-          rb_ary_push(trace, trace_line);
+          if (RTEST(_traces[i].frames_buf[n])) { // We should always get valid frames from rb_profile_frames, but that doesn't always seem to be the case
+            trace_line = rb_ary_new2(2);
+            rb_ary_store(trace_line, 0, _traces[i].frames_buf[n]);
+            rb_ary_store(trace_line, 1, INT2FIX(_traces[i].lines_buf[n]));
+            rb_ary_push(trace, trace_line);
+          }
         }
         rb_ary_push(traces, trace);
       }
