@@ -31,7 +31,7 @@ module ScoutApm
       return @directory if @directory
 
       data_file = ScoutApm::Agent.instance.config.value("data_file")
-      data_file = File.dirname(data_file) if data_file && !File.directory?
+      data_file = File.dirname(data_file) if data_file && !File.directory?(data_file)
 
       candidates = [
         data_file,
