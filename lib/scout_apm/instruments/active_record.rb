@@ -173,7 +173,7 @@ module ScoutApm
         req.start_layer(layer)
         req.ignore_children!
         begin
-          find_by_sql_without_scout_instruments(*args)
+          find_by_sql_without_scout_instruments(*args, &block)
         ensure
           req.acknowledge_children!
           req.stop_layer
@@ -199,7 +199,7 @@ module ScoutApm
         req.start_layer(layer)
         req.ignore_children!
         begin
-          find_with_associations_without_scout_instruments(*args)
+          find_with_associations_without_scout_instruments(*args, &block)
         ensure
           req.acknowledge_children!
           req.stop_layer
