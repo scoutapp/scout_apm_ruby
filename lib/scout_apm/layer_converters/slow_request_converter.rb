@@ -133,7 +133,7 @@ module ScoutApm
             if layer.type =~ %r{^(Controller|Queue|Job)$}.freeze
               ScoutApm::Agent.instance.logger.debug do
                 traces_inspect = layer.traces.inspect
-                "****** Slow Request #{layer.type} Traces (#{layer.name}, tet: #{layer.total_exclusive_time}, tct: #{layer.total_call_time}), total raw traces: #{layer.traces.cube.total_count}, total clean traces: #{layer.traces.total_count}:\n#{traces_inspect}"
+                "****** Slow Request #{layer.type} Traces (#{layer.name}, tet: #{layer.total_exclusive_time}, tct: #{layer.total_call_time}), total raw traces: #{layer.traces.cube.total_count}, total clean traces: #{layer.traces.total_count}, skipped gc: #{layer.traces.skipped_in_gc}, skipped handler: #{layer.traces.skipped_in_handler}, skipped registered #{layer.traces.skipped_in_job_registered}, skipped not_running #{layer.traces.skipped_in_not_running}:\n#{traces_inspect}"
               end
             end
           else

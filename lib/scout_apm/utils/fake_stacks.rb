@@ -77,6 +77,10 @@ module ScoutApm
         def skipped_in_job_registered(*args)
           0
         end
+
+        def skipped_in_not_running(*args)
+          0
+        end
       end
     end
   end

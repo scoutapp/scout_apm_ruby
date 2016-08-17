@@ -154,6 +154,7 @@ module ScoutApm
           traces.skipped_in_gc = ScoutApm::Instruments::Stacks.skipped_in_gc
           traces.skipped_in_handler = ScoutApm::Instruments::Stacks.skipped_in_handler
           traces.skipped_in_job_registered = ScoutApm::Instruments::Stacks.skipped_in_job_registered
+          traces.skipped_in_not_running = ScoutApm::Instruments::Stacks.skipped_in_not_running
         end
       end
     end

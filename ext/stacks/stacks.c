@@ -103,8 +103,10 @@ static __thread atomic_uint16_t _cur_traces_num = ATOMIC_INIT(0);
 static __thread atomic_uint32_t _skipped_in_gc = ATOMIC_INIT(0);
 static __thread atomic_uint32_t _skipped_in_signal_handler = ATOMIC_INIT(0);
 static __thread atomic_uint32_t _skipped_in_job_registered = ATOMIC_INIT(0);
+static __thread atomic_uint32_t _skipped_in_not_running = ATOMIC_INIT(0);
 
 static __thread VALUE _gc_hook;
+static __thread VALUE _ruby_thread;
 
 static __thread atomic_bool_t _job_registered = ATOMIC_INIT(false);
 
@@ -278,6 +280,8 @@ init_thread_vars()
   ATOMIC_STORE_INT16(&_start_trace_index, 0);
   ATOMIC_STORE_INT16(&_cur_traces_num, 0);
 
+  _ruby_thread = rb_thread_current(); // Used as a check to avoid any Fiber switching silliness
+
   _traces = ALLOC_N(struct c_trace, MAX_TRACES); // TODO Check return
 
   _gc_hook = Data_Wrap_Struct(rb_cObject, &scoutprof_gc_mark, NULL, &_traces);
@@ -322,6 +326,8 @@ scout_profile_broadcast_signal_handler(int sig)
 
   if (rb_during_gc()) {
     ATOMIC_ADD(&_skipped_in_gc, 1);
+  } else if (rb_thread_current() != _ruby_thread) {
+    ATOMIC_ADD(&_skipped_in_not_running, 1);
   } else {
     if (ATOMIC_LOAD(&_job_registered) == false){
       register_result = rb_postponed_job_register(0, scout_record_sample, 0);
@@ -352,6 +358,10 @@ scout_record_sample()
   if (ATOMIC_LOAD(&_ok_to_sample) == false) return;
   if (rb_during_gc()) {
     ATOMIC_ADD(&_skipped_in_gc, 1);
+    return;
+  }
+  if (rb_thread_current() != _ruby_thread) {
+    ATOMIC_ADD(&_skipped_in_not_running, 1);
     return;
   }
 
@@ -497,6 +507,7 @@ rb_scout_stop_sampling(VALUE self, VALUE reset)
     ATOMIC_STORE_INT32(&_skipped_in_gc, 0);
     ATOMIC_STORE_INT32(&_skipped_in_signal_handler, 0);
     ATOMIC_STORE_INT32(&_skipped_in_job_registered, 0);
+    ATOMIC_STORE_INT32(&_skipped_in_not_running, 0);
   }
   return Qtrue;
 }
@@ -550,6 +561,12 @@ static VALUE
 rb_scout_skipped_in_job_registered(VALUE self)
 {
   return INT2NUM(ATOMIC_LOAD(&_skipped_in_job_registered));
+}
+
+static VALUE
+rb_scout_skipped_in_not_running(VALUE self)
+{
+  return INT2NUM(ATOMIC_LOAD(&_skipped_in_not_running));
 }
 
 ////////////////////////////////////////////////////////////////
@@ -619,6 +636,7 @@ void Init_stacks()
     rb_define_singleton_method(cStacks, "skipped_in_gc", rb_scout_skipped_in_gc, 0);
     rb_define_singleton_method(cStacks, "skipped_in_handler", rb_scout_skipped_in_handler, 0);
     rb_define_singleton_method(cStacks, "skipped_in_job_registered", rb_scout_skipped_in_job_registered, 0);
+    rb_define_singleton_method(cStacks, "skipped_in_not_running", rb_scout_skipped_in_not_running, 0);
 
     rb_define_const(cStacks, "ENABLED", Qtrue);
     rb_warning("Finished Initializing ScoutProf Native Extension");
@@ -712,6 +730,12 @@ rb_scout_skipped_in_job_registered(VALUE self)
 }
 
 static VALUE
+rb_scout_skipped_in_not_running(VALUE self)
+{
+  return INT2NUM(0);
+}
+
+static VALUE
 rb_scout_frame_klass(VALUE self, VALUE frame)
 {
   return Qnil;
@@ -767,6 +791,7 @@ void Init_stacks()
     rb_define_singleton_method(cStacks, "skipped_in_gc", rb_scout_skipped_in_gc, 0);
     rb_define_singleton_method(cStacks, "skipped_in_handler", rb_scout_skipped_in_handler, 0);
     rb_define_singleton_method(cStacks, "skipped_in_job_registered", rb_scout_skipped_in_job_registered, 0);
+    rb_define_singleton_method(cStacks, "skipped_in_not_running", rb_scout_skipped_in_not_running, 0);
 
     rb_define_const(cStacks, "ENABLED", Qfalse);
     rb_define_const(cStacks, "INSTALLED", Qfalse);
