@@ -289,7 +289,7 @@ init_thread_vars()
 
   res = pthread_atfork(scout_parent_atfork_prepare, scout_parent_atfork_finish, NULL);
   if (res != 0) {
-    fprintf(stderr, "Pthread_atfork failed: %d\n", res);
+    fprintf(stderr, "APM-DEBUG: Pthread_atfork failed: %d\n", res);
   }
 
 #ifdef __linux__
@@ -299,7 +299,7 @@ init_thread_vars()
   _sev.sigev_notify_thread_id = syscall(SYS_gettid);
   _sev.sigev_value.sival_ptr = &_timerid;
   if (timer_create(CLOCK_MONOTONIC, &_sev, &_timerid) == -1) {
-    fprintf(stderr, "Time create failed: %d\n", errno);
+    fprintf(stderr, "APM-DEBUG: Time create failed: %d\n", errno);
   }
 #endif
 
@@ -389,7 +389,7 @@ static VALUE rb_scout_profile_frames(VALUE self)
   VALUE traces, trace, trace_line;
 
   if (ATOMIC_LOAD(&_thread_registered) == false) {
-    fprintf(stderr, "Error: trying to get profiled frames on a non-profiled thread!\n");
+    fprintf(stderr, "APM-DEBUG: Error: trying to get profiled frames on a non-profiled thread!\n");
     ATOMIC_STORE_INT16(&_cur_traces_num, 0);
     return rb_ary_new();
   }
@@ -403,11 +403,13 @@ static VALUE rb_scout_profile_frames(VALUE self)
       if (_traces[i].num_tracelines > 0) {
         trace = rb_ary_new2(_traces[i].num_tracelines);
         for(n = 0; n < _traces[i].num_tracelines; n++) {
-          if (RTEST(_traces[i].frames_buf[n])) { // We should always get valid frames from rb_profile_frames, but that doesn't always seem to be the case
+          if (TYPE(_traces[i].frames_buf[n]) == RUBY_T_DATA) { // We should always get valid frames from rb_profile_frames, but that doesn't always seem to be the case
             trace_line = rb_ary_new2(2);
             rb_ary_store(trace_line, 0, _traces[i].frames_buf[n]);
             rb_ary_store(trace_line, 1, INT2FIX(_traces[i].lines_buf[n]));
             rb_ary_push(trace, trace_line);
+          } else {
+            fprintf(stderr, "APM-DEBUG: Non-data frame is: 0x%04x\n", TYPE(_traces[i].frames_buf[n]));
           }
         }
         rb_ary_push(traces, trace);
@@ -440,7 +442,7 @@ scout_start_thread_timer()
   sigemptyset(&mask);
   sigaddset(&mask, SIGALRM);
   if (sigprocmask(SIG_SETMASK, &mask, NULL) == -1) {
-    fprintf(stderr, "Block mask failed: %d\n", errno);
+    fprintf(stderr, "APM-DEBUG: Block mask failed: %d\n", errno);
   }
 
   its.it_value.tv_sec = 0;
@@ -449,11 +451,11 @@ scout_start_thread_timer()
   its.it_interval.tv_nsec = its.it_value.tv_nsec;
 
   if (timer_settime(_timerid, 0, &its, NULL) == -1) {
-    fprintf(stderr, "Timer set failed in start sampling: %d\n", errno);
+    fprintf(stderr, "APM-DEBUG: Timer set failed in start sampling: %d\n", errno);
   }
 
   if (sigprocmask(SIG_UNBLOCK, &mask, NULL) == -1) {
-    fprintf(stderr, "UNBlock mask failed: %d\n", errno);
+    fprintf(stderr, "APM-DEBUG: UNBlock mask failed: %d\n", errno);
   }
 #endif
 }
@@ -470,7 +472,7 @@ scout_stop_thread_timer()
 #ifdef __linux__
   memset((void*)&its, 0, sizeof(its));
   if (timer_settime(_timerid, 0, &its, NULL) == -1 ) {
-    fprintf(stderr, "Timer set failed: %d\n", errno);
+    fprintf(stderr, "APM-DEBUG: Timer set failed: %d\n", errno);
   }
 #endif
 }
