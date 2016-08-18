@@ -32,11 +32,10 @@ class SlowRequestPolicyTest < Minitest::Test
 
     request.set_duration(10) # 10 seconds
     policy.last_seen[request.unique_name] = Time.now - 120 # 2 minutes since last seen
-    agent.request_histograms.add(request.unique_name, 1)
+    ScoutApm::Agent.instance.request_histograms.add(request.unique_name, 1)
 
-    # Actual value I have in console is 1.599
-    assert policy.score(request) > 1.5
-    assert policy.score(request) < 2.0
-
+    # Actual value I have in console is 1.499
+    assert policy.score(request) > 1.45
+    assert policy.score(request) < 1.55
   end
 end

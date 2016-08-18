@@ -5,25 +5,20 @@ require 'scout_apm/metric_stats'
 require 'scout_apm/context'
 require 'scout_apm/store'
 
+require 'fileutils'
 class LayawayTest < Minitest::Test
-  def test_add_reporting_period
-    File.open(DATA_FILE_PATH, 'w') { |file| file.write(Marshal.dump(NEW_FORMAT)) }
-    ScoutApm::Agent.instance.start
+  def test_directory_uses_DATA_FILE_option
+    FileUtils.mkdir_p '/tmp/scout_apm_test/data_file_option'
+    config = make_fake_config("data_file" => "/tmp/scout_apm_test/data_file_option")
 
-    data = ScoutApm::Layaway.new
-    t = ScoutApm::StoreReportingPeriodTimestamp.new
-    data.add_reporting_period(t,ScoutApm::StoreReportingPeriod.new(t))
-    assert_equal [TIMESTAMP,t].sort_by(&:timestamp), Marshal.load(File.read(DATA_FILE_PATH)).keys.sort_by(&:timestamp)
+    assert_equal Pathname.new("/tmp/scout_apm_test/data_file_option"), ScoutApm::Layaway.new(config, ScoutApm::Agent.instance.environment).directory
   end
 
-  def test_merge_reporting_period
-    File.open(DATA_FILE_PATH, 'w') { |file| file.write(Marshal.dump(NEW_FORMAT)) }
-    layaway = ScoutApm::Layaway.new
-    layaway.add_reporting_period(TIMESTAMP, ScoutApm::StoreReportingPeriod.new(TIMESTAMP))
-    unmarshalled = Marshal.load(File.read(DATA_FILE_PATH))
-    assert_equal [TIMESTAMP], unmarshalled.keys
-  end
+  def test_directory_looks_for_root_slash_tmp
+    FileUtils.mkdir_p '/tmp/scout_apm_test/tmp'
+    config = make_fake_config({})
+    env = make_fake_environment(:root => "/tmp/scout_apm_test")
 
-  TIMESTAMP = ScoutApm::StoreReportingPeriodTimestamp.new(Time.parse("2015-01-01"))
-  NEW_FORMAT = {TIMESTAMP => ScoutApm::StoreReportingPeriod.new(TIMESTAMP)} # Format for 1.2+ agents
+    assert_equal Pathname.new("/tmp/scout_apm_test/tmp"), ScoutApm::Layaway.new(config, env).directory
+  end
 end

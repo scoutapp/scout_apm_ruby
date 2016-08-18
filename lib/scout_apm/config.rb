@@ -137,11 +137,17 @@ module ScoutApm
     end
 
     def initialize(overlays)
-      @overlays = overlays
+      @overlays = Array(overlays)
     end
 
     def value(key)
-      raw_value = @overlays.detect{ |overlay| overlay.has_key?(key) }.value(key)
+      o = @overlays.detect{ |overlay| overlay.has_key?(key) }
+      raw_value = if o
+                    o.value(key)
+                  else
+                    # No overlay said it could handle this key, bail out with nil.
+                    nil
+                  end
 
       coercion = SETTING_COERCIONS[key] || NullCoercion.new
       coercion.coerce(raw_value)
