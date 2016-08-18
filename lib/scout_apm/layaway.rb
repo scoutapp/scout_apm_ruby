@@ -18,8 +18,10 @@ module ScoutApm
     # Must be sortable as an integer
     TIME_FORMAT = "%Y%m%d%H%M"
 
-    def initialize(directory=nil)
-      @directory = directory
+    attr_reader :config
+
+    def initialize(config)
+      @config = config
     end
 
     # Returns a Pathname object with the fully qualified directory where the layaway files can be placed.
@@ -30,7 +32,7 @@ module ScoutApm
     def directory
       return @directory if @directory
 
-      data_file = ScoutApm::Agent.instance.config.value("data_file")
+      data_file = config.value("data_file")
       data_file = File.dirname(data_file) if data_file && !File.directory?(data_file)
 
       candidates = [

@@ -55,7 +55,7 @@ module ScoutApm
       @request_histograms_by_time = Hash.new { |h, k| h[k] = ScoutApm::RequestHistograms.new }
 
       @store          = ScoutApm::Store.new
-      @layaway        = ScoutApm::Layaway.new
+      @layaway        = ScoutApm::Layaway.new(config)
       @metric_lookup  = Hash.new
 
       @capacity       = ScoutApm::Capacity.new
