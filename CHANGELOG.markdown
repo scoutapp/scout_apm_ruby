@@ -1,3 +1,9 @@
+# 2.1.1
+
+* Fix an issue with AR instrumentation and complex queries
+* Fix use of configuration option `data_file`
+* Update unit tests
+
 # 2.1.0
 
 * Added ignore key to configuration to entirely ignore an endpoint. No traces
