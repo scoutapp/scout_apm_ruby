@@ -32,6 +32,20 @@ class FakeConfigOverlay
   end
 end
 
+class FakeEnvironment
+  def initialize(values)
+    @values = values
+  end
+
+  def method_missing(sym)
+    if @values.has_key?(sym)
+      @values[sym]
+    else
+      raise "#{sym} not found in FakeEnvironment"
+    end
+  end
+end
+
 # Helpers available to all tests
 class Minitest::Test
   def setup
@@ -54,6 +68,10 @@ class Minitest::Test
     @log_contents = StringIO.new
     @logger = Logger.new(@log_contents)
     ScoutApm::Agent.instance.instance_variable_set("@logger", @logger)
+  end
+
+  def make_fake_environment(values)
+    FakeEnvironment.new(values)
   end
 
   def make_fake_config(values)

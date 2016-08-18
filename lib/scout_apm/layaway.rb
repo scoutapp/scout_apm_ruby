@@ -19,9 +19,11 @@ module ScoutApm
     TIME_FORMAT = "%Y%m%d%H%M"
 
     attr_reader :config
+    attr_reader :environment
 
-    def initialize(config)
+    def initialize(config, environment)
       @config = config
+      @environment = environment
     end
 
     # Returns a Pathname object with the fully qualified directory where the layaway files can be placed.
@@ -37,7 +39,7 @@ module ScoutApm
 
       candidates = [
         data_file,
-        "#{ScoutApm::Agent.instance.environment.root}/tmp",
+        "#{environment.root}/tmp",
         "/tmp"
       ].compact
 
