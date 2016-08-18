@@ -59,9 +59,9 @@ module ScoutApm
 
         if ScoutApm::Agent.instance.config.value('profile') && SidekiqMiddleware.version_supports_profiling?
           # Capture ScoutProf if we can
-          req.enable_profiled_thread!
-          job_layer.set_root_class(job_class)
-          job_layer.traced!
+          #req.enable_profiled_thread!
+          #job_layer.set_root_class(job_class)
+          #job_layer.traced!
         end
 
         req.start_layer(queue_layer)
