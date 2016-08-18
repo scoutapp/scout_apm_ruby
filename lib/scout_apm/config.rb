@@ -137,7 +137,7 @@ module ScoutApm
     end
 
     def initialize(overlays)
-      @overlays = overlays
+      @overlays = Array(overlays)
     end
 
     def value(key)

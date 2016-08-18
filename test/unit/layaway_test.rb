@@ -9,7 +9,7 @@ require 'fileutils'
 class LayawayTest < Minitest::Test
   def test_uses_DATA_FILE_option
     FileUtils.mkdir_p '/tmp/scout_apm_test/data_file_option'
-    config = FakeConfig.new("data_file" => "/tmp/scout_apm_test/data_file_option")
+    config = make_fake_config("data_file" => "/tmp/scout_apm_test/data_file_option")
 
     assert_equal Pathname.new("/tmp/scout_apm_test/data_file_option"), ScoutApm::Layaway.new(config).directory
   end

@@ -17,6 +17,20 @@ Kernel.module_eval do
   end
 end
 
+# A test helper class to create a temporary "configuration" we can control entirely purposes
+class FakeConfigOverlay
+  def initialize(values)
+    @values = values
+  end
+
+  def value(key)
+    @values[key]
+  end
+
+  def has_key?(key)
+    @values.has_key?(key)
+  end
+end
 
 # Helpers available to all tests
 class Minitest::Test
@@ -42,17 +56,12 @@ class Minitest::Test
     ScoutApm::Agent.instance.instance_variable_set("@logger", @logger)
   end
 
+  def make_fake_config(values)
+    ScoutApm::Config.new(FakeConfigOverlay.new(values))
+  end
+
   DATA_FILE_DIR = File.dirname(__FILE__) + '/tmp'
   DATA_FILE_PATH = "#{DATA_FILE_DIR}/scout_apm.db"
 end
 
-# A test helper class to create a temporary "configuration" we can control entirely purposes
-class FakeConfig
-  def initialize(values)
-    @values = values
-  end
 
-  def value(key)
-    @values[key]
-  end
-end
