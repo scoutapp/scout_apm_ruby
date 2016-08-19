@@ -18,7 +18,7 @@ module ScoutApm
     # Must be sortable as an integer
     TIME_FORMAT = "%Y%m%d%H%M"
 
-    attr_reader :config
+    attr_accessor :config
     attr_reader :environment
 
     def initialize(config, environment)
