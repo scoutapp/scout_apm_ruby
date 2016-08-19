@@ -41,8 +41,7 @@ module ScoutApm
     # Note that this middleware never even gets inserted unless Rails environment is development (See Railtie)
     class Middleware
       def initialize(app)
-        ScoutApm::Agent.instance.logger.info("Activating Scout DevTrace because environment=development and dev_trace=true in scout_apm config")
-        @app        = app
+        @app = app
       end
 
       def call(env)
