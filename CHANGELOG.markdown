@@ -1,3 +1,7 @@
+# 2.1.2
+
+* Applies `Rails.application.config.filter_parameters` settings to reported transaction trace uris
+
 # 2.1.1
 
 * Fix an issue with AR instrumentation and complex queries
