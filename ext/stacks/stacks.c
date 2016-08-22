@@ -69,6 +69,12 @@ const long INTERVAL = 1000; // 1ms
 
 #endif
 
+#ifdef T_IMEMO
+#define VALID_RUBY_FRAME T_IMEMO
+#else
+#define VALID_RUBY_FRAME T_DATA
+#endif
+
 
 
 #ifdef RUBY_INTERNAL_EVENT_NEWOBJ
@@ -403,7 +409,7 @@ static VALUE rb_scout_profile_frames(VALUE self)
       if (_traces[i].num_tracelines > 0) {
         trace = rb_ary_new2(_traces[i].num_tracelines);
         for(n = 0; n < _traces[i].num_tracelines; n++) {
-          if (TYPE(_traces[i].frames_buf[n]) == RUBY_T_DATA) { // We should always get valid frames from rb_profile_frames, but that doesn't always seem to be the case
+          if (TYPE(_traces[i].frames_buf[n]) == VALID_RUBY_FRAME) { // We should always get valid frames from rb_profile_frames, but that doesn't always seem to be the case
             trace_line = rb_ary_new2(2);
             rb_ary_store(trace_line, 0, _traces[i].frames_buf[n]);
             rb_ary_store(trace_line, 1, INT2FIX(_traces[i].lines_buf[n]));
