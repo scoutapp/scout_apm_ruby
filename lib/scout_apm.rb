@@ -165,6 +165,8 @@ if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR
     end
     class Railtie < Rails::Railtie
       initializer 'scout_apm.start' do |app|
+        # Install the middleware every time in development mode.
+        # The middleware is a noop if dev_trace is not enabled in config
         if Rails.env.development?
           app.middleware.use ScoutApm::Instant::Middleware
         end

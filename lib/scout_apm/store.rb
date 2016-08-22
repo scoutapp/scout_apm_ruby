@@ -69,12 +69,17 @@ module ScoutApm
 
       @mutex.synchronize {
         reporting_periods.select { |time, rp| force || time.timestamp < current_timestamp.timestamp}.
-                          each   { |time, rp|
-                                   collect_samplers(rp)
-                                   layaway.write_reporting_period(rp)
-                                   reporting_periods.delete(time)
-                                 }
+                          each   { |time, rp| write_reporting_period(layaway, time, rp) }
       }
+    end
+
+    def write_reporting_period(layaway, time, rp)
+      collect_samplers(rp)
+      layaway.write_reporting_period(rp)
+    rescue => e
+      ScoutApm::Agent.instance.logger.warn("Failed writing data to layaway file: #{e.message} / #{e.backtrace}")
+    ensure
+      reporting_periods.delete(time)
     end
 
     ######################################

@@ -112,7 +112,10 @@ module ScoutApm
     # It initializes the agent and starts the worker thread (if appropiate).
     def start(options = {})
       @options.merge!(options)
+
       @config = ScoutApm::Config.with_file(@config.value("config_file"))
+      layaway.config = config
+
       init_logger
       logger.info "Attempting to start Scout Agent [#{ScoutApm::VERSION}] on [#{environment.hostname}]"
 
