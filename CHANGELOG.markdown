@@ -1,6 +1,9 @@
+# master
+
 # 2.1.2
 
 * Applies `Rails.application.config.filter_parameters` settings to reported transaction trace uris
+* Fix incompatibility with ResqueWeb and middleware instrumentation
 
 # 2.1.1
 
