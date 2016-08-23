@@ -247,8 +247,6 @@ module ScoutApm
       logger.info "Not starting background worker, already started" and return if background_worker_running?
       logger.info "Initializing worker thread."
 
-      return if background_worker_running?
-
       install_exit_handler
 
       @background_worker = ScoutApm::BackgroundWorker.new
