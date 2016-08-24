@@ -1,5 +1,9 @@
 # master
 
+* Less noisy output on errors with Context
+  * Not logging errors w/nil keys or values
+  * Bumping log level down from WARN => INFO on errors
+
 # 2.1.2
 
 * Applies `Rails.application.config.filter_parameters` settings to reported transaction trace uris
