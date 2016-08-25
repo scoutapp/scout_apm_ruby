@@ -14,7 +14,10 @@ module ScoutApm
       def initialize(call_stack, root=ScoutApm::Environment.instance.root)
         @call_stack = call_stack
         # We can't use a constant as it'd be too early to fetch environment info
-        @@app_dir_regex = %r|#{root}/(.*)|
+        #
+        # This regex looks for files under the app root, inside lib/, app/, and
+        # config/ dirs, and captures the path under root.
+        @@app_dir_regex = %r[#{root}/((?:lib/|app/|config/).*)]
       end
 
       def call
@@ -27,7 +30,6 @@ module ScoutApm
         end
         stack
       end
-
     end
   end
 end
