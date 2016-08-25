@@ -17,7 +17,7 @@ module ScoutApm
         #
         # This regex looks for files under the app root, inside lib/, app/, and
         # config/ dirs, and captures the path under root.
-        @@app_dir_regex = %r|#{root}/((?:lib/|app/|config/).*)|
+        @@app_dir_regex = %r[#{root}/((?:lib/|app/|config/).*)]
       end
 
       def call
@@ -30,7 +30,6 @@ module ScoutApm
         end
         stack
       end
-
     end
   end
 end
