@@ -1,5 +1,11 @@
 # master
 
+# 2.1.4
+
+* Enhance regular expression that determines if a backtrace line is "inside"
+  the application
+    * Avoids labeling vendor/ as part of the monitored app
+
 # 2.1.3
 
 * Less noisy output on errors with Context
