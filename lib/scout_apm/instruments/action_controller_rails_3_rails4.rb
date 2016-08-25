@@ -60,8 +60,7 @@ module ScoutApm
     module ActionControllerRails3Rails4Instruments
       def process_action(*args)
         req = ScoutApm::RequestManager.lookup
-        path = ScoutApm::Agent.instance.config.value("uri_reporting") == 'path' ? request.path : request.fullpath
-        req.annotate_request(:uri => path)
+        req.annotate_request(:uri => scout_transaction_uri(request))
 
         # IP Spoofing Protection can throw an exception, just move on w/o remote ip
         req.context.add_user(:ip => request.remote_ip) rescue nil
@@ -95,8 +94,19 @@ module ScoutApm
         ensure
           req.stop_layer
         end
+      end # process_action
+
+      # Given an +ActionDispatch::Request+, formats the uri based on config settings.
+      def scout_transaction_uri(request)
+        case ScoutApm::Agent.instance.config.value("uri_reporting")
+        when 'path'
+          request.path # strips off the query string for more security
+        else # default handles filtered params
+          request.filtered_path
+        end
       end
-    end
+
+    end # ActionControllerRails3Rails4Instruments
   end
 end
 

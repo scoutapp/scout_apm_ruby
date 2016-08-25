@@ -24,6 +24,7 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency "rusage", '~> 0.2.0'
 
   s.add_development_dependency "minitest"
+  s.add_development_dependency 'mocha'
   s.add_development_dependency "pry"
   s.add_development_dependency "m"
   s.add_development_dependency "simplecov"

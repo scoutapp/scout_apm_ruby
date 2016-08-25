@@ -2,6 +2,26 @@
 
 * ScoutProf BETA
 
+# 2.1.4
+
+* Enhance regular expression that determines if a backtrace line is "inside"
+  the application
+    * Avoids labeling vendor/ as part of the monitored app
+
+# 2.1.3
+
+* Less noisy output on errors with Context
+  * Not logging errors w/nil keys or values
+  * Bumping log level down from WARN => INFO on errors
+* Fix error with complicated AR queries
+  * Caused high log noise
+* Sidekiq instrumentation changes to handle a variety of edge cases
+
+# 2.1.2
+
+* Applies `Rails.application.config.filter_parameters` settings to reported transaction trace uris
+* Fix incompatibility with ResqueWeb and middleware instrumentation
+
 # 2.1.1
 
 * Fix an issue with AR instrumentation and complex queries

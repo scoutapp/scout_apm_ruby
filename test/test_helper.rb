@@ -5,6 +5,7 @@ SimpleCov.start
 require 'minitest/autorun'
 require 'minitest/unit'
 require 'minitest/pride'
+require 'mocha/mini_test'
 require 'pry'
 
 
@@ -81,5 +82,4 @@ class Minitest::Test
   DATA_FILE_DIR = File.dirname(__FILE__) + '/tmp'
   DATA_FILE_PATH = "#{DATA_FILE_DIR}/scout_apm.db"
 end
-
 
