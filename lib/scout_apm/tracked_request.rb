@@ -47,7 +47,7 @@ module ScoutApm
       @layers = []
       @call_set = Hash.new { |h, k| h[k] = CallSet.new }
       @annotations = {}
-      @ignoring_children = false
+      @ignoring_children = 0
       @context = Context.new
       @root_layer = nil
       @error = false
@@ -297,27 +297,41 @@ module ScoutApm
     # specific, and useful than the fact that InfluxDB happens to use Net::HTTP
     # internally
     #
-    # When enabled, new layers won't be added to the current Request.
+    # When enabled, new layers won't be added to the current Request, and calls
+    # to stop_layer will be ignored.
     #
     # Do not forget to turn if off when leaving a layer, it is the
     # instrumentation's task to do that.
+    #
+    # When you use this in code, be sure to use it in this order:
+    #
+    # start_layer
+    # ignore_children
+    #  -> call
+    # acknowledge_children
+    # stop_layer
+    #
+    # If you don't call it in this order, it's possible to get out of sync, and
+    # have an ignored start and an actually-executed stop, causing layers to
+    # get out of sync
 
     def ignore_children!
-      @ignoring_children = true
+      @ignoring_children += 1
     end
 
     def acknowledge_children!
-      @ignoring_children = false
+      if @ignoring_children > 0
+        @ignoring_children -= 1
+      end
     end
 
     def ignoring_children?
-      @ignoring_children
+      @ignoring_children > 0
     end
 
     # Grab backtraces more aggressively when running in dev trace mode
     def backtrace_threshold
       dev_trace ? 0.05 : 0.5 # the minimum threshold in seconds to record the backtrace for a metric.
     end
-
   end
 end
