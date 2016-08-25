@@ -8,7 +8,7 @@ module ScoutApm
       end
 
       def present?
-        defined?(::Sidekiq) && (File.basename($0) =~ /\Asidekiq/)
+        defined?(::Sidekiq) && File.basename($PROGRAM_NAME).start_with?('sidekiq')
       end
 
       def forking?
@@ -16,22 +16,33 @@ module ScoutApm
       end
 
       def install
+        install_tracer
+        add_middleware
+        install_processor
+      end
+
+      def install_tracer
         # ScoutApm::Tracer is not available when this class is defined
         SidekiqMiddleware.class_eval do
           include ScoutApm::Tracer
         end
+      end
 
+      def add_middleware
         ::Sidekiq.configure_server do |config|
           config.server_middleware do |chain|
             chain.add SidekiqMiddleware
           end
         end
+      end
 
+      def install_processor
         require 'sidekiq/processor' # sidekiq v4 has not loaded this file by this point
 
         ::Sidekiq::Processor.class_eval do
           def initialize_with_scout(boss)
-            ::ScoutApm::Agent.instance.start_background_worker unless ::ScoutApm::Agent.instance.background_worker_running?
+            agent = ::ScoutApm::Agent.instance
+            agent.start_background_worker
             initialize_without_scout(boss)
           end
 
@@ -41,31 +52,53 @@ module ScoutApm
       end
     end
 
+    # We insert this middleware into the Sidekiq stack, to capture each job,
+    # and time them.
     class SidekiqMiddleware
-      def call(worker, msg, queue)
-        job_class = msg["class"] # TODO: Validate this across different versions of Sidekiq
-        if job_class == "ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper" && msg.has_key?("wrapped")
-          job_class = msg["wrapped"]
-        end
+      ACTIVE_JOB_KLASS = 'ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper'.freeze
 
-        latency = (Time.now.to_f - (msg['enqueued_at'] || msg['created_at']))
-
+      def call(_worker, msg, queue)
         req = ScoutApm::RequestManager.lookup
         req.job!
-        req.annotate_request(:queue_latency => latency)
-
-        req.start_layer( ScoutApm::Layer.new("Queue", queue) )
-        req.start_layer( ScoutApm::Layer.new("Job", job_class) )
+        req.annotate_request(:queue_latency => latency(msg))
 
         begin
+          req.start_layer(ScoutApm::Layer.new('Queue', queue))
+          started_queue = true
+          req.start_layer(ScoutApm::Layer.new('Job', job_class(msg)))
+          started_job = true
+
           yield
         rescue
           req.error!
           raise
+        ensure
+          req.stop_layer if started_job
+          req.stop_layer if started_queue
         end
-      ensure
-        req.stop_layer # Job
-        req.stop_layer # Queue
+      end
+
+      UNKNOWN_CLASS_PLACEHOLDER = 'UnknownJob'.freeze
+
+      def job_class(msg)
+        job_class = msg.fetch('class', UNKNOWN_CLASS_PLACEHOLDER)
+        if job_class == ACTIVE_JOB_KLASS && msg.key?('wrapped')
+          job_class = msg['wrapped']
+        end
+        job_class
+      rescue
+        UNKNOWN_CLASS_PLACEHOLDER
+      end
+
+      def latency(msg, time = Time.now.to_f)
+        created_at = msg['enqueued_at'] || msg['created_at']
+        if created_at
+          (time - created_at)
+        else
+          0
+        end
+      rescue
+        0
       end
     end
   end

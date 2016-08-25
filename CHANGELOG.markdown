@@ -1,5 +1,14 @@
 # master
 
+# 2.1.3
+
+* Less noisy output on errors with Context
+  * Not logging errors w/nil keys or values
+  * Bumping log level down from WARN => INFO on errors
+* Fix error with complicated AR queries
+  * Caused high log noise
+* Sidekiq instrumentation changes to handle a variety of edge cases
+
 # 2.1.2
 
 * Applies `Rails.application.config.filter_parameters` settings to reported transaction trace uris
