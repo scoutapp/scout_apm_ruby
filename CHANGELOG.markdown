@@ -1,5 +1,7 @@
 # master
 
+* Adds Git revision detection, which is reported on app load and associated with transaction traces
+
 # 2.1.2
 
 * Applies `Rails.application.config.filter_parameters` settings to reported transaction trace uris

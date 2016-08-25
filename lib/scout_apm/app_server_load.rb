@@ -38,7 +38,8 @@ module ScoutApm
         :database_adapter   => ScoutApm::Environment.instance.raw_database_adapter, # Raw
         :application_name   => ScoutApm::Environment.instance.application_name,
         :libraries          => ScoutApm::Utils::InstalledGems.new.run,
-        :paas               => ScoutApm::Environment.instance.platform_integration.name
+        :paas               => ScoutApm::Environment.instance.platform_integration.name,
+        :git_revision       => ScoutApm::Environment.instance.git_revision.sha
       }
     end
   end

@@ -41,13 +41,8 @@ module ScoutApm
       ScoutApm::PlatformIntegrations::Server.new,
     ]
 
-    DEPLOY_INTEGRATIONS = [
-      ScoutApm::DeployIntegrations::Capistrano3.new(STDOUT_LOGGER),
-      # ScoutApm::DeployIntegrations::Capistrano2.new(STDOUT_LOGGER),
-    ]
-
     def env
-      @env ||= deploy_integration? ? deploy_integration.env : framework_integration.env
+      @env ||= framework_integration.env
     end
 
     def framework
@@ -88,7 +83,7 @@ module ScoutApm
     end
 
     def root
-      @root ||= deploy_integration? ? deploy_integration.root : framework_root
+      @root ||= framework_root
     end
 
     def framework_root
@@ -108,6 +103,10 @@ module ScoutApm
 
     def hostname
       @hostname ||= Agent.instance.config.value("hostname") || platform_integration.hostname
+    end
+
+    def git_revision
+      @git_revision || = ScoutApm::GitRevision.new
     end
 
     # Returns the whole integration object
@@ -141,14 +140,6 @@ module ScoutApm
 
     def background_job_name
       background_job_integration && background_job_integration.name
-    end
-
-    def deploy_integration
-      @deploy_integration ||= DEPLOY_INTEGRATIONS.detect{ |integration| integration.present? }
-    end
-
-    def deploy_integration?
-      !@deploy_integration.nil?
     end
 
     ### ruby checks
