@@ -20,6 +20,7 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib","data"]
   s.extensions << 'ext/allocations/extconf.rb'
   s.extensions << 'ext/stacks/extconf.rb'
+  s.extensions << 'ext/rusage/extconf.rb'
 
   s.add_development_dependency "minitest"
   s.add_development_dependency 'mocha'
