@@ -21,5 +21,6 @@ end
 # Rake Compiler
 require 'rake/extensiontask'
 Rake::ExtensionTask.new('allocations')
+Rake::ExtensionTask.new('rusage')
 Rake::ExtensionTask.new('stacks')
 
