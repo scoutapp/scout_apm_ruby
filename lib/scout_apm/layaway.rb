@@ -61,11 +61,15 @@ module ScoutApm
       coordinator_file = glob_pattern(timestamp, :coordinator)
 
 
-      # This file gets deleted only by a process that successfully obtained a lock
-      f = File.open(coordinator_file, File::RDWR | File::CREAT)
       begin
-        # Nonblocking, Exclusive lock.
-        if f.flock(File::LOCK_EX | File::LOCK_NB)
+        # This file gets deleted only by a process that successfully created and obtained the exclusive lock
+        f = File.open(coordinator_file, File::RDWR | File::CREAT | File::EXCL | File::NONBLOCK)
+      rescue Errno::EEXIST
+        false
+      end
+
+      begin
+        if f
 
           ScoutApm::Agent.instance.logger.debug("Obtained Reporting Lock")
 
@@ -87,7 +91,6 @@ module ScoutApm
           true
         else
           # Didn't obtain lock, another process is reporting. Return false from this function, but otherwise no work
-          f.close
           false
         end
       end
