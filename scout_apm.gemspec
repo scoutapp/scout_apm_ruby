@@ -19,10 +19,10 @@ Gem::Specification.new do |s|
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib","data"]
   s.extensions << 'ext/allocations/extconf.rb'
-
-  s.add_runtime_dependency "rusage", '~> 0.2.0'
+  s.extensions << 'ext/rusage/extconf.rb'
 
   s.add_development_dependency "minitest"
+  s.add_development_dependency 'mocha'
   s.add_development_dependency "pry"
   s.add_development_dependency "m"
   s.add_development_dependency "simplecov"

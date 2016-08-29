@@ -3,7 +3,7 @@ require "bundler/gem_tasks"
 task :default => :test
 
 desc "Run Unit Tests"
-task :test do
+task :test => [:compile] do
   $: << File.expand_path(File.dirname(__FILE__) + "/test")
   Dir.glob('./test/**/*_test.rb').each { |file| require file }
 end
@@ -21,4 +21,5 @@ end
 # Rake Compiler
 require 'rake/extensiontask'
 Rake::ExtensionTask.new('allocations')
+Rake::ExtensionTask.new('rusage')
 

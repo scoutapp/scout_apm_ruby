@@ -26,5 +26,47 @@ class ConfigTest < Minitest::Test
     assert_equal "debug", conf.value('log_level')
     assert_equal "APM Test Conf (Production)", conf.value('name')
   end
+
+  def test_loading_file_without_env_in_file
+    conf_file = File.expand_path("../../data/config_test_1.yml", __FILE__)
+    conf = ScoutApm::Config.with_file(conf_file, environment: "staging")
+
+    assert_equal "info", conf.value('log_level') # the default value
+    assert_equal nil, conf.value('name')         # the default value
+  end
+
+  def test_boolean_coercion
+    coercion = ScoutApm::Config::BooleanCoercion.new
+    assert_equal true, coercion.coerce("true")
+    assert_equal true, coercion.coerce("t")
+    assert_equal false, coercion.coerce("false")
+    assert_equal false, coercion.coerce("f")
+    assert_equal false, coercion.coerce("")
+
+    assert_equal true, coercion.coerce(true)
+    assert_equal false, coercion.coerce(false)
+    assert_equal false, coercion.coerce(nil)
+
+    assert_equal true, coercion.coerce(1)
+    assert_equal true, coercion.coerce(20)
+    assert_equal true, coercion.coerce(-1)
+    assert_equal false, coercion.coerce(0)
+
+    # for any other unknown class, there is no clear answer, so be safe and say false.
+    assert_equal false, coercion.coerce([])
+  end
+
+  def test_json_coersion
+    coercion = ScoutApm::Config::JsonCoercion.new
+    assert_equal [1,2,3], coercion.coerce('[1,2,3]')
+    assert_equal ['foo/bar','baz/quux'], coercion.coerce('["foo/bar", "baz/quux"]')
+
+    assert_equal({"foo" => "bar"}, coercion.coerce('{"foo": "bar"}'))
+
+    assert_equal true, coercion.coerce(true)
+    assert_equal 10, coercion.coerce(10)
+    assert_equal ["a"], coercion.coerce(["a"])
+  end
 end
+
 

@@ -2,6 +2,31 @@
 
 * Adds Git revision detection, which is reported on app load and associated with transaction traces
 
+# 2.1.5
+
+* Be less strict loading Rails environments that don't have a matching
+  scout_apm.yml section. Previously we raised, now we log and continue
+  to load with the ENV settings
+* Fix a memory leak in error recovery code
+* Fix a minor race condition in data coordination between processes.
+  * There was a tiny sliver of a window where a lock wasn't held, and it caused
+    an exception to be raised.
+
+# 2.1.4
+
+* Enhance regular expression that determines if a backtrace line is "inside"
+  the application
+    * Avoids labeling vendor/ as part of the monitored app
+
+# 2.1.3
+
+* Less noisy output on errors with Context
+  * Not logging errors w/nil keys or values
+  * Bumping log level down from WARN => INFO on errors
+* Fix error with complicated AR queries
+  * Caused high log noise
+* Sidekiq instrumentation changes to handle a variety of edge cases
+
 # 2.1.2
 
 * Applies `Rails.application.config.filter_parameters` settings to reported transaction trace uris

@@ -49,4 +49,18 @@ class BacktraceParserTest < Minitest::Test
     result = ScoutApm::Utils::BacktraceParser.new(raw_backtrace, "/Users/scout/different-secrets").call
     assert_equal 0, result.length
   end
+
+  def test_excludes_vendor_paths
+    raw_backtrace = [
+      "#{root}/vendor/ruby/thing.rb",
+      "#{root}/app/controllers/users_controller.rb",
+      "#{root}/vendor/ruby/thing.rb",
+      "#{root}/config/initializers/inject_something.rb",
+    ]
+    result = ScoutApm::Utils::BacktraceParser.new(raw_backtrace, root).call
+
+    assert_equal 2, result.length
+    assert_equal false, (result[0] =~ %r|app/controllers/users_controller.rb|).nil?
+    assert_equal false, (result[1] =~ %r|config/initializers/inject_something.rb|).nil?
+  end
 end

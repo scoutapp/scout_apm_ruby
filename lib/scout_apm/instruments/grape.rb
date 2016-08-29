@@ -29,9 +29,10 @@ module ScoutApm
     end
 
     module GrapeEndpointInstruments
-      def run_with_scout_instruments
-        request = ::Grape::Request.new(env)
+      def run_with_scout_instruments(*args)
+        request = ::Grape::Request.new(env || args.first)
         req = ScoutApm::RequestManager.lookup
+
         path = ScoutApm::Agent.instance.config.value("uri_reporting") == 'path' ? request.path : request.fullpath
         req.annotate_request(:uri => path)
 
@@ -55,7 +56,7 @@ module ScoutApm
 
         req.start_layer( ScoutApm::Layer.new("Controller", name) )
         begin
-          run_without_scout_instruments
+          run_without_scout_instruments(*args)
         rescue
           req.error!
           raise

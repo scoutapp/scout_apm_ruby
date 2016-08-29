@@ -75,8 +75,10 @@ module ScoutApm
     def value_valid?(key_value)
       # ensure one of our accepted types.
       value = key_value.values.last
-      if !valid_type?([String, Symbol, Numeric, Time, Date, TrueClass, FalseClass],value)
-        ScoutApm::Agent.instance.logger.warn "The value for [#{key_value.keys.first}] is not a valid type [#{value.class}]."
+      if value.nil?
+        false # don't log this ... easy to happen
+      elsif !valid_type?([String, Symbol, Numeric, Time, Date, TrueClass, FalseClass],value)
+        ScoutApm::Agent.instance.logger.info "The value for [#{key_value.keys.first}] is not a valid type [#{value.class}]."
         false
       else
         true
@@ -86,14 +88,16 @@ module ScoutApm
     # for consistently with #value_valid?, takes a hash eventhough the value isn't yet used.
     def key_valid?(key_value)
       key = key_value.keys.first
+      if key.nil?
+        false # don't log this ... easy to happen
       # ensure a string or a symbol
-      if !valid_type?([String, Symbol],key)
-        ScoutApm::Agent.instance.logger.warn "The key [#{key}] is not a valid type [#{key.class}]."
+      elsif !valid_type?([String, Symbol],key)
+        ScoutApm::Agent.instance.logger.info "The key [#{key}] is not a valid type [#{key.class}]."
         return false
       end
       # only alphanumeric, dash, and underscore allowed.
       if key.to_s.match(/[^\w-]/)
-        ScoutApm::Agent.instance.logger.warn "They key name [#{key}] is not valid."
+        ScoutApm::Agent.instance.logger.info "They key name [#{key}] is not valid."
         return false
       end
       true
