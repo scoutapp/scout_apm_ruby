@@ -22,11 +22,6 @@ require 'scout_apm/environment'
 # Any of these config settings can be set with an environment variable prefixed
 # by SCOUT_ and uppercasing the key: SCOUT_LOG_LEVEL for instance.
 
-
-# Config - Made up of config overlay
-# Default -> File -> Environment Var
-# QUESTION: How to embed arrays or hashes into ENV?
-
 module ScoutApm
   class Config
 
@@ -129,7 +124,7 @@ module ScoutApm
     def self.with_file(file_path=nil, config={})
       overlays = [
         ConfigEnvironment.new,
-        ConfigFile.new(file_path, config[:file]),
+        ConfigFile.new(file_path, config),
         ConfigDefaults.new,
         ConfigNull.new,
       ]
@@ -149,7 +144,7 @@ module ScoutApm
                     nil
                   end
 
-      coercion = SETTING_COERCIONS[key] || NullCoercion.new
+      coercion = SETTING_COERCIONS.fetch(key, NullCoercion.new)
       coercion.coerce(raw_value)
     end
 
@@ -163,8 +158,8 @@ module ScoutApm
         'disabled_instruments'   => [],
         'enable_background_jobs' => true,
         'ignore'                 => [],
-        'dev_trace' => false, # false for now so code can live in main branch
-        'profile' => true # for scoutprof
+        'dev_trace'              => false,
+        'profile'                => true # for scoutprof
       }.freeze
 
       def value(key)
@@ -248,15 +243,16 @@ module ScoutApm
           raw_file = File.read(@resolved_file_path)
           erb_file = ERB.new(raw_file).result(binding)
           parsed_yaml = YAML.load(erb_file)
-          @settings = parsed_yaml[app_environment]
+          file_settings = parsed_yaml[app_environment]
 
-          if !@settings.is_a? Hash
-            raise ("Missing environment key for: #{app_environment}. This can happen if the key is missing, or with a malformed configuration file," +
-                   " check that there is a top level #{app_environment} key.")
+          if file_settings.is_a? Hash
+            logger.debug("Loaded Configuration: #{@resolved_file_path}. Using environment: #{app_environment}")
+            @settings = file_settings
+            @file_loaded = true
+          else
+            logger.info("Couldn't find configuration in #{@resolved_file_path} for environment: #{app_environment}. Configuration in ENV will still be applied.")
+            @file_loaded = false
           end
-
-          logger.debug("Loaded Configuration: #{@resolved_file_path}. Using environment: #{app_environment}")
-          @file_loaded = true
         rescue Exception => e # Explicit `Exception` handling to catch SyntaxError and anything else that ERB or YAML may throw
           logger.debug("Failed loading configuration file: #{e.message}. ScoutAPM will continue starting with configuration from ENV and defaults")
           @file_loaded = false

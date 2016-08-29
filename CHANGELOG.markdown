@@ -2,6 +2,23 @@
 
 * ScoutProf BETA
 
+# 2.1.6
+
+* Support older versions of Grape (0.10 onward)
+* Fix issue with complex AR queries
+* Vendor rusage library
+* Fix double-exit that caused error messages when running under Passenger
+
+# 2.1.5
+
+* Be less strict loading Rails environments that don't have a matching
+  scout_apm.yml section. Previously we raised, now we log and continue
+  to load with the ENV settings
+* Fix a memory leak in error recovery code
+* Fix a minor race condition in data coordination between processes.
+  * There was a tiny sliver of a window where a lock wasn't held, and it caused
+    an exception to be raised.
+
 # 2.1.4
 
 * Enhance regular expression that determines if a backtrace line is "inside"
