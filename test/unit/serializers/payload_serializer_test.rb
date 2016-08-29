@@ -78,6 +78,7 @@ class PayloadSerializerTest < Minitest::Test
         "min_call_time" => 0.000613518,
         "total_call_time" => 0.033245704,
         "total_exclusive_time" => 0.033245704,
+        "traces" => []
       },
       {
         "key" => {
@@ -92,6 +93,7 @@ class PayloadSerializerTest < Minitest::Test
         "min_call_time" => 0.034881757,
         "total_call_time" => 0.113403176,
         "total_exclusive_time" => 0.07813208899999999,
+        "traces" => []
       }
     ]
     assert_equal formatted_metrics, JSON.parse(payload)["metrics"]
