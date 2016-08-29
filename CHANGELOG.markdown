@@ -2,6 +2,13 @@
 
 * Adds Git revision detection, which is reported on app load and associated with transaction traces
 
+# 2.1.6
+
+* Support older versions of Grape (0.10 onward)
+* Fix issue with complex AR queries
+* Vendor rusage library
+* Fix double-exit that caused error messages when running under Passenger
+
 # 2.1.5
 
 * Be less strict loading Rails environments that don't have a matching
