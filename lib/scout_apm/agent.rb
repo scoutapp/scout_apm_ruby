@@ -202,18 +202,20 @@ module ScoutApm
     # It does not attempt to actually report metrics.
     def shutdown
       logger.info "Shutting down ScoutApm"
+
       return if !started?
+
+      return if @shutdown
+      @shutdown = true
 
       if @background_worker
         logger.info("Stopping background worker")
         @background_worker.stop
         store.write_to_layaway(layaway, :force)
-      end
-
-      logger.debug "Joining background worker thread"
-      if @background_worker_thread
-        @background_worker_thread.wakeup
-        @background_worker_thread.join
+        if @background_worker_thread.alive?
+          @background_worker_thread.wakeup
+          @background_worker_thread.join
+        end
       end
       ScoutApm::Instruments::Stacks.uninstall
     end
