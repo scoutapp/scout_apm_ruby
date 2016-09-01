@@ -135,7 +135,7 @@ module ScoutApm
 
       [ ScoutApm::Instruments::Process::ProcessCpu.new(environment.processors, logger),
         ScoutApm::Instruments::Process::ProcessMemory.new(logger),
-        ScoutApm::Instruments::PercentileSampler.new(logger, 95),
+        ScoutApm::Instruments::PercentileSampler.new(logger, request_histograms_by_time),
       ].each { |s| store.add_sampler(s) }
 
       app_server_load_hook
