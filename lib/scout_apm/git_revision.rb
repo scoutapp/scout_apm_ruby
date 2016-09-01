@@ -22,7 +22,7 @@ module ScoutApm
     end
 
     def detect_from_env_var
-      ENV['SCOUT_SHA']
+      ENV['SCOUT_REVISION_SHA']
     end
 
     def detect_from_capistrano
