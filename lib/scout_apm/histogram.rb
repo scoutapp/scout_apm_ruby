@@ -104,7 +104,12 @@ module ScoutApm
 
     def as_json
       mutex.synchronize do
-        bins.map{|b| [b.value, b.count]}
+        bins.map{ |b|
+          [
+            ScoutApm::Utils::Numbers.round(b.value, 4),
+            b.count
+          ]
+        }
       end
     end
 
