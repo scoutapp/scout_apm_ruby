@@ -106,7 +106,7 @@ module ScoutApm
     end
 
     def git_revision
-      @git_revision || = ScoutApm::GitRevision.new
+      @git_revision ||= ScoutApm::GitRevision.new
     end
 
     # Returns the whole integration object

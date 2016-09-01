@@ -21,7 +21,7 @@ module ScoutApm
             "allocations" => job.allocations,
             "seconds_since_startup" => job.seconds_since_startup,
             "hostname" => job.hostname,
-            "git_revision" => job.git_revision,
+            "git_sha" => job.git_sha,
             "metrics" => MetricsToJsonSerializer.new(job.metrics).as_json, # New style of metrics
             "allocation_metrics" => MetricsToJsonSerializer.new(job.allocation_metrics).as_json, # New style of metrics
             "context" => job.context.to_hash,

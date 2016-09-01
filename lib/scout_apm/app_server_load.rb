@@ -39,7 +39,7 @@ module ScoutApm
         :application_name   => ScoutApm::Environment.instance.application_name,
         :libraries          => ScoutApm::Utils::InstalledGems.new.run,
         :paas               => ScoutApm::Environment.instance.platform_integration.name,
-        :git_revision       => ScoutApm::Environment.instance.git_revision.sha
+        :git_sha            => ScoutApm::Environment.instance.git_revision.sha
       }
     end
   end

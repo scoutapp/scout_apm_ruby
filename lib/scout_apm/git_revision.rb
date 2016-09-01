@@ -5,13 +5,14 @@ module ScoutApm
 
     def initialize
       @sha = detect
+      ScoutApm::Agent.instance.logger.debug "Detected Git Revision [#{@sha}]"
     end
 
     private
 
     def detect
-      detect_from_heroku     ||
       detect_from_env_var    ||
+      detect_from_heroku     ||
       detect_from_capistrano ||
       detect_from_git
     end
@@ -21,7 +22,7 @@ module ScoutApm
     end
 
     def detect_from_env_var
-      ENV['SCOUT_REVISION']
+      ENV['SCOUT_SHA']
     end
 
     def detect_from_capistrano
@@ -33,7 +34,11 @@ module ScoutApm
     end
 
     def detect_from_git
-      `git rev-parse --short HEAD`.strip if File.directory?(".git") rescue nil
+      if File.directory?(".git")
+        `git rev-parse --short HEAD`.strip 
+      end
+    rescue
+      nil
     end
 
     def app_root

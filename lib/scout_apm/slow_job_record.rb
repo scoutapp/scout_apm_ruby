@@ -20,7 +20,7 @@ module ScoutApm
     attr_reader :hostname
     attr_reader :seconds_since_startup
     attr_reader :score
-    attr_reader :git_revision
+    attr_reader :git_sha
 
     def initialize(queue_name, job_name, time, total_time, exclusive_time, context, metrics, allocation_metrics, mem_delta, allocations, score)
       @queue_name = queue_name
@@ -35,7 +35,7 @@ module ScoutApm
       @allocations = allocations
       @seconds_since_startup = (Time.now - ScoutApm::Agent.instance.process_start_time)
       @hostname = ScoutApm::Environment.instance.hostname
-      @git_revision = ScoutApm::Environment.instance.git_revision.sha
+      @git_sha = ScoutApm::Environment.instance.git_revision.sha
       @score = score
       ScoutApm::Agent.instance.logger.debug { "Slow Job [#{metric_name}] - Call Time: #{total_call_time} Mem Delta: #{mem_delta}"}
     end
