@@ -1,36 +1,53 @@
 module ScoutApm
   module Instruments
+
+    class HistogramReport
+      attr_reader :name
+      attr_reader :histogram
+
+      def initialize(name, histogram)
+        @name = name
+        @histogram = histogram
+      end
+
+      def combine!(other)
+        raise "Mismatched Histogram Names" unless name == other.name
+        histogram.combine!(other.histogram)
+        self
+      end
+    end
+
     class PercentileSampler
       attr_reader :logger
 
-      attr_reader :percentiles
+      # A hash of { time => RequestHistograms }
+      attr_reader :histograms
 
-      def initialize(logger, percentiles)
+      def initialize(logger, histograms)
         @logger = logger
-        @percentiles = Array(percentiles)
+        @histograms = histograms
       end
 
       def human_name
-        "Percentiles"
+        'Percentiles'
       end
 
-      # Gets the 95th%ile for the time requested
-      def metrics(time)
-        ms = {}
-        histos = ScoutApm::Agent.instance.request_histograms_by_time[time]
-        histos.each_name do |name|
-          percentiles.each do |percentile|
-            meta = MetricMeta.new("Percentile/#{percentile}/#{name}")
-            stat = MetricStats.new
-            stat.update!(histos.quantile(name, percentile))
-            ms[meta] = stat
-          end
+      def metrics(timestamp, store)
+        store.track_histograms!(percentiles(timestamp), :timestamp => timestamp)
+      end
+
+      def percentiles(time)
+        result = []
+
+        histogram = histograms.delete(time)
+
+        return result unless histogram
+
+        histogram.each_name do |name|
+          result << HistogramReport.new(name, histogram.raw(name))
         end
 
-        # Wipe the histograms we just collected data on
-        ScoutApm::Agent.instance.request_histograms_by_time.delete(time)
-
-        ms
+        result
       end
     end
   end
