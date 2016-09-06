@@ -1,4 +1,4 @@
-# master
+# 2.1.8
 
 * Adds Git revision detection, which is reported on app load and associated with transaction traces
 
