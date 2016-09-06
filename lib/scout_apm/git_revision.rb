@@ -29,7 +29,8 @@ module ScoutApm
       version = File.read(File.join(app_root, 'REVISION')).strip
       # Capistrano 3.0 - 3.1.x
       version || File.open(File.join(app_root, '..', 'revisions.log')).to_a.last.strip.sub(/.*as release ([0-9]+).*/, '\1')
-    rescue 
+    rescue
+      ScoutApm::Agent.instance.logger.debug "Unable to detect Git Revision from Capistrano: #{$!.message}"
       nil
     end
 
@@ -38,11 +39,12 @@ module ScoutApm
         `git rev-parse --short HEAD`.strip 
       end
     rescue
+      ScoutApm::Agent.instance.logger.debug "Unable to detect Git Revision from Git: #{$!.message}"
       nil
     end
 
     def app_root
-      ScoutApm::Environment.root
+      ScoutApm::Environment.instance.root
     end
 
   end
