@@ -90,7 +90,11 @@ module ScoutApm
     def combine!(other)
       mutex.synchronize do
         other.mutex.synchronize do
-          @bins = (other.bins + @bins).sort_by {|b| b.value }
+          @bins = (other.bins + @bins).
+            group_by {|b| b.value }.
+            map {|val, bs| [val, bs.inject(0) {|sum, b| sum + b.count }] }.
+            map {|val, sum| HistogramBin.new(val,sum) }.
+            sort_by { |b| b.value }
           @total += other.total
           trim
           self
@@ -100,7 +104,12 @@ module ScoutApm
 
     def as_json
       mutex.synchronize do
-        bins.map{|b| [b.value, b.count]}
+        bins.map{ |b|
+          [
+            ScoutApm::Utils::Numbers.round(b.value, 4),
+            b.count
+          ]
+        }
       end
     end
 

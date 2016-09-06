@@ -278,7 +278,7 @@ module ScoutApm
         # If there's an instant_key, it means we need to report this right away
         if instant?
           trace = slow_converter.call
-          ScoutApm::InstantReporting.new(trace, instant_key).call()
+          ScoutApm::InstantReporting.new(trace, instant_key).call
         end
       end
 

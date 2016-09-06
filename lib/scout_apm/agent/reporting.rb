@@ -58,6 +58,7 @@ module ScoutApm
         slow_transactions = reporting_period.slow_transactions_payload
         jobs = reporting_period.jobs
         slow_jobs = reporting_period.slow_jobs_payload
+        histograms = reporting_period.histograms
 
         metadata = {
           :app_root      => ScoutApm::Environment.instance.root.to_s,
@@ -68,9 +69,9 @@ module ScoutApm
           :platform      => "ruby",
         }
 
-        log_deliver(metrics, slow_transactions, metadata, slow_jobs)
+        log_deliver(metrics, slow_transactions, metadata, slow_jobs, histograms)
 
-        payload = ScoutApm::Serializers::PayloadSerializer.serialize(metadata, metrics, slow_transactions, jobs, slow_jobs)
+        payload = ScoutApm::Serializers::PayloadSerializer.serialize(metadata, metrics, slow_transactions, jobs, slow_jobs, histograms)
         # logger.debug("Payload: #{payload}")
 
         reporter.report(payload, headers)
@@ -80,7 +81,7 @@ module ScoutApm
         logger.debug e.backtrace
       end
 
-      def log_deliver(metrics, slow_transactions, metadata, jobs_traces)
+      def log_deliver(metrics, slow_transactions, metadata, jobs_traces, histograms)
         total_request_count = metrics.
           select { |meta,stats| meta.metric_name =~ /\AController/ }.
           inject(0) {|sum, (_, stat)| sum + stat.call_count }
@@ -97,6 +98,7 @@ module ScoutApm
         metrics_clause    = "#{metrics.length} Metrics for #{total_request_count} requests"
         slow_trans_clause = "#{slow_transactions.length} Slow Transaction Traces"
         job_clause        = "#{jobs_traces.length} Job Traces"
+        histogram_clause  = "#{histograms.length} Histograms"
 
         logger.info "#{time_clause} Delivering #{metrics_clause} and #{slow_trans_clause} and #{job_clause}, #{process_log_str}."
         # logger.debug("Metrics: #{metrics.pretty_inspect}\nSlowTrans: #{slow_transactions.pretty_inspect}\nMetadata: #{metadata.inspect.pretty_inspect}")

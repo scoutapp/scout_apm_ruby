@@ -29,16 +29,17 @@ module ScoutApm
           "Process CPU"
         end
 
-        def metrics(_time)
+        def metrics(timestamp, store)
           result = run
           if result
             meta = MetricMeta.new("#{metric_type}/#{metric_name}")
             stat = MetricStats.new(false)
             stat.update!(result)
-            { meta => stat }
+            store.track!({ meta => stat }, :timestamp => timestamp)
           else
             {}
           end
+
         end
 
         # TODO: Figure out a good default instead of nil
