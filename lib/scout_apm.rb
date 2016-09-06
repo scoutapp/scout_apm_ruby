@@ -63,9 +63,6 @@ require 'scout_apm/platform_integrations/server'
 
 require 'scout_apm/histogram'
 
-require 'scout_apm/deploy_integrations/capistrano_3'
-# require 'scout_apm/deploy_integrations/capistrano_2'
-
 require 'scout_apm/instruments/net_http'
 require 'scout_apm/instruments/http_client'
 require 'scout_apm/instruments/moped'
@@ -136,6 +133,7 @@ require 'scout_apm/request_histograms'
 
 require 'scout_apm/capacity'
 require 'scout_apm/attribute_arranger'
+require 'scout_apm/git_revision'
 
 require 'scout_apm/serializers/payload_serializer'
 require 'scout_apm/serializers/payload_serializer_to_json'
@@ -144,7 +142,6 @@ require 'scout_apm/serializers/slow_jobs_serializer_to_json'
 require 'scout_apm/serializers/metrics_to_json_serializer'
 require 'scout_apm/serializers/directive_serializer'
 require 'scout_apm/serializers/app_server_load_serializer'
-require 'scout_apm/serializers/deploy_serializer'
 
 require 'scout_apm/middleware'
 
