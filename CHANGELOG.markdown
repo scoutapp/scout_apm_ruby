@@ -1,5 +1,9 @@
 # master
 
+# 2.1.7
+
+* Fix allocations extension compilation on Ruby 1.8.7
+
 # 2.1.6
 
 * Support older versions of Grape (0.10 onward)
