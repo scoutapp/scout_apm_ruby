@@ -2,10 +2,18 @@
 
 * ScoutProf BETA
 
+# 2.1.8
+
+* Adds Git revision detection, which is reported on app load and associated with transaction traces
+
+# 2.1.7
+
+* Fix allocations extension compilation on Ruby 1.8.7
+>>>>>>> master
+
 # 2.1.6
 
 * Support older versions of Grape (0.10 onward)
-* Fix issue with complex AR queries
 * Vendor rusage library
 * Fix double-exit that caused error messages when running under Passenger
 
