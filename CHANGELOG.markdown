@@ -1,3 +1,9 @@
+# Dev
+
+* Adds Git revision detection, which is reported on app load and associated with transaction traces
+* Adds histogram & percentile support
+* Adds gzipped payloads support
+
 # 3.0.0
 
 * ScoutProf BETA
@@ -9,7 +15,6 @@
 # 2.1.7
 
 * Fix allocations extension compilation on Ruby 1.8.7
->>>>>>> master
 
 # 2.1.6
 
