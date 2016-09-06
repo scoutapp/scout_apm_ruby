@@ -121,11 +121,6 @@ module ScoutApm
 
       @ignored_uris = ScoutApm::IgnoredUris.new(config.value('ignore'))
 
-      if environment.deploy_integration
-        logger.info "Starting monitoring for [#{environment.deploy_integration.name}]]."
-        return environment.deploy_integration.install
-      end
-
       load_instruments if should_load_instruments?(options)
 
       return false unless preconditions_met?(options)
@@ -322,10 +317,6 @@ module ScoutApm
       instance = instrument_klass.new
       @installed_instruments << instance
       instance.install
-    end
-
-    def deploy_integration
-      environment.deploy_integration
     end
 
     def app_server_missing?(options = {})
