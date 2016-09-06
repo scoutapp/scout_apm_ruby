@@ -98,6 +98,7 @@ require 'scout_apm/utils/sql_sanitizer'
 require 'scout_apm/utils/time'
 require 'scout_apm/utils/unique_id'
 require 'scout_apm/utils/numbers'
+require 'scout_apm/utils/gzip_helper'
 
 require 'scout_apm/config'
 require 'scout_apm/environment'
