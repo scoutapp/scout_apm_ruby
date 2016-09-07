@@ -11,7 +11,13 @@ module ScoutApm
       end
 
       def deflate(str)
-        Zlib::Deflate.deflate(str, level)
+        strio = StringIO.new
+
+        gz = Zlib::GzipWriter.new(strio, level)
+        gz.write str
+        gz.close
+
+        strio.string
       end
     end
   end
