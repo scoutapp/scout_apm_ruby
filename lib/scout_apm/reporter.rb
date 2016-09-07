@@ -128,7 +128,7 @@ module ScoutApm
     def compress_payload(payload)
       [
         ScoutApm::Utils::GzipHelper.new.deflate(payload),
-        { 'Transfer-Encoding' => 'gzip' }
+        { 'Content-Encoding' => 'gzip' }
       ]
     end
 
