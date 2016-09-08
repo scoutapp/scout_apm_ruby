@@ -160,7 +160,7 @@ module ScoutApm
         'ignore'                 => [],
         'dev_trace'              => false,
         'profile'                => true, # for scoutprof
-        'compress_payload'       => false,
+        'compress_payload'       => true,
       }.freeze
 
       def value(key)
