@@ -193,7 +193,7 @@ module ScoutApm
         allocation_stat.update!(layer.total_allocations, layer.total_exclusive_allocations)
 
         # Attach Scoutprof Traces
-        stat.add_traces(layer.traces.as_json)
+        timing_stat.add_traces(layer.traces.as_json)
       end
 
       # Merged Metric - no specifics, just sum up by type (ActiveRecord, View, HTTP, etc)
