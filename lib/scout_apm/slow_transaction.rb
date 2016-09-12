@@ -16,7 +16,8 @@ module ScoutApm
     attr_accessor :hostname # hack - we need to reset these server side.
     attr_accessor :seconds_since_startup # hack - we need to reset these server side.
     attr_accessor :git_sha # hack - we need to reset these server side.
-    attr_reader :truncated_metrics
+
+    attr_reader :truncated_metrics # True/False that says if we had to truncate the metrics of this trace
 
     def initialize(uri, metric_name, total_call_time, metrics, allocation_metrics, context, time, raw_stackprof, mem_delta, allocations, score, truncated_metrics)
       @uri = uri
@@ -49,7 +50,19 @@ module ScoutApm
     end
 
     def as_json
-      json_attributes = [:key, :time, :total_call_time, :uri, [:context, :context_hash], :score, :prof, :mem_delta, :allocations, :seconds_since_startup, :hostname, :git_sha]
+      json_attributes = [:key,
+                         :time,
+                         :total_call_time,
+                         :uri,
+                         [:context, :context_hash],
+                         :score,
+                         :prof,
+                         :mem_delta,
+                         :allocations,
+                         :seconds_since_startup,
+                         :hostname,
+                         :git_sha,
+                         :truncated_metrics]
       ScoutApm::AttributeArranger.call(self, json_attributes)
     end
 
