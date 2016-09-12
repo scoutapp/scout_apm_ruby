@@ -31,7 +31,7 @@ module ScoutApm
               queue_layer = ScoutApm::Layer.new('Queue', queue)
               job_layer = ScoutApm::Layer.new('Job', name)
 
-              ScoutApm::Agent.instance.logger.info("Starting DelayedJob #{queue}/#{name}")
+              ScoutApm::Agent.instance.logger.debug("Starting DelayedJob #{queue}/#{name}")
 
               begin
                 req.start_layer(queue_layer)
@@ -42,7 +42,7 @@ module ScoutApm
                 # Call the job itself.
                 block.call(job, *args)
 
-                ScoutApm::Agent.instance.logger.info("Finished DelayedJob #{queue}/#{name}")
+                ScoutApm::Agent.instance.logger.debug("Finished DelayedJob #{queue}/#{name}")
               rescue
                 req.error!
                 raise
