@@ -25,7 +25,7 @@ module ScoutApm
 
     BACKGROUND_JOB_INTEGRATIONS = [
       ScoutApm::BackgroundJobIntegrations::Sidekiq.new,
-      # ScoutApm::BackgroundJobIntegrations::DelayedJob.new
+      ScoutApm::BackgroundJobIntegrations::DelayedJob.new,
     ]
 
     FRAMEWORK_INTEGRATIONS = [

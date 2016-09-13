@@ -273,10 +273,10 @@ module ScoutApm
     # Loads the instrumention logic.
     def load_instruments
       if !background_job_missing?
-        case environment.background_job_name
-        when :delayed_job
-          install_instrument(ScoutApm::Instruments::DelayedJob)
-        end
+#        case environment.background_job_name
+#        when :delayed_job
+#          install_instrument(ScoutApm::Instruments::DelayedJob)
+#        end
       else
         case environment.framework
         when :rails       then install_instrument(ScoutApm::Instruments::ActionControllerRails2)
