@@ -50,11 +50,24 @@ module ScoutApm
                 with_scout_instruments = %Q[
                 def #{method}_with_scout_instruments(*args, &block)
 
+
                   req = ScoutApm::RequestManager.lookup
                   *db, collection = view.collection.namespace.split(".")
 
                   name = collection + "/#{method}"
-                  filter = ScoutApm::Instruments::Mongoid.anonymize_filter(view.filter)
+
+                  # Between Mongo gem version 2.1 and 2.3, this method name was
+                  # changed. Accomodate both.  If for some reason neither is
+                  # there, try to continue with an empty "filter" hash.
+                  raw_filter = if view.respond_to?(:selector)
+                    view.selector
+                  elsif view.respond_to?(:filter)
+                    view.filter
+                  else
+                    {}
+                  end
+
+                  filter = ScoutApm::Instruments::Mongoid.anonymize_filter(raw_filter)
 
                   layer = ScoutApm::Layer.new("MongoDB", name)
                   layer.desc = filter.inspect
