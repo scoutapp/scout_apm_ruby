@@ -17,7 +17,9 @@ module ScoutApm
     attr_accessor :seconds_since_startup # hack - we need to reset these server side.
     attr_accessor :git_sha # hack - we need to reset these server side.
 
-    def initialize(uri, metric_name, total_call_time, metrics, allocation_metrics, context, time, raw_stackprof, mem_delta, allocations, score)
+    attr_reader :truncated_metrics # True/False that says if we had to truncate the metrics of this trace
+
+    def initialize(uri, metric_name, total_call_time, metrics, allocation_metrics, context, time, raw_stackprof, mem_delta, allocations, score, truncated_metrics)
       @uri = uri
       @metric_name = metric_name
       @total_call_time = total_call_time
@@ -32,6 +34,8 @@ module ScoutApm
       @hostname = ScoutApm::Environment.instance.hostname
       @score = score
       @git_sha = ScoutApm::Environment.instance.git_revision.sha
+      @truncated_metrics = truncated_metrics
+
       ScoutApm::Agent.instance.logger.debug { "Slow Request [#{uri}] - Call Time: #{total_call_time} Mem Delta: #{mem_delta} Score: #{score}"}
     end
 
@@ -46,7 +50,19 @@ module ScoutApm
     end
 
     def as_json
-      json_attributes = [:key, :time, :total_call_time, :uri, [:context, :context_hash], :score, :prof, :mem_delta, :allocations, :seconds_since_startup, :hostname, :git_sha]
+      json_attributes = [:key,
+                         :time,
+                         :total_call_time,
+                         :uri,
+                         [:context, :context_hash],
+                         :score,
+                         :prof,
+                         :mem_delta,
+                         :allocations,
+                         :seconds_since_startup,
+                         :hostname,
+                         :git_sha,
+                         :truncated_metrics]
       ScoutApm::AttributeArranger.call(self, json_attributes)
     end
 
