@@ -49,5 +49,11 @@ module ScoutApm
       @combine_in_progress = false
       self
     end
+
+
+    def eql?(other)
+      metrics == other.metrics
+    end
+    alias :== :eql?
   end
 end
