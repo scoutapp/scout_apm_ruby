@@ -11,6 +11,10 @@ module ScoutApm
       @keep_running = true
     end
 
+    def running?
+      @keep_running
+    end
+
     def stop
       ScoutApm::Agent.instance.logger.debug "Background Worker: stop requested"
       @keep_running = false
