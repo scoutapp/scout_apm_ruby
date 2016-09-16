@@ -1,3 +1,7 @@
+# 2.1.10
+
+* Fix issue getting a default Application Name when it wasn't explicitly set
+
 # 2.1.9
 
 * Send raw histograms of response time, enabling more accurate 95th %iles
