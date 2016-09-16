@@ -36,7 +36,6 @@ module ScoutApm
 
     def uri(host)
       encoded_app_name = CGI.escape(Environment.instance.application_name)
-      encoded_name = CGI.escape(config.value('name'))
       key = config.value('key')
 
       case type
@@ -45,9 +44,9 @@ module ScoutApm
       when :app_server_load
         URI.parse("#{host}/apps/app_server_load.scout?key=#{key}&name=#{encoded_app_name}")
       when :deploy_hook
-        URI.parse("#{host}/apps/deploy.scout?key=#{key}&name=#{encoded_name}")
+        URI.parse("#{host}/apps/deploy.scout?key=#{key}&name=#{encoded_app_name}")
       when :instant_trace
-        URI.parse("#{host}/apps/instant_trace.scout?key=#{key}&name=#{encoded_name}&instant_key=#{instant_key}")
+        URI.parse("#{host}/apps/instant_trace.scout?key=#{key}&name=#{encoded_app_name}&instant_key=#{instant_key}")
       end.tap { |u| logger.debug("Posting to #{u}") }
     end
 
