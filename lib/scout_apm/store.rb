@@ -26,7 +26,23 @@ module ScoutApm
     # Save newly collected metrics
     def track!(metrics, options={})
       @mutex.synchronize {
-        current_period.absorb_metrics!(metrics)
+        period = if options[:timestamp]
+                   @reporting_periods[options[:timestamp]]
+                 else
+                   current_period
+                 end
+        period.absorb_metrics!(metrics)
+      }
+    end
+
+    def track_histograms!(histograms, options={})
+      @mutex.synchronize {
+        period = if options[:timestamp]
+                   @reporting_periods[options[:timestamp]]
+                 else
+                   current_period
+                 end
+        period.merge_histograms!(histograms)
       }
     end
 
@@ -67,15 +83,15 @@ module ScoutApm
     def write_to_layaway(layaway, force=false)
       ScoutApm::Agent.instance.logger.debug("Writing to layaway#{" (Forced)" if force}")
 
-      @mutex.synchronize {
-        reporting_periods.select { |time, rp| force || time.timestamp < current_timestamp.timestamp}.
+        reporting_periods.select { |time, rp| force || time.timestamp < current_timestamp.timestamp }.
+                          each   { |time, rp| collect_samplers(rp) }.
                           each   { |time, rp| write_reporting_period(layaway, time, rp) }
-      }
     end
 
     def write_reporting_period(layaway, time, rp)
-      collect_samplers(rp)
-      layaway.write_reporting_period(rp)
+      @mutex.synchronize {
+        layaway.write_reporting_period(rp)
+      }
     rescue => e
       ScoutApm::Agent.instance.logger.warn("Failed writing data to layaway file: #{e.message} / #{e.backtrace}")
     ensure
@@ -91,12 +107,10 @@ module ScoutApm
     def collect_samplers(rp)
       @samplers.each do |sampler|
         begin
-          metrics = sampler.metrics(rp.timestamp)
-          rp.absorb_metrics!(metrics)
+          sampler.metrics(rp.timestamp, self)
         rescue => e
           ScoutApm::Agent.instance.logger.info "Error reading #{sampler.human_name} for period: #{rp}"
-          ScoutApm::Agent.instance.logger.debug e.message
-          ScoutApm::Agent.instance.logger.debug e.backtrace.join("\n")
+          ScoutApm::Agent.instance.logger.debug "#{e.message}\n\t#{e.backtrace.join("\n\t")}"
         end
       end
     end
@@ -159,6 +173,9 @@ module ScoutApm
     # A ScoredItemSet holding the "best" traces for the period
     attr_reader :job_traces
 
+    # An Array of HistogramsReport
+    attr_reader :histograms
+
     # A StoreReportingPeriodTimestamp representing the time that this
     # collection of metrics is for
     attr_reader :timestamp
@@ -171,6 +188,8 @@ module ScoutApm
       @request_traces = ScoredItemSet.new
       @job_traces = ScoredItemSet.new
 
+      @histograms = []
+
       @metric_set = MetricSet.new
       @jobs = Hash.new
     end
@@ -181,7 +200,8 @@ module ScoutApm
         merge_metrics!(other.metric_set).
         merge_slow_transactions!(other.slow_transactions_payload).
         merge_jobs!(other.jobs).
-        merge_slow_jobs!(other.slow_jobs_payload)
+        merge_slow_jobs!(other.slow_jobs_payload).
+        merge_histograms!(other.histograms)
       self
     end
 
@@ -226,6 +246,17 @@ module ScoutApm
       Array(new_jobs).each do |job|
         job_traces << job
       end
+
+      self
+    end
+
+    def merge_histograms!(new_histograms)
+      new_histograms = Array(new_histograms)
+      @histograms = (histograms + new_histograms).
+        group_by { |histo| histo.name }.
+        map { |(_, histos)|
+          histos.inject { |merged, histo| merged.combine!(histo) }
+        }
 
       self
     end

@@ -1,3 +1,16 @@
+# 2.1.10
+
+* Fix issue getting a default Application Name when it wasn't explicitly set
+
+# 2.1.9
+
+* Send raw histograms of response time, enabling more accurate 95th %iles
+* Gzip payloads
+* Fix Mongoid (5.0) + Mongo (2.1) support
+* Initial Delayed Job support
+* Limit max metric size of a trace to 500.
+
+
 # 2.1.8
 
 * Adds Git revision detection, which is reported on app load and associated with transaction traces

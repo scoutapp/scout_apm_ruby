@@ -21,17 +21,22 @@ module ScoutApm
 
           callbacks do |lifecycle|
             lifecycle.around(:invoke_job) do |job, *args, &block|
+              ScoutApm::Agent.instance.start_background_worker unless ScoutApm::Agent.instance.background_worker_running?
+
               name = job.name
               queue = job.queue || "default"
 
               req = ScoutApm::RequestManager.lookup
               req.job!
-              # req.annotate_request(:queue_latency => latency(msg))
+
+              begin
+                latency = Time.now - job.created_at
+                req.annotate_request(:queue_latency => latency)
+              rescue
+              end
 
               queue_layer = ScoutApm::Layer.new('Queue', queue)
               job_layer = ScoutApm::Layer.new('Job', name)
-
-              ScoutApm::Agent.instance.logger.debug("Starting DelayedJob #{queue}/#{name}")
 
               begin
                 req.start_layer(queue_layer)
@@ -41,8 +46,6 @@ module ScoutApm
 
                 # Call the job itself.
                 block.call(job, *args)
-
-                ScoutApm::Agent.instance.logger.debug("Finished DelayedJob #{queue}/#{name}")
               rescue
                 req.error!
                 raise

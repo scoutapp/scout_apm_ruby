@@ -39,6 +39,10 @@ module ScoutApm
       initialize_histograms_hash
     end
 
+    def raw(item)
+      @histograms[item]
+    end
+
     def initialize_histograms_hash
       @histograms = Hash.new { |h, k| h[k] = NumericHistogram.new(histogram_size) }
     end

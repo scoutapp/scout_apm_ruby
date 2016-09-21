@@ -159,7 +159,8 @@ module ScoutApm
         'enable_background_jobs' => true,
         'ignore'                 => [],
         'dev_trace'              => false,
-        'profile'                => true # for scoutprof
+        'profile'                => true, # for scoutprof
+        'compress_payload'       => true,
       }.freeze
 
       def value(key)

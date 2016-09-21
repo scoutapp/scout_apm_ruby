@@ -130,7 +130,7 @@ module ScoutApm
 
       [ ScoutApm::Instruments::Process::ProcessCpu.new(environment.processors, logger),
         ScoutApm::Instruments::Process::ProcessMemory.new(logger),
-        ScoutApm::Instruments::PercentileSampler.new(logger, 95),
+        ScoutApm::Instruments::PercentileSampler.new(logger, request_histograms_by_time),
       ].each { |s| store.add_sampler(s) }
 
       app_server_load_hook
@@ -231,7 +231,10 @@ module ScoutApm
     end
 
     def background_worker_running?
-      !! @background_worker_thread
+      @background_worker_thread          &&
+        @background_worker_thread.alive? &&
+        @background_worker               &&
+        @background_worker.running?
     end
 
     # Creates the worker thread. The worker thread is a loop that runs continuously. It sleeps for +Agent#period+ and when it wakes,

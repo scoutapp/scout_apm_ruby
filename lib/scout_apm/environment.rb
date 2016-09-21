@@ -58,7 +58,9 @@ module ScoutApm
     end
 
     def application_name
-      Agent.instance.config.value("name") || framework_integration.application_name
+      Agent.instance.config.value("name") ||
+        framework_integration.application_name ||
+        "App"
     end
 
     def database_engine

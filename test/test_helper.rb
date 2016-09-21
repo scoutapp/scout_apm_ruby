@@ -83,3 +83,13 @@ class Minitest::Test
   DATA_FILE_PATH = "#{DATA_FILE_DIR}/scout_apm.db"
 end
 
+
+module CustomAsserts
+  def assert_false(thing)
+    assert !thing
+  end
+end
+
+class Minitest::Test
+  include CustomAsserts
+end

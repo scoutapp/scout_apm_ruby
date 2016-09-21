@@ -17,31 +17,37 @@ module ScoutApm
       @instant_key = instant_key
     end
 
-    # TODO: Parse & return a real response object, not the HTTP Response object
     def report(payload, headers = {})
-      # Some posts (typically ones under development) bypass the ingestion pipeline and go directly to the webserver. They use direct_host instead of host
-      hosts = [:deploy_hook, :instant_trace].include?(type) ? config.value('direct_host') : config.value('host')
+      hosts = determine_hosts
 
-      Array(hosts).each do |host|
-        full_uri = uri(host)
-        response = post(full_uri, payload, headers)
-        unless response && response.is_a?(Net::HTTPSuccess)
-          logger.warn "Error on checkin to #{full_uri.to_s}: #{response.inspect}"
-        end
+      if config.value('compress_payload')
+        original_payload_size = payload.length
+
+        payload, compression_headers = compress_payload(payload)
+        headers.merge!(compression_headers)
+
+        compress_payload_size = payload.length
+        ScoutApm::Agent.instance.logger.debug("Compressed Payload: #{payload.inspect}")
+        ScoutApm::Agent.instance.logger.debug("Original Size: #{original_payload_size} Compressed Size: #{compress_payload_size}")
       end
+
+      post_payload(hosts, payload, headers)
     end
 
     def uri(host)
+      encoded_app_name = CGI.escape(Environment.instance.application_name)
+      key = config.value('key')
+
       case type
       when :checkin
-        URI.parse("#{host}/apps/checkin.scout?key=#{config.value('key')}&name=#{CGI.escape(Environment.instance.application_name)}")
+        URI.parse("#{host}/apps/checkin.scout?key=#{key}&name=#{encoded_app_name}")
       when :app_server_load
-        URI.parse("#{host}/apps/app_server_load.scout?key=#{config.value('key')}&name=#{CGI.escape(Environment.instance.application_name)}")
+        URI.parse("#{host}/apps/app_server_load.scout?key=#{key}&name=#{encoded_app_name}")
       when :deploy_hook
-        URI.parse("#{host}/apps/deploy.scout?key=#{config.value('key')}&name=#{CGI.escape(config.value('name'))}")
+        URI.parse("#{host}/apps/deploy.scout?key=#{key}&name=#{encoded_app_name}")
       when :instant_trace
-        URI.parse("#{host}/apps/instant_trace.scout?key=#{config.value('key')}&name=#{CGI.escape(config.value('name'))}&instant_key=#{instant_key}")
-      end.tap{|u| logger.debug("Posting to #{u.to_s}")}
+        URI.parse("#{host}/apps/instant_trace.scout?key=#{key}&name=#{encoded_app_name}&instant_key=#{instant_key}")
+      end.tap { |u| logger.debug("Posting to #{u}") }
     end
 
     def can_report?
@@ -106,13 +112,44 @@ module ScoutApm
     # Net::HTTP::Proxy returns a regular Net::HTTP class if the first argument (host) is nil.
     def http(url)
       proxy_uri = URI.parse(config.value('proxy').to_s)
-      http = Net::HTTP::Proxy(proxy_uri.host,proxy_uri.port,proxy_uri.user,proxy_uri.password).new(url.host, url.port)
+      http = Net::HTTP::Proxy(proxy_uri.host,
+                              proxy_uri.port,
+                              proxy_uri.user,
+                              proxy_uri.password).new(url.host, url.port)
       if url.is_a?(URI::HTTPS)
         http.use_ssl = true
         http.ca_file = CA_FILE
         http.verify_mode = VERIFY_MODE
       end
       http
+    end
+
+    def compress_payload(payload)
+      [
+        ScoutApm::Utils::GzipHelper.new.deflate(payload),
+        { 'Content-Encoding' => 'gzip' }
+      ]
+    end
+
+    # Some posts (typically ones under development) bypass the ingestion
+    # pipeline and go directly to the webserver. They use direct_host instead
+    # of host
+    def determine_hosts
+      if [:deploy_hook, :instant_trace].include?(type)
+        config.value('direct_host')
+      else
+        config.value('host')
+      end
+    end
+
+    def post_payload(hosts, payload, headers)
+      Array(hosts).each do |host|
+        full_uri = uri(host)
+        response = post(full_uri, payload, headers)
+        unless response && response.is_a?(Net::HTTPSuccess)
+          logger.warn "Error on checkin to #{full_uri}: #{response.inspect}"
+        end
+      end
     end
   end
 end

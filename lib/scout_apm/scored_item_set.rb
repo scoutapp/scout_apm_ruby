@@ -63,6 +63,12 @@ module ScoutApm
       end
     end
 
+    # Equal to another set only if exactly the same set of items is inside
+    def eql?(other)
+      items == other.items
+    end
+
+    alias :== :eql?
 
     private
 
@@ -75,5 +81,6 @@ module ScoutApm
         items[new_item.name] = [new_item.score, new_item.call]
       end
     end
+
   end
 end

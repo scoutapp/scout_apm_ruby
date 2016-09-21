@@ -21,3 +21,54 @@ class StoreTest < Minitest::Test
     assert_equal({}, s.reporting_periods)
   end
 end
+
+class StoreReportingPeriodTest < Minitest::Test
+  HistogramReport = ScoutApm::Instruments::HistogramReport
+
+  attr_reader :subject
+
+  def setup
+    @subject = ScoutApm::StoreReportingPeriod.new(ScoutApm::StoreReportingPeriodTimestamp.new)
+  end
+
+  # Check default values at creation time
+  def test_empty_values
+    assert_equal [], subject.histograms
+    assert_equal ScoutApm::ScoredItemSet.new, subject.request_traces
+    assert_equal ScoutApm::ScoredItemSet.new, subject.job_traces
+    assert_equal ScoutApm::MetricSet.new, subject.metric_set
+  end
+
+  def test_merge_histograms
+    histogramFoo1 = histogram
+    histogramFoo2 = histogram
+    histogramBar1 = histogram
+    histogramBar2 = histogram
+
+    # This assertion may be fragile to reordering in the merge_histograms! function.
+    histogramFoo1.expects(:combine!).with(histogramFoo2)
+    histogramBar1.expects(:combine!).with(histogramBar2)
+
+    subject.merge_histograms!([
+      HistogramReport.new("foo", histogramFoo1),
+      HistogramReport.new("bar", histogramBar1),
+    ])
+
+    subject.merge_histograms!([
+      HistogramReport.new("foo", histogramFoo2),
+      HistogramReport.new("bar", histogramBar2),
+    ])
+
+    result = subject.histograms
+    assert_equal 2, result.length
+    assert_equal ["bar", "foo"], result.map(&:name).sort
+  end
+
+  ###############################################################################
+  # Helpers
+  ###############################################################################
+  def histogram
+    max_bins = 20
+    ScoutApm::NumericHistogram.new(max_bins)
+  end
+end
