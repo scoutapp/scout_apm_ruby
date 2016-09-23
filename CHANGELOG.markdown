@@ -1,3 +1,7 @@
+# 2.1.11
+
+* Support alternate methods of launching Delayed Job
+
 # 2.1.10
 
 * Fix issue getting a default Application Name when it wasn't explicitly set
