@@ -1,3 +1,7 @@
+# 2.1.12
+
+* Revert 2.1.11's Delayed Job change - caused issues in a handful of environments
+
 # 2.1.11
 
 * Support alternate methods of launching Delayed Job
