@@ -275,14 +275,13 @@ module ScoutApm
 
     # Loads the instrumention logic.
     def load_instruments
-      unless app_server_missing?
-        case environment.framework
-        when :rails       then install_instrument(ScoutApm::Instruments::ActionControllerRails2)
-        when :rails3_or_4 then
-          install_instrument(ScoutApm::Instruments::ActionControllerRails3Rails4)
-          install_instrument(ScoutApm::Instruments::MiddlewareSummary)
-          install_instrument(ScoutApm::Instruments::RailsRouter)
-        end
+      case environment.framework
+      when :rails then
+        install_instrument(ScoutApm::Instruments::ActionControllerRails2)
+      when :rails3_or_4 then
+        install_instrument(ScoutApm::Instruments::ActionControllerRails3Rails4)
+        install_instrument(ScoutApm::Instruments::MiddlewareSummary)
+        install_instrument(ScoutApm::Instruments::RailsRouter)
       end
 
       install_instrument(ScoutApm::Instruments::ActiveRecord)
