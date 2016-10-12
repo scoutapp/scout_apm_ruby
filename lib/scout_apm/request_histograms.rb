@@ -1,6 +1,6 @@
 module ScoutApm
   class RequestHistograms
-    DEFAULT_HISTOGRAM_SIZE = 50
+    DEFAULT_HISTOGRAM_SIZE = 500
 
     # Private Accessor:
     # A hash of Endpoint Name to an approximate histogram
