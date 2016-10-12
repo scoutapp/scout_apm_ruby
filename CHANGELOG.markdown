@@ -6,6 +6,18 @@
 
 * ScoutProf BETA
 
+# 2.1.13
+
+* Rework Delayed Job instrumentation to not interfere with other instruments.
+
+# 2.1.12
+
+* Revert 2.1.11's Delayed Job change - caused issues in a handful of environments
+
+# 2.1.11
+
+* Support alternate methods of launching Delayed Job
+
 # 2.1.10
 
 * Fix issue getting a default Application Name when it wasn't explicitly set
