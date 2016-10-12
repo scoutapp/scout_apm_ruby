@@ -8,7 +8,7 @@ module ScoutApm
       end
 
       def present?
-        defined?(::Delayed::Job) && File.basename($PROGRAM_NAME).start_with?('delayed_job')
+        defined?(::Delayed::Job)
       end
 
       def forking?

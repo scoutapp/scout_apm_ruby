@@ -281,20 +281,13 @@ module ScoutApm
 
     # Loads the instrumention logic.
     def load_instruments
-      if !background_job_missing?
-#        case environment.background_job_name
-#        when :delayed_job
-#          install_instrument(ScoutApm::Instruments::DelayedJob)
-#        end
-      else
-        case environment.framework
-        when :rails       then install_instrument(ScoutApm::Instruments::ActionControllerRails2)
-        when :rails3_or_4 then
-          install_instrument(ScoutApm::Instruments::ActionControllerRails3Rails4)
-          install_instrument(ScoutApm::Instruments::MiddlewareSummary)
-          install_instrument(ScoutApm::Instruments::RailsRouter)
-        # when :sinatra     then install_instrument(ScoutApm::Instruments::Sinatra)
-        end
+      case environment.framework
+      when :rails then
+        install_instrument(ScoutApm::Instruments::ActionControllerRails2)
+      when :rails3_or_4 then
+        install_instrument(ScoutApm::Instruments::ActionControllerRails3Rails4)
+        install_instrument(ScoutApm::Instruments::MiddlewareSummary)
+        install_instrument(ScoutApm::Instruments::RailsRouter)
       end
 
       install_instrument(ScoutApm::Instruments::ActiveRecord)
