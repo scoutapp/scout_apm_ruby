@@ -22,10 +22,15 @@ module ScoutApm
             include ScoutApm::Tracer
 
             def request_with_scout_instruments(*args,&block)
-              url = (@address + args.first.path.split('?').first)[0..99]
-              self.class.instrument("HTTP", "request", :desc => url) do
+              self.class.instrument("HTTP", "request", :desc => request_scout_description(args.first)) do
                 request_without_scout_instruments(*args, &block)
               end
+            end
+
+            def request_scout_description(req)
+              path = req.path
+              path = path.path if path.respond_to?(:path)
+              (@address + path.split('?').first)[0..99]
             end
 
             alias request_without_scout_instruments request

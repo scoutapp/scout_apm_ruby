@@ -27,4 +27,5 @@ Gem::Specification.new do |s|
   s.add_development_dependency "m"
   s.add_development_dependency "simplecov"
   s.add_development_dependency "rake-compiler"
+  s.add_development_dependency "addressable"
 end
