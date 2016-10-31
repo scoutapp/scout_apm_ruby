@@ -14,6 +14,7 @@ require 'socket'
 require 'thread'
 require 'time'
 require 'yaml'
+require 'delegate'
 
 #####################################
 # Gem Requires
@@ -26,6 +27,7 @@ require 'rusage'
 require 'scout_apm/version'
 
 require 'scout_apm/tracked_request'
+require 'scout_apm/ignored_request'
 require 'scout_apm/layer'
 require 'scout_apm/request_manager'
 require 'scout_apm/call_set'

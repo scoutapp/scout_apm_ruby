@@ -42,6 +42,7 @@ module ScoutApm
     # Whereas the instant_key gets set per-request in reponse to a URL param, dev_trace is set in the config file
     attr_accessor :dev_trace
 
+
     def initialize(store)
       @store = store #this is passed in so we can use a real store (normal operation) or fake store (instant mode only)
       @layers = []
@@ -54,6 +55,10 @@ module ScoutApm
       @instant_key = nil
       @mem_start = mem_usage
       @dev_trace =  ScoutApm::Agent.instance.config.value('dev_trace') && Rails.env.development?
+    end
+
+    def layer_count
+      @layers.length
     end
 
     def start_layer(layer)
