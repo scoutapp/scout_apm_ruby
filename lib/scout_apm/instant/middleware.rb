@@ -50,6 +50,9 @@ module ScoutApm
         if ScoutApm::Agent.instance.config.value('dev_trace')
           if response.respond_to?(:body)
             req = ScoutApm::RequestManager.lookup
+
+            return [status, headers, response] if req.ignoring_request?
+
             slow_converter = LayerConverters::SlowRequestConverter.new(req)
             trace = slow_converter.call
             if trace
