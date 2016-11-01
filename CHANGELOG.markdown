@@ -1,3 +1,9 @@
+# 2.1.14
+
+* Add TrackedRequest#ignore_request! to entirely ignore and stop capturing a
+  certain request. Use in your code by calling:
+    ScoutApm::RequestManager.lookup.ignore_request!
+
 # 2.1.13
 
 * Rework Delayed Job instrumentation to not interfere with other instruments.
