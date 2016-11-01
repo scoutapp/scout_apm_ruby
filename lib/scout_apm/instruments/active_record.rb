@@ -62,8 +62,10 @@ module ScoutApm
             layer = req.current_layer
             if layer && layer.type == "ActiveRecord"
               layer.annotate_layer(payload)
-            else
+            elsif layer
               ScoutApm::Agent.instance.logger.debug("Expected layer type: ActiveRecord, got #{layer && layer.type}")
+            else
+              # noop, no layer at all. We're probably ignoring this req.
             end
           end
         end
