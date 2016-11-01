@@ -57,9 +57,9 @@ module ScoutApm
     end
 
     def start_layer(layer)
-      if ignoring_children?
-        return
-      end
+      return if ignoring_children?
+
+      return ignoring_start_layer if ignoring_request?
 
       start_request(layer) unless @root_layer
       @layers[-1].add_child(layer) if @layers.any?
@@ -68,6 +68,8 @@ module ScoutApm
 
     def stop_layer
       return if ignoring_children?
+
+      return ignoring_stop_layer if ignoring_request?
 
       layer = @layers.pop
 
@@ -110,6 +112,8 @@ module ScoutApm
 
     BACKTRACE_BLACKLIST = ["Controller", "Job"]
     def capture_backtrace?(layer)
+      return if ignoring_request?
+
       # Never capture backtraces for this kind of layer. The backtrace will
       # always be 100% framework code.
       return false if BACKTRACE_BLACKLIST.include?(layer.type)
@@ -210,6 +214,8 @@ module ScoutApm
     end
 
     def instant?
+      return false if ignoring_request?
+
       instant_key
     end
 
@@ -221,6 +227,8 @@ module ScoutApm
     # the peristent Store object
     def record!
       @recorded = true
+
+      return if ignoring_request?
 
       # Bail out early if the user asked us to ignore this uri
       return if ScoutApm::Agent.instance.ignored_uris.ignore?(annotations[:uri])
@@ -271,6 +279,8 @@ module ScoutApm
 
     # Only call this after the request is complete
     def unique_name
+      return nil if ignoring_request?
+
       @unique_name ||= begin
                          scope_layer = LayerConverters::ConverterBase.new(self).scope_layer
                          if scope_layer
@@ -285,6 +295,8 @@ module ScoutApm
     # Used to know when we should just create a new one (don't attempt to add
     # data to an already-recorded request). See RequestManager
     def recorded?
+      return ignoring_recorded? if ignoring_request?
+
       @recorded
     end
 
@@ -332,6 +344,49 @@ module ScoutApm
     # Grab backtraces more aggressively when running in dev trace mode
     def backtrace_threshold
       dev_trace ? 0.05 : 0.5 # the minimum threshold in seconds to record the backtrace for a metric.
+    end
+
+    ################################################################################
+    # Ignoring the rest of a request
+    ################################################################################
+
+    # At any point in the request, calling code or instrumentation can call
+    # `ignore_request!` to immediately stop recording any information about new
+    # layers, and delete any existing layer info.  This class will still exist,
+    # and respond to methods as normal, but `record!` won't be called, and no
+    # data will be recorded.
+
+    def ignore_request!
+      return if @ignoring_request
+
+      # Set instance variable
+      @ignoring_request = true
+
+      # Store data we'll need
+      @ignoring_depth = @layers.length
+
+      # Clear data
+      @layers = []
+      @root_layer = nil
+      @call_set = nil
+      @annotations = {}
+      @instant_key = nil
+    end
+
+    def ignoring_request?
+      @ignoring_request
+    end
+
+    def ignoring_start_layer
+      @ignoring_depth += 1
+    end
+
+    def ignoring_stop_layer
+      @ignoring_depth -= 1
+    end
+
+    def ignoring_recorded?
+      @ignoring_depth <= 0
     end
   end
 end
