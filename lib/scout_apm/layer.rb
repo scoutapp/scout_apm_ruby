@@ -13,13 +13,17 @@ module ScoutApm
     #   instrumentation for an example of how this is useful
     attr_accessor :name
 
-    # An array of children layers, in call order.
+    # An array of children layers
     # For instance, if we are in a middleware, there will likely be only a single
     # child, which is another middleware.  In a Controller, we may have a handful
     # of children: [ActiveRecord, ActiveRecord, View, HTTP Call].
     #
     # This useful to get actual time spent in this layer vs. children time
-    attr_reader :children
+    #
+    # TODO: Check callers for compatibility w/ nil to avoid making an empty array
+    def children
+      @children || []
+    end
 
     # Time objects recording the start & stop times of this layer
     attr_reader :start_time, :stop_time
@@ -38,6 +42,8 @@ module ScoutApm
     # Known Keys:
     #   :record_count - The number of rows returned by an AR query (From notification instantiation.active_record)
     #   :class_name   - The ActiveRecord class name (From notification instantiation.active_record)
+    #
+    # If no annotations are ever set, this will return nil
     attr_reader :annotations
 
     BACKTRACE_CALLER_LIMIT = 50 # maximum number of lines to send thru for backtrace analysis
@@ -45,15 +51,18 @@ module ScoutApm
     def initialize(type, name, start_time = Time.now)
       @type = type
       @name = name
-      @annotations = {}
       @start_time = start_time
       @allocations_start = ScoutApm::Instruments::Allocations.count
       @allocations_stop = 0
-      @children = [] # In order of calls
+
+      # initialize these only on first use
+      @children = nil
+      @annotations = nil
       @desc = nil
     end
 
     def add_child(child)
+      @children ||= []
       @children << child
     end
 
@@ -72,6 +81,7 @@ module ScoutApm
 
     # This data is internal to ScoutApm, to add custom information, use the Context api.
     def annotate_layer(hsh)
+      @annotations ||= {}
       @annotations.merge!(hsh)
     end
 
