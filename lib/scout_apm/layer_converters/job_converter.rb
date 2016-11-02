@@ -57,7 +57,7 @@ module ScoutApm
         walker.walk do |layer|
           next if layer == job_layer
           next if layer == queue_layer
-          next if layer.annotations[:ignorable]
+          next if skip_layer?(layer)
 
           # we don't need to use the full metric name for scoped metrics as we
           # only display metrics aggregrated by type, just use "ActiveRecord"
