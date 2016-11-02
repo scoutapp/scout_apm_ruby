@@ -177,7 +177,7 @@ module ScoutApm
         meta_options = make_meta_options(layer)
 
         meta = MetricMeta.new(layer.legacy_metric_name, meta_options)
-        meta.extra.merge!(layer.annotations)
+        meta.extra.merge!(layer.annotations) if layer.annotations
 
         store_backtrace(layer, meta)
 
@@ -221,7 +221,8 @@ module ScoutApm
       # an example. We start capturing before we know if a query is cached
       # or not, and want to skip any cached queries.
       def skip_layer?(layer)
-        return true if layer.annotations[:ignorable]
+        return false if layer.annotations.nil?
+        return true  if layer.annotations[:ignorable]
       end
 
       # Debug logging for scoutprof traces
