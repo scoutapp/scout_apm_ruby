@@ -22,7 +22,7 @@ module ScoutApm
     #
     # TODO: Check callers for compatibility w/ nil to avoid making an empty array
     def children
-      @children || []
+      @children || LayerChildrenSet.new
     end
 
     # Time objects recording the start & stop times of this layer
@@ -62,7 +62,7 @@ module ScoutApm
     end
 
     def add_child(child)
-      @children ||= []
+      @children ||= LayerChildrenSet.new
       @children << child
     end
 
