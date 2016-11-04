@@ -154,6 +154,7 @@ module ScoutApm
         map { |child| child.total_call_time }.
         inject(0) { |sum, time| sum + time }
     end
+    private :child_time
 
     ######################################
     # Allocation Calculations
@@ -179,5 +180,6 @@ module ScoutApm
         map { |child| child.total_allocations }.
         inject(0) { |sum, obj| sum + obj }
     end
+    private :child_allocations
   end
 end
