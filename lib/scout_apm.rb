@@ -27,6 +27,8 @@ require 'scout_apm/version'
 
 require 'scout_apm/tracked_request'
 require 'scout_apm/layer'
+require 'scout_apm/merged_layer'
+require 'scout_apm/layer_children_set'
 require 'scout_apm/request_manager'
 require 'scout_apm/call_set'
 
