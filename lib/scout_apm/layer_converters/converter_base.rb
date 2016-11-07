@@ -192,7 +192,7 @@ module ScoutApm
         stat = allocation_metric_hash[meta]
         stat.update!(layer.total_allocations, layer.total_exclusive_allocations)
 
-        if MergedLayer === layer
+        if LimitedLayer === layer
           metric_hash[meta].call_count = layer.count
           allocation_metric_hash[meta].call_count = layer.count
         end
