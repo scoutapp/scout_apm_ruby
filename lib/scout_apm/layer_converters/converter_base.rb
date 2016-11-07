@@ -187,13 +187,16 @@ module ScoutApm
         # Timing
         timing_stat = metric_hash[meta]
         timing_stat.update!(layer.total_call_time, layer.total_exclusive_time)
+        timing_stat.add_traces(layer.traces.as_json)
 
         # Allocations
         allocation_stat = allocation_metric_hash[meta]
         allocation_stat.update!(layer.total_allocations, layer.total_exclusive_allocations)
 
-        # Attach Scoutprof Traces
-        timing_stat.add_traces(layer.traces.as_json)
+        if LimitedLayer === layer
+          metric_hash[meta].call_count = layer.count
+          allocation_metric_hash[meta].call_count = layer.count
+        end
       end
 
       # Merged Metric - no specifics, just sum up by type (ActiveRecord, View, HTTP, etc)

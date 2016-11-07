@@ -64,7 +64,6 @@ module ScoutApm
       layer.start_sampling
 
       start_request(layer) unless @root_layer
-      @layers[-1].add_child(layer) if @layers.any?
       @layers.push(layer)
     end
 
@@ -88,6 +87,8 @@ module ScoutApm
       layer.record_traces!
       layer.record_stop_time!
       layer.record_allocations!
+
+      @layers[-1].add_child(layer) if @layers.any?
 
       # This must be called before checking if a backtrace should be collected as the call count influences our capture logic.
       # We call `#update_call_counts in stop layer to ensure the layer has a final desc. Layer#desc is updated during the AR instrumentation flow.
