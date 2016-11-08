@@ -85,6 +85,10 @@ module ScoutApm
       # noop
     end
 
+    def traces
+      ScoutApm::TraceSet.new
+    end
+
     #######################################################################
     #  Many methods don't make any sense on a limited layer. Raise errors  #
     #  aggressively for now to detect mistaken calls                      #
