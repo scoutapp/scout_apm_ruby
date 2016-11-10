@@ -6,6 +6,10 @@
 
 * ScoutProf BETA
 
+# 2.1.15
+
+* Limit memory usage for very long running requests.
+
 # 2.1.14
 
 * Add TrackedRequest#ignore_request! to entirely ignore and stop capturing a
