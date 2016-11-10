@@ -19,7 +19,7 @@ module ScoutApm
 
     # By default, how many unique children of a type do we store before
     # flipping over to storing only aggregate info.
-    DEFAULT_UNIQUE_CUTOFF = 1000
+    DEFAULT_UNIQUE_CUTOFF = 2000
     attr_reader :unique_cutoff
 
     # The Set of children objects
