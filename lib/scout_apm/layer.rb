@@ -22,7 +22,7 @@ module ScoutApm
     #
     # TODO: Check callers for compatibility w/ nil to avoid making an empty array
     def children
-      @children || []
+      @children || LayerChildrenSet.new
     end
 
     # Time objects recording the start & stop times of this layer
@@ -62,7 +62,7 @@ module ScoutApm
     end
 
     def add_child(child)
-      @children ||= []
+      @children ||= LayerChildrenSet.new
       @children << child
     end
 
@@ -154,6 +154,7 @@ module ScoutApm
         map { |child| child.total_call_time }.
         inject(0) { |sum, time| sum + time }
     end
+    private :child_time
 
     ######################################
     # Allocation Calculations
@@ -179,5 +180,6 @@ module ScoutApm
         map { |child| child.total_allocations }.
         inject(0) { |sum, obj| sum + obj }
     end
+    private :child_allocations
   end
 end

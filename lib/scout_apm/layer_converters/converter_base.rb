@@ -191,6 +191,11 @@ module ScoutApm
         # allocations
         stat = allocation_metric_hash[meta]
         stat.update!(layer.total_allocations, layer.total_exclusive_allocations)
+
+        if LimitedLayer === layer
+          metric_hash[meta].call_count = layer.count
+          allocation_metric_hash[meta].call_count = layer.count
+        end
       end
 
       # Merged Metric - no specifics, just sum up by type (ActiveRecord, View, HTTP, etc)
