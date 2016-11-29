@@ -1,10 +1,10 @@
-# Dev
-
-* Adds Git revision detection, which is reported on app load and associated with transaction traces
-
 # 3.0.0
 
 * ScoutProf BETA
+
+# 2.1.16
+
+* Extract the name correctly for DelayedJob workers run via ActiveJob
 
 # 2.1.15
 
