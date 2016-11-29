@@ -1,3 +1,7 @@
+# 2.1.16
+
+* Extract the name correctly for DelayedJob workers run via ActiveJob
+
 # 2.1.15
 
 * Limit memory usage for very long running requests.
