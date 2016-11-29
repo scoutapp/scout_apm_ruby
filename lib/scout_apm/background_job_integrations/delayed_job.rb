@@ -1,6 +1,8 @@
 module ScoutApm
   module BackgroundJobIntegrations
     class DelayedJob
+      ACTIVE_JOB_KLASS = 'ActiveJob::QueueAdapters::DelayedJobAdapter::JobWrapper'.freeze
+
       attr_reader :logger
 
       def name
@@ -23,7 +25,15 @@ module ScoutApm
             lifecycle.around(:invoke_job) do |job, *args, &block|
               ScoutApm::Agent.instance.start_background_worker unless ScoutApm::Agent.instance.background_worker_running?
 
-              name = job.name
+              name = begin
+                       if job.payload_object.class.to_s == ACTIVE_JOB_KLASS
+                         job.payload_object.job_data["job_class"]
+                       else
+                         job.name
+                       end
+                     rescue
+                       job.name
+                     end
               queue = job.queue || "default"
 
               req = ScoutApm::RequestManager.lookup
