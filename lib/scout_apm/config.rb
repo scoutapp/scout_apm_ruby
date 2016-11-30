@@ -5,25 +5,54 @@ require 'scout_apm/environment'
 
 # Valid Config Options:
 #
+# This list is complete, but some are old and unused, or for developers of
+# scout_apm itself. See the documentation at http://help.apm.scoutapp.com for
+# customer-focused documentation.
+#
 # application_root - override the detected directory of the application
+# compress_payload - true/false to enable gzipping of payload
 # data_file        - override the default temporary storage location. Must be a location in a writable directory
-# host             - override the default hostname detection. Default varies by environment - either system hostname, or PAAS hostname
+# dev_trace        - true or false. Enables always-on tracing in development environmen only
 # direct_host      - override the default "direct" host. The direct_host bypasses the ingestion pipeline and goes directly to the webserver, and is primarily used for features under development.
+# enable_background_jobs - true or false
+# host             - configuration used in development
+# hostname         - override the default hostname detection. Default varies by environment - either system hostname, or PAAS hostname
 # key              - the account key with Scout APM. Found in Settings in the Web UI
 # log_file_path    - either a directory or "STDOUT".
 # log_level        - DEBUG / INFO / WARN as usual
 # monitor          - true or false.  False prevents any instrumentation from starting
 # name             - override the name reported to APM. This is the name that shows in the Web UI
-# uri_reporting    - 'path' or 'full_path' default is 'full_path', which reports URL params as well as the path.
+# profile          - turn on/off scoutprof (only applicable in Gem versions including scoutprof)
+# proxy            - an http proxy
 # report_format    - 'json' or 'marshal'. Marshal is legacy and will be removed.
-# dev_trace        - true or false. Enables always-on tracing in development environmen only
-# enable_background_jobs - true or false
+# uri_reporting    - 'path' or 'full_path' default is 'full_path', which reports URL params as well as the path.
 #
 # Any of these config settings can be set with an environment variable prefixed
 # by SCOUT_ and uppercasing the key: SCOUT_LOG_LEVEL for instance.
 
 module ScoutApm
   class Config
+    KNOWN_CONFIG_OPTIONS = [
+        'application_root',
+        'compress_payload',
+        'config_file',
+        'data_file',
+        'dev_trace',
+        'direct_host',
+        'disabled_instruments',
+        'enable_background_jobs',
+        'host',
+        'hostname',
+        'ignore',
+        'key',
+        'log_level',
+        'log_file_path',
+        'monitor',
+        'name',
+        'profile',
+        'report_format',
+        'uri_reporting',
+    ]
 
     ################################################################################
     # Coersions
@@ -136,6 +165,10 @@ module ScoutApm
     end
 
     def value(key)
+      if ! KNOWN_CONFIG_OPTIONS.include?(key)
+        ScoutApm::Agent.instance.logger.debug("Requested looking up a unknown configuration key: #{key} (not a problem. Evaluate and add to config.rb)")
+      end
+
       o = @overlays.detect{ |overlay| overlay.has_key?(key) }
       raw_value = if o
                     o.value(key)
@@ -148,19 +181,24 @@ module ScoutApm
       coercion.coerce(raw_value)
     end
 
+    # Did we load anything for configuration?
+    def any_keys_found?
+      @overlays.any? { |overlay| overlay.any_keys_found? }
+    end
+
     class ConfigDefaults
       DEFAULTS = {
-        'host'                   => 'https://checkin.scoutapp.com',
+        'compress_payload'       => true,
+        'dev_trace'              => false,
         'direct_host'            => 'https://apm.scoutapp.com',
-        'log_level'              => 'info',
-        'uri_reporting'          => 'full_path',
-        'report_format'          => 'json',
         'disabled_instruments'   => [],
         'enable_background_jobs' => true,
+        'host'                   => 'https://checkin.scoutapp.com',
         'ignore'                 => [],
-        'dev_trace'              => false,
+        'log_level'              => 'info',
         'profile'                => true, # for scoutprof
-        'compress_payload'       => true,
+        'report_format'          => 'json',
+        'uri_reporting'          => 'full_path',
       }.freeze
 
       def value(key)
@@ -169,6 +207,11 @@ module ScoutApm
 
       def has_key?(key)
         DEFAULTS.has_key?(key)
+      end
+
+      # Defaults are here, but not counted as user specified.
+      def any_keys_found?
+        false
       end
     end
 
@@ -184,6 +227,10 @@ module ScoutApm
       def has_key?(*)
         true
       end
+
+      def any_keys_found?
+        false
+      end
     end
 
     class ConfigEnvironment
@@ -198,6 +245,12 @@ module ScoutApm
 
       def key_to_env_key(key)
         'SCOUT_' + key.upcase
+      end
+
+      def any_keys_found?
+        KNOWN_CONFIG_OPTIONS.any? { |option|
+          ENV.has_key?(key_to_env_key(option))
+        }
       end
     end
 
@@ -222,6 +275,12 @@ module ScoutApm
 
       def has_key?(key)
         @settings.has_key?(key)
+      end
+
+      def any_keys_found?
+        KNOWN_CONFIG_OPTIONS.any? { |option|
+          @settings.has_key?(option)
+        }
       end
 
       private
@@ -255,7 +314,7 @@ module ScoutApm
             @file_loaded = false
           end
         rescue Exception => e # Explicit `Exception` handling to catch SyntaxError and anything else that ERB or YAML may throw
-          logger.debug("Failed loading configuration file: #{e.message}. ScoutAPM will continue starting with configuration from ENV and defaults")
+          logger.info("Failed loading configuration file (#{@resolved_file_path}): #{e.message}. ScoutAPM will continue starting with configuration from ENV and defaults")
           @file_loaded = false
         end
       end
