@@ -113,6 +113,7 @@ module ScoutApm
     def start(options = {})
       @options.merge!(options)
 
+
       @config = ScoutApm::Config.with_file(@config.value("config_file"))
       layaway.config = config
 
@@ -122,6 +123,12 @@ module ScoutApm
       @ignored_uris = ScoutApm::IgnoredUris.new(config.value('ignore'))
 
       load_instruments if should_load_instruments?(options)
+
+      if !@config.any_keys_found?
+        logger.info("No configuration file loaded, and no configuration found in ENV. " +
+                    "For assistance configuring Scout, visit " +
+                    "http://help.apm.scoutapp.com/#configuration-options")
+      end
 
       return false unless preconditions_met?(options)
       @started = true

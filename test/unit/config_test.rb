@@ -67,4 +67,15 @@ class ConfigTest < Minitest::Test
     assert_equal 10, coercion.coerce(10)
     assert_equal ["a"], coercion.coerce(["a"])
   end
+
+  def test_any_keys_found
+    ENV.stubs(:has_key?).returns(nil)
+
+    conf = ScoutApm::Config.with_file("a_file_that_doesnt_exist.yml")
+    assert ! conf.any_keys_found?
+
+    ENV.stubs(:has_key?).with("SCOUT_MONITOR").returns("true")
+    conf = ScoutApm::Config.with_file("a_file_that_doesnt_exist.yml")
+    assert conf.any_keys_found?
+  end
 end
