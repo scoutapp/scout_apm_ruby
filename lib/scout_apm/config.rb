@@ -50,6 +50,7 @@ module ScoutApm
         'monitor',
         'name',
         'profile',
+        'proxy',
         'report_format',
         'uri_reporting',
     ]
