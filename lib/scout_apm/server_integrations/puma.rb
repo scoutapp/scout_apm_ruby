@@ -24,10 +24,13 @@ module ScoutApm
       end
 
       def install
-        ::Puma.cli_config.options[:before_worker_boot] << Proc.new do
+        old = ::Puma.cli_config.options[:before_worker_boot] || []
+        new = Array(old) + [Proc.new do
           logger.info "Installing Puma worker loop."
           ScoutApm::Agent.instance.start_background_worker
-        end
+        end]
+
+        ::Puma.cli_config.options[:before_worker_boot] = new
       rescue
         logger.warn "Unable to install Puma worker loop: #{$!.message}"
       end
