@@ -27,7 +27,6 @@ module ScoutApm
         headers.merge!(compression_headers)
 
         compress_payload_size = payload.length
-        ScoutApm::Agent.instance.logger.debug("Compressed Payload: #{payload.inspect}")
         ScoutApm::Agent.instance.logger.debug("Original Size: #{original_payload_size} Compressed Size: #{compress_payload_size}")
       end
 

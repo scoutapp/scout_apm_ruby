@@ -83,7 +83,7 @@ module ScoutApm
     def write_to_layaway(layaway, force=false)
       ScoutApm::Agent.instance.logger.debug("Writing to layaway#{" (Forced)" if force}")
 
-        reporting_periods.select { |time, rp| force || time.timestamp < current_timestamp.timestamp }.
+        reporting_periods.select { |time, rp| force || (time.timestamp < current_timestamp.timestamp) }.
                           each   { |time, rp| collect_samplers(rp) }.
                           each   { |time, rp| write_reporting_period(layaway, time, rp) }
     end
@@ -95,7 +95,9 @@ module ScoutApm
     rescue => e
       ScoutApm::Agent.instance.logger.warn("Failed writing data to layaway file: #{e.message} / #{e.backtrace}")
     ensure
-      reporting_periods.delete(time)
+      ScoutApm::Agent.instance.logger.debug("Before delete, reporting periods length: #{reporting_periods.size}")
+      deleted_items = reporting_periods.delete(time)
+      ScoutApm::Agent.instance.logger.debug("After delete, reporting periods length: #{reporting_periods.size}. Did delete #{deleted_items}")
     end
 
     ######################################

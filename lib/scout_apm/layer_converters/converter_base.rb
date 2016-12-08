@@ -88,8 +88,6 @@ module ScoutApm
         if bt.any?
           meta.backtrace = bt
           @backtraces << meta
-        else
-          ScoutApm::Agent.instance.logger.debug { "Unable to capture an app-specific backtrace for #{meta.inspect}\n#{layer.backtrace}" }
         end
       end
 
