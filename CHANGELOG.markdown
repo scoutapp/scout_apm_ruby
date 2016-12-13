@@ -2,6 +2,10 @@
 
 * ScoutProf BETA
 
+# 2.1.17
+
+* Additional logging around file system usage
+
 # 2.1.16
 
 * Extract the name correctly for DelayedJob workers run via ActiveJob
