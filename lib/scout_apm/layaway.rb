@@ -7,9 +7,6 @@
 #
 module ScoutApm
   class Layaway
-    # How old a file needs to be in Seconds before it gets reported.
-    REPORTING_AGE = 120
-
     # How long to let a stale file sit before deleting it.
     # Letting it sit a bit may be useful for debugging
     STALE_AGE = 10 * 60
@@ -60,7 +57,6 @@ module ScoutApm
     def with_claim(timestamp)
       coordinator_file = glob_pattern(timestamp, :coordinator)
 
-
       begin
         # This file gets deleted only by a process that successfully created and obtained the exclusive lock
         f = File.open(coordinator_file, File::RDWR | File::CREAT | File::EXCL | File::NONBLOCK)
@@ -70,25 +66,33 @@ module ScoutApm
 
       begin
         if f
+          begin
+            ScoutApm::Agent.instance.logger.debug("Obtained Reporting Lock")
 
-          ScoutApm::Agent.instance.logger.debug("Obtained Reporting Lock")
+            files = all_files_for(timestamp).reject{|l| l.to_s == coordinator_file.to_s }
+            rps = files.map{ |layaway| LayawayFile.new(layaway).load }.compact
+            if rps.any?
+              yield rps
 
-          files = all_files_for(timestamp).reject{|l| l.to_s == coordinator_file.to_s }
-          rps = files.map{ |layaway| LayawayFile.new(layaway).load }.compact
-          if rps.any?
-            yield rps
+              ScoutApm::Agent.instance.logger.debug("Deleting the now-reported layaway files for #{timestamp.to_s}")
+              delete_files_for(timestamp) # also removes the coodinator_file
 
-            delete_files_for(timestamp) # also removes the coodinator_file
-            delete_stale_files(timestamp.to_time - STALE_AGE)
-          else
-            File.unlink(coordinator_file)
-            ScoutApm::Agent.instance.logger.debug("No layaway files to report")
+              ScoutApm::Agent.instance.logger.debug("Checking for any Stale layaway files")
+              delete_stale_files(timestamp.to_time - STALE_AGE)
+            else
+              File.unlink(coordinator_file)
+              ScoutApm::Agent.instance.logger.debug("No layaway files to report")
+            end
+
+            true
+          rescue Exception => e
+            ScoutApm::Agent.instance.logger.debug("Caught an exception in with_claim, with the coordination file locked: #{e.message}, #{e.backtrace.inspect}")
+            raise
+          ensure
+            # Unlock the file when done!
+            f.flock(File::LOCK_UN | File::LOCK_NB)
+            f.close
           end
-
-          # Unlock the file when done!
-          f.flock(File::LOCK_UN | File::LOCK_NB)
-          f.close
-          true
         else
           # Didn't obtain lock, another process is reporting. Return false from this function, but otherwise no work
           false
@@ -97,7 +101,10 @@ module ScoutApm
     end
 
     def delete_files_for(timestamp)
-      all_files_for(timestamp).each { |layaway| File.unlink(layaway) }
+      all_files_for(timestamp).each { |layaway|
+        ScoutApm::Agent.instance.logger.debug("Deleting layaway file: #{layaway}")
+        File.unlink(layaway)
+      }
     end
 
     def delete_stale_files(older_than)
@@ -108,6 +115,8 @@ module ScoutApm
         select { |timestamp| timestamp.to_i < older_than.strftime(TIME_FORMAT).to_i }.
           tap  { |timestamps| ScoutApm::Agent.instance.logger.debug("Deleting stale layaway files with timestamps: #{timestamps.inspect}") }.
         map    { |timestamp| delete_files_for(timestamp) }
+    rescue => e
+      ScoutApm::Agent.instance.logger.debug("Problem deleting stale files: #{e.message}, #{e.backtrace.inspect}")
     end
 
     private
