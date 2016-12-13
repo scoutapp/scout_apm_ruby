@@ -171,6 +171,8 @@ module ScoutApm
     end
 
     def log_layaway_file_information
+      files_in_temp = Dir["#{directory}/*"].count
+
       all_filenames = all_files_for(:all)
       count_per_timestamp = Hash[
         all_filenames.
@@ -178,7 +180,8 @@ module ScoutApm
         map{ |timestamp, list| [timestamp, list.length] }
       ]
 
-      ScoutApm::Agent.instance.logger.debug("Total Layaway Files: #{all_filenames.size}.  By Timestamp: #{count_per_timestamp.inspect}")
+
+      ScoutApm::Agent.instance.logger.debug("Total in #{directory}: #{files_in_temp}. Total Layaway Files: #{all_filenames.size}.  By Timestamp: #{count_per_timestamp.inspect}")
     end
   end
 end
