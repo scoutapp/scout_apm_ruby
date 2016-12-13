@@ -69,6 +69,8 @@ module ScoutApm
           begin
             ScoutApm::Agent.instance.logger.debug("Obtained Reporting Lock")
 
+            log_layaway_file_information
+
             files = all_files_for(timestamp).reject{|l| l.to_s == coordinator_file.to_s }
             rps = files.map{ |layaway| LayawayFile.new(layaway).load }.compact
             if rps.any?
@@ -166,6 +168,17 @@ module ScoutApm
       else
         nil
       end
+    end
+
+    def log_layaway_file_information
+      all_filenames = all_files_for(:all)
+      count_per_timestamp = Hash[
+        all_filenames.
+        group_by {|f| timestamp_from_filename(f) }.
+        map{ |timestamp, list| [timestamp, list.length] }
+      ]
+
+      ScoutApm::Agent.instance.logger.debug("Total Layaway Files: #{all_filenames.size}.  By Timestamp: #{count_per_timestamp.inspect}")
     end
   end
 end
