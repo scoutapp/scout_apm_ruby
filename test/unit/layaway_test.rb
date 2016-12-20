@@ -28,21 +28,17 @@ class LayawayTest < Minitest::Test
     layaway = ScoutApm::Layaway.new(config, ScoutApm::Agent.instance.environment)
     layaway.delete_files_for(:all)
 
-    limit_before = ScoutApm::Layaway::LAYAWAY_FILES_LIMIT
-    Kernel.silence_warnings { ScoutApm::Layaway.const_set("LAYAWAY_FILES_LIMIT", 1) }
-
     current_time = Time.now.utc
     current_rp = ScoutApm::StoreReportingPeriod.new(current_time)
     stale_rp = ScoutApm::StoreReportingPeriod.new(current_time - current_time.sec - 120)
 
     # layaway.write_reporting_period returns nil on successful write
     # It should probably be changed to return true or the number of bytes written
-    assert_nil layaway.write_reporting_period(stale_rp)
+    assert_nil layaway.write_reporting_period(stale_rp, 1)
 
     # layaway.write_reporting_period returns an explicit false class on failure
-    assert layaway.write_reporting_period(current_rp).is_a?(FalseClass)
+    assert layaway.write_reporting_period(current_rp, 1).is_a?(FalseClass)
 
-    Kernel.silence_warnings { ScoutApm::Layaway.const_set("LAYAWAY_FILES_LIMIT", limit_before) }
     layaway.delete_files_for(:all)
   end
 end
