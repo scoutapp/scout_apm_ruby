@@ -16,6 +16,14 @@ Kernel.module_eval do
   def self.const_unset(const)
     self.instance_eval { remove_const(const) }
   end
+
+  def silence_warnings(&block)
+    warn_level = $VERBOSE
+    $VERBOSE = nil
+    result = block.call
+    $VERBOSE = warn_level
+    result
+  end
 end
 
 # A test helper class to create a temporary "configuration" we can control entirely purposes
