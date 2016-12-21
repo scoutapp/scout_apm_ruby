@@ -134,7 +134,6 @@ require 'scout_apm/slow_job_policy'
 require 'scout_apm/job_record'
 require 'scout_apm/request_histograms'
 
-require 'scout_apm/capacity'
 require 'scout_apm/attribute_arranger'
 require 'scout_apm/git_revision'
 

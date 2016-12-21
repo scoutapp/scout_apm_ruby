@@ -20,6 +20,21 @@ class StoreTest < Minitest::Test
 
     assert_equal({}, s.reporting_periods)
   end
+
+  def test_writing_layaway_removes_stale_timestamps
+    current_time = Time.now.utc
+    current_rp = ScoutApm::StoreReportingPeriod.new(current_time)
+    stale_rp = ScoutApm::StoreReportingPeriod.new(current_time - current_time.sec - 120)
+
+    s = ScoutApm::Store.new
+    ScoutApm::Instruments::Process::ProcessMemory.new(Logger.new(StringIO.new)).metrics(stale_rp.timestamp, s)
+    ScoutApm::Instruments::Process::ProcessMemory.new(Logger.new(StringIO.new)).metrics(current_rp.timestamp, s)
+    assert_equal 2, s.reporting_periods.size
+
+    s.write_to_layaway(FakeFailingLayaway.new, true)
+
+    assert_equal({}, s.reporting_periods)
+  end
 end
 
 class StoreReportingPeriodTest < Minitest::Test

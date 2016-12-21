@@ -11,6 +11,9 @@ module ScoutApm
     # Letting it sit a bit may be useful for debugging
     STALE_AGE = 10 * 60
 
+    # Failsafe to prevent writing layaway files if for some reason they are not being cleaned up
+    MAX_FILES_LIMIT = 5000
+
     # A strftime format string for how we render timestamps in filenames.
     # Must be sortable as an integer
     TIME_FORMAT = "%Y%m%d%H%M"
@@ -45,7 +48,11 @@ module ScoutApm
       @directory = Pathname.new(found)
     end
 
-    def write_reporting_period(reporting_period)
+    def write_reporting_period(reporting_period, files_limit = MAX_FILES_LIMIT)
+      if at_layaway_file_limit?(files_limit)
+        ScoutApm::Agent.instance.logger.error("Hit layaway file limit. Not writing to layaway file")
+        return false
+      end
       filename = file_for(reporting_period.timestamp)
       layaway_file = LayawayFile.new(filename)
       layaway_file.write(reporting_period)
@@ -168,6 +175,10 @@ module ScoutApm
       else
         nil
       end
+    end
+
+    def at_layaway_file_limit?(files_limit = MAX_FILES_LIMIT)
+      all_files_for(:all).count >= files_limit
     end
 
     def log_layaway_file_information

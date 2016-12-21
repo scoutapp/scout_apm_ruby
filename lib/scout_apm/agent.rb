@@ -12,7 +12,6 @@ module ScoutApm
     attr_accessor :store
     attr_accessor :layaway
     attr_accessor :config
-    attr_accessor :capacity
     attr_accessor :logger
     attr_accessor :log_file # path to the log file
     attr_accessor :options # options passed to the agent when +#start+ is called.
@@ -58,7 +57,6 @@ module ScoutApm
       @layaway        = ScoutApm::Layaway.new(config, environment)
       @metric_lookup  = Hash.new
 
-      @capacity       = ScoutApm::Capacity.new
       @installed_instruments = []
     end
 

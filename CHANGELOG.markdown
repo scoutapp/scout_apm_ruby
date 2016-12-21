@@ -2,6 +2,11 @@
 
 * ScoutProf BETA
 
+# 2.1.18
+
+* Max layaway file threshold limit
+
+
 # 2.1.17
 
 * Additional logging around file system usage
