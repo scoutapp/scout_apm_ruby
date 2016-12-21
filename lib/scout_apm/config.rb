@@ -165,12 +165,17 @@ module ScoutApm
       @overlays = Array(overlays)
     end
 
+    # For a given key, what is the first overlay says that it can handle it?
+    def overlay_for_key(key)
+      @overlays.detect{ |overlay| overlay.has_key?(key) }
+    end
+
     def value(key)
       if ! KNOWN_CONFIG_OPTIONS.include?(key)
         ScoutApm::Agent.instance.logger.debug("Requested looking up a unknown configuration key: #{key} (not a problem. Evaluate and add to config.rb)")
       end
 
-      o = @overlays.detect{ |overlay| overlay.has_key?(key) }
+      o = overlay_for_key(key)
       raw_value = if o
                     o.value(key)
                   else
@@ -185,6 +190,14 @@ module ScoutApm
     # Did we load anything for configuration?
     def any_keys_found?
       @overlays.any? { |overlay| overlay.any_keys_found? }
+    end
+
+    def log_settings
+      messages = KNOWN_CONFIG_OPTIONS.inject([]) do |memo, key|
+        o = overlay_for_key(key)
+        memo << "#{o.name} - #{key}: #{value(key).inspect}"
+      end
+      ScoutApm::Agent.instance.logger.debug("Resolved Setting Values:\n" + messages.join("\n"))
     end
 
     class ConfigDefaults
@@ -214,6 +227,10 @@ module ScoutApm
       def any_keys_found?
         false
       end
+
+      def name
+        "defaults"
+      end
     end
 
 
@@ -231,6 +248,10 @@ module ScoutApm
 
       def any_keys_found?
         false
+      end
+
+      def name
+        "no-config"
       end
     end
 
@@ -252,6 +273,10 @@ module ScoutApm
         KNOWN_CONFIG_OPTIONS.any? { |option|
           ENV.has_key?(key_to_env_key(option))
         }
+      end
+
+      def name
+        "environment"
       end
     end
 
@@ -282,6 +307,10 @@ module ScoutApm
         KNOWN_CONFIG_OPTIONS.any? { |option|
           @settings.has_key?(option)
         }
+      end
+
+      def name
+        "config-file"
       end
 
       private

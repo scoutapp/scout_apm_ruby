@@ -120,6 +120,8 @@ module ScoutApm
       init_logger
       logger.info "Attempting to start Scout Agent [#{ScoutApm::VERSION}] on [#{environment.hostname}]"
 
+      @config.log_settings
+
       @ignored_uris = ScoutApm::IgnoredUris.new(config.value('ignore'))
 
       load_instruments if should_load_instruments?(options)
