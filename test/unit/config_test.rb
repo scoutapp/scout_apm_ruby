@@ -32,7 +32,7 @@ class ConfigTest < Minitest::Test
     conf = ScoutApm::Config.with_file(conf_file, environment: "staging")
 
     assert_equal "info", conf.value('log_level') # the default value
-    assert_equal nil, conf.value('name')         # the default value
+    assert_nil nil, conf.value('name')         # the default value
   end
 
   def test_boolean_coercion

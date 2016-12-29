@@ -2,6 +2,11 @@
 
 * ScoutProf BETA
 
+# 2.1.19
+
+* Log all configuration settings at start when log level is debug
+* Tune DelayedJob class name detection
+
 # 2.1.18
 
 * Max layaway file threshold limit
