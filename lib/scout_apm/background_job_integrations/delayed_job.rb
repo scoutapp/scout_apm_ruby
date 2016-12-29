@@ -2,6 +2,7 @@ module ScoutApm
   module BackgroundJobIntegrations
     class DelayedJob
       ACTIVE_JOB_KLASS = 'ActiveJob::QueueAdapters::DelayedJobAdapter::JobWrapper'.freeze
+      DJ_PERFORMABLE_METHOD = 'Delayed::PerformableMethod'.freeze
 
       attr_reader :logger
 
@@ -26,14 +27,27 @@ module ScoutApm
               ScoutApm::Agent.instance.start_background_worker unless ScoutApm::Agent.instance.background_worker_running?
 
               name = begin
-                       if job.payload_object.class.to_s == ACTIVE_JOB_KLASS
+                       case job.payload_object.class.to_s
+
+                       # ActiveJob's class wraps the actual job class
+                       when ACTIVE_JOB_KLASS
                          job.payload_object.job_data["job_class"]
-                       else
+
+                       # An adhoc job, called like `@user.delay.fib(10)`.
+                       # returns a string like "User#fib"
+                       when DJ_PERFORMABLE_METHOD
                          job.name
+
+                       # A "real" job called like `Delayed::Job.enqueue(MyJob.new)`
+                       # returns "MyJob"
+                       else
+                         job.payload_object.class.to_s
                        end
                      rescue
+                       # Fall back to whatever DJ thinks the name is.
                        job.name
                      end
+
               queue = job.queue || "default"
 
               req = ScoutApm::RequestManager.lookup
