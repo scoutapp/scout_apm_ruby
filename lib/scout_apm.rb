@@ -76,7 +76,7 @@ require 'scout_apm/instruments/active_record'
 require 'scout_apm/instruments/action_controller_rails_2'
 require 'scout_apm/instruments/action_controller_rails_3_rails4'
 require 'scout_apm/instruments/middleware_summary'
-# require 'scout_apm/instruments/middleware_detailed' # Currently disabled functionality, see the file for details.
+require 'scout_apm/instruments/middleware_detailed' # Disabled by default, see the file for more details
 require 'scout_apm/instruments/rails_router'
 require 'scout_apm/instruments/grape'
 require 'scout_apm/instruments/sinatra'

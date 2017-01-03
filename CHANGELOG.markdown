@@ -2,6 +2,13 @@
 
 * ScoutProf BETA
 
+# 2.1.20
+
+* Add a `detailed_middleware` boolean configuration option to capture
+  per-middleware data, as opposed to the default of aggregating all middleware
+  together.  This has a small amount of additional overhead, approximately
+  10-15ms per request.
+
 # 2.1.19
 
 * Log all configuration settings at start when log level is debug
