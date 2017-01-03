@@ -37,6 +37,7 @@ module ScoutApm
         'compress_payload',
         'config_file',
         'data_file',
+        'detailed_middleware',
         'dev_trace',
         'direct_host',
         'disabled_instruments',
@@ -45,8 +46,8 @@ module ScoutApm
         'hostname',
         'ignore',
         'key',
-        'log_level',
         'log_file_path',
+        'log_level',
         'monitor',
         'name',
         'profile',
@@ -129,6 +130,7 @@ module ScoutApm
       "monitor"                => BooleanCoercion.new,
       "enable_background_jobs" => BooleanCoercion.new,
       "dev_trace"              => BooleanCoercion.new,
+      "detailed_middleware"    => BooleanCoercion.new,
       "ignore"                 => JsonCoercion.new,
     }
 
@@ -203,6 +205,7 @@ module ScoutApm
     class ConfigDefaults
       DEFAULTS = {
         'compress_payload'       => true,
+        'detailed_middleware'    => false,
         'dev_trace'              => false,
         'direct_host'            => 'https://apm.scoutapp.com',
         'disabled_instruments'   => [],
