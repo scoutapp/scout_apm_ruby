@@ -25,6 +25,7 @@ require 'rusage'
 #####################################
 require 'scout_apm/version'
 
+require 'scout_apm/debug'
 require 'scout_apm/tracked_request'
 require 'scout_apm/layer'
 require 'scout_apm/limited_layer'
