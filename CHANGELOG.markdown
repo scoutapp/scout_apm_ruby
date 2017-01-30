@@ -1,3 +1,7 @@
+# 2.1.22
+
+* Add DevTrace support for newest 4.2.x and 5.x versions of Rails
+
 # 2.1.21
 
 * Fix edge case, causing DevTrace to fail
