@@ -53,7 +53,8 @@ module ScoutApm
         rack_response = @app.call(env)
         begin
           DevTraceResponseManipulator.new(env, rack_response).call
-        rescue => e
+        rescue Exception => e
+          # If anything went wrong at all, just bail out and return the unmodified response.
           ScoutApm::Agent.instance.logger.debug("DevTrace: Raised an exception: #{e.message}, #{e.backtrace}")
           rack_response
         end
@@ -132,25 +133,39 @@ module ScoutApm
 
       def adjust_html_response
         case true
-        when rails_response?      then  adjust_rails_response
+        when older_rails_response? then adjust_older_rails_response
+        when newer_rails_response? then adjust_newer_rails_response
         when rack_proxy_response? then  adjust_rack_proxy_response
         else
           # No action taken, we only adjust if we know exactly what we have.
         end
       end
 
-      def rails_response?
-        rack_body.is_a?(ActionDispatch::Response)
+      def older_rails_response?
+        if defined?(ActionDispatch::Response)
+          return true if rack_body.is_a?(ActionDispatch::Response)
+        end
+      end
+
+      def newer_rails_response?
+        if defined?(ActionDispatch::Response::RackBody)
+          return true if rack_body.is_a?(ActionDispatch::Response::RackBody)
+        end
       end
 
       def rack_proxy_response?
         rack_body.is_a?(Rack::BodyProxy)
       end
 
-      # Preserve the ActionDispatch::Response object we're working with
-      def adjust_rails_response
-        logger.debug("DevTrace: in middleware, dev_trace is active, and response has a body. This appears to be an HTML page and an ActionDispatch::Response. Path=#{path}; ContentType=#{content_type}")
+      def adjust_older_rails_response
+        logger.debug("DevTrace: in middleware, dev_trace is active, and response has a (older) body. This appears to be an HTML page and an ActionDispatch::Response. Path=#{path}; ContentType=#{content_type}")
         rack_body.body = [ html_manipulator.res ]
+      end
+
+      # Preserve the ActionDispatch::Response object we're working with
+      def adjust_newer_rails_response
+        logger.debug("DevTrace: in middleware, dev_trace is active, and response has a (newer) body. This appears to be an HTML page and an ActionDispatch::Response. Path=#{path}; ContentType=#{content_type}")
+        @rack_body = [ html_manipulator.res ]
       end
 
       def adjust_rack_proxy_response
