@@ -2,6 +2,16 @@
 
 * ScoutProf BETA
 
+# 2.1.22
+
+* Add DevTrace support for newest 4.2.x and 5.x versions of Rails
+
+# 2.1.21
+
+* Fix edge case, causing DevTrace to fail
+* Add debug tooling, allowing custom functions to be inserted into the agent at
+  key points.
+
 # 2.1.20
 
 * Add a `detailed_middleware` boolean configuration option to capture

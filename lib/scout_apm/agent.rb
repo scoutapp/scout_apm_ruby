@@ -265,6 +265,7 @@ module ScoutApm
       @background_worker = ScoutApm::BackgroundWorker.new
       @background_worker_thread = Thread.new do
         @background_worker.start {
+          ScoutApm::Debug.instance.call_periodic_hooks
           ScoutApm::Agent.instance.process_metrics
           clean_old_percentiles
         }
