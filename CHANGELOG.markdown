@@ -61,6 +61,7 @@
 # 2.1.9
 
 * Send raw histograms of response time, enabling more accurate 95th %iles
+* Raw histograms are used in Apdex calculations
 * Gzip payloads
 * Fix Mongoid (5.0) + Mongo (2.1) support
 * Initial Delayed Job support
