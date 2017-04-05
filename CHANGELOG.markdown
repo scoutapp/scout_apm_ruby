@@ -1,3 +1,7 @@
+# 2.1.23
+
+* Extend Mongoid instrumentation to 6.x
+
 # 2.1.22
 
 * Add DevTrace support for newest 4.2.x and 5.x versions of Rails
