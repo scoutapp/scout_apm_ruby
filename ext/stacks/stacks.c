@@ -33,7 +33,10 @@
 #ifdef __linux__
 #include <sys/syscall.h>
 #endif
+
+#ifndef _WIN32
 #include <sys/time.h>
+#endif
 
 #include "scout_atomics.h"
 
@@ -77,7 +80,7 @@ const long INTERVAL = 1000; // 1ms
 
 
 
-#ifdef RUBY_INTERNAL_EVENT_NEWOBJ
+#if defined(RUBY_INTERNAL_EVENT_NEWOBJ) && !defined(_WIN32)
 
 // Forward Declarations
 static void init_thread_vars();

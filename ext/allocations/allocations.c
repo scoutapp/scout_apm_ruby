@@ -8,7 +8,7 @@ VALUE mScoutApm;
 VALUE mInstruments;
 VALUE cAllocations;
 
-#ifdef RUBY_INTERNAL_EVENT_NEWOBJ
+#if defined(RUBY_INTERNAL_EVENT_NEWOBJ) && !defined(_WIN32)
 
 #include <sys/resource.h> // is this needed?
 #include <sys/time.h>
