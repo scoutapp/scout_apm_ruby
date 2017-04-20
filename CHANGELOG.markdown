@@ -1,3 +1,7 @@
+# 2.1.24
+
+* Capture additional layers of application backtrace frames. (From 3 -> 8)
+
 # 2.1.23
 
 * Extend Mongoid instrumentation to 6.x
