@@ -6,8 +6,8 @@ require 'scout_apm/environment'
 module ScoutApm
   module Utils
     class BacktraceParser
-
-      APP_FRAMES = 3 # will return up to 3 frames from the app stack.
+      # will return this many backtrace frames from the app stack.
+      APP_FRAMES = 8
 
       attr_reader :call_stack
 
