@@ -134,11 +134,14 @@ module ScoutApm
       @started = true
       logger.info "Starting monitoring for [#{environment.application_name}]. Framework [#{environment.framework}] App Server [#{environment.app_server}] Background Job Framework [#{environment.background_job_name}]."
 
-
-      [ ScoutApm::Instruments::Process::ProcessCpu.new(environment.processors, logger),
-        ScoutApm::Instruments::Process::ProcessMemory.new(logger),
-        ScoutApm::Instruments::PercentileSampler.new(logger, request_histograms_by_time),
-      ].each { |s| store.add_sampler(s) }
+      if config.value('disable_samplers')
+        logger.info("Disabling Samplers - Memory & CPU won't be available")
+      else
+        [ ScoutApm::Instruments::Process::ProcessCpu.new(environment.processors, logger),
+          ScoutApm::Instruments::Process::ProcessMemory.new(logger),
+          ScoutApm::Instruments::PercentileSampler.new(logger, request_histograms_by_time),
+        ].each { |s| store.add_sampler(s) }
+      end
 
       app_server_load_hook
 
