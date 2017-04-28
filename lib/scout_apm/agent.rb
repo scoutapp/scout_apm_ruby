@@ -53,7 +53,13 @@ module ScoutApm
       @request_histograms = ScoutApm::RequestHistograms.new
       @request_histograms_by_time = Hash.new { |h, k| h[k] = ScoutApm::RequestHistograms.new }
 
-      @store          = ScoutApm::Store.new
+      @store = if config.value("disable_store")
+        STDOUT.puts "Disable store, using FakeStore instead"
+        ScoutApm::FakeStore.new
+      else
+        ScoutApm::Store.new
+      end
+
       @layaway        = ScoutApm::Layaway.new(config, environment)
       @metric_lookup  = Hash.new
 
@@ -250,6 +256,11 @@ module ScoutApm
     # Creates the worker thread. The worker thread is a loop that runs continuously. It sleeps for +Agent#period+ and when it wakes,
     # processes data, either saving it to disk or reporting to Scout.
     def start_background_worker
+      if config.value("disable_background_worker")
+        logger.info("Background worker disabled. No metrics will be reported")
+        return false
+      end
+
       if !apm_enabled?
         logger.debug "Not starting background worker as monitoring isn't enabled."
         return false
