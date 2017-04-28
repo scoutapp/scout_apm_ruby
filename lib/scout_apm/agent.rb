@@ -53,7 +53,7 @@ module ScoutApm
       @request_histograms = ScoutApm::RequestHistograms.new
       @request_histograms_by_time = Hash.new { |h, k| h[k] = ScoutApm::RequestHistograms.new }
 
-      @store = if config.value("disable_store")
+      @store = if ENV["SCOUT_DISABLE_STORE"] == "true"
         STDOUT.puts "Disable store, using FakeStore instead"
         ScoutApm::FakeStore.new
       else
