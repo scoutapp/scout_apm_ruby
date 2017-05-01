@@ -87,7 +87,7 @@ module ScoutApm
       # Forcibly create the period?
       current_period
 
-      reporting_periods.each { |rp| rp.log_inspect }
+      reporting_periods.each { |(k, rp)| rp.log_inspect }
 
       reporting_periods.select { |time, rp| force || (time.timestamp < current_timestamp.timestamp) }.
                         each   { |time, rp| collect_samplers(rp) }.
