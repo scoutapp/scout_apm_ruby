@@ -84,6 +84,9 @@ module ScoutApm
       ScoutApm::Agent.instance.logger.debug("Writing to layaway#{" (Forced)" if force}")
       ScoutApm::Agent.instance.logger.debug("Reporting Periods: #{reporting_periods.length}")
 
+      # Forcibly create the period?
+      current_period
+
       reporting_periods.each { |rp| rp.log_inspect }
 
       reporting_periods.select { |time, rp| force || (time.timestamp < current_timestamp.timestamp) }.
