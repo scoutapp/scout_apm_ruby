@@ -82,10 +82,13 @@ module ScoutApm
     # during a restart.
     def write_to_layaway(layaway, force=false)
       ScoutApm::Agent.instance.logger.debug("Writing to layaway#{" (Forced)" if force}")
+      ScoutApm::Agent.instance.logger.debug("Reporting Periods: #{reporting_periods.length}")
 
-        reporting_periods.select { |time, rp| force || (time.timestamp < current_timestamp.timestamp) }.
-                          each   { |time, rp| collect_samplers(rp) }.
-                          each   { |time, rp| write_reporting_period(layaway, time, rp) }
+      reporting_periods.each { |rp| rp.log_inspect }
+
+      reporting_periods.select { |time, rp| force || (time.timestamp < current_timestamp.timestamp) }.
+                        each   { |time, rp| collect_samplers(rp) }.
+                        each   { |time, rp| write_reporting_period(layaway, time, rp) }
     end
 
     def write_reporting_period(layaway, time, rp)
@@ -183,6 +186,10 @@ module ScoutApm
     attr_reader :timestamp
 
     attr_reader :metric_set
+
+    def log_inspect
+      ScoutApm::Agent.logger.debug("RP: #{timestamp.to_s} Metrics(#{@metric_set.metrics.size}) Histos(#{@histograms.length}) RTraces(#{request_traces.count}) JTraces(#{job_traces.count})")
+    end
 
     def initialize(timestamp)
       @timestamp = timestamp
