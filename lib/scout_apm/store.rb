@@ -113,6 +113,7 @@ module ScoutApm
       @samplers.each do |sampler|
         begin
           sampler.metrics(rp.timestamp, self)
+          ScoutApm::Agent.instance.logger.debug("Collected #{sampler.human_name} for period: #{rp}")
         rescue => e
           ScoutApm::Agent.instance.logger.info "Error reading #{sampler.human_name} for period: #{rp}"
           ScoutApm::Agent.instance.logger.debug "#{e.message}\n\t#{e.backtrace.join("\n\t")}"
