@@ -192,7 +192,7 @@ module ScoutApm
     attr_reader :metric_set
 
     def log_inspect
-      ScoutApm::Agent.logger.debug("RP: #{timestamp.to_s} Metrics(#{@metric_set.metrics.size}) Histos(#{@histograms.length}) RTraces(#{request_traces.count}) JTraces(#{job_traces.count})")
+      ScoutApm::Agent.instance.logger.debug("RP: #{timestamp.to_s} Metrics(#{@metric_set.metrics.size}) Histos(#{@histograms.length}) RTraces(#{request_traces.count}) JTraces(#{job_traces.count})")
     end
 
     def initialize(timestamp)
