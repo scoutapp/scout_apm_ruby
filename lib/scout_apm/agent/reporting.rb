@@ -15,7 +15,16 @@ module ScoutApm
       #
       # At any given point, there is data in each of those steps, moving its way through the process
       def process_metrics
+        stat = GC.stat
         logger.debug(GC.stat.inspect)
+        diff = stat[:total_allocated_objects] - stat[:total_freed_objects]
+        logger.debug("Total Allocated #{stat[:total_allocated_objects]} - Total Freed #{stat[:total_freed_objects]} = Diff: #{diff}")
+
+        objects_total = ObjectSpace.count_objects[:TOTAL]
+        logger.debug("Total objects: #{objects_total}")
+        logger.debug(ObjectSpace.count_objects.inspect)
+
+        logger.debug("All Objects:\n#{Hash[ObjectSpace.each_object.group_by{|x| x.class}.map{|(clas, arr)| [clas, arr.length]}]}")
 
         # Write the previous minute's data to the shared-across-process layaway file.
         store.write_to_layaway(layaway)
