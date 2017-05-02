@@ -22,16 +22,16 @@ module ScoutApm
 
         objects_total = ObjectSpace.count_objects[:TOTAL]
         logger.debug("Total objects: #{objects_total}")
-        logger.debug(ObjectSpace.count_objects.inspect)
+        # logger.debug(ObjectSpace.count_objects.inspect)
 
-        object_hash = Hash[
-          ObjectSpace.
-            each_object.
-            group_by{ |x| x.class.to_s }.
-            map{ |(clas, arr)| [clas, arr.length] }.
-            sort_by{ |x| x[0] }
-        ]
-        logger.debug("All Objects:\n#{object_hash}")
+        # object_hash = Hash[
+          # ObjectSpace.
+            # each_object.
+            # group_by{ |x| x.class.to_s }.
+            # map{ |(clas, arr)| [clas, arr.length] }.
+            # sort_by{ |x| x[0] }
+        # ]
+        # logger.debug("All Objects:\n#{object_hash}")
 
         # Write the previous minute's data to the shared-across-process layaway file.
         store.write_to_layaway(layaway)
