@@ -15,6 +15,8 @@ module ScoutApm
       #
       # At any given point, there is data in each of those steps, moving its way through the process
       def process_metrics
+        logger.debug(GC.stat.inspect)
+
         # Write the previous minute's data to the shared-across-process layaway file.
         store.write_to_layaway(layaway)
 
