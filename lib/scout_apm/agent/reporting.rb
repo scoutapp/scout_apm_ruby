@@ -27,7 +27,7 @@ module ScoutApm
         object_hash = Hash[
           ObjectSpace.
             each_object.
-            group_by{ |x| x.class }.
+            group_by{ |x| x.class.to_s }.
             map{ |(clas, arr)| [clas, arr.length] }.
             sort_by{ |x| x[0] }
         ]
