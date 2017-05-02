@@ -15,6 +15,8 @@ module ScoutApm
       #
       # At any given point, there is data in each of those steps, moving its way through the process
       def process_metrics
+        GC.start
+
         stat = GC.stat
         logger.debug(GC.stat.inspect)
         diff = stat[:total_allocated_objects] - stat[:total_freed_objects]
