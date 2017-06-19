@@ -143,6 +143,8 @@ require 'scout_apm/middleware'
 
 require 'scout_apm/instant/middleware'
 
+require 'scout_apm/rack'
+
 if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR) && Rails::VERSION::MAJOR >= 3 && defined?(Rails::Railtie)
   module ScoutApm
     class Railtie < Rails::Railtie
