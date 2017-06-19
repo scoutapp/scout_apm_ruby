@@ -297,6 +297,7 @@ module ScoutApm
         end
       end
 
+      install_instrument(ScoutApm::Instruments::ActionView)
       install_instrument(ScoutApm::Instruments::ActiveRecord)
       install_instrument(ScoutApm::Instruments::Moped)
       install_instrument(ScoutApm::Instruments::Mongoid)
