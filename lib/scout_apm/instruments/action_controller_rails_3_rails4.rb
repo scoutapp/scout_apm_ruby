@@ -25,7 +25,7 @@ module ScoutApm
             ScoutApm::Agent.instance.logger.info "Instrumenting ActionController::Base"
             ::ActionController::Base.class_eval do
               # include ScoutApm::Tracer
-              include ScoutApm::Instruments::ActionControllerRails3Rails4Instruments
+              include ScoutApm::Instruments::ActionControllerBaseInstruments
             end
           end
 
@@ -39,7 +39,7 @@ module ScoutApm
           if defined?(::ActionController::API)
             ScoutApm::Agent.instance.logger.info "Instrumenting ActionController::Api"
             ::ActionController::API.class_eval do
-              include ScoutApm::Instruments::ActionControllerRails3Rails4Instruments
+              include ScoutApm::Instruments::ActionControllerAPIInstruments
             end
           end
         end
@@ -109,7 +109,19 @@ module ScoutApm
       end
     end
 
+    # Empty, noop module to provide compatibility w/ previous manual instrumentation
     module ActionControllerRails3Rails4Instruments
+    end
+
+    module ActionControllerBaseInstruments
+      include ScoutApm::Instruments::ActionControllerRails3Rails4.build_instrument_module
+
+      def scout_action_name(*args)
+        action_name
+      end
+    end
+
+    module ActionControllerAPIInstruments
       include ScoutApm::Instruments::ActionControllerRails3Rails4.build_instrument_module
 
       def scout_action_name(*args)
