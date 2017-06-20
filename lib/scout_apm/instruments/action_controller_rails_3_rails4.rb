@@ -65,7 +65,6 @@ module ScoutApm
 
             if current_layer.type == "Controller"
               # Don't start a new layer if ActionController::API or ActionController::Base handled it already.
-              STDOUT.puts "Skipping because already started controller layer"
               super
             else
               req.annotate_request(:uri => ScoutApm::Instruments::ActionControllerRails3Rails4.scout_transaction_uri(request))
@@ -77,9 +76,7 @@ module ScoutApm
               req.web!
 
               resolved_name = scout_action_name(*args)
-              STDOUT.puts("Got action name: #{resolved_name}")
               req.start_layer( ScoutApm::Layer.new("Controller", "#{controller_path}/#{resolved_name}") )
-              STDOUT.puts "Starting controller layer"
               begin
                 super
               rescue
@@ -87,7 +84,6 @@ module ScoutApm
                 raise
               ensure
                 req.stop_layer
-                STDOUT.puts "Stopping controller layer"
               end
             end
           end
