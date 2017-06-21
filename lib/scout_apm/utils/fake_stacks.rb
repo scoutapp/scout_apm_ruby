@@ -3,6 +3,7 @@ module ScoutApm
   module Instruments
     class Stacks
       ENABLED = false
+      INSTALLED = false
 
       class << self
         def install(*args)

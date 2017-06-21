@@ -77,11 +77,13 @@ module ScoutApm
 
         layer = ScoutApm::Layer.new("Controller", "#{controller_path}/#{action_name}")
 
-        if ScoutApm::Agent.instance.config.value('profile')
-          # Capture ScoutProf if we can
-          req.enable_profiled_thread!
-          layer.set_root_class(self.class)
-          layer.traced!
+        if ScoutApm::Agent.instance.config.value('profile') && ScoutApm::Instruments::Stacks::ENABLED
+          if defined?(ScoutApm::Instruments::Stacks::INSTALLED) && ScoutApm::Instruments::Stacks::INSTALLED
+            # Capture ScoutProf if we can
+            req.enable_profiled_thread!
+            layer.set_root_class(self.class)
+            layer.traced!
+          end
         end
 
         # Start the layer, then execute the user's code
