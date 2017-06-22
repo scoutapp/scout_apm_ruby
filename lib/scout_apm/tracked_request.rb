@@ -53,7 +53,7 @@ module ScoutApm
       @error = false
       @instant_key = nil
       @mem_start = mem_usage
-      @dev_trace =  ScoutApm::Agent.instance.config.value('dev_trace') && Rails.env.development?
+      @dev_trace =  ScoutApm::Agent.instance.config.value('dev_trace') && ScoutApm::Agent.instance.environment.env == "development"
     end
 
     def start_layer(layer)
