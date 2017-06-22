@@ -83,6 +83,7 @@ require 'scout_apm/instruments/sinatra'
 require 'scout_apm/instruments/process/process_cpu'
 require 'scout_apm/instruments/process/process_memory'
 require 'scout_apm/instruments/percentile_sampler'
+require 'scout_apm/instruments/action_view'
 require 'allocations'
 
 require 'scout_apm/app_server_load'
