@@ -31,6 +31,7 @@ module ScoutApm
     def thread_func
       while req = queue.pop
         begin
+          logger.debug("recording in thread. Queue size: #{queue.size}")
           # For now, just proxy right back into the TrackedRequest object's record function
           req.record!
         rescue => e
