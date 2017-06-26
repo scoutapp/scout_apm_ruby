@@ -63,7 +63,7 @@ module ScoutApm
               req.instant_key = instant_key
             end
 
-            if current_layer.type == "Controller"
+            if current_layer && current_layer.type == "Controller"
               # Don't start a new layer if ActionController::API or ActionController::Base handled it already.
               super
             else
