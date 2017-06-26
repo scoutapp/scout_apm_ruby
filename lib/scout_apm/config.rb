@@ -35,6 +35,7 @@ module ScoutApm
   class Config
     KNOWN_CONFIG_OPTIONS = [
         'application_root',
+        'async_recording',
         'compress_payload',
         'config_file',
         'data_file',
@@ -129,11 +130,12 @@ module ScoutApm
 
 
     SETTING_COERCIONS = {
-      "monitor"                => BooleanCoercion.new,
-      "enable_background_jobs" => BooleanCoercion.new,
-      "dev_trace"              => BooleanCoercion.new,
+      "async_recording"        => BooleanCoercion.new,
       "detailed_middleware"    => BooleanCoercion.new,
+      "dev_trace"              => BooleanCoercion.new,
+      "enable_background_jobs" => BooleanCoercion.new,
       "ignore"                 => JsonCoercion.new,
+      "monitor"                => BooleanCoercion.new,
     }
 
 

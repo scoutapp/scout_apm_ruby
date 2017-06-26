@@ -118,6 +118,8 @@ require 'scout_apm/fake_store'
 require 'scout_apm/tracer'
 require 'scout_apm/context'
 require 'scout_apm/instant_reporting'
+require 'scout_apm/background_recorder'
+require 'scout_apm/synchronous_recorder'
 
 require 'scout_apm/metric_meta'
 require 'scout_apm/metric_stats'
