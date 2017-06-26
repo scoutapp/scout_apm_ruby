@@ -10,6 +10,7 @@ module ScoutApm
 
     # Accessors below are for associated classes
     attr_accessor :store
+    attr_reader :recorder
     attr_accessor :layaway
     attr_accessor :config
     attr_accessor :logger
@@ -41,6 +42,9 @@ module ScoutApm
       @process_start_time = Time.now
       @options ||= options
 
+      # until the agent is started, there's no recorder
+      @recorder = nil
+
       # Start up without attempting to load a configuration file. We need to be
       # able to lookup configuration options like "application_root" which would
       # then in turn influence where the configuration file came from.
@@ -54,6 +58,7 @@ module ScoutApm
       @request_histograms_by_time = Hash.new { |h, k| h[k] = ScoutApm::RequestHistograms.new }
 
       @store          = ScoutApm::Store.new
+
       @layaway        = ScoutApm::Layaway.new(config, environment)
       @metric_lookup  = Hash.new
 
@@ -117,6 +122,8 @@ module ScoutApm
 
       init_logger
       logger.info "Attempting to start Scout Agent [#{ScoutApm::VERSION}] on [#{environment.hostname}]"
+
+      @recorder = create_recorder
 
       @config.log_settings
 
@@ -256,6 +263,8 @@ module ScoutApm
 
       install_exit_handler
 
+      @recorder = create_recorder
+
       @background_worker = ScoutApm::BackgroundWorker.new
       @background_worker_thread = Thread.new do
         @background_worker.start {
@@ -336,5 +345,14 @@ module ScoutApm
     def background_job_missing?(options = {})
       environment.background_job_integration.nil? && !options[:skip_background_job_check]
     end
+
+    def create_recorder
+      if config.value("async_recording")
+        ScoutApm::BackgroundRecorder.new(logger).start
+      else
+        ScoutApm::SynchronousRecorder.new(logger).start
+      end
+    end
+
   end
 end

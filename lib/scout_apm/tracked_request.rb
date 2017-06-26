@@ -42,6 +42,9 @@ module ScoutApm
     # Whereas the instant_key gets set per-request in reponse to a URL param, dev_trace is set in the config file
     attr_accessor :dev_trace
 
+    # An object that responds to `record!(TrackedRequest)` to store this tracked request
+    attr_reader :recorder
+
     def initialize(store)
       @store = store #this is passed in so we can use a real store (normal operation) or fake store (instant mode only)
       @layers = []
@@ -54,6 +57,9 @@ module ScoutApm
       @instant_key = nil
       @mem_start = mem_usage
       @dev_trace =  ScoutApm::Agent.instance.config.value('dev_trace') && ScoutApm::Agent.instance.environment.env == "development"
+      @recorder = ScoutApm::Agent.instance.recorder
+
+      ignore_request! if @recorder.nil?
     end
 
     def start_layer(layer)
@@ -77,7 +83,7 @@ module ScoutApm
       # lined up correctly. If stop_layer gets called twice, when it should
       # only have been called once you'll end up with this error.
       if layer.nil?
-        ScoutApm::Agent.instance.logger.warn("Error stopping layer, was nil. Root Layer: #{@root_layer.inspect}")
+        logger.warn("Error stopping layer, was nil. Root Layer: #{@root_layer.inspect}")
         stop_request
         return
       end
@@ -169,7 +175,9 @@ module ScoutApm
     #
     # * Send the request off to be stored
     def stop_request
-      record!
+      if recorder
+        recorder.record!(self)
+      end
     end
 
     ###################################
@@ -275,7 +283,6 @@ module ScoutApm
 
       allocation_metrics = LayerConverters::AllocationMetricConverter.new(self).call
       @store.track!(allocation_metrics)
-
     end
 
     # Only call this after the request is complete
@@ -388,6 +395,10 @@ module ScoutApm
 
     def ignoring_recorded?
       @ignoring_depth <= 0
+    end
+
+    def logger
+      ScoutApm::Agent.instance.logger
     end
   end
 end
