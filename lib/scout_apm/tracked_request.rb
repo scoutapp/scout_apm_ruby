@@ -400,5 +400,14 @@ module ScoutApm
     def logger
       ScoutApm::Agent.instance.logger
     end
+
+    # Actually go fetch & make-real any lazily created data.
+    # Clean up any cleverness in objects.
+    # Makes this object ready to be Marshal Dumped (or otherwise serialized)
+    def reify!
+      @call_set.default_proc = nil
+      @store = nil
+      @recorder = nil
+    end
   end
 end
