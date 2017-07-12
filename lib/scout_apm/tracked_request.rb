@@ -54,29 +54,40 @@ module ScoutApm
       @context = Context.new
       @root_layer = nil
       @error = false
+      @stopping = false
       @instant_key = nil
       @mem_start = mem_usage
       @dev_trace =  ScoutApm::Agent.instance.config.value('dev_trace') && ScoutApm::Agent.instance.environment.env == "development"
       @recorder = ScoutApm::Agent.instance.recorder
+      puts "#{$$}: Initialized tracked request with recorder: #{@recorder.class}"
 
       ignore_request! if @recorder.nil?
     end
 
     def start_layer(layer)
+      # If we're already stopping, don't do additional layers
+      return if stopping?
+
       return if ignoring_children?
 
       return ignoring_start_layer if ignoring_request?
 
+      puts "#{$$}: Starting Layer: #{layer.type}, #{layer.name}"
       start_request(layer) unless @root_layer
       @layers.push(layer)
     end
 
     def stop_layer
+      # If we're already stopping, don't do additional layers
+      return if stopping?
+
       return if ignoring_children?
 
       return ignoring_stop_layer if ignoring_request?
 
       layer = @layers.pop
+
+      puts "#{$$}: Stopping Layer: #{layer.type}, #{layer.name}"
 
       # Safeguard against a mismatch in the layer tracking in an instrument.
       # This class works under the assumption that start & stop layers are
@@ -161,6 +172,7 @@ module ScoutApm
     # Are we finished with this request?
     # We're done if we have no layers left after popping one off
     def finalized?
+      logger.info "#{$$}: @layers length: #{@layers.length}"
       @layers.none?
     end
 
@@ -175,9 +187,18 @@ module ScoutApm
     #
     # * Send the request off to be stored
     def stop_request
+      @stopping = true
+
       if recorder
+        logger.info "Recording w/ #{recorder.inspect}"
         recorder.record!(self)
+      else
+        logger.info "OMG, no recorder?"
       end
+    end
+
+    def stopping?
+      @stopping
     end
 
     ###################################
@@ -232,12 +253,20 @@ module ScoutApm
     # Persist the Request
     ###################################
 
+    def recorded!
+      @recorded = true
+    end
+
     # Convert this request to the appropriate structure, then report it into
     # the peristent Store object
     def record!
-      @recorded = true
+      recorded!
 
       return if ignoring_request?
+
+      # If we didn't have store, but we're trying to record anyway, go
+      # figure that out. (this happens in Remote Agent scenarios)
+      restore_store if @store.nil?
 
       # Bail out early if the user asked us to ignore this uri
       return if ScoutApm::Agent.instance.ignored_uris.ignore?(annotations[:uri])
@@ -404,10 +433,16 @@ module ScoutApm
     # Actually go fetch & make-real any lazily created data.
     # Clean up any cleverness in objects.
     # Makes this object ready to be Marshal Dumped (or otherwise serialized)
-    def reify!
-      @call_set.default_proc = nil
+    def prepare_to_dump!
+      @call_set = nil
       @store = nil
       @recorder = nil
+    end
+
+    # Go re-fetch the store based on what the Agent's official one is. Used
+    # after hydrating a dumped TrackedRequest
+    def restore_store
+      @store = ScoutApm::Agent.instance.store
     end
   end
 end

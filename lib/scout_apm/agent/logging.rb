@@ -6,7 +6,12 @@ module ScoutApm
         "#{environment.root}/log"
       end
 
-      def init_logger
+      def init_logger(opts={})
+        if opts[:force]
+          @log_file = nil
+          @logger = nil
+        end
+
         begin
           @log_file ||= determine_log_destination
         rescue => e

@@ -11,7 +11,7 @@ module ScoutApm
     def self.find
       req = Thread.current[:scout_request]
 
-      if req && req.recorded?
+      if req && (req.stopping? || req.recorded?)
         nil
       else
         req
