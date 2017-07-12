@@ -27,9 +27,14 @@ module ScoutApm
     private :children
 
     def initialize(unique_cutoff = DEFAULT_UNIQUE_CUTOFF)
-      @children = Hash.new { |hash, key| hash[key] = Set.new }
+      @children = Hash.new
       @limited_layers = nil # populated when needed
       @unique_cutoff = unique_cutoff
+    end
+
+    def child_set(metric_type)
+      children[metric_type] = Set.new if !children.has_key?(metric_type)
+      children[metric_type]
     end
 
     # Add a new layer into this set
@@ -38,7 +43,7 @@ module ScoutApm
     # total_call_time and similar methods.
     def <<(child)
       metric_type = child.type
-      set = children[metric_type]
+      set = child_set(metric_type)
 
       if set.size >= unique_cutoff
         # find limited_layer

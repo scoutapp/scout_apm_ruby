@@ -14,6 +14,7 @@ require 'socket'
 require 'thread'
 require 'time'
 require 'yaml'
+require 'webrick'
 
 #####################################
 # Gem Requires
@@ -53,6 +54,7 @@ require 'scout_apm/server_integrations/null'
 
 require 'scout_apm/background_job_integrations/sidekiq'
 require 'scout_apm/background_job_integrations/delayed_job'
+require 'scout_apm/background_job_integrations/resque'
 
 require 'scout_apm/framework_integrations/rails_2'
 require 'scout_apm/framework_integrations/rails_3_or_4'
@@ -147,6 +149,12 @@ require 'scout_apm/middleware'
 require 'scout_apm/instant/middleware'
 
 require 'scout_apm/rack'
+
+require 'scout_apm/remote/server'
+require 'scout_apm/remote/router'
+require 'scout_apm/remote/message'
+require 'scout_apm/remote/recorder'
+require 'scout_apm/instruments/resque'
 
 if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR) && Rails::VERSION::MAJOR >= 3 && defined?(Rails::Railtie)
   module ScoutApm

@@ -26,6 +26,8 @@ require 'scout_apm/environment'
 # proxy            - an http proxy
 # report_format    - 'json' or 'marshal'. Marshal is legacy and will be removed.
 # uri_reporting    - 'path' or 'full_path' default is 'full_path', which reports URL params as well as the path.
+# remote_host      - Internal: What host to bind to, and also send messages to for remote. Default: 127.0.0.1.
+# remote_port      - What port to bind the remote webserver to
 #
 # Any of these config settings can be set with an environment variable prefixed
 # by SCOUT_ and uppercasing the key: SCOUT_LOG_LEVEL for instance.
@@ -53,6 +55,8 @@ module ScoutApm
         'name',
         'profile',
         'proxy',
+        'remote_host',
+        'remote_port',
         'report_format',
         'uri_reporting',
     ]
@@ -218,6 +222,8 @@ module ScoutApm
         'profile'                => true, # for scoutprof
         'report_format'          => 'json',
         'uri_reporting'          => 'full_path',
+        'remote_host'            => '127.0.0.1',
+        'remote_port'            => 7721, # picked at random
       }.freeze
 
       def value(key)

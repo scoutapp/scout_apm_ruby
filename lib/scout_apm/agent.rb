@@ -264,6 +264,7 @@ module ScoutApm
       install_exit_handler
 
       @recorder = create_recorder
+      logger.info("recorder is now: #{@recorder.class}")
 
       @background_worker = ScoutApm::BackgroundWorker.new
       @background_worker_thread = Thread.new do
@@ -346,13 +347,46 @@ module ScoutApm
       environment.background_job_integration.nil? && !options[:skip_background_job_check]
     end
 
+    def clear_recorder
+      puts "Clearing recorder"
+      @recorder = nil
+    end
+
     def create_recorder
+      if @recorder
+        puts "Recorder already set, not creating"
+        return @recorder
+      end
+
       if config.value("async_recording")
+        logger.info("Settingup async recorder")
         ScoutApm::BackgroundRecorder.new(logger).start
       else
+        logger.info("Settingup sync recorder")
         ScoutApm::SynchronousRecorder.new(logger).start
       end
     end
 
+    def start_remote_server(bind, port)
+      return if @remote_server && @remote_server.running?
+
+      logger.info("Starting Remote Server")
+
+      # Start the listening web server only in parent process.
+      @remote_server = ScoutApm::Remote::Server.new(
+        bind,
+        port,
+        ScoutApm::Remote::Router.new(ScoutApm::SynchronousRecorder.new(logger), logger),
+        logger
+      )
+
+      @remote_server.start
+    end
+
+    # Execute this in the child process of a remote agent. The parent is expected to have its webserver up and running
+    def use_remote_recorder(host, port)
+      @recorder = ScoutApm::Remote::Recorder.new(host, port, logger)
+      @store = ScoutApm::FakeStore.new
+    end
   end
 end
