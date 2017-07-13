@@ -1,15 +1,14 @@
 module ScoutApm
   module BackgroundJobIntegrations
     class Resque
-      attr_reader :logger
-
       def name
         :resque
       end
 
       def present?
-        # defined?(::Sidekiq) && File.basename($PROGRAM_NAME).start_with?('sidekiq')
-        true
+        defined?(::Resque) &&
+          ::Resque.respond_to?(:before_first_fork) &&
+          ::Resque.respond_to?(:after_fork)
       end
 
       # Lies. This forks really aggressively, but we have to do handling
@@ -20,37 +19,29 @@ module ScoutApm
       end
 
       def install
-        puts "Installing Resque!"
-
         install_before_fork
         install_after_fork
       end
 
       def install_before_fork
-        puts "Installing Before First Fork!"
         ::Resque.before_first_fork do
           begin
-            puts "BEFORE FIRST FORK: #{$$}"
             ScoutApm::Agent.instance.start(:skip_app_server_check => true)
             ScoutApm::Agent.instance.start_background_worker
             ScoutApm::Agent.instance.start_remote_server(bind, port)
           rescue => e
-            puts "ERROR ERROR: #{e.inspect}"
+            ScoutApm::Agent.instance.logger.warn "Error while Installing Resque before_first_fork: #{e.inspect}"
           end
         end
       end
 
       def install_after_fork
-        puts "Installing After Fork!"
         ::Resque.after_fork do
           begin
-            puts "\n\n***** FORKED, In Worker: #{$$}\n"
-
-            ScoutApm::Agent.instance.init_logger({:force => true})
             ScoutApm::Agent.instance.use_remote_recorder(bind, port)
             inject_job_instrument
           rescue => e
-            puts "ERROR ERROR: #{e.inspect}"
+            ScoutApm::Agent.instance.logger.warn "Error while Installing Resque after_fork: #{e.inspect}"
           end
         end
       end
@@ -76,11 +67,11 @@ module ScoutApm
       private
 
       def bind
-        config.value("remote_host").tap{|x| puts "Bind: #{x}"}
+        config.value("remote_host")
       end
 
       def port
-        config.value("remote_port").tap{|x| puts "Port: #{x}"}
+        config.value("remote_port")
       end
 
       def config

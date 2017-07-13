@@ -8,7 +8,7 @@ module ScoutApm
       attr_reader :port
       attr_reader :logger
 
-      def initialize(bind, port, router, logger, options = {})
+      def initialize(bind, port, router, logger)
         @router = router
         @logger = logger
         @bind = bind
@@ -20,11 +20,14 @@ module ScoutApm
         @server = WEBrick::HTTPServer.new(
           :BindAddress => bind,
           :Port => port,
-          :AccessLog => []
+          :AccessLog => [],
+          :Logger => @logger
         )
 
         @server.mount_proc '/' do |request, response|
           router.handle(request.body)
+
+          # arbitrary response, client doesn't expect anything in particular
           response.body = 'Ok'
         end
 
@@ -34,9 +37,9 @@ module ScoutApm
 
             @server.start
 
-            logger.debug("After server start, thread exiting")
+            logger.debug("Remote: Server returned after #start call, thread exiting")
           rescue => e
-            logger.debug("ERROR: #{e}")
+            logger.debug("Remote: Server Exception, #{e}")
           end
         end
       end

@@ -116,7 +116,6 @@ module ScoutApm
     def start(options = {})
       @options.merge!(options)
 
-
       @config = ScoutApm::Config.with_file(@config.value("config_file"))
       layaway.config = config
 
@@ -140,7 +139,6 @@ module ScoutApm
       return false unless preconditions_met?(options)
       @started = true
       logger.info "Starting monitoring for [#{environment.application_name}]. Framework [#{environment.framework}] App Server [#{environment.app_server}] Background Job Framework [#{environment.background_job_name}]."
-
 
       [ ScoutApm::Instruments::Process::ProcessCpu.new(environment.processors, logger),
         ScoutApm::Instruments::Process::ProcessMemory.new(logger),
@@ -348,21 +346,19 @@ module ScoutApm
     end
 
     def clear_recorder
-      puts "Clearing recorder"
       @recorder = nil
     end
 
     def create_recorder
       if @recorder
-        puts "Recorder already set, not creating"
         return @recorder
       end
 
       if config.value("async_recording")
-        logger.info("Settingup async recorder")
+        logger.debug("Using asynchronous recording")
         ScoutApm::BackgroundRecorder.new(logger).start
       else
-        logger.info("Settingup sync recorder")
+        logger.debug("Using synchronous recording")
         ScoutApm::SynchronousRecorder.new(logger).start
       end
     end
@@ -370,7 +366,7 @@ module ScoutApm
     def start_remote_server(bind, port)
       return if @remote_server && @remote_server.running?
 
-      logger.info("Starting Remote Server")
+      logger.info("Starting Remote Agent Server")
 
       # Start the listening web server only in parent process.
       @remote_server = ScoutApm::Remote::Server.new(
@@ -383,8 +379,10 @@ module ScoutApm
       @remote_server.start
     end
 
-    # Execute this in the child process of a remote agent. The parent is expected to have its webserver up and running
+    # Execute this in the child process of a remote agent. The parent is
+    # expected to have its accepting webserver up and running
     def use_remote_recorder(host, port)
+      logger.debug("Becoming Remote Agent (reporting to: #{host}:#{port})")
       @recorder = ScoutApm::Remote::Recorder.new(host, port, logger)
       @store = ScoutApm::FakeStore.new
     end
