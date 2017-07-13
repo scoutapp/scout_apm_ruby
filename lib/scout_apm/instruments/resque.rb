@@ -10,7 +10,6 @@ module ScoutApm
         # req.annotate_request(:queue_latency => latency(msg))
 
         begin
-          puts "#{$$} JOB: #{name} - QUEUE: #{queue}"
           req.start_layer(ScoutApm::Layer.new('Queue', queue))
           started_queue = true
           req.start_layer(ScoutApm::Layer.new('Job', job_name))
@@ -18,7 +17,6 @@ module ScoutApm
 
           yield
         rescue => e
-          puts "#{$$}: Recording an ERROR IN JOB! #{e.inspect}"
           req.error!
           raise
         ensure

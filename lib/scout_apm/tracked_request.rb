@@ -59,7 +59,6 @@ module ScoutApm
       @mem_start = mem_usage
       @dev_trace =  ScoutApm::Agent.instance.config.value('dev_trace') && ScoutApm::Agent.instance.environment.env == "development"
       @recorder = ScoutApm::Agent.instance.recorder
-      puts "#{$$}: Initialized tracked request with recorder: #{@recorder.class}"
 
       ignore_request! if @recorder.nil?
     end
@@ -72,7 +71,6 @@ module ScoutApm
 
       return ignoring_start_layer if ignoring_request?
 
-      puts "#{$$}: Starting Layer: #{layer.type}, #{layer.name}"
       start_request(layer) unless @root_layer
       @layers.push(layer)
     end
@@ -86,8 +84,6 @@ module ScoutApm
       return ignoring_stop_layer if ignoring_request?
 
       layer = @layers.pop
-
-      puts "#{$$}: Stopping Layer: #{layer.type}, #{layer.name}"
 
       # Safeguard against a mismatch in the layer tracking in an instrument.
       # This class works under the assumption that start & stop layers are
@@ -172,7 +168,6 @@ module ScoutApm
     # Are we finished with this request?
     # We're done if we have no layers left after popping one off
     def finalized?
-      logger.info "#{$$}: @layers length: #{@layers.length}"
       @layers.none?
     end
 
@@ -190,10 +185,7 @@ module ScoutApm
       @stopping = true
 
       if recorder
-        logger.info "Recording w/ #{recorder.inspect}"
         recorder.record!(self)
-      else
-        logger.info "OMG, no recorder?"
       end
     end
 

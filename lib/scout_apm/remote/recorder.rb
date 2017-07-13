@@ -28,19 +28,16 @@ module ScoutApm
         # Only send requests that we actually want. Incidental http &
         # background thread stuff can just be dropped
         unless request.job? || request.web?
-          puts "#{$$} Skipping request id #{request.object_id}, since not job? or web?"
           return
         end
-
-        puts "#{$$} Recording request id #{request.object_id}"
 
         request.prepare_to_dump!
         message = ScoutApm::Remote::Message.new('record', 'record!', request)
         encoded = message.encode
-        puts "Remote: Posting a message of length: #{encoded.length}"
+        logger.debug "Remote Agent: Posting a message of length: #{encoded.length}"
         post(encoded)
       rescue => e
-        puts "Remote: ERROR: #{e.inspect}, #{e.backtrace.join("\n")}"
+        logger.debug "Remote: Error while sending to collector: #{e.inspect}, #{e.backtrace.join("\n")}"
       end
 
       def post(encoded_message)

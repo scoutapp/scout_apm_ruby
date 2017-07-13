@@ -17,7 +17,7 @@ class TrackedRequestDumpAndLoadTest < Minitest::Test
     assert_equal faux, tr.instance_variable_get("@store")
 
     tr.prepare_to_dump!
-    assert_equal nil, tr.instance_variable_get("@store")
+    assert_nil tr.instance_variable_get("@store")
 
     tr.restore_store
     assert_equal ScoutApm::Agent.instance.store, tr.instance_variable_get("@store")

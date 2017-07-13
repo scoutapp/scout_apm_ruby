@@ -29,7 +29,6 @@ module ScoutApm
       # Returns whatever the recipient object returns
       def handle(msg)
         message = Remote::Message.decode(msg)
-        puts "SERVER received message: #{msg.length} with type: #{message.type}"
         assert_type(message)
         call_route(message)
       end
