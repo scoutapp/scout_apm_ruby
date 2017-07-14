@@ -21,23 +21,29 @@ module ScoutApm
       end
 
       def record!(request)
-        # Mark this request as recorded, so the next lookup on this thread, it
-        # can be recreated
-        request.recorded!
+          begin
+            t1 = Time.now
+            # Mark this request as recorded, so the next lookup on this thread, it
+            # can be recreated
+            request.recorded!
 
-        # Only send requests that we actually want. Incidental http &
-        # background thread stuff can just be dropped
-        unless request.job? || request.web?
-          return
-        end
+            # Only send requests that we actually want. Incidental http &
+            # background thread stuff can just be dropped
+            unless request.job? || request.web?
+              return
+            end
 
-        request.prepare_to_dump!
-        message = ScoutApm::Remote::Message.new('record', 'record!', request)
-        encoded = message.encode
-        logger.debug "Remote Agent: Posting a message of length: #{encoded.length}"
-        post(encoded)
-      rescue => e
-        logger.debug "Remote: Error while sending to collector: #{e.inspect}, #{e.backtrace.join("\n")}"
+            request.prepare_to_dump!
+            message = ScoutApm::Remote::Message.new('record', 'record!', request)
+            encoded = message.encode
+            logger.debug "Remote Agent: Posting a message of length: #{encoded.length}"
+            post(encoded)
+            t2 = Time.now
+
+            logger.debug("Remote Recording took: #{t2.to_f - t1.to_f} seconds")
+          rescue => e
+            logger.debug "Remote: Error while sending to collector: #{e.inspect}, #{e.backtrace.join("\n")}"
+          end
       end
 
       def post(encoded_message)
