@@ -2,12 +2,12 @@ module ScoutApm
   module Remote
     class Recorder
       attr_reader :logger
-      attr_reader :remote_host
-      attr_reader :remote_port
+      attr_reader :remote_agent_host
+      attr_reader :remote_agent_port
 
-      def initialize(remote_host, remote_port, logger)
-        @remote_host = remote_host
-        @remote_port = remote_port
+      def initialize(remote_agent_host, remote_agent_port, logger)
+        @remote_agent_host = remote_agent_host
+        @remote_agent_port = remote_agent_port
         @logger = logger
       end
 
@@ -47,7 +47,7 @@ module ScoutApm
       end
 
       def post(encoded_message)
-        http = Net::HTTP.new(remote_host, remote_port)
+        http = Net::HTTP.new(remote_agent_host, remote_agent_port)
         request = Net::HTTP::Post.new("/users")
         request.body = encoded_message
         response = http.request(request)

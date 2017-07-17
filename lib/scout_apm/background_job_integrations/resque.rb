@@ -30,7 +30,7 @@ module ScoutApm
             ScoutApm::Agent.instance.start_background_worker
             ScoutApm::Agent.instance.start_remote_server(bind, port)
           rescue Errno::EADDRINUSE
-            ScoutApm::Agent.instance.logger.warn "Error while Installing Resque Instruments, Port #{port} already in use. Set via the `remote_port` configuration option"
+            ScoutApm::Agent.instance.logger.warn "Error while Installing Resque Instruments, Port #{port} already in use. Set via the `remote_agent_port` configuration option"
           rescue => e
             ScoutApm::Agent.instance.logger.warn "Error while Installing Resque before_first_fork: #{e.inspect}"
           end
@@ -69,11 +69,11 @@ module ScoutApm
       private
 
       def bind
-        config.value("remote_host")
+        config.value("remote_agent_host")
       end
 
       def port
-        config.value("remote_port")
+        config.value("remote_agent_port")
       end
 
       def config
