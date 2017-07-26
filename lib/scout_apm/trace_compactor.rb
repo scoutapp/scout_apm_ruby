@@ -13,16 +13,10 @@ class TraceSet
   # A TraceCube object which is a glorified hash of { Trace -> Count }. Used to
   # collect up the count of each unique trace we've seen
   attr_reader :cube
-
-  # Allow layer to push values in
-  attr_accessor :raw_traces
-  attr_accessor :skipped_in_gc
-  attr_accessor :skipped_in_handler
-  attr_accessor :skipped_in_job_registered
-  attr_accessor :skipped_in_not_running
+  attr_accessor :raw_trace
 
   def initialize
-    @raw_traces = []
+    @raw_trace = []
     @cube = TraceCube.new
   end
 
@@ -60,11 +54,9 @@ class TraceSet
   end
 
   def create_cube!
-    while raw_trace = @raw_traces.shift
-      clean_trace = ScoutApm::CleanTrace.new(raw_trace, @root_klass)
-      @cube << clean_trace
-    end
-    @raw_traces = []
+    clean_trace = ScoutApm::CleanTrace.new(raw_trace, @root_klass)
+    @cube << clean_trace
+    @raw_trace = []
   end
 
   def total_count
@@ -96,7 +88,7 @@ class CleanTrace
   attr_reader :lines
 
   def initialize(raw_trace, root_klass=nil)
-    @lines = Array(raw_trace).map {|frame, lineno| TraceLine.new(frame, lineno)}
+    @lines = Array(raw_trace).map {|file, lineno, method, klass| TraceLine.new(file, lineno, method, klass)}
     @root_klass = root_klass
 
     # A trace has interesting data in the middle of it, since normally it'll go
@@ -166,14 +158,16 @@ end
 
 class TraceLine
   # An opaque C object, only call Stacks#frame_* methods on this.
-  attr_reader :frame
-
-  # The line number. This doesn't appear to be obtainable from the frame itself
+  attr_reader :file
   attr_reader :lineno
+  attr_reader :method
+  attr_reader :klass
 
-  def initialize(frame, lineno)
-    @frame = frame
+  def initialize(file, lineno, method, klass)
+    @file = file
     @lineno = lineno
+    @method = method
+    @klass = klass.name
   end
 
   # Returns the name of the last gem in the line
@@ -195,24 +189,6 @@ class TraceLine
                   rescue
                     nil
                   end
-  end
-
-  def file
-    ScoutApm::Instruments::Stacks.frame_file(frame)
-  end
-
-
-  # If we ever want to get the "first line of the method" - ScoutApm::Instruments::Stacks.frame_lineno(frame)
-  def line
-    lineno
-  end
-
-  def klass
-    ScoutApm::Instruments::Stacks.frame_klass(frame)
-  end
-
-  def method
-    ScoutApm::Instruments::Stacks.frame_method(frame)
   end
 
   def gem?
@@ -258,7 +234,7 @@ class TraceLine
   end
 
   def as_json
-    [ trim_file(file), line, klass, method, app?, gem_name, stdlib_name ]
+    [ trim_file(file), lineno, klass, method, app?, gem_name, stdlib_name ]
   end
 
   ###############################

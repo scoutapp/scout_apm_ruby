@@ -1,0 +1,219 @@
+have_func: checking for rb_profile_frames()... -------------------- yes
+
+"gcc -o conftest -I/home/dave/.rvm/rubies/ruby-2.1.2/include/ruby-2.1.0/x86_64-linux -I/home/dave/.rvm/rubies/ruby-2.1.2/include/ruby-2.1.0/ruby/backward -I/home/dave/.rvm/rubies/ruby-2.1.2/include/ruby-2.1.0 -I.     -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration  -fPIC conftest.c  -L. -L/home/dave/.rvm/rubies/ruby-2.1.2/lib -Wl,-R/home/dave/.rvm/rubies/ruby-2.1.2/lib -L. -fstack-protector -rdynamic -Wl,-export-dynamic     -Wl,-rpath,'/../lib' -Wl,-R -Wl,'/../lib' -L'/../lib' -lruby  -lpthread -ldl -lcrypt -lm   -lc"
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: int main(int argc, char **argv)
+4: {
+5:   return 0;
+6: }
+/* end */
+
+"gcc -o conftest -I/home/dave/.rvm/rubies/ruby-2.1.2/include/ruby-2.1.0/x86_64-linux -I/home/dave/.rvm/rubies/ruby-2.1.2/include/ruby-2.1.0/ruby/backward -I/home/dave/.rvm/rubies/ruby-2.1.2/include/ruby-2.1.0 -I.     -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration  -fPIC conftest.c  -L. -L/home/dave/.rvm/rubies/ruby-2.1.2/lib -Wl,-R/home/dave/.rvm/rubies/ruby-2.1.2/lib -L. -fstack-protector -rdynamic -Wl,-export-dynamic     -Wl,-rpath,'/../lib' -Wl,-R -Wl,'/../lib' -L'/../lib' -lruby  -lpthread -ldl -lcrypt -lm   -lc"
+conftest.c: In function ‘t’:
+conftest.c:13:57: error: ‘rb_profile_frames’ undeclared (first use in this function)
+ int t(void) { void ((*volatile p)()); p = (void ((*)()))rb_profile_frames; return 0; }
+                                                         ^
+conftest.c:13:57: note: each undeclared identifier is reported only once for each function it appears in
+conftest.c:13:32: warning: variable ‘p’ set but not used [-Wunused-but-set-variable]
+ int t(void) { void ((*volatile p)()); p = (void ((*)()))rb_profile_frames; return 0; }
+                                ^
+checked program was:
+/* begin */
+ 1: #include "ruby.h"
+ 2: 
+ 3: /*top*/
+ 4: extern int t(void);
+ 5: int main(int argc, char **argv)
+ 6: {
+ 7:   if (argc > 1000000) {
+ 8:     printf("%p", &t);
+ 9:   }
+10: 
+11:   return 0;
+12: }
+13: int t(void) { void ((*volatile p)()); p = (void ((*)()))rb_profile_frames; return 0; }
+/* end */
+
+"gcc -o conftest -I/home/dave/.rvm/rubies/ruby-2.1.2/include/ruby-2.1.0/x86_64-linux -I/home/dave/.rvm/rubies/ruby-2.1.2/include/ruby-2.1.0/ruby/backward -I/home/dave/.rvm/rubies/ruby-2.1.2/include/ruby-2.1.0 -I.     -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration  -fPIC conftest.c  -L. -L/home/dave/.rvm/rubies/ruby-2.1.2/lib -Wl,-R/home/dave/.rvm/rubies/ruby-2.1.2/lib -L. -fstack-protector -rdynamic -Wl,-export-dynamic     -Wl,-rpath,'/../lib' -Wl,-R -Wl,'/../lib' -L'/../lib' -lruby  -lpthread -ldl -lcrypt -lm   -lc"
+conftest.c: In function ‘t’:
+conftest.c:13:1: warning: implicit declaration of function ‘rb_profile_frames’ [-Wimplicit-function-declaration]
+ int t(void) { rb_profile_frames(); return 0; }
+ ^
+checked program was:
+/* begin */
+ 1: #include "ruby.h"
+ 2: 
+ 3: /*top*/
+ 4: extern int t(void);
+ 5: int main(int argc, char **argv)
+ 6: {
+ 7:   if (argc > 1000000) {
+ 8:     printf("%p", &t);
+ 9:   }
+10: 
+11:   return 0;
+12: }
+13: int t(void) { rb_profile_frames(); return 0; }
+/* end */
+
+--------------------
+
+have_func: checking for rb_profile_frame_absolute_path()... -------------------- yes
+
+"gcc -o conftest -I/home/dave/.rvm/rubies/ruby-2.1.2/include/ruby-2.1.0/x86_64-linux -I/home/dave/.rvm/rubies/ruby-2.1.2/include/ruby-2.1.0/ruby/backward -I/home/dave/.rvm/rubies/ruby-2.1.2/include/ruby-2.1.0 -I.     -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration  -fPIC conftest.c  -L. -L/home/dave/.rvm/rubies/ruby-2.1.2/lib -Wl,-R/home/dave/.rvm/rubies/ruby-2.1.2/lib -L. -fstack-protector -rdynamic -Wl,-export-dynamic     -Wl,-rpath,'/../lib' -Wl,-R -Wl,'/../lib' -L'/../lib' -lruby  -lpthread -ldl -lcrypt -lm   -lc"
+conftest.c: In function ‘t’:
+conftest.c:13:57: error: ‘rb_profile_frame_absolute_path’ undeclared (first use in this function)
+ int t(void) { void ((*volatile p)()); p = (void ((*)()))rb_profile_frame_absolute_path; return 0; }
+                                                         ^
+conftest.c:13:57: note: each undeclared identifier is reported only once for each function it appears in
+conftest.c:13:32: warning: variable ‘p’ set but not used [-Wunused-but-set-variable]
+ int t(void) { void ((*volatile p)()); p = (void ((*)()))rb_profile_frame_absolute_path; return 0; }
+                                ^
+checked program was:
+/* begin */
+ 1: #include "ruby.h"
+ 2: 
+ 3: /*top*/
+ 4: extern int t(void);
+ 5: int main(int argc, char **argv)
+ 6: {
+ 7:   if (argc > 1000000) {
+ 8:     printf("%p", &t);
+ 9:   }
+10: 
+11:   return 0;
+12: }
+13: int t(void) { void ((*volatile p)()); p = (void ((*)()))rb_profile_frame_absolute_path; return 0; }
+/* end */
+
+"gcc -o conftest -I/home/dave/.rvm/rubies/ruby-2.1.2/include/ruby-2.1.0/x86_64-linux -I/home/dave/.rvm/rubies/ruby-2.1.2/include/ruby-2.1.0/ruby/backward -I/home/dave/.rvm/rubies/ruby-2.1.2/include/ruby-2.1.0 -I.     -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration  -fPIC conftest.c  -L. -L/home/dave/.rvm/rubies/ruby-2.1.2/lib -Wl,-R/home/dave/.rvm/rubies/ruby-2.1.2/lib -L. -fstack-protector -rdynamic -Wl,-export-dynamic     -Wl,-rpath,'/../lib' -Wl,-R -Wl,'/../lib' -L'/../lib' -lruby  -lpthread -ldl -lcrypt -lm   -lc"
+conftest.c: In function ‘t’:
+conftest.c:13:1: warning: implicit declaration of function ‘rb_profile_frame_absolute_path’ [-Wimplicit-function-declaration]
+ int t(void) { rb_profile_frame_absolute_path(); return 0; }
+ ^
+checked program was:
+/* begin */
+ 1: #include "ruby.h"
+ 2: 
+ 3: /*top*/
+ 4: extern int t(void);
+ 5: int main(int argc, char **argv)
+ 6: {
+ 7:   if (argc > 1000000) {
+ 8:     printf("%p", &t);
+ 9:   }
+10: 
+11:   return 0;
+12: }
+13: int t(void) { rb_profile_frame_absolute_path(); return 0; }
+/* end */
+
+--------------------
+
+have_func: checking for rb_profile_frame_label()... -------------------- yes
+
+"gcc -o conftest -I/home/dave/.rvm/rubies/ruby-2.1.2/include/ruby-2.1.0/x86_64-linux -I/home/dave/.rvm/rubies/ruby-2.1.2/include/ruby-2.1.0/ruby/backward -I/home/dave/.rvm/rubies/ruby-2.1.2/include/ruby-2.1.0 -I.     -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration  -fPIC conftest.c  -L. -L/home/dave/.rvm/rubies/ruby-2.1.2/lib -Wl,-R/home/dave/.rvm/rubies/ruby-2.1.2/lib -L. -fstack-protector -rdynamic -Wl,-export-dynamic     -Wl,-rpath,'/../lib' -Wl,-R -Wl,'/../lib' -L'/../lib' -lruby  -lpthread -ldl -lcrypt -lm   -lc"
+conftest.c: In function ‘t’:
+conftest.c:13:57: error: ‘rb_profile_frame_label’ undeclared (first use in this function)
+ int t(void) { void ((*volatile p)()); p = (void ((*)()))rb_profile_frame_label; return 0; }
+                                                         ^
+conftest.c:13:57: note: each undeclared identifier is reported only once for each function it appears in
+conftest.c:13:32: warning: variable ‘p’ set but not used [-Wunused-but-set-variable]
+ int t(void) { void ((*volatile p)()); p = (void ((*)()))rb_profile_frame_label; return 0; }
+                                ^
+checked program was:
+/* begin */
+ 1: #include "ruby.h"
+ 2: 
+ 3: /*top*/
+ 4: extern int t(void);
+ 5: int main(int argc, char **argv)
+ 6: {
+ 7:   if (argc > 1000000) {
+ 8:     printf("%p", &t);
+ 9:   }
+10: 
+11:   return 0;
+12: }
+13: int t(void) { void ((*volatile p)()); p = (void ((*)()))rb_profile_frame_label; return 0; }
+/* end */
+
+"gcc -o conftest -I/home/dave/.rvm/rubies/ruby-2.1.2/include/ruby-2.1.0/x86_64-linux -I/home/dave/.rvm/rubies/ruby-2.1.2/include/ruby-2.1.0/ruby/backward -I/home/dave/.rvm/rubies/ruby-2.1.2/include/ruby-2.1.0 -I.     -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration  -fPIC conftest.c  -L. -L/home/dave/.rvm/rubies/ruby-2.1.2/lib -Wl,-R/home/dave/.rvm/rubies/ruby-2.1.2/lib -L. -fstack-protector -rdynamic -Wl,-export-dynamic     -Wl,-rpath,'/../lib' -Wl,-R -Wl,'/../lib' -L'/../lib' -lruby  -lpthread -ldl -lcrypt -lm   -lc"
+conftest.c: In function ‘t’:
+conftest.c:13:1: warning: implicit declaration of function ‘rb_profile_frame_label’ [-Wimplicit-function-declaration]
+ int t(void) { rb_profile_frame_label(); return 0; }
+ ^
+checked program was:
+/* begin */
+ 1: #include "ruby.h"
+ 2: 
+ 3: /*top*/
+ 4: extern int t(void);
+ 5: int main(int argc, char **argv)
+ 6: {
+ 7:   if (argc > 1000000) {
+ 8:     printf("%p", &t);
+ 9:   }
+10: 
+11:   return 0;
+12: }
+13: int t(void) { rb_profile_frame_label(); return 0; }
+/* end */
+
+--------------------
+
+have_func: checking for rb_profile_frame_classpath()... -------------------- yes
+
+"gcc -o conftest -I/home/dave/.rvm/rubies/ruby-2.1.2/include/ruby-2.1.0/x86_64-linux -I/home/dave/.rvm/rubies/ruby-2.1.2/include/ruby-2.1.0/ruby/backward -I/home/dave/.rvm/rubies/ruby-2.1.2/include/ruby-2.1.0 -I.     -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration  -fPIC conftest.c  -L. -L/home/dave/.rvm/rubies/ruby-2.1.2/lib -Wl,-R/home/dave/.rvm/rubies/ruby-2.1.2/lib -L. -fstack-protector -rdynamic -Wl,-export-dynamic     -Wl,-rpath,'/../lib' -Wl,-R -Wl,'/../lib' -L'/../lib' -lruby  -lpthread -ldl -lcrypt -lm   -lc"
+conftest.c: In function ‘t’:
+conftest.c:13:57: error: ‘rb_profile_frame_classpath’ undeclared (first use in this function)
+ int t(void) { void ((*volatile p)()); p = (void ((*)()))rb_profile_frame_classpath; return 0; }
+                                                         ^
+conftest.c:13:57: note: each undeclared identifier is reported only once for each function it appears in
+conftest.c:13:32: warning: variable ‘p’ set but not used [-Wunused-but-set-variable]
+ int t(void) { void ((*volatile p)()); p = (void ((*)()))rb_profile_frame_classpath; return 0; }
+                                ^
+checked program was:
+/* begin */
+ 1: #include "ruby.h"
+ 2: 
+ 3: /*top*/
+ 4: extern int t(void);
+ 5: int main(int argc, char **argv)
+ 6: {
+ 7:   if (argc > 1000000) {
+ 8:     printf("%p", &t);
+ 9:   }
+10: 
+11:   return 0;
+12: }
+13: int t(void) { void ((*volatile p)()); p = (void ((*)()))rb_profile_frame_classpath; return 0; }
+/* end */
+
+"gcc -o conftest -I/home/dave/.rvm/rubies/ruby-2.1.2/include/ruby-2.1.0/x86_64-linux -I/home/dave/.rvm/rubies/ruby-2.1.2/include/ruby-2.1.0/ruby/backward -I/home/dave/.rvm/rubies/ruby-2.1.2/include/ruby-2.1.0 -I.     -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration  -fPIC conftest.c  -L. -L/home/dave/.rvm/rubies/ruby-2.1.2/lib -Wl,-R/home/dave/.rvm/rubies/ruby-2.1.2/lib -L. -fstack-protector -rdynamic -Wl,-export-dynamic     -Wl,-rpath,'/../lib' -Wl,-R -Wl,'/../lib' -L'/../lib' -lruby  -lpthread -ldl -lcrypt -lm   -lc"
+conftest.c: In function ‘t’:
+conftest.c:13:1: warning: implicit declaration of function ‘rb_profile_frame_classpath’ [-Wimplicit-function-declaration]
+ int t(void) { rb_profile_frame_classpath(); return 0; }
+ ^
+checked program was:
+/* begin */
+ 1: #include "ruby.h"
+ 2: 
+ 3: /*top*/
+ 4: extern int t(void);
+ 5: int main(int argc, char **argv)
+ 6: {
+ 7:   if (argc > 1000000) {
+ 8:     printf("%p", &t);
+ 9:   }
+10: 
+11:   return 0;
+12: }
+13: int t(void) { rb_profile_frame_classpath(); return 0; }
+/* end */
+
+--------------------
+

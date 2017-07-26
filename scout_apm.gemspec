@@ -19,7 +19,7 @@ Gem::Specification.new do |s|
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib","data"]
   s.extensions << 'ext/allocations/extconf.rb'
-  s.extensions << 'ext/stacks/extconf.rb'
+  s.extensions << 'ext/scoutprof/extconf.rb'
   s.extensions << 'ext/rusage/extconf.rb'
 
   s.add_development_dependency "minitest"

@@ -219,7 +219,6 @@ module ScoutApm
           @background_worker_thread.join
         end
       end
-      ScoutApm::Instruments::Stacks.uninstall
     end
 
     def started?
@@ -255,12 +254,6 @@ module ScoutApm
       logger.info "Initializing worker thread."
 
       install_exit_handler
-
-      if ScoutApm::Agent.instance.config.value('profile')
-        # After we fork, setup the handlers here.
-        ScoutApm::Instruments::Stacks.install
-        ScoutApm::Instruments::Stacks.start
-      end
 
       @background_worker = ScoutApm::BackgroundWorker.new
       @background_worker_thread = Thread.new do

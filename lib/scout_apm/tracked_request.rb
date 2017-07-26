@@ -61,7 +61,11 @@ module ScoutApm
 
       return ignoring_start_layer if ignoring_request?
 
-      layer.start_sampling
+      tracing_for_previous_layer(:stop)
+
+      if layer.traced?
+        layer.start_tracing
+      end
 
       start_request(layer) unless @root_layer
       @layers.push(layer)
@@ -84,7 +88,10 @@ module ScoutApm
         return
       end
 
-      layer.record_traces!
+      if layer.traced?
+        layer.stop_tracing
+      end
+
       layer.record_stop_time!
       layer.record_allocations!
 
@@ -100,7 +107,7 @@ module ScoutApm
       if finalized?
         stop_request
       else
-        continue_sampling_for_layers if ScoutApm::Agent.instance.config.value('profile')
+        tracing_for_previous_layer(:start)
       end
     end
 
@@ -163,10 +170,18 @@ module ScoutApm
       @layers.none?
     end
 
-    def continue_sampling_for_layers
-      if last_traced_layer = @layers.select{|layer| layer.traced?}.last
-        ScoutApm::Instruments::Stacks.update_indexes(@layers.last.frame_index, @layers.last.trace_index)
-        ScoutApm::Instruments::Stacks.start_sampling
+    def tracing_for_previous_layer(action)
+      last_traced_layer = @layers.select{|layer| layer.traced?}.last
+      return unless last_traced_layer
+      case action
+      when :start
+        #puts "Started Tracing for #{last_traced_layer.legacy_metric_name}"
+        last_traced_layer.start_tracing
+      when :stop
+        #puts "Stopped Tracing for #{last_traced_layer.legacy_metric_name}"
+        last_traced_layer.stop_tracing
+      else
+        raise "Unknown action #{action}"
       end
     end
 
@@ -181,21 +196,7 @@ module ScoutApm
     #
     # * Send the request off to be stored
     def stop_request
-      if ScoutApm::Agent.instance.config.value('profile')
-        ScoutApm::Instruments::Stacks.stop_sampling(true)
-        ScoutApm::Instruments::Stacks.update_indexes(0, 0)
-      end
       record!
-    end
-
-    # Enable ScoutProf for this thread
-    def enable_profiled_thread!
-        ScoutApm::Instruments::Stacks.add_profiled_thread
-    end
-
-    # Disable ScoutProf for this thread
-    def disable_profiled_thread!
-        ScoutApm::Instruments::Stacks.remove_profiled_thread
     end
 
     ###################################

@@ -67,8 +67,6 @@ module ScoutApm
         walker.walk do |layer|
           next if skip_layer?(layer)
 
-          debug_scoutprof(layer)
-
           store_specific_metric(layer, metric_hash, allocation_metric_hash)
           store_aggregate_metric(layer, metric_hash, allocation_metric_hash)
         end

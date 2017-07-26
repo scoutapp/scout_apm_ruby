@@ -22,4 +22,5 @@ end
 require 'rake/extensiontask'
 Rake::ExtensionTask.new('allocations')
 Rake::ExtensionTask.new('stacks')
+Rake::ExtensionTask.new('scoutprof')
 Rake::ExtensionTask.new('rusage')

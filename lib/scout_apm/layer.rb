@@ -46,19 +46,13 @@ module ScoutApm
     # If no annotations are ever set, this will return nil
     attr_reader :annotations
 
-    # ScoutProf - trace_index is an index into the Stack structure in the C
-    # code, used to store captured traces.
-    attr_reader :trace_index
-
-    # ScoutProf - frame_index is an optimization to not capture a few frames
-    # during scoutprof instrumentation
-    attr_reader :frame_index
-
     # Captured backtraces from ScoutProf. This is distinct from the backtrace
     # attribute, which gets the ruby backtrace of any given layer. StackProf
     # focuses on Controller layers, and requires a native extension and a
     # reasonably recent Ruby.
     attr_reader :traces
+
+    attr_reader :scoutprof
 
     BACKTRACE_CALLER_LIMIT = 50 # maximum number of lines to send thru for backtrace analysis
 
@@ -75,9 +69,10 @@ module ScoutApm
       @desc = nil
 
       @traces = ScoutApm::TraceSet.new
-      @raw_frames = []
-      @frame_index = ScoutApm::Instruments::Stacks.current_frame_index # For efficiency sake, try to skip the bottom X frames when collecting traces
-      @trace_index = ScoutApm::Instruments::Stacks.current_trace_index
+
+      @traced = false
+      @tracepoint = nil
+      @scoutprof = nil
     end
 
     def add_child(child)
@@ -113,11 +108,29 @@ module ScoutApm
     end
 
     def traced!
-      @traced = true
+      me = self
+      @scoutprof = ScoutApm::Instruments::Scoutprof.new
+      @tracepoint = TracePoint.new(:call, :return) do |tp|
+        req = ScoutApm::RequestManager.find
+        if req &&
+            (req.current_layer) &&
+            (req.current_layer) == me
+          @scoutprof.record
+        end
+      end
+      @traced = true if @scoutprof && @tracepoint
     end
 
     def traced?
       @traced
+    end
+
+    def start_tracing
+      @tracepoint.enable
+    end
+
+    def stop_tracing
+      @tracepoint.disable
     end
 
     # This is the old style name. This function is used for now, but should be
@@ -146,29 +159,6 @@ module ScoutApm
     def set_root_class(klass_name)
       @traces.set_root_class(klass_name)
     end
-
-    def start_sampling
-      if ScoutApm::Agent.instance.config.value('profile') && traced?
-        ScoutApm::Instruments::Stacks.update_indexes(frame_index, trace_index)
-        ScoutApm::Instruments::Stacks.start_sampling
-      else
-        ScoutApm::Instruments::Stacks.stop_sampling(false)
-      end
-    end
-
-    def record_traces!
-      if ScoutApm::Agent.instance.config.value('profile')
-        ScoutApm::Instruments::Stacks.stop_sampling(false)
-        if traced?
-          traces.raw_traces = ScoutApm::Instruments::Stacks.profile_frames
-          traces.skipped_in_gc = ScoutApm::Instruments::Stacks.skipped_in_gc
-          traces.skipped_in_handler = ScoutApm::Instruments::Stacks.skipped_in_handler
-          traces.skipped_in_job_registered = ScoutApm::Instruments::Stacks.skipped_in_job_registered
-          traces.skipped_in_not_running = ScoutApm::Instruments::Stacks.skipped_in_not_running
-        end
-      end
-    end
-
 
     ######################################
     # Debugging Helpers

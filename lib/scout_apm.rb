@@ -86,11 +86,7 @@ require 'scout_apm/instruments/process/process_memory'
 require 'scout_apm/instruments/percentile_sampler'
 require 'allocations'
 
-begin
-  require 'stacks'
-rescue LoadError
-  require 'scout_apm/utils/fake_stacks'
-end
+require 'scoutprof'
 
 require 'scout_apm/app_server_load'
 
