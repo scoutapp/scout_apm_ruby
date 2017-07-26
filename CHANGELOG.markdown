@@ -1,3 +1,15 @@
+# 2.1.27
+
+* Don't attempt to call `current_layer.type` on nil
+
+# 2.1.26
+
+* Bug fix [4b188d6](https://github.com/scoutapp/scout_apm_ruby/commit/4b188d698852c86b86d8768ea5b37d706ce544fe)
+
+# 2.1.25
+
+* Automatically instrument API and Metal controllers.
+
 # 2.1.24
 
 * Capture additional layers of application backtrace frames. (From 3 -> 8)
