@@ -1,3 +1,7 @@
+# 2.1.28
+
+* Changes to app server load data
+
 # 2.1.27
 
 * Don't attempt to call `current_layer.type` on nil
