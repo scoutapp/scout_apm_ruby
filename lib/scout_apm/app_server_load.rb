@@ -27,7 +27,7 @@ module ScoutApm
     end
 
     def data
-      { :server_time        => Time.now,
+      { :server_time        => to_s_safe(Time.now),
         :framework          => to_s_safe(ScoutApm::Environment.instance.framework_integration.human_name),
         :framework_version  => to_s_safe(ScoutApm::Environment.instance.framework_integration.version),
         :environment        => to_s_safe(ScoutApm::Environment.instance.framework_integration.env),
