@@ -84,6 +84,14 @@ module ScoutApm
                       end
     end
 
+    def scm_subdirectory
+      @scm_subdirectory ||= if Agent.instance.config.value('scm_subdirectory').empty?
+        ''
+      else
+        Agent.instance.config.value('scm_subdirectory').sub(/^\//, '') # Trim any leading slash
+      end
+    end
+
     def root
       @root ||= framework_root
     end

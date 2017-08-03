@@ -39,6 +39,11 @@ class BacktraceParserTest < Minitest::Test
     end
   end
 
+  def test_calls_scm_relative_path
+    ScoutApm::Utils::Scm.expects(:relative_scm_path).at_least_once
+    assert ScoutApm::Utils::BacktraceParser.new(raw_backtrace, root).call
+  end
+
   def test_works_on_shorter_backtraces
     result = ScoutApm::Utils::BacktraceParser.new(raw_backtrace(1), root).call
 
