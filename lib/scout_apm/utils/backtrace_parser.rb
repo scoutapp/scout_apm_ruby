@@ -24,7 +24,7 @@ module ScoutApm
         stack = []
         call_stack.each do |c|
           if m = c.match(@@app_dir_regex)
-            stack << m[1]
+            stack << ScoutApm::Utils::Scm.relative_scm_path(m[1])
             break if stack.size == APP_FRAMES
           end
         end
