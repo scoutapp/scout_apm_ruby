@@ -27,20 +27,30 @@ module ScoutApm
     end
 
     def data
-      { :server_time        => Time.now,
-        :framework          => ScoutApm::Environment.instance.framework_integration.human_name,
-        :framework_version  => ScoutApm::Environment.instance.framework_integration.version,
-        :environment        => ScoutApm::Environment.instance.framework_integration.env,
-        :app_server         => ScoutApm::Environment.instance.app_server,
+      { :server_time        => to_s_safe(Time.now),
+        :framework          => to_s_safe(ScoutApm::Environment.instance.framework_integration.human_name),
+        :framework_version  => to_s_safe(ScoutApm::Environment.instance.framework_integration.version),
+        :environment        => to_s_safe(ScoutApm::Environment.instance.framework_integration.env),
+        :app_server         => to_s_safe(ScoutApm::Environment.instance.app_server),
         :ruby_version       => RUBY_VERSION,
-        :hostname           => ScoutApm::Environment.instance.hostname,
-        :database_engine    => ScoutApm::Environment.instance.database_engine,      # Detected
-        :database_adapter   => ScoutApm::Environment.instance.raw_database_adapter, # Raw
-        :application_name   => ScoutApm::Environment.instance.application_name,
+        :hostname           => to_s_safe(ScoutApm::Environment.instance.hostname),
+        :database_engine    => to_s_safe(ScoutApm::Environment.instance.database_engine),      # Detected
+        :database_adapter   => to_s_safe(ScoutApm::Environment.instance.raw_database_adapter), # Raw
+        :application_name   => to_s_safe(ScoutApm::Environment.instance.application_name),
         :libraries          => ScoutApm::Utils::InstalledGems.new.run,
-        :paas               => ScoutApm::Environment.instance.platform_integration.name,
-        :git_sha            => ScoutApm::Environment.instance.git_revision.sha
+        :paas               => to_s_safe(ScoutApm::Environment.instance.platform_integration.name),
+        :git_sha            => to_s_safe(ScoutApm::Environment.instance.git_revision.sha)
       }
+    end
+
+    # Calls `.to_s` on the object passed in.
+    # Returns literal string 'to_s error' if the object does not respond to .to_s
+    def to_s_safe(obj)
+      if obj.respond_to?(:to_s)
+        obj.to_s
+      else
+        'to_s error'
+      end
     end
   end
 end

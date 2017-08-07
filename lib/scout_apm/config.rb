@@ -25,6 +25,7 @@ require 'scout_apm/environment'
 # profile          - turn on/off scoutprof (only applicable in Gem versions including scoutprof)
 # proxy            - an http proxy
 # report_format    - 'json' or 'marshal'. Marshal is legacy and will be removed.
+# scm_subdirectory - if the app root lives in source management in a subdirectory. E.g. #{SCM_ROOT}/src
 # uri_reporting    - 'path' or 'full_path' default is 'full_path', which reports URL params as well as the path.
 # remote_agent_host - Internal: What host to bind to, and also send messages to for remote. Default: 127.0.0.1.
 # remote_agent_port - What port to bind the remote webserver to
@@ -58,6 +59,7 @@ module ScoutApm
         'remote_agent_host',
         'remote_agent_port',
         'report_format',
+        'scm_subdirectory',
         'uri_reporting',
     ]
 
@@ -221,6 +223,7 @@ module ScoutApm
         'log_level'              => 'info',
         'profile'                => true, # for scoutprof
         'report_format'          => 'json',
+        'scm_subdirectory'       => '',
         'uri_reporting'          => 'full_path',
         'remote_agent_host'      => '127.0.0.1',
         'remote_agent_port'      => 7721, # picked at random
