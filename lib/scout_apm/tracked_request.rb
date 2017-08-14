@@ -42,6 +42,9 @@ module ScoutApm
     # Whereas the instant_key gets set per-request in reponse to a URL param, dev_trace is set in the config file
     attr_accessor :dev_trace
 
+    # An object that responds to `record!(TrackedRequest)` to store this tracked request
+    attr_reader :recorder
+
     def initialize(store)
       @store = store #this is passed in so we can use a real store (normal operation) or fake store (instant mode only)
       @layers = []
@@ -51,12 +54,19 @@ module ScoutApm
       @context = Context.new
       @root_layer = nil
       @error = false
+      @stopping = false
       @instant_key = nil
       @mem_start = mem_usage
       @dev_trace =  ScoutApm::Agent.instance.config.value('dev_trace') && ScoutApm::Agent.instance.environment.env == "development"
+      @recorder = ScoutApm::Agent.instance.recorder
+
+      ignore_request! if @recorder.nil?
     end
 
     def start_layer(layer)
+      # If we're already stopping, don't do additional layers
+      return if stopping?
+
       return if ignoring_children?
 
       return ignoring_start_layer if ignoring_request?
@@ -66,6 +76,9 @@ module ScoutApm
     end
 
     def stop_layer
+      # If we're already stopping, don't do additional layers
+      return if stopping?
+
       return if ignoring_children?
 
       return ignoring_stop_layer if ignoring_request?
@@ -77,7 +90,7 @@ module ScoutApm
       # lined up correctly. If stop_layer gets called twice, when it should
       # only have been called once you'll end up with this error.
       if layer.nil?
-        ScoutApm::Agent.instance.logger.warn("Error stopping layer, was nil. Root Layer: #{@root_layer.inspect}")
+        logger.warn("Error stopping layer, was nil. Root Layer: #{@root_layer.inspect}")
         stop_request
         return
       end
@@ -169,7 +182,15 @@ module ScoutApm
     #
     # * Send the request off to be stored
     def stop_request
-      record!
+      @stopping = true
+
+      if recorder
+        recorder.record!(self)
+      end
+    end
+
+    def stopping?
+      @stopping
     end
 
     ###################################
@@ -224,12 +245,20 @@ module ScoutApm
     # Persist the Request
     ###################################
 
+    def recorded!
+      @recorded = true
+    end
+
     # Convert this request to the appropriate structure, then report it into
     # the peristent Store object
     def record!
-      @recorded = true
+      recorded!
 
       return if ignoring_request?
+
+      # If we didn't have store, but we're trying to record anyway, go
+      # figure that out. (this happens in Remote Agent scenarios)
+      restore_store if @store.nil?
 
       # Bail out early if the user asked us to ignore this uri
       return if ScoutApm::Agent.instance.ignored_uris.ignore?(annotations[:uri])
@@ -275,7 +304,6 @@ module ScoutApm
 
       allocation_metrics = LayerConverters::AllocationMetricConverter.new(self).call
       @store.track!(allocation_metrics)
-
     end
 
     # Only call this after the request is complete
@@ -388,6 +416,25 @@ module ScoutApm
 
     def ignoring_recorded?
       @ignoring_depth <= 0
+    end
+
+    def logger
+      ScoutApm::Agent.instance.logger
+    end
+
+    # Actually go fetch & make-real any lazily created data.
+    # Clean up any cleverness in objects.
+    # Makes this object ready to be Marshal Dumped (or otherwise serialized)
+    def prepare_to_dump!
+      @call_set = nil
+      @store = nil
+      @recorder = nil
+    end
+
+    # Go re-fetch the store based on what the Agent's official one is. Used
+    # after hydrating a dumped TrackedRequest
+    def restore_store
+      @store = ScoutApm::Agent.instance.store
     end
   end
 end
