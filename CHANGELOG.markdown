@@ -1,3 +1,7 @@
+# 2.1.30
+
+* Add Resque support.
+
 # 2.1.29
 
 * Add `scm_subdirectory` option. Useful for when your app code does not live in your SCM root directory.
