@@ -41,8 +41,6 @@ module ScoutApm
             req.start_layer(layer)
             req.ignore_children! if options[:ignore_children]
 
-            STDOUT.puts "in instruemnetation for #{type} / #{resolved_name}"
-
             begin
               super(*args, &block)
             ensure
