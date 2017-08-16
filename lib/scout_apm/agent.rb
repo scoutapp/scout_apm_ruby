@@ -89,6 +89,11 @@ module ScoutApm
         return false unless force?
       end
 
+      if environment.interactive?
+        logger.warn "Agent attempting to load in interactive mode. #{force? ? 'Forcing agent to start' : 'Not starting agent'}"
+        return false unless force?
+      end
+
       if app_server_missing?(options) && background_job_missing?
         if force?
           logger.warn "Agent starting (forced)"
