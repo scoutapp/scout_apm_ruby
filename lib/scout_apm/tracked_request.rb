@@ -263,22 +263,17 @@ module ScoutApm
       # Bail out early if the user asked us to ignore this uri
       return if ScoutApm::Agent.instance.ignored_uris.ignore?(annotations[:uri])
 
-      # Update immediate and long-term histograms for both job and web requests
-      # if unique_name != :unknown
-      #   ScoutApm::Agent.instance.request_histograms.add(unique_name, root_layer.total_call_time)
-      #   ScoutApm::Agent.instance.request_histograms_by_time[@store.current_timestamp].
-      #     add(unique_name, root_layer.total_call_time)
-      # end
-
       converters = [
+        LayerConverters::Histograms,
         LayerConverters::MetricConverter,
-        # LayerConverters::ErrorConverter,
-        # LayerConverters::AllocationMetricConverter,
-        # LayerConverters::SlowRequestConverter,
-        # LayerConverters::RequestQueueTimeConverter,
-        # LayerConverters::JobConverter,
-        # LayerConverters::SlowJobConverter,
-        # LayerConverters::AllocationMetricConverter,
+        LayerConverters::ErrorConverter,
+        LayerConverters::AllocationMetricConverter,
+        LayerConverters::AllocationMetricConverter,
+        LayerConverters::RequestQueueTimeConverter,
+        LayerConverters::JobConverter,
+
+        LayerConverters::SlowJobConverter,
+        LayerConverters::SlowRequestConverter,
       ]
 
       layer_finder = LayerConverters::FindLayerByType.new(self)

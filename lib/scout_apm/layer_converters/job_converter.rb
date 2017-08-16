@@ -10,10 +10,6 @@
 module ScoutApm
   module LayerConverters
     class JobConverter < ConverterBase
-      # Full metrics from this request. These get aggregated in Store for the
-      # overview metrics, or stored permanently in a SlowTransaction
-      # Some merging of metrics will happen here, so if a request calls the same
-      # ActiveRecord or View repeatedly, it'll get merged.
       def register_hooks
         return unless request.job?
 
