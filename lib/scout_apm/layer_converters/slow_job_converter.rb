@@ -24,8 +24,8 @@ module ScoutApm
 
       def call
         return nil unless request.job?
-        return nil unless queue_layer
-        return nil unless job_layer
+        return nil unless layer_finder.queue
+        return nil unless layer_finder.job
 
         ScoutApm::Agent.instance.slow_job_policy.stored!(request)
 
@@ -54,16 +54,8 @@ module ScoutApm
         )
       end
 
-      def queue_layer
-        @queue_layer ||= find_first_layer_of_type("Queue")
-      end
-
-      def job_layer
-        @job_layer ||= find_first_layer_of_type("Job")
-      end
-
       def skip_layer?(layer)
-        super(layer) || layer == queue_layer
+        super(layer) || layer == layer_finder.queue
       end
 
       def create_metrics
@@ -75,7 +67,7 @@ module ScoutApm
 
           # The queue_layer is useful to capture for other reasons, but doesn't
           # create a MetricMeta/Stat of its own
-          next if layer == queue_layer
+          next if layer == layer_finder.queue
 
           store_specific_metric(layer, metric_hash, allocation_metric_hash)
           store_aggregate_metric(layer, metric_hash, allocation_metric_hash)

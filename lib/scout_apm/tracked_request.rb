@@ -291,28 +291,16 @@ module ScoutApm
       walker.walk
       instances.each {|i| i.record! }
 
-      # metrics = LayerConverters::MetricConverter.new(self).call
-      # @store.track!(metrics)
-
-      # error_metrics = LayerConverters::ErrorConverter.new(self).call
-      # @store.track!(error_metrics)
-
-      # allocation_metrics = LayerConverters::AllocationMetricConverter.new(self).call
-      # @store.track!(allocation_metrics)
-
       # if web?
       #   # Don't #call this - that's the job of the ScoredItemSet later.
       #   slow_converter = LayerConverters::SlowRequestConverter.new(self)
       #   @store.track_slow_transaction!(slow_converter)
 
-      #   queue_time_metrics = LayerConverters::RequestQueueTimeConverter.new(self).call
-      #   @store.track!(queue_time_metrics)
-
       #   # If there's an instant_key, it means we need to report this right away
-      #   if instant?
-      #     trace = slow_converter.call
-      #     ScoutApm::InstantReporting.new(trace, instant_key).call
-      #   end
+      if web? && instant?
+        trace = slow_converter.call
+        ScoutApm::InstantReporting.new(trace, instant_key).call
+      end
       # end
 
       # if job?
@@ -322,9 +310,6 @@ module ScoutApm
       #   job_converter = LayerConverters::SlowJobConverter.new(self)
       #   @store.track_slow_job!(job_converter)
       # end
-
-      # allocation_metrics = LayerConverters::AllocationMetricConverter.new(self).call
-      # @store.track!(allocation_metrics)
     end
 
     # Only call this after the request is complete

@@ -10,53 +10,21 @@
 module ScoutApm
   module LayerConverters
     class JobConverter < ConverterBase
-      def call
-        return unless request.job?
-
-        JobRecord.new(
-          queue_layer.name,
-          job_layer.name,
-          job_layer.total_call_time,
-          job_layer.total_exclusive_time,
-          errors,
-          create_metrics
-        )
-      end
-
-      def queue_layer
-        @queue_layer ||= find_first_layer_of_type("Queue")
-      end
-
-      def job_layer
-        @job_layer ||= find_first_layer_of_type("Job")
-      end
-
-      def errors
-        if request.error?
-          1
-        else
-          0
-        end
-      end
-
-      def find_first_layer_of_type(layer_type)
-        walker.walk do |layer|
-          return layer if layer.type == layer_type
-        end
-      end
-
       # Full metrics from this request. These get aggregated in Store for the
       # overview metrics, or stored permanently in a SlowTransaction
       # Some merging of metrics will happen here, so if a request calls the same
       # ActiveRecord or View repeatedly, it'll get merged.
-      def create_metrics
-        metric_hash = Hash.new
+      def register_hooks
+        return unless request.job?
 
-        meta_options = {:scope => job_layer.legacy_metric_name}
+        super
 
-        walker.walk do |layer|
-          next if layer == job_layer
-          next if layer == queue_layer
+        @metrics = Hash.new
+        meta_options = {:scope => layer_finder.job.legacy_metric_name}
+
+        walker.on do |layer|
+          next if layer == layer_finder.job
+          next if layer == layer_finder.queue
           next if skip_layer?(layer)
 
           # we don't need to use the full metric name for scoped metrics as we
@@ -65,20 +33,40 @@ module ScoutApm
           metric_name = layer.type
 
           meta = MetricMeta.new(metric_name, meta_options)
-          metric_hash[meta] ||= MetricStats.new( meta_options.has_key?(:scope) )
+          @metrics[meta] ||= MetricStats.new( meta_options.has_key?(:scope) )
 
-          stat = metric_hash[meta]
+          stat = @metrics[meta]
           stat.update!(layer.total_call_time, layer.total_exclusive_time)
         end
 
-        # Add the latency metric, which wasn't stored as a distinct layer
+      end
+
+      def record!
+        return unless request.job?
+
+        errors = request.error? ? 1 : 0
+        add_latency_metric!
+
+        record = JobRecord.new(
+          layer_finder.queue.name,
+          layer_finder.job.name,
+          layer_finder.job.total_call_time,
+          layer_finder.job.total_exclusive_time,
+          errors,
+          @metrics
+        )
+
+        @store.track_job!(record)
+      end
+
+      # This isn't stored as a specific layer, so grabbing it doesn't use the
+      # walker callbacks
+      def add_latency_metric!
         latency = request.annotations[:queue_latency] || 0
         meta = MetricMeta.new("Latency", meta_options)
         stat = MetricStats.new
         stat.update!(latency)
-        metric_hash[meta] = stat
-
-        metric_hash
+        @metrics[meta] = stat
       end
     end
   end

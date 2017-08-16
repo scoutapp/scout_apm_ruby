@@ -4,37 +4,35 @@ module ScoutApm
 
       HEADERS = %w(X-Queue-Start X-Request-Start X-QUEUE-START X-REQUEST-START x-queue-start x-request-start)
 
-      # Headers is a hash of request headers.  In Rails, request.headers would be appropriate
-      def initialize(request)
-        super(request)
-        @headers = request.headers
+      def headers
+        request.headers
       end
 
-      def call
-        return {} unless headers
+      def record!
+        return unless request.web?
+
+        return unless headers
 
         raw_start = locate_timestamp
-        return {} unless raw_start
+        return unless raw_start
 
         parsed_start = parse(raw_start)
-        return {} unless parsed_start
+        return unless parsed_start
 
         request_start = root_layer.start_time
         queue_time = (request_start - parsed_start).to_f
 
         # If we end up with a negative value, just bail out and don't report anything
-        return {} if queue_time < 0
+        return if queue_time < 0
 
         meta = MetricMeta.new("QueueTime/Request", {:scope => scope_layer.legacy_metric_name})
         stat = MetricStats.new(true)
         stat.update!(queue_time)
 
-        { meta => stat }
+        @store.track!({ meta => stat })
       end
 
       private
-
-      attr_reader :headers
 
       # Looks through the possible headers with this data, and extracts the raw
       # value of the header
