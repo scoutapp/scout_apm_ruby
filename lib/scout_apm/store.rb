@@ -23,26 +23,33 @@ module ScoutApm
       reporting_periods[current_timestamp]
     end
 
+    def find_period(timestamp = nil)
+      if timestamp
+        @reporting_periods[options[:timestamp]]
+      else
+        current_period
+      end
+    end
+
     # Save newly collected metrics
     def track!(metrics, options={})
       @mutex.synchronize {
-        period = if options[:timestamp]
-                   @reporting_periods[options[:timestamp]]
-                 else
-                   current_period
-                 end
+        period = find_period(options[:timestamp])
         period.absorb_metrics!(metrics)
       }
     end
 
     def track_histograms!(histograms, options={})
       @mutex.synchronize {
-        period = if options[:timestamp]
-                   @reporting_periods[options[:timestamp]]
-                 else
-                   current_period
-                 end
+        period = find_period(options[:timestamp])
         period.merge_histograms!(histograms)
+      }
+    end
+
+    def track_db_layers!(layers, options={})
+      @mutex.synchronize {
+        period = find_period(options[:timestamp])
+        period.absorb_db_layers!(layers)
       }
     end
 
@@ -184,6 +191,8 @@ module ScoutApm
 
     attr_reader :metric_set
 
+    attr_reader :db_query_metric_set
+
     def initialize(timestamp)
       @timestamp = timestamp
 
@@ -193,7 +202,11 @@ module ScoutApm
       @histograms = []
 
       @metric_set = MetricSet.new
+      @db_query_metric_set = DbQueryMetricSet.new
+
       @jobs = Hash.new
+
+      @database_data = []
     end
 
     # Merges another StoreReportingPeriod into this one
@@ -222,6 +235,10 @@ module ScoutApm
     def merge_metrics!(other_metric_set)
       metric_set.combine!(other_metric_set)
       self
+    end
+
+    def absorb_db_layers!(layers)
+      db_query_metric_set.absorb!(layers)
     end
 
     def merge_slow_transactions!(new_transactions)

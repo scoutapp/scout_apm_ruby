@@ -250,6 +250,9 @@ module ScoutApm
       allocation_metrics = LayerConverters::AllocationMetricConverter.new(self).call
       @store.track!(allocation_metrics)
 
+      database_layers = LayerConverters::DatabaseConverter.new(self).call
+      @store.track_db_layers!(database_layers)
+
       if web?
         # Don't #call this - that's the job of the ScoredItemSet later.
         slow_converter = LayerConverters::SlowRequestConverter.new(self)
