@@ -10,7 +10,7 @@
 module ScoutApm
   module LayerConverters
     class JobConverter < ConverterBase
-      def register_hooks
+      def register_hooks(walker)
         return unless request.job?
 
         super

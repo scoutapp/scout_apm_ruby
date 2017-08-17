@@ -31,7 +31,7 @@ module ScoutApm
     end
 
     def stored!(request)
-      last_seen[unique_name_for(request)] = Time.now
+      last_seen[request.unique_name] = Time.now
     end
 
     # Determine if this job trace should be fully analyzed by scoring it
@@ -60,15 +60,6 @@ module ScoutApm
     end
 
     private
-
-    def unique_name_for(request)
-      scope_layer = LayerConverters::ConverterBase.new(request).scope_layer
-      if scope_layer
-        scope_layer.legacy_metric_name
-      else
-        :unknown
-      end
-    end
 
     # Time in seconds
     # Logarithm keeps huge times from swamping the other metrics.

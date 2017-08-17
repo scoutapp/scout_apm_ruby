@@ -278,33 +278,20 @@ module ScoutApm
 
       layer_finder = LayerConverters::FindLayerByType.new(self)
       walker = LayerConverters::DepthFirstWalker.new(self.root_layer)
-      instances = converters.map do |klass|
+      converters = converters.map do |klass|
         instance = klass.new(self, layer_finder, @store)
         instance.register_hooks(walker)
         instance
       end
       walker.walk
-      instances.each {|i| i.record! }
+      converters.each {|i| i.record! }
 
-      # if web?
-      #   # Don't #call this - that's the job of the ScoredItemSet later.
-      #   slow_converter = LayerConverters::SlowRequestConverter.new(self)
-      #   @store.track_slow_transaction!(slow_converter)
-
-      #   # If there's an instant_key, it means we need to report this right away
+      # If there's an instant_key, it means we need to report this right away
       if web? && instant?
-        trace = slow_converter.call
+        converter = converters.find{|c| c.class == LayerConverters::SlowRequestConverter}
+        trace = converter.call
         ScoutApm::InstantReporting.new(trace, instant_key).call
       end
-      # end
-
-      # if job?
-      #   job_metrics = LayerConverters::JobConverter.new(self).call
-      #   @store.track_job!(job_metrics)
-
-      #   job_converter = LayerConverters::SlowJobConverter.new(self)
-      #   @store.track_slow_job!(job_converter)
-      # end
     end
 
     # Only call this after the request is complete
@@ -312,7 +299,7 @@ module ScoutApm
       return nil if ignoring_request?
 
       @unique_name ||= begin
-                         scope_layer = LayerConverters::FindLayerByType.new(self).scope_layer
+                         scope_layer = LayerConverters::FindLayerByType.new(self).scope
                          if scope_layer
                            scope_layer.legacy_metric_name
                          else

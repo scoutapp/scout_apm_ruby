@@ -43,6 +43,7 @@ require 'scout_apm/layer_converters/metric_converter'
 require 'scout_apm/layer_converters/slow_request_converter'
 require 'scout_apm/layer_converters/request_queue_time_converter'
 require 'scout_apm/layer_converters/allocation_metric_converter'
+require 'scout_apm/layer_converters/histograms'
 require 'scout_apm/layer_converters/find_layer_by_type'
 
 require 'scout_apm/server_integrations/passenger'

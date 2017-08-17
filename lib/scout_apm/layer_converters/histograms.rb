@@ -6,7 +6,7 @@ module ScoutApm
         if request.unique_name != :unknown
           ScoutApm::Agent.instance.request_histograms.add(request.unique_name, root_layer.total_call_time)
           ScoutApm::Agent.instance.request_histograms_by_time[@store.current_timestamp].
-            add(unique_name, root_layer.total_call_time)
+            add(request.unique_name, root_layer.total_call_time)
         end
       end
     end
