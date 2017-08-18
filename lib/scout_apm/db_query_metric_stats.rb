@@ -22,12 +22,12 @@ module ScoutApm
       @operation = operation
 
       @call_count = call_count
-      @call_time = call_time
-      @rows_returned = rows_returned
 
+      @call_time = call_time
       @min_call_time = call_time
       @max_call_time = call_time
 
+      @rows_returned = rows_returned
       @min_rows_returned = rows_returned
       @max_rows_returned = rows_returned
 
@@ -37,10 +37,12 @@ module ScoutApm
       @histogram.add(call_time)
     end
 
+    # `User#find`, `Org#create` etc.
     def key
       @key ||= "#{model_name}##{operation}"
     end
 
+    # Combine data from another DbQueryMetricStats into +self+. Modifies and returns +self+
     def combine!(other)
       return self if other == self
 
@@ -61,11 +63,11 @@ module ScoutApm
     # To avoid conflicts with different JSON libaries handle JSON ourselves.
     # Time-based metrics are converted to milliseconds from seconds.
     def to_json(*a)
-       %Q[{"call_count":#{call_count},"total_call_time":#{call_time*1000},"min_call_time":#{min_call_time*1000},"max_call_time":#{max_call_time*1000},"total_rows_returned":#{rows_returned},"min_rows_returned":#{min_rows_returned},"max_rows_returned":#{max_rows_returned},"histogram":#{histogram.as_json}}]
+       %Q[{"call_count":#{call_count},"total_call_time":#{call_time*1000},"min_call_time":#{min_call_time*1000},"max_call_time":#{max_call_time*1000},"total_rows_returned":#{rows_returned},"min_rows_returned":#{min_rows_returned},"max_rows_returned":#{max_rows_returned},"histograms":["call_time":#{histogram.as_json}]}]
     end
 
     def as_json
-      json_attributes = [:call_count, :total_call_time, :min_call_time, :max_call_time, :rows_returned]
+      json_attributes = [:call_count, :total_call_time, :min_call_time, :max_call_time, :total_rows_returned, :min_rows_returned, :max_rows_returned, :histograms]
       ScoutApm::AttributeArranger.call(self, json_attributes)
     end
   end
