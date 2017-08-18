@@ -46,10 +46,10 @@ module ScoutApm
       }
     end
 
-    def track_db_layers!(layers, options={})
+    def track_db_query_metrics!(db_query_metric_set, options={})
       @mutex.synchronize {
         period = find_period(options[:timestamp])
-        period.absorb_db_layers!(layers)
+        period.merge_db_query_metrics!(db_query_metric_set)
       }
     end
 

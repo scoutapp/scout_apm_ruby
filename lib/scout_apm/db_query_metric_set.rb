@@ -1,10 +1,18 @@
 module ScoutApm
   class DbQueryMetricSet
+    include Enumerable
+
     attr_reader :metrics
 
     def initialize
       # A hash of DbQueryMetricStats values, keyed by DbQueryMetricStats.key
       @metrics = Hash.new
+    end
+
+    def each
+      metrics.values.each do |db_query_metric_stat|
+        yield db_query_metric_stat
+      end
     end
 
     # Looks up a DbQueryMetricStats instance in the +@metrics+ hash. Sets the value to +other+ if no key

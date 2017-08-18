@@ -251,7 +251,7 @@ module ScoutApm
       @store.track!(allocation_metrics)
 
       db_query_metric_set = LayerConverters::DatabaseConverter.new(self).call
-      @store.merge_db_query_metrics!(db_query_metric_set)
+      @store.track_db_query_metrics!(db_query_metric_set)
 
       if web?
         # Don't #call this - that's the job of the ScoredItemSet later.
