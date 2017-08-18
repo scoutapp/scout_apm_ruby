@@ -205,8 +205,6 @@ module ScoutApm
       @db_query_metric_set = DbQueryMetricSet.new
 
       @jobs = Hash.new
-
-      @database_data = []
     end
 
     # Merges another StoreReportingPeriod into this one
