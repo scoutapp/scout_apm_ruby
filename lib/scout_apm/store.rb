@@ -25,7 +25,7 @@ module ScoutApm
 
     def find_period(timestamp = nil)
       if timestamp
-        @reporting_periods[options[:timestamp]]
+        @reporting_periods[timestamp]
       else
         current_period
       end
@@ -234,10 +234,6 @@ module ScoutApm
     def merge_metrics!(other_metric_set)
       metric_set.combine!(other_metric_set)
       self
-    end
-
-    def absorb_db_layers!(layers)
-      db_query_metric_set.absorb!(layers)
     end
 
     def merge_db_query_metrics!(other_metric_set)

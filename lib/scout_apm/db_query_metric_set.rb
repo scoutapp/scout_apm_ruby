@@ -15,8 +15,8 @@ module ScoutApm
     end
 
     # Takes an array of ActiveRecord layers, creates new DbQueryMetricStats and combines them into this Set
-    def absorb!(layers)
-      layers.each do |l|
+    def absorb_layers!(database_layers)
+      database_layers.each do |l|
         db_query_metric_stats = DbQueryMetricStats.new(l.name.model, l.name.normalized_operation, 1, l.total_call_time, l.annotations[:record_count])
         combine!(db_query_metric_stats)
       end

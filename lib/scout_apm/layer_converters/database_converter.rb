@@ -8,10 +8,10 @@ module ScoutApm
         # Middleware decides to return rather than passing onward)
         return {} unless scope
 
-        create_database_metrics
+        db_query_metric_set_from_layers(select_database_layers)
       end
 
-      def create_database_metrics
+      def select_database_layers
         metric_ary = Array.new
 
         walker.walk do |layer|
@@ -19,6 +19,10 @@ module ScoutApm
           metric_ary << layer if layer.type == 'ActiveRecord'
         end
         metric_ary
+      end
+
+      def db_query_metric_set_from_layers(database_layers)
+        DbQueryMetricSet.new.absorb_layers!(database_layers)
       end
     end
   end
