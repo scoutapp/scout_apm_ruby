@@ -216,7 +216,8 @@ module ScoutApm
         merge_slow_transactions!(other.slow_transactions_payload).
         merge_jobs!(other.jobs).
         merge_slow_jobs!(other.slow_jobs_payload).
-        merge_histograms!(other.histograms)
+        merge_histograms!(other.histograms).
+        merge_db_query_metrics!(other.db_query_metric_set)
       self
     end
 
@@ -239,6 +240,12 @@ module ScoutApm
 
     def absorb_db_layers!(layers)
       db_query_metric_set.absorb!(layers)
+    end
+
+    def merge_db_query_metrics!(other_metric_set)
+      other_metric_set.each do |other_metric_stat|
+        db_query_metric_set.combine!(other_metric_stat)
+      end
     end
 
     def merge_slow_transactions!(new_transactions)
@@ -297,6 +304,10 @@ module ScoutApm
 
     def slow_jobs_payload
       job_traces.to_a
+    end
+
+    def db_query_metrics_payload
+      db_query_metric_set.metrics
     end
 
     #################################
