@@ -141,6 +141,7 @@ require 'scout_apm/serializers/jobs_serializer_to_json'
 require 'scout_apm/serializers/slow_jobs_serializer_to_json'
 require 'scout_apm/serializers/metrics_to_json_serializer'
 require 'scout_apm/serializers/histograms_serializer_to_json'
+require 'scout_apm/serializers/db_query_serializer_to_json'
 require 'scout_apm/serializers/directive_serializer'
 require 'scout_apm/serializers/app_server_load_serializer'
 
