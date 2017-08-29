@@ -27,6 +27,8 @@ require 'scout_apm/environment'
 # report_format    - 'json' or 'marshal'. Marshal is legacy and will be removed.
 # scm_subdirectory - if the app root lives in source management in a subdirectory. E.g. #{SCM_ROOT}/src
 # uri_reporting    - 'path' or 'full_path' default is 'full_path', which reports URL params as well as the path.
+# remote_agent_host - Internal: What host to bind to, and also send messages to for remote. Default: 127.0.0.1.
+# remote_agent_port - What port to bind the remote webserver to
 #
 # Any of these config settings can be set with an environment variable prefixed
 # by SCOUT_ and uppercasing the key: SCOUT_LOG_LEVEL for instance.
@@ -35,6 +37,7 @@ module ScoutApm
   class Config
     KNOWN_CONFIG_OPTIONS = [
         'application_root',
+        'async_recording',
         'compress_payload',
         'config_file',
         'data_file',
@@ -53,6 +56,8 @@ module ScoutApm
         'name',
         'profile',
         'proxy',
+        'remote_agent_host',
+        'remote_agent_port',
         'report_format',
         'scm_subdirectory',
         'uri_reporting',
@@ -129,11 +134,12 @@ module ScoutApm
 
 
     SETTING_COERCIONS = {
-      "monitor"                => BooleanCoercion.new,
-      "enable_background_jobs" => BooleanCoercion.new,
-      "dev_trace"              => BooleanCoercion.new,
+      "async_recording"        => BooleanCoercion.new,
       "detailed_middleware"    => BooleanCoercion.new,
+      "dev_trace"              => BooleanCoercion.new,
+      "enable_background_jobs" => BooleanCoercion.new,
       "ignore"                 => JsonCoercion.new,
+      "monitor"                => BooleanCoercion.new,
     }
 
 
@@ -219,6 +225,8 @@ module ScoutApm
         'report_format'          => 'json',
         'scm_subdirectory'       => '',
         'uri_reporting'          => 'full_path',
+        'remote_agent_host'      => '127.0.0.1',
+        'remote_agent_port'      => 7721, # picked at random
       }.freeze
 
       def value(key)

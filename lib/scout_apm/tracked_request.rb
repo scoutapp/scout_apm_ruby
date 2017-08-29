@@ -42,6 +42,9 @@ module ScoutApm
     # Whereas the instant_key gets set per-request in reponse to a URL param, dev_trace is set in the config file
     attr_accessor :dev_trace
 
+    # An object that responds to `record!(TrackedRequest)` to store this tracked request
+    attr_reader :recorder
+
     def initialize(store)
       @store = store #this is passed in so we can use a real store (normal operation) or fake store (instant mode only)
       @layers = []
@@ -51,12 +54,19 @@ module ScoutApm
       @context = Context.new
       @root_layer = nil
       @error = false
+      @stopping = false
       @instant_key = nil
       @mem_start = mem_usage
       @dev_trace =  ScoutApm::Agent.instance.config.value('dev_trace') && ScoutApm::Agent.instance.environment.env == "development"
+      @recorder = ScoutApm::Agent.instance.recorder
+
+      ignore_request! if @recorder.nil?
     end
 
     def start_layer(layer)
+      # If we're already stopping, don't do additional layers
+      return if stopping?
+
       return if ignoring_children?
 
       return ignoring_start_layer if ignoring_request?
@@ -66,6 +76,9 @@ module ScoutApm
     end
 
     def stop_layer
+      # If we're already stopping, don't do additional layers
+      return if stopping?
+
       return if ignoring_children?
 
       return ignoring_stop_layer if ignoring_request?
@@ -77,7 +90,7 @@ module ScoutApm
       # lined up correctly. If stop_layer gets called twice, when it should
       # only have been called once you'll end up with this error.
       if layer.nil?
-        ScoutApm::Agent.instance.logger.warn("Error stopping layer, was nil. Root Layer: #{@root_layer.inspect}")
+        logger.warn("Error stopping layer, was nil. Root Layer: #{@root_layer.inspect}")
         stop_request
         return
       end
@@ -169,7 +182,15 @@ module ScoutApm
     #
     # * Send the request off to be stored
     def stop_request
-      record!
+      @stopping = true
+
+      if recorder
+        recorder.record!(self)
+      end
+    end
+
+    def stopping?
+      @stopping
     end
 
     ###################################
@@ -224,61 +245,54 @@ module ScoutApm
     # Persist the Request
     ###################################
 
+    def recorded!
+      @recorded = true
+    end
+
     # Convert this request to the appropriate structure, then report it into
     # the peristent Store object
     def record!
-      @recorded = true
+      recorded!
 
       return if ignoring_request?
+
+      # If we didn't have store, but we're trying to record anyway, go
+      # figure that out. (this happens in Remote Agent scenarios)
+      restore_store if @store.nil?
 
       # Bail out early if the user asked us to ignore this uri
       return if ScoutApm::Agent.instance.ignored_uris.ignore?(annotations[:uri])
 
-      # Update immediate and long-term histograms for both job and web requests
-      if unique_name != :unknown
-        ScoutApm::Agent.instance.request_histograms.add(unique_name, root_layer.total_call_time)
-        ScoutApm::Agent.instance.request_histograms_by_time[@store.current_timestamp].
-          add(unique_name, root_layer.total_call_time)
+      converters = [
+        LayerConverters::Histograms,
+        LayerConverters::MetricConverter,
+        LayerConverters::ErrorConverter,
+        LayerConverters::AllocationMetricConverter,
+        LayerConverters::AllocationMetricConverter,
+        LayerConverters::RequestQueueTimeConverter,
+        LayerConverters::JobConverter,
+        LayerConverters::DatabaseConverter,
+
+        LayerConverters::SlowJobConverter,
+        LayerConverters::SlowRequestConverter,
+      ]
+
+      layer_finder = LayerConverters::FindLayerByType.new(self)
+      walker = LayerConverters::DepthFirstWalker.new(self.root_layer)
+      converters = converters.map do |klass|
+        instance = klass.new(self, layer_finder, @store)
+        instance.register_hooks(walker)
+        instance
       end
+      walker.walk
+      converters.each {|i| i.record! }
 
-      metrics = LayerConverters::MetricConverter.new(self).call
-      @store.track!(metrics)
-
-      error_metrics = LayerConverters::ErrorConverter.new(self).call
-      @store.track!(error_metrics)
-
-      allocation_metrics = LayerConverters::AllocationMetricConverter.new(self).call
-      @store.track!(allocation_metrics)
-
-      db_query_metric_set = LayerConverters::DatabaseConverter.new(self).call
-      @store.track_db_query_metrics!(db_query_metric_set)
-
-      if web?
-        # Don't #call this - that's the job of the ScoredItemSet later.
-        slow_converter = LayerConverters::SlowRequestConverter.new(self)
-        @store.track_slow_transaction!(slow_converter)
-
-        queue_time_metrics = LayerConverters::RequestQueueTimeConverter.new(self).call
-        @store.track!(queue_time_metrics)
-
-        # If there's an instant_key, it means we need to report this right away
-        if instant?
-          trace = slow_converter.call
-          ScoutApm::InstantReporting.new(trace, instant_key).call
-        end
+      # If there's an instant_key, it means we need to report this right away
+      if web? && instant?
+        converter = converters.find{|c| c.class == LayerConverters::SlowRequestConverter}
+        trace = converter.call
+        ScoutApm::InstantReporting.new(trace, instant_key).call
       end
-
-      if job?
-        job_metrics = LayerConverters::JobConverter.new(self).call
-        @store.track_job!(job_metrics)
-
-        job_converter = LayerConverters::SlowJobConverter.new(self)
-        @store.track_slow_job!(job_converter)
-      end
-
-      allocation_metrics = LayerConverters::AllocationMetricConverter.new(self).call
-      @store.track!(allocation_metrics)
-
     end
 
     # Only call this after the request is complete
@@ -286,7 +300,7 @@ module ScoutApm
       return nil if ignoring_request?
 
       @unique_name ||= begin
-                         scope_layer = LayerConverters::ConverterBase.new(self).scope_layer
+                         scope_layer = LayerConverters::FindLayerByType.new(self).scope
                          if scope_layer
                            scope_layer.legacy_metric_name
                          else
@@ -391,6 +405,25 @@ module ScoutApm
 
     def ignoring_recorded?
       @ignoring_depth <= 0
+    end
+
+    def logger
+      ScoutApm::Agent.instance.logger
+    end
+
+    # Actually go fetch & make-real any lazily created data.
+    # Clean up any cleverness in objects.
+    # Makes this object ready to be Marshal Dumped (or otherwise serialized)
+    def prepare_to_dump!
+      @call_set = nil
+      @store = nil
+      @recorder = nil
+    end
+
+    # Go re-fetch the store based on what the Agent's official one is. Used
+    # after hydrating a dumped TrackedRequest
+    def restore_store
+      @store = ScoutApm::Agent.instance.store
     end
   end
 end

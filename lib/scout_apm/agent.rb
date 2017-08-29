@@ -10,6 +10,7 @@ module ScoutApm
 
     # Accessors below are for associated classes
     attr_accessor :store
+    attr_reader :recorder
     attr_accessor :layaway
     attr_accessor :config
     attr_accessor :logger
@@ -41,6 +42,9 @@ module ScoutApm
       @process_start_time = Time.now
       @options ||= options
 
+      # until the agent is started, there's no recorder
+      @recorder = nil
+
       # Start up without attempting to load a configuration file. We need to be
       # able to lookup configuration options like "application_root" which would
       # then in turn influence where the configuration file came from.
@@ -54,6 +58,7 @@ module ScoutApm
       @request_histograms_by_time = Hash.new { |h, k| h[k] = ScoutApm::RequestHistograms.new }
 
       @store          = ScoutApm::Store.new
+
       @layaway        = ScoutApm::Layaway.new(config, environment)
       @metric_lookup  = Hash.new
 
@@ -111,12 +116,13 @@ module ScoutApm
     def start(options = {})
       @options.merge!(options)
 
-
       @config = ScoutApm::Config.with_file(@config.value("config_file"))
       layaway.config = config
 
       init_logger
       logger.info "Attempting to start Scout Agent [#{ScoutApm::VERSION}] on [#{environment.hostname}]"
+
+      @recorder = create_recorder
 
       @config.log_settings
 
@@ -133,7 +139,6 @@ module ScoutApm
       return false unless preconditions_met?(options)
       @started = true
       logger.info "Starting monitoring for [#{environment.application_name}]. Framework [#{environment.framework}] App Server [#{environment.app_server}] Background Job Framework [#{environment.background_job_name}]."
-
 
       [ ScoutApm::Instruments::Process::ProcessCpu.new(environment.processors, logger),
         ScoutApm::Instruments::Process::ProcessMemory.new(logger),
@@ -256,6 +261,9 @@ module ScoutApm
 
       install_exit_handler
 
+      @recorder = create_recorder
+      logger.info("recorder is now: #{@recorder.class}")
+
       @background_worker = ScoutApm::BackgroundWorker.new
       @background_worker_thread = Thread.new do
         @background_worker.start {
@@ -335,6 +343,48 @@ module ScoutApm
 
     def background_job_missing?(options = {})
       environment.background_job_integration.nil? && !options[:skip_background_job_check]
+    end
+
+    def clear_recorder
+      @recorder = nil
+    end
+
+    def create_recorder
+      if @recorder
+        return @recorder
+      end
+
+      if config.value("async_recording")
+        logger.debug("Using asynchronous recording")
+        ScoutApm::BackgroundRecorder.new(logger).start
+      else
+        logger.debug("Using synchronous recording")
+        ScoutApm::SynchronousRecorder.new(logger).start
+      end
+    end
+
+    def start_remote_server(bind, port)
+      return if @remote_server && @remote_server.running?
+
+      logger.info("Starting Remote Agent Server")
+
+      # Start the listening web server only in parent process.
+      @remote_server = ScoutApm::Remote::Server.new(
+        bind,
+        port,
+        ScoutApm::Remote::Router.new(ScoutApm::SynchronousRecorder.new(logger), logger),
+        logger
+      )
+
+      @remote_server.start
+    end
+
+    # Execute this in the child process of a remote agent. The parent is
+    # expected to have its accepting webserver up and running
+    def use_remote_recorder(host, port)
+      logger.debug("Becoming Remote Agent (reporting to: #{host}:#{port})")
+      @recorder = ScoutApm::Remote::Recorder.new(host, port, logger)
+      @store = ScoutApm::FakeStore.new
     end
   end
 end
