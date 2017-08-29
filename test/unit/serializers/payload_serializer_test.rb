@@ -1,13 +1,4 @@
 require 'test_helper'
-require 'scout_apm/attribute_arranger'
-require 'scout_apm/bucket_name_splitter'
-require 'scout_apm/serializers/payload_serializer'
-require 'scout_apm/serializers/payload_serializer_to_json'
-require 'scout_apm/slow_transaction'
-require 'scout_apm/metric_meta'
-require 'scout_apm/metric_stats'
-require 'scout_apm/context'
-require 'ostruct'
 require 'json' # to deserialize what has been manually serialized by the production code
 
 class PayloadSerializerTest < Minitest::Test

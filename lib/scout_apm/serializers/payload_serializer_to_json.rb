@@ -11,8 +11,10 @@ module ScoutApm
                         :jobs => JobsSerializerToJson.new(jobs).as_json,
                         :slow_jobs => SlowJobsSerializerToJson.new(slow_jobs).as_json,
                         :histograms => HistogramsSerializerToJson.new(histograms).as_json,
-                        :db_query_metrics => DbQuerySerializerToJson.new(db_query_metrics).as_json,
-                      })
+                        :db_metrics => {
+                          :query => DbQuerySerializerToJson.new(db_query_metrics).as_json,
+                        },
+          })
         end
 
         # For the old style of metric serializing.

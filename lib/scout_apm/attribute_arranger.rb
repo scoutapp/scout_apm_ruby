@@ -12,7 +12,12 @@ module ScoutApm
         when :name
           attribute_hash[attribute] = subject.bucket_name
         when Symbol
-          attribute_hash[attribute] = subject.send(attribute)
+          data = subject.send(attribute)
+          if data.respond_to?(:as_json)
+            attribute_hash[attribute] = data.as_json
+          else
+            attribute_hash[attribute] = data
+          end
         end
         attribute_hash
       end

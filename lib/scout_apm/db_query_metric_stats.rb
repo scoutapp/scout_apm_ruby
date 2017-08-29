@@ -47,7 +47,7 @@ module ScoutApm
       return self if other == self
 
       self.call_count += other.call_count
-      self.rows_returned += self.rows_returned
+      self.rows_returned += other.rows_returned
       self.call_time += other.call_time
 
       self.min_call_time = other.min_call_time if self.min_call_time.zero? or other.min_call_time < self.min_call_time
@@ -60,14 +60,23 @@ module ScoutApm
       self
     end
 
-    # To avoid conflicts with different JSON libaries handle JSON ourselves.
-    # Time-based metrics are converted to milliseconds from seconds.
-    def to_json(*a)
-       %Q[{"call_count":#{call_count},"total_call_time":#{call_time*1000},"min_call_time":#{min_call_time*1000},"max_call_time":#{max_call_time*1000},"total_rows_returned":#{rows_returned},"min_rows_returned":#{min_rows_returned},"max_rows_returned":#{max_rows_returned},"histograms":["call_time":#{histogram.as_json}]}]
-    end
-
     def as_json
-      json_attributes = [:call_count, :total_call_time, :min_call_time, :max_call_time, :total_rows_returned, :min_rows_returned, :max_rows_returned, :histograms]
+      json_attributes = [
+        :model_name,
+        :operation,
+
+        :call_count,
+
+        :histogram,
+        :call_time,
+        :max_call_time,
+        :min_call_time,
+
+        :max_rows_returned,
+        :min_rows_returned,
+        :rows_returned,
+      ]
+
       ScoutApm::AttributeArranger.call(self, json_attributes)
     end
   end
