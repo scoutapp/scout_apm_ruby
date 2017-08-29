@@ -10,7 +10,7 @@ module ScoutApm
     end
 
     def each
-      metrics.values.each do |db_query_metric_stat|
+      metrics.each do |_key, db_query_metric_stat|
         yield db_query_metric_stat
       end
     end
@@ -26,10 +26,13 @@ module ScoutApm
       other.metrics.each do |_key, metric|
         self << metric
       end
+      self
     end
 
-    # Combines two DbQueryMetricStats intances. It's ok to call `combine!` on itself (results in a noop)
-    # Returns a DbQueryMetricStats instance
+    # Add a single DbQueryMetricStats object to this set.
+    #
+    # Looks up an existing one under this key and merges, or just saves a new
+    # one under the key
     def <<(stat)
       lookup(stat).combine!(stat)
     end
