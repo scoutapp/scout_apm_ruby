@@ -240,6 +240,7 @@ module ScoutApm
       other_metric_set.each do |other_metric_stat|
         db_query_metric_set.combine!(other_metric_stat)
       end
+      self
     end
 
     def merge_slow_transactions!(new_transactions)

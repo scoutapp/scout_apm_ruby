@@ -13,6 +13,8 @@ module ScoutApm
 
         @metrics = {}
 
+        return unless scope_layer
+
         walker.on do |layer|
           next if skip_layer?(layer)
 

@@ -1,11 +1,15 @@
 module ScoutApm
   module LayerConverters
     class DatabaseConverter < ConverterBase
+      def initialize(*)
+        super
+        @db_query_metric_set = DbQueryMetricSet.new
+      end
+
       def register_hooks(walker)
         super
-        return {} unless scope_layer
 
-        @db_query_metric_set = DbQueryMetricSet.new
+        return unless scope_layer
 
         walker.on do |layer|
           next if skip_layer?(layer)
