@@ -21,10 +21,17 @@ module ScoutApm
       metrics[other.key] ||= other
     end
 
+    # Take another set, and merge it with this one
+    def combine!(other)
+      other.metrics.each do |_key, metric|
+        self << metric
+      end
+    end
+
     # Combines two DbQueryMetricStats intances. It's ok to call `combine!` on itself (results in a noop)
     # Returns a DbQueryMetricStats instance
-    def combine!(other)
-      lookup(other).combine!(other)
+    def <<(stat)
+      lookup(stat).combine!(stat)
     end
   end
 end

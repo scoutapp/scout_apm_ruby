@@ -21,6 +21,8 @@ module ScoutApm
 
       def faux_layer_finder
         @layer_finder ||= stub
+        @layer_finder.stubs(scope: stub)
+        @layer_finder
       end
 
       def faux_store

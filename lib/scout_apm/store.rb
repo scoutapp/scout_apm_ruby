@@ -237,9 +237,7 @@ module ScoutApm
     end
 
     def merge_db_query_metrics!(other_metric_set)
-      other_metric_set.each do |other_metric_stat|
-        db_query_metric_set.combine!(other_metric_stat)
-      end
+      db_query_metric_set.combine!(other_metric_set)
       self
     end
 

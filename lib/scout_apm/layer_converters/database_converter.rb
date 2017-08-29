@@ -20,7 +20,7 @@ module ScoutApm
             1,
             layer.total_call_time,
             layer.annotations[:record_count])
-          @db_query_metric_set.combine!(stat)
+          @db_query_metric_set << stat
         end
       end
 
