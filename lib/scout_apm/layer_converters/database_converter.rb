@@ -17,6 +17,7 @@ module ScoutApm
           stat = DbQueryMetricStats.new(
             layer.name.model,
             layer.name.normalized_operation,
+            scope_layer.legacy_metric_name, # controller_scope
             1,
             layer.total_call_time,
             layer.annotations[:record_count])

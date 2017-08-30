@@ -36,5 +36,11 @@ module ScoutApm
     def <<(stat)
       lookup(stat).combine!(stat)
     end
+
+    def inspect
+      metrics.map {|key, metric|
+        "#{key.inspect} - Count: #{metric.call_count}, Total Time: #{"%.2f" % metric.call_time}"
+      }.join("\n")
+    end
   end
 end

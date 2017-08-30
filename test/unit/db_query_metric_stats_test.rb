@@ -5,12 +5,13 @@ require 'scout_apm/db_query_metric_stats'
 module ScoutApm
 class DbQueryMetricStatsTest < Minitest::Test
   def test_as_json_empty_stats
-    stat = build("table", "op", 1, 10, 20)
+    stat = build("table", "op", "Controller/public/index", 1, 10, 20)
 
     assert_equal({
       model_name: "table",
       operation: "op",
       call_count: 1,
+      scope: "Controller/public/index",
       histogram: [[10.0, 1]],
 
       max_call_time: 10.0,
@@ -24,8 +25,8 @@ class DbQueryMetricStatsTest < Minitest::Test
   end
 
   def test_key_name
-    stat = build("User", "find")
-    assert_equal "User#find", stat.key
+    stat = build("User", "find", "Controller/public/index")
+    assert_equal ["User", "find", "Controller/public/index"], stat.key
   end
 
   def test_combine_min_call_time_picks_smallest
@@ -78,15 +79,16 @@ class DbQueryMetricStatsTest < Minitest::Test
 
   def build(model_name="User",
             operation="find",
+            scope="Controller/public/index",
             call_count=DEFAULTS[:call_count],
             call_time=DEFAULTS[:call_time],
             rows_returned=DEFAULTS[:rows_returned])
-    DbQueryMetricStats.new(model_name, operation, call_count, call_time, rows_returned)
+    DbQueryMetricStats.new(model_name, operation, scope, call_count, call_time, rows_returned)
   end
 
   def build_pair
-    stat1 = build("table", "op", 2, 5.1, 10)
-    stat2 = build("table", "op", 3, 8.2, 20)
+    stat1 = build("table", "op", "Controller/public/index", 2, 5.1, 10)
+    stat2 = build("table", "op", "Controller/public/index", 3, 8.2, 20)
     [stat1, stat2]
   end
 end
