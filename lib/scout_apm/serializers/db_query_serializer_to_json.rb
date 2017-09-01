@@ -8,7 +8,7 @@ module ScoutApm
       end
 
       def as_json
-        Hash[db_query_metrics.map{|_k, v| v }.map(&:as_json)]
+        db_query_metrics.map{|_k, v| v.as_json }
       end
     end
   end
