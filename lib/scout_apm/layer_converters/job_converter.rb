@@ -10,13 +10,15 @@
 module ScoutApm
   module LayerConverters
     class JobConverter < ConverterBase
+      attr_reader :meta_options
+
       def register_hooks(walker)
         return unless request.job?
 
         super
 
         @metrics = Hash.new
-        meta_options = {:scope => layer_finder.job.legacy_metric_name}
+        @meta_options = {:scope => layer_finder.job.legacy_metric_name}
 
         walker.on do |layer|
           next if layer == layer_finder.job
