@@ -153,6 +153,11 @@ module ScoutApm
       background_job_integration && background_job_integration.name
     end
 
+    # If both stdin & stdout are interactive and the Rails::Console constant is defined
+    def interactive?
+      defined?(::Rails::Console) && $stdout.isatty && $stdin.isatty
+    end
+
     ### ruby checks
 
     def rubinius?

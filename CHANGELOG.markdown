@@ -1,3 +1,13 @@
+# 2.1.31
+
+* Better detection of Resque queue names
+* Fix passing arguments through Active Record instrumentation. (Thanks to Nick Quaranto for providing the fix)
+* Stricter checks to prevent agent from starting in Rails console
+
+# 2.1.30
+
+* Add Resque support.
+
 # 2.1.29
 
 * Add `scm_subdirectory` option. Useful for when your app code does not live in your SCM root directory.

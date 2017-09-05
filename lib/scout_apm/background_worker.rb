@@ -36,12 +36,6 @@ module ScoutApm
 
       loop do
         begin
-          # Bail out if @keep_running is false
-          unless @keep_running
-            ScoutApm::Agent.instance.logger.debug "Background Worker: breaking from loop"
-            break
-          end
-
           now = Time.now
 
           # Sleep the correct amount of time to reach next_time
@@ -49,6 +43,12 @@ module ScoutApm
             sleep_time = next_time - now
             sleep(sleep_time) if sleep_time > 0
             now = Time.now
+          end
+
+          # Bail out if @keep_running is false
+          unless @keep_running
+            ScoutApm::Agent.instance.logger.debug "Background Worker: breaking from loop"
+            break
           end
 
           @task.call

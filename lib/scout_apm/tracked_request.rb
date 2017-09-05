@@ -268,7 +268,6 @@ module ScoutApm
         LayerConverters::MetricConverter,
         LayerConverters::ErrorConverter,
         LayerConverters::AllocationMetricConverter,
-        LayerConverters::AllocationMetricConverter,
         LayerConverters::RequestQueueTimeConverter,
         LayerConverters::JobConverter,
         LayerConverters::DatabaseConverter,
