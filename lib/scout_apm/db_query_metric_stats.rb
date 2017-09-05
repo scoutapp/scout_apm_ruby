@@ -7,6 +7,8 @@ module ScoutApm
     attr_reader :operation
     attr_reader :scope
 
+    attr_reader :transaction_count
+
     attr_reader :call_count
     attr_reader :call_time
     attr_reader :rows_returned
@@ -38,6 +40,8 @@ module ScoutApm
       @histogram = NumericHistogram.new(DEFAULT_HISTOGRAM_SIZE)
       @histogram.add(call_time)
 
+      @transaction_count = 0
+
       @scope = scope
     end
 
@@ -50,6 +54,7 @@ module ScoutApm
     def combine!(other)
       return self if other == self
 
+      @transaction_count += other.transaction_count
       @call_count += other.call_count
       @rows_returned += other.rows_returned
       @call_time += other.call_time
@@ -70,6 +75,7 @@ module ScoutApm
         :operation,
         :scope,
 
+        :transaction_count,
         :call_count,
 
         :histogram,
@@ -83,6 +89,14 @@ module ScoutApm
       ]
 
       ScoutApm::AttributeArranger.call(self, json_attributes)
+    end
+
+    # Called by the Set on each DbQueryMetricStats object that it holds, only
+    # once during the recording of a transaction.
+    #
+    # Don't call elsewhere, and don't set to 1 in the initializer.
+    def increment_transaction_count!
+      @transaction_count += 1
     end
   end
 end

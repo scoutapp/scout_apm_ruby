@@ -37,6 +37,12 @@ module ScoutApm
       lookup(stat).combine!(stat)
     end
 
+    def increment_transaction_count!
+      metrics.each do |_key, db_query_metric_stat|
+        db_query_metric_stat.increment_transaction_count!
+      end
+    end
+
     def inspect
       metrics.map {|key, metric|
         "#{key.inspect} - Count: #{metric.call_count}, Total Time: #{"%.2f" % metric.call_time}"
