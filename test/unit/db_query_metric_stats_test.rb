@@ -11,6 +11,7 @@ class DbQueryMetricStatsTest < Minitest::Test
       model_name: "table",
       operation: "op",
       call_count: 1,
+      transaction_count: 0,
       scope: "Controller/public/index",
       histogram: [[10.0, 1]],
 
@@ -22,6 +23,15 @@ class DbQueryMetricStatsTest < Minitest::Test
       min_rows_returned: 20,
       rows_returned: 20,
     }, stat.as_json)
+  end
+
+  def test_increment_transaction_count
+    stat = build()
+    assert_equal 0, stat.transaction_count
+
+    stat.increment_transaction_count!
+
+    assert_equal 1, stat.transaction_count
   end
 
   def test_key_name
@@ -44,6 +54,14 @@ class DbQueryMetricStatsTest < Minitest::Test
     assert_equal 5, stat1.combine!(stat2).call_count
   end
 
+  def test_combine_transaction_count_adds
+    stat1, stat2 = build_pair
+    2.times { stat1.increment_transaction_count! }
+    3.times { stat2.increment_transaction_count! }
+
+    assert_equal 5, stat1.combine!(stat2).call_count
+  end
+
   def test_combine_doesnt_merge_with_self
     stat = build
     merged = stat.combine!(stat)
@@ -57,7 +75,7 @@ class DbQueryMetricStatsTest < Minitest::Test
   # Have to be a bit careful, since combine! is destructive, so make two pairs
   # with same data to do both sides, then check that they result in the same
   # answer
-  [:call_count, :rows_returned, :min_rows_returned, :max_rows_returned, :max_call_time, :min_call_time].each do |attr|
+  [:transaction_count, :call_count, :rows_returned, :min_rows_returned, :max_rows_returned, :max_call_time, :min_call_time].each do |attr|
     define_method :"test_combine_#{attr}_is_symmetric" do
       stat1_a, stat2_a = build_pair
       stat1_b, stat2_b = build_pair
