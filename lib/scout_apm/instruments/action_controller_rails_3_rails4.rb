@@ -1,6 +1,6 @@
 module ScoutApm
   module Instruments
-    # instrumentation for Rails 3 and Rails 4 is the same.
+    # instrumentation for Rails 3, 4, and 5 is the same.
     class ActionControllerRails3Rails4
       attr_reader :logger
 
@@ -78,7 +78,7 @@ module ScoutApm
               resolved_name = scout_action_name(*args)
               layer = ScoutApm::Layer.new("Controller", "#{controller_path}/#{resolved_name}")
 
-              if ScoutApm::Agent.instance.config.value('profile') && ScoutApm::Instruments::Stacks::ENABLED
+              if enable_scoutprof? && ScoutApm::Agent.instance.config.value('profile') && ScoutApm::Instruments::Stacks::ENABLED
                 if defined?(ScoutApm::Instruments::Stacks::INSTALLED) && ScoutApm::Instruments::Stacks::INSTALLED
                   # Capture ScoutProf if we can
                   req.enable_profiled_thread!
@@ -112,23 +112,27 @@ module ScoutApm
       end
     end
 
+    module ActionControllerBaseInstruments
+      include ScoutApm::Instruments::ActionControllerRails3Rails4.build_instrument_module
+
+      def scout_action_name(*args)
+        action_name
+      end
+
+      def enable_scoutprof?
+        true
+      end
+    end
+
     module ActionControllerMetalInstruments
       include ScoutApm::Instruments::ActionControllerRails3Rails4.build_instrument_module
 
       def scout_action_name(*args)
         action_name = args[0]
       end
-    end
 
-    # Empty, noop module to provide compatibility w/ previous manual instrumentation
-    module ActionControllerRails3Rails4Instruments
-    end
-
-    module ActionControllerBaseInstruments
-      include ScoutApm::Instruments::ActionControllerRails3Rails4.build_instrument_module
-
-      def scout_action_name(*args)
-        action_name
+      def enable_scoutprof?
+        false
       end
     end
 
@@ -138,6 +142,14 @@ module ScoutApm
       def scout_action_name(*args)
         action_name
       end
+
+      def enable_scoutprof?
+        false
+      end
+    end
+
+    # Empty, noop module to provide compatibility w/ previous manual instrumentation
+    module ActionControllerRails3Rails4Instruments
     end
   end
 end
