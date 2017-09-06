@@ -122,7 +122,7 @@ module ScoutApm
             current_layer.desc = desc
           end
 
-          log_without_scout_instruments(sql, name, &block)
+          log_without_scout_instruments(*args, &block)
 
         # OR: Start a new layer, we didn't pick up instrumentation earlier in the stack.
         else
@@ -130,7 +130,7 @@ module ScoutApm
           layer.desc = desc
           req.start_layer(layer)
           begin
-            log_without_scout_instruments(sql, name, &block)
+            log_without_scout_instruments(*args, &block)
           ensure
             req.stop_layer
           end

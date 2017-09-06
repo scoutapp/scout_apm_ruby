@@ -18,3 +18,4 @@ coverage/*
 lib/*.bundle
 lib/*.so
 **/.RUBYARCHDIR.time
+log/scout_apm.log

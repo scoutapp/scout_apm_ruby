@@ -2,6 +2,45 @@
 
 * ScoutProf BETA
 
+# 2.1.31
+
+* Better detection of Resque queue names
+* Fix passing arguments through Active Record instrumentation. (Thanks to Nick Quaranto for providing the fix)
+* Stricter checks to prevent agent from starting in Rails console
+
+# 2.1.30
+
+* Add Resque support.
+
+# 2.1.29
+
+* Add `scm_subdirectory` option. Useful for when your app code does not live in your SCM root directory.
+
+# 2.1.28
+
+* Changes to app server load data
+
+# 2.1.27
+
+* Don't attempt to call `current_layer.type` on nil
+
+# 2.1.26
+
+* Bug fix [4b188d6](https://github.com/scoutapp/scout_apm_ruby/commit/4b188d698852c86b86d8768ea5b37d706ce544fe)
+
+# 2.1.25
+
+* Automatically instrument API and Metal controllers.
+
+# 2.1.24
+
+* Capture additional layers of application backtrace frames. (From 3 -> 8)
+
+# 2.1.23
+
+* Extend Mongoid instrumentation to 6.x
+>>>>>>> master
+
 # 2.1.22
 
 * Add DevTrace support for newest 4.2.x and 5.x versions of Rails
@@ -66,6 +105,7 @@
 # 2.1.9
 
 * Send raw histograms of response time, enabling more accurate 95th %iles
+* Raw histograms are used in Apdex calculations
 * Gzip payloads
 * Fix Mongoid (5.0) + Mongo (2.1) support
 * Initial Delayed Job support

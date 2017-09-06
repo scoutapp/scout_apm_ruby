@@ -6,8 +6,8 @@ require 'scout_apm/environment'
 module ScoutApm
   module Utils
     class BacktraceParser
-
-      APP_FRAMES = 3 # will return up to 3 frames from the app stack.
+      # will return this many backtrace frames from the app stack.
+      APP_FRAMES = 8
 
       attr_reader :call_stack
 
@@ -24,7 +24,7 @@ module ScoutApm
         stack = []
         call_stack.each do |c|
           if m = c.match(@@app_dir_regex)
-            stack << m[1]
+            stack << ScoutApm::Utils::Scm.relative_scm_path(m[1])
             break if stack.size == APP_FRAMES
           end
         end

@@ -24,6 +24,7 @@ module ScoutApm
     ]
 
     BACKGROUND_JOB_INTEGRATIONS = [
+      ScoutApm::BackgroundJobIntegrations::Resque.new,
       ScoutApm::BackgroundJobIntegrations::Sidekiq.new,
       ScoutApm::BackgroundJobIntegrations::DelayedJob.new,
     ]
@@ -84,6 +85,14 @@ module ScoutApm
                       end
     end
 
+    def scm_subdirectory
+      @scm_subdirectory ||= if Agent.instance.config.value('scm_subdirectory').empty?
+        ''
+      else
+        Agent.instance.config.value('scm_subdirectory').sub(/^\//, '') # Trim any leading slash
+      end
+    end
+
     def root
       @root ||= framework_root
     end
@@ -142,6 +151,11 @@ module ScoutApm
 
     def background_job_name
       background_job_integration && background_job_integration.name
+    end
+
+    # If both stdin & stdout are interactive and the Rails::Console constant is defined
+    def interactive?
+      defined?(::Rails::Console) && $stdout.isatty && $stdin.isatty
     end
 
     ### ruby checks
