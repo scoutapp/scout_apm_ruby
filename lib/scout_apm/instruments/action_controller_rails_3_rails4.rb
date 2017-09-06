@@ -76,7 +76,18 @@ module ScoutApm
               req.web!
 
               resolved_name = scout_action_name(*args)
-              req.start_layer( ScoutApm::Layer.new("Controller", "#{controller_path}/#{resolved_name}") )
+              layer = ScoutApm::Layer.new("Controller", "#{controller_path}/#{resolved_name}")
+
+              if ScoutApm::Agent.instance.config.value('profile') && ScoutApm::Instruments::Stacks::ENABLED
+                if defined?(ScoutApm::Instruments::Stacks::INSTALLED) && ScoutApm::Instruments::Stacks::INSTALLED
+                  # Capture ScoutProf if we can
+                  req.enable_profiled_thread!
+                  layer.set_root_class(self.class)
+                  layer.traced!
+                end
+              end
+
+              req.start_layer(layer)
               begin
                 super
               rescue
