@@ -33,11 +33,6 @@ class MetricMeta
     !!(metric_name =~ /\A(Controller|Job)\//)
   end
 
-  # To avoid conflicts with different JSON libaries
-  def to_json(*a)
-     %Q[{"metric_id":#{metric_id || 'null'},"metric_name":#{metric_name.to_json},"scope":#{scope.to_json || 'null'}}]
-  end
-
   def ==(o)
     self.eql?(o)
   end

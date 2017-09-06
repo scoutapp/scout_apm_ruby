@@ -2,34 +2,22 @@ module ScoutApm
   module LayerConverters
     class ConverterBase
 
-      attr_reader :walker
       attr_reader :request
       attr_reader :root_layer
+      attr_reader :layer_finder
 
-      def initialize(request)
+      def initialize(request, layer_finder, store=nil)
         @request = request
+        @layer_finder = layer_finder
+        @store = store
+
         @root_layer = request.root_layer
         @backtraces = []
-        @walker = DepthFirstWalker.new(root_layer)
-
         @limited = false
       end
 
-      # Scope is determined by the first Controller we hit.  Most of the time
-      # there will only be 1 anyway.  But if you have a controller that calls
-      # another controller method, we may pick that up:
-      #     def update
-      #       show
-      #       render :update
-      #     end
       def scope_layer
-        @scope_layer ||= find_first_layer_of_type("Controller") || find_first_layer_of_type("Job")
-      end
-
-      def find_first_layer_of_type(layer_type)
-        walker.walk do |layer|
-          return layer if layer.type == layer_type
-        end
+        layer_finder.scope
       end
 
       ################################################################################
@@ -39,7 +27,7 @@ module ScoutApm
       # Keep a list of subscopes, but only ever use the front one.  The rest
       # get pushed/popped in cases when we have many levels of subscopable
       # layers.  This lets us push/pop without otherwise keeping track very closely.
-      def setup_subscopable_callbacks
+      def register_hooks(walker)
         @subscope_layers = []
 
         walker.before do |layer|
