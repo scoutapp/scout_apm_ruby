@@ -55,8 +55,6 @@ module ScoutApm
     # We insert this middleware into the Sidekiq stack, to capture each job,
     # and time them.
     class SidekiqMiddleware
-      ACTIVE_JOB_KLASS = 'ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper'.freeze
-
       def call(_worker, msg, queue)
         req = ScoutApm::RequestManager.lookup
         req.job!
@@ -79,12 +77,30 @@ module ScoutApm
       end
 
       UNKNOWN_CLASS_PLACEHOLDER = 'UnknownJob'.freeze
+      ACTIVE_JOB_KLASS = 'ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper'.freeze
+      DELAYED_WRAPPER_KLASS = 'Sidekiq::Extensions::DelayedClass'.freeze
+
 
       def job_class(msg)
         job_class = msg.fetch('class', UNKNOWN_CLASS_PLACEHOLDER)
+
         if job_class == ACTIVE_JOB_KLASS && msg.key?('wrapped')
-          job_class = msg['wrapped']
+          begin
+            job_class = msg['wrapped']
+          rescue
+            ACTIVE_JOB_KLASS
+          end
+        elsif job_class == DELAYED_WRAPPER_KLASS
+          begin
+            yml = msg['args'].first
+            deserialized_args = YAML.load(yml)
+            klass, method, *rest = deserialized_args
+            job_class = [klass,method].map(&:to_s).join(".")
+          rescue
+            DELAYED_WRAPPER_KLASS
+          end
         end
+
         job_class
       rescue
         UNKNOWN_CLASS_PLACEHOLDER
