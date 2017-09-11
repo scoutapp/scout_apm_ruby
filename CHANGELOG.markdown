@@ -1,3 +1,8 @@
+# 2.1.32
+
+* Better naming when using Resque + ActiveJob
+* Better naming when using Sidekiq + DelayedExtension
+
 # 2.1.31
 
 * Better detection of Resque queue names
