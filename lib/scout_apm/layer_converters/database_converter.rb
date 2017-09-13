@@ -20,7 +20,7 @@ module ScoutApm
             scope_layer.legacy_metric_name, # controller_scope
             1,                              # count, this is a single query, so 1
             layer.total_call_time,
-            layer.annotations[:record_count])
+            layer.annotations[:record_count] || 0)
           @db_query_metric_set << stat
         end
       end
