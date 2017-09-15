@@ -94,6 +94,8 @@ module ScoutApm
           table = split[1].gsub(/"/, '')
           "#{table}/delete"
         end
+      rescue
+        DEFAULT_METRIC
       end
     end
   end
