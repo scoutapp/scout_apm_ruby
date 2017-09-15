@@ -18,12 +18,16 @@ module ScoutApm
       # metric_name: Place/find
       def to_s
         return DEFAULT_METRIC unless name
-        return DEFAULT_METRIC unless model && operation
-
-        if parsed = parse_operation
-          "#{model}/#{parsed}"
+        if name == "SQL"
+          from_sql
         else
-          "SQL/other"
+          return DEFAULT_METRIC unless model && operation
+
+          if parsed = parse_operation
+            "#{model}/#{parsed}"
+          else
+            "SQL/other"
+          end
         end
       end
 
@@ -74,6 +78,21 @@ module ScoutApm
           if model == 'Join'
             operation
           end
+        end
+      end
+
+      def from_sql
+        keyword, *split = sql.split(" ")
+        case keyword.downcase
+        when "insert"
+          table = split[1].gsub(/"/, '')
+          "#{table}/insert"
+        when "update"
+          table = split[0].gsub(/"/, '')
+          "#{table}/update"
+        when "delete"
+          table = split[1].gsub(/"/, '')
+          "#{table}/delete"
         end
       end
     end
