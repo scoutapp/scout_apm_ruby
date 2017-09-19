@@ -27,7 +27,7 @@ module ScoutApm
       end
 
       def skip_layer?(layer)
-        super || layer.type != 'ActiveRecord'
+        layer.type != 'ActiveRecord' || layer.limited? || super
       end
 
       def record!

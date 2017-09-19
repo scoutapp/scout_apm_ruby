@@ -66,6 +66,10 @@ module ScoutApm
       "<LimitedLayer type=#{type} count=#{count}>"
     end
 
+    def limited?
+      true
+    end
+
     ######################################################
     #  Stub out some methods with static default values  #
     ######################################################
