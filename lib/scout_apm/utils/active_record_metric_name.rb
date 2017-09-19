@@ -93,6 +93,10 @@ module ScoutApm
         when "delete"
           table = split[1].gsub(/"/, '')
           "#{table}/delete"
+        when "select"
+          "SQL/select"
+        else
+          DEFAULT_METRIC
         end
       rescue
         DEFAULT_METRIC
