@@ -20,13 +20,14 @@ module ScoutApm
             scope_layer.legacy_metric_name, # controller_scope
             1,                              # count, this is a single query, so 1
             layer.total_call_time,
-            layer.annotations[:record_count] || 0)
+            records_returned(layer)
+          )
           @db_query_metric_set << stat
         end
       end
 
       def skip_layer?(layer)
-        super || layer.annotations.nil? || layer.type != 'ActiveRecord'
+        super || layer.type != 'ActiveRecord'
       end
 
       def record!
@@ -35,6 +36,14 @@ module ScoutApm
         # only due to 1 http request)
         @db_query_metric_set.increment_transaction_count!
         @store.track_db_query_metrics!(@db_query_metric_set)
+      end
+
+      def records_returned(layer)
+        if layer.annotations
+          layer.annotations.fetch(:record_count, 0)
+        else
+          0
+        end
       end
     end
   end

@@ -42,6 +42,18 @@ module ScoutApm
           end
         end
 
+        if Utils::KlassHelper.defined?("ActiveRecord::Base")
+          ::ActiveRecord::Base.class_eval do
+            include ::ScoutApm::Instruments::ActiveRecordUpdateInstruments
+          end
+        end
+
+        if Utils::KlassHelper.defined?("ActiveRecord::Relation")
+          ::ActiveRecord::Relation.class_eval do
+            include ::ScoutApm::Instruments::ActiveRecordRelationInstruments
+          end
+        end
+
         if Utils::KlassHelper.defined?("ActiveRecord::Querying")
           ::ActiveRecord::Querying.module_eval do
             include ::ScoutApm::Tracer
@@ -202,6 +214,116 @@ module ScoutApm
         req.ignore_children!
         begin
           find_with_associations_without_scout_instruments(*args, &block)
+        ensure
+          req.acknowledge_children!
+          req.stop_layer
+        end
+      end
+    end
+
+    module ActiveRecordUpdateInstruments
+      def self.included(instrumented_class)
+        ScoutApm::Agent.instance.logger.info "Instrumenting ActiveRecord Save: - #{instrumented_class.inspect}"
+        instrumented_class.class_eval do
+          unless instrumented_class.method_defined?(:save_without_scout_instruments)
+            alias_method :save_without_scout_instruments, :save
+            alias_method :save, :save_with_scout_instruments
+          end
+
+          unless instrumented_class.method_defined?(:"savebang_without_scout_instruments")
+            alias_method :"savebang_without_scout_instruments", :"save!"
+            alias_method :"save!", :"savebang_with_scout_instruments"
+          end
+        end
+
+      end
+
+      def savebang_with_scout_instruments(*args, &block)
+        model = self.class.name
+        operation = self.persisted? ? "Update" : "Create"
+
+        req = ScoutApm::RequestManager.lookup
+        layer = ScoutApm::Layer.new("ActiveRecord", Utils::ActiveRecordMetricName.new("", "#{model} #{operation}"))
+        req.start_layer(layer)
+        req.ignore_children!
+        begin
+          savebang_without_scout_instruments(*args, &block)
+        ensure
+          req.acknowledge_children!
+          req.stop_layer
+        end
+      end
+
+      def save_with_scout_instruments(*args, &block)
+        model = self.class.name
+        operation = self.persisted? ? "Update" : "Create"
+
+        req = ScoutApm::RequestManager.lookup
+        layer = ScoutApm::Layer.new("ActiveRecord", Utils::ActiveRecordMetricName.new("", "#{model} #{operation}"))
+        req.start_layer(layer)
+        req.ignore_children!
+        begin
+          save_without_scout_instruments(*args, &block)
+        ensure
+          req.acknowledge_children!
+          req.stop_layer
+        end
+      end
+    end
+
+    module ActiveRecordRelationInstruments
+      def self.included(instrumented_class)
+        ::ActiveRecord::Relation.class_eval do
+          alias_method :update_all_without_scout_instruments, :update_all
+          alias_method :update_all, :update_all_with_scout_instruments
+
+          alias_method :delete_all_without_scout_instruments, :delete_all
+          alias_method :delete_all, :delete_all_with_scout_instruments
+
+          alias_method :destroy_all_without_scout_instruments, :destroy_all
+          alias_method :destroy_all, :destroy_all_with_scout_instruments
+        end
+      end
+
+      def update_all_with_scout_instruments(*args, &block)
+        model = self.name
+
+        req = ScoutApm::RequestManager.lookup
+        layer = ScoutApm::Layer.new("ActiveRecord", Utils::ActiveRecordMetricName.new("", "#{model} Update"))
+        req.start_layer(layer)
+        req.ignore_children!
+        begin
+          update_all_without_scout_instruments(*args, &block)
+        ensure
+          req.acknowledge_children!
+          req.stop_layer
+        end
+      end
+
+      def delete_all_with_scout_instruments(*args, &block)
+        model = self.name
+
+        req = ScoutApm::RequestManager.lookup
+        layer = ScoutApm::Layer.new("ActiveRecord", Utils::ActiveRecordMetricName.new("", "#{model} Delete"))
+        req.start_layer(layer)
+        req.ignore_children!
+        begin
+          delete_all_without_scout_instruments(*args, &block)
+        ensure
+          req.acknowledge_children!
+          req.stop_layer
+        end
+      end
+
+      def destroy_all_with_scout_instruments(*args, &block)
+        model = self.name
+
+        req = ScoutApm::RequestManager.lookup
+        layer = ScoutApm::Layer.new("ActiveRecord", Utils::ActiveRecordMetricName.new("", "#{model} Delete"))
+        req.start_layer(layer)
+        req.ignore_children!
+        begin
+          destroy_all_without_scout_instruments(*args, &block)
         ensure
           req.acknowledge_children!
           req.stop_layer
