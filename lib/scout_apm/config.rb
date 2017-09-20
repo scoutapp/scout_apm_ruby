@@ -125,6 +125,12 @@ module ScoutApm
       end
     end
 
+    class IntegerCoercion
+      def coerce(val)
+        val.to_i
+      end
+    end
+
     # Simply returns the passed in value, without change
     class NullCoercion
       def coerce(val)
@@ -140,6 +146,8 @@ module ScoutApm
       "enable_background_jobs" => BooleanCoercion.new,
       "ignore"                 => JsonCoercion.new,
       "monitor"                => BooleanCoercion.new,
+      'database_metric_limit'  => IntegerCoercion.new,
+      'database_metric_report_limit' => IntegerCoercion.new,
     }
 
 
@@ -227,6 +235,8 @@ module ScoutApm
         'uri_reporting'          => 'full_path',
         'remote_agent_host'      => '127.0.0.1',
         'remote_agent_port'      => 7721, # picked at random
+        'database_metric_limit'  => 5000, # The hard limit on db metrics
+        'database_metric_report_limit' => 1000,
       }.freeze
 
       def value(key)

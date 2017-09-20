@@ -23,7 +23,7 @@ module ScoutApm
 
     # Take another set, and merge it with this one
     def combine!(other)
-      other.metrics.each do |_key, metric|
+      other.each do |_key, metric|
         self << metric
       end
       self
@@ -34,7 +34,15 @@ module ScoutApm
     # Looks up an existing one under this key and merges, or just saves a new
     # one under the key
     def <<(stat)
-      lookup(stat).combine!(stat)
+      existing_stat = metrics[stat.key]
+      if existing_stat
+        existing_stat.combine!(stat)
+      elsif at_limit?
+        # We're full up, can't add any more.
+        # Should I log this? It may get super noisy?
+      else
+        metrics[stat.key] = stat
+      end
     end
 
     def increment_transaction_count!
@@ -47,6 +55,11 @@ module ScoutApm
       metrics.map {|key, metric|
         "#{key.inspect} - Count: #{metric.call_count}, Total Time: #{"%.2f" % metric.call_time}"
       }.join("\n")
+    end
+
+    def at_limit?
+      @limit ||= ScoutApm::Agent.instance.config.value('database_metric_limit')
+      metrics.size > @limit
     end
   end
 end
