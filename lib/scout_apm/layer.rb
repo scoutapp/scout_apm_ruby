@@ -80,6 +80,10 @@ module ScoutApm
       @trace_index = ScoutApm::Instruments::Stacks.current_trace_index
     end
 
+    def limited?
+      false
+    end
+
     def add_child(child)
       @children ||= LayerChildrenSet.new
       @children << child
