@@ -8,27 +8,7 @@ module ScoutApm
       end
 
       def as_json
-        limited_metrics.map{|metric| metric.as_json }
-      end
-
-      def limited_metrics
-        if over_limit?
-          db_query_metrics.
-            values.
-            sort_by {|stat| stat.call_time }.
-            reverse.
-            take(limit)
-        else
-          db_query_metrics.values
-        end
-      end
-
-      def over_limit?
-        db_query_metrics.size > limit
-      end
-
-      def limit
-        ScoutApm::Agent.instance.config.value('database_metric_report_limit')
+        db_query_metrics.map{|metric| metric.as_json }
       end
     end
   end

@@ -2,11 +2,13 @@ module ScoutApm
   class DbQueryMetricSet
     include Enumerable
 
-    attr_reader :metrics
+    attr_reader :metrics # the raw metrics. You probably want #metrics_to_report
+    attr_reader :config # A ScoutApm::Config instance
 
-    def initialize
+    def initialize(config=ScoutApm::Agent.instance.config)
       # A hash of DbQueryMetricStats values, keyed by DbQueryMetricStats.key
       @metrics = Hash.new
+      @config = config
     end
 
     def each
@@ -23,7 +25,7 @@ module ScoutApm
 
     # Take another set, and merge it with this one
     def combine!(other)
-      other.each do |_key, metric|
+      other.each do |metric|
         self << metric
       end
       self
@@ -51,6 +53,19 @@ module ScoutApm
       end
     end
 
+    def metrics_to_report
+      report_limit = config.value('database_metric_report_limit')
+      if metrics.size > report_limit
+        metrics.
+          values.
+          sort_by {|stat| stat.call_time }.
+          reverse.
+          take(report_limit)
+      else
+        metrics.values
+      end
+    end
+
     def inspect
       metrics.map {|key, metric|
         "#{key.inspect} - Count: #{metric.call_count}, Total Time: #{"%.2f" % metric.call_time}"
@@ -58,8 +73,8 @@ module ScoutApm
     end
 
     def at_limit?
-      @limit ||= ScoutApm::Agent.instance.config.value('database_metric_limit')
-      metrics.size > @limit
+      @limit ||= config.value('database_metric_limit')
+      metrics.size >= @limit
     end
   end
 end

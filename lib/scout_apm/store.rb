@@ -300,7 +300,7 @@ module ScoutApm
     end
 
     def db_query_metrics_payload
-      db_query_metric_set.metrics
+      db_query_metric_set.metrics_to_report
     end
 
     #################################
