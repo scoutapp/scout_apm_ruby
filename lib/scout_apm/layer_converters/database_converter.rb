@@ -30,9 +30,9 @@ module ScoutApm
         layer.type != 'ActiveRecord'            ||
         layer.limited?                          ||
         ( ! layer.name.respond_to?(:model))     ||
-        ( ! layer.name.respond_to?(:operation)) ||
+        ( ! layer.name.respond_to?(:normalized_operation)) ||
         layer.name.model.nil?                   ||
-        layer.name.operation.nil?
+        layer.name.normalized_operation.nil?
       end
 
       def record!
