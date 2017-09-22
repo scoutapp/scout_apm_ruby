@@ -5,6 +5,11 @@ module ScoutApm
         job_name = self.to_s
         queue = find_queue
 
+        if job_name == "ActiveJob::QueueAdapters::ResqueAdapter::JobWrapper"
+          job_name = args.first["job_class"] rescue job_name
+          queue = args.first["queue_name"] rescue queue_name
+        end
+
         req = ScoutApm::RequestManager.lookup
         req.job!
 
