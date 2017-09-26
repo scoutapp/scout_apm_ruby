@@ -1,6 +1,13 @@
+<<<<<<< HEAD
 # 3.0.0
 
 * ScoutProf BETA
+=======
+# 2.1.32
+
+* Better naming when using Resque + ActiveJob
+* Better naming when using Sidekiq + DelayedExtension
+>>>>>>> master
 
 # 2.1.31
 
