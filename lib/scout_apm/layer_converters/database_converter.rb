@@ -55,6 +55,8 @@ module ScoutApm
         else
           DEFAULT_MODEL
         end
+      rescue
+        DEFAULT_MODEL
       end
 
       def operation_name(layer)
@@ -63,6 +65,8 @@ module ScoutApm
         else
           DEFAULT_OPERATION
         end
+      rescue
+        DEFAULT_OPERATION
       end
 
       def records_returned(layer)
