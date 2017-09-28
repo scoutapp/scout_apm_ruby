@@ -41,6 +41,8 @@ module ScoutApm
         'compress_payload',
         'config_file',
         'data_file',
+        'database_metric_limit',
+        'database_metric_report_limit',
         'detailed_middleware',
         'dev_trace',
         'direct_host',
