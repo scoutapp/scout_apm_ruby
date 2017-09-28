@@ -25,6 +25,7 @@ module ScoutApm
         current_period
       end
     end
+    private :find_period
 
     # Save newly collected metrics
     def track!(metrics, options={})
