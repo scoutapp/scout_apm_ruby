@@ -3,12 +3,6 @@
 # the layaway file for cross-process aggregation.
 module ScoutApm
   class Store
-    # A hash of reporting periods. { StoreReportingPeriodTimestamp => StoreReportingPeriod }
-    attr_reader :reporting_periods
-
-    # Used to pull metrics into each reporting period, as that reporting period is finished.
-    attr_reader :samplers
-
     def initialize
       @mutex = Mutex.new
       @reporting_periods = Hash.new { |h,k| h[k] = StoreReportingPeriod.new(k) }
@@ -20,8 +14,9 @@ module ScoutApm
     end
 
     def current_period
-      reporting_periods[current_timestamp]
+      @reporting_periods[current_timestamp]
     end
+    private :current_period
 
     def find_period(timestamp = nil)
       if timestamp
@@ -90,7 +85,7 @@ module ScoutApm
     def write_to_layaway(layaway, force=false)
       ScoutApm::Agent.instance.logger.debug("Writing to layaway#{" (Forced)" if force}")
 
-        reporting_periods.select { |time, rp| force || (time.timestamp < current_timestamp.timestamp) }.
+        @reporting_periods.select { |time, rp| force || (time.timestamp < current_timestamp.timestamp) }.
                           each   { |time, rp| collect_samplers(rp) }.
                           each   { |time, rp| write_reporting_period(layaway, time, rp) }
     end
@@ -102,10 +97,11 @@ module ScoutApm
     rescue => e
       ScoutApm::Agent.instance.logger.warn("Failed writing data to layaway file: #{e.message} / #{e.backtrace}")
     ensure
-      ScoutApm::Agent.instance.logger.debug("Before delete, reporting periods length: #{reporting_periods.size}")
-      deleted_items = reporting_periods.delete(time)
-      ScoutApm::Agent.instance.logger.debug("After delete, reporting periods length: #{reporting_periods.size}. Did delete #{deleted_items}")
+      ScoutApm::Agent.instance.logger.debug("Before delete, reporting periods length: #{@reporting_periods.size}")
+      deleted_items = @reporting_periods.delete(time)
+      ScoutApm::Agent.instance.logger.debug("After delete, reporting periods length: #{@reporting_periods.size}. Did delete #{deleted_items}")
     end
+    private :write_reporting_period
 
     ######################################
     # Sampler support
@@ -123,6 +119,7 @@ module ScoutApm
         end
       end
     end
+    private :collect_samplers
   end
 
   # A timestamp, normalized to the beginning of a minute. Used as a hash key to

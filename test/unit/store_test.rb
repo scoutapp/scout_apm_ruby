@@ -14,11 +14,11 @@ class StoreTest < Minitest::Test
     s = ScoutApm::Store.new
     s.track_one!("Controller", "user/show", 10)
 
-    assert_equal(1, s.reporting_periods.size)
+    assert_equal(1, s.instance_variable_get('@reporting_periods').size)
 
     s.write_to_layaway(FakeFailingLayaway.new, true)
 
-    assert_equal({}, s.reporting_periods)
+    assert_equal({}, s.instance_variable_get('@reporting_periods'))
   end
 
   def test_writing_layaway_removes_stale_timestamps
@@ -29,11 +29,11 @@ class StoreTest < Minitest::Test
     s = ScoutApm::Store.new
     ScoutApm::Instruments::Process::ProcessMemory.new(Logger.new(StringIO.new)).metrics(stale_rp.timestamp, s)
     ScoutApm::Instruments::Process::ProcessMemory.new(Logger.new(StringIO.new)).metrics(current_rp.timestamp, s)
-    assert_equal 2, s.reporting_periods.size
+    assert_equal 2, s.instance_variable_get('@reporting_periods').size
 
     s.write_to_layaway(FakeFailingLayaway.new, true)
 
-    assert_equal({}, s.reporting_periods)
+    assert_equal({}, s.instance_variable_get('@reporting_periods'))
   end
 end
 
