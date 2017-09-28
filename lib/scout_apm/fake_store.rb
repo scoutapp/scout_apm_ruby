@@ -17,6 +17,9 @@ module ScoutApm
     def track_one!(type, name, value, options={})
     end
 
+    def track_histograms!(histograms, options={})
+    end
+
     def track_slow_transaction!(slow_transaction)
     end
 
