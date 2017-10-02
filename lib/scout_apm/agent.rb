@@ -277,6 +277,14 @@ module ScoutApm
       logger.info("recorder is now: #{@recorder.class}")
 
       @background_worker = ScoutApm::BackgroundWorker.new
+
+      if config.value('memory_debug')
+        ScoutApm::Debug.instance.register_periodic_hook do
+          ScoutApm::Agent.instance.logger.info "Memory debug: dumping ScoutApm::Agent objects to file."
+          ScoutApm::Utils::ObjectDump.dump_reachable(ScoutApm::Agent)
+        end
+      end
+
       @background_worker_thread = Thread.new do
         @background_worker.start {
           ScoutApm::Debug.instance.call_periodic_hooks

@@ -20,6 +20,7 @@ require 'scout_apm/environment'
 # key              - the account key with Scout APM. Found in Settings in the Web UI
 # log_file_path    - either a directory or "STDOUT".
 # log_level        - DEBUG / INFO / WARN as usual
+# memory_debug     - true or false. Enable periodic memory debugging to debug files. Defaults to false.
 # monitor          - true or false.  False prevents any instrumentation from starting
 # name             - override the name reported to APM. This is the name that shows in the Web UI
 # profile          - turn on/off scoutprof (only applicable in Gem versions including scoutprof)
@@ -52,6 +53,7 @@ module ScoutApm
         'key',
         'log_file_path',
         'log_level',
+        'memory_debug',
         'monitor',
         'name',
         'profile',
@@ -221,6 +223,7 @@ module ScoutApm
         'host'                   => 'https://checkin.scoutapp.com',
         'ignore'                 => [],
         'log_level'              => 'info',
+        'memory_debug'           => false,
         'profile'                => true, # for scoutprof
         'report_format'          => 'json',
         'scm_subdirectory'       => '',
