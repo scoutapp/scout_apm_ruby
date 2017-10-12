@@ -1,26 +1,21 @@
 # Take a TrackedRequest and turn it into a hash of:
 #   MetricMeta => MetricStats
+
+# Full metrics from this request. These get aggregated in Store for the
+# overview metrics, or stored permanently in a SlowTransaction
+# Some merging of metrics will happen here, so if a request calls the same
+# ActiveRecord or View repeatedly, it'll get merged.
 module ScoutApm
   module LayerConverters
     class MetricConverter < ConverterBase
-      def call
-        scope = scope_layer
+      def register_hooks(walker)
+        super
 
-        # TODO: Track requests that never reach a Controller (for example, when
-        # Middleware decides to return rather than passing onward)
-        return {} unless scope
+        @metrics = {}
 
-        create_metrics
-      end
+        return unless scope_layer
 
-      # Full metrics from this request. These get aggregated in Store for the
-      # overview metrics, or stored permanently in a SlowTransaction
-      # Some merging of metrics will happen here, so if a request calls the same
-      # ActiveRecord or View repeatedly, it'll get merged.
-      def create_metrics
-        metric_hash = Hash.new
-
-        walker.walk do |layer|
+        walker.on do |layer|
           next if skip_layer?(layer)
 
           meta_options = if layer == scope_layer # We don't scope the controller under itself
@@ -34,12 +29,15 @@ module ScoutApm
           metric_name = meta_options.has_key?(:scope) ? layer.type : layer.legacy_metric_name
 
           meta = MetricMeta.new(metric_name, meta_options)
-          metric_hash[meta] ||= MetricStats.new( meta_options.has_key?(:scope) )
+          @metrics[meta] ||= MetricStats.new( meta_options.has_key?(:scope) )
 
-          stat = metric_hash[meta]
+          stat = @metrics[meta]
           stat.update!(layer.total_call_time, layer.total_exclusive_time)
         end
-        metric_hash
+      end
+
+      def record!
+        @store.track!(@metrics)
       end
     end
   end

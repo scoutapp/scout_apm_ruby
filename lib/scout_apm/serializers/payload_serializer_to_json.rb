@@ -2,7 +2,7 @@ module ScoutApm
   module Serializers
     module PayloadSerializerToJson
       class << self
-        def serialize(metadata, metrics, slow_transactions, jobs, slow_jobs, histograms)
+        def serialize(metadata, metrics, slow_transactions, jobs, slow_jobs, histograms, db_query_metrics)
           metadata.merge!({:payload_version => 2})
 
           jsonify_hash({:metadata => metadata,
@@ -11,7 +11,10 @@ module ScoutApm
                         :jobs => JobsSerializerToJson.new(jobs).as_json,
                         :slow_jobs => SlowJobsSerializerToJson.new(slow_jobs).as_json,
                         :histograms => HistogramsSerializerToJson.new(histograms).as_json,
-                      })
+                        :db_metrics => {
+                          :query => DbQuerySerializerToJson.new(db_query_metrics).as_json,
+                        },
+          })
         end
 
         # For the old style of metric serializing.

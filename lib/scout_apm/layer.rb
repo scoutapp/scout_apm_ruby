@@ -61,6 +61,10 @@ module ScoutApm
       @desc = nil
     end
 
+    def limited?
+      false
+    end
+
     def add_child(child)
       @children ||= LayerChildrenSet.new
       @children << child

@@ -1,13 +1,4 @@
 require 'test_helper'
-require 'scout_apm/attribute_arranger'
-require 'scout_apm/bucket_name_splitter'
-require 'scout_apm/serializers/payload_serializer'
-require 'scout_apm/serializers/payload_serializer_to_json'
-require 'scout_apm/slow_transaction'
-require 'scout_apm/metric_meta'
-require 'scout_apm/metric_stats'
-require 'scout_apm/context'
-require 'ostruct'
 require 'json' # to deserialize what has been manually serialized by the production code
 
 class PayloadSerializerTest < Minitest::Test
@@ -17,7 +8,7 @@ class PayloadSerializerTest < Minitest::Test
       :unique_id => "unique_idz",
       :agent_version => 123
     }
-    payload = ScoutApm::Serializers::PayloadSerializerToJson.serialize(metadata, {}, {}, [], [], [])
+    payload = ScoutApm::Serializers::PayloadSerializerToJson.serialize(metadata, {}, {}, [], [], [], {})
 
     # symbol keys turn to strings
     formatted_metadata = {
@@ -58,7 +49,7 @@ class PayloadSerializerTest < Minitest::Test
         stats.total_exclusive_time = 0.07813208899999999
       }
     }
-    payload = ScoutApm::Serializers::PayloadSerializerToJson.serialize({}, metrics, {}, [], [], [])
+    payload = ScoutApm::Serializers::PayloadSerializerToJson.serialize({}, metrics, {}, [], [], [], {})
     formatted_metrics = [
       {
         "key" => {
@@ -102,7 +93,7 @@ class PayloadSerializerTest < Minitest::Test
       :quotie => "here are some \"quotes\"",
       :payload_version => 2,
     }
-    payload = ScoutApm::Serializers::PayloadSerializerToJson.serialize(metadata, {}, {}, [], [], [])
+    payload = ScoutApm::Serializers::PayloadSerializerToJson.serialize(metadata, {}, {}, [], [], [], {})
 
     # symbol keys turn to strings
     formatted_metadata = {

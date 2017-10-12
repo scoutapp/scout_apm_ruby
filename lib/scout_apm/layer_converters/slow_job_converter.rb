@@ -1,31 +1,33 @@
+# Uses a different workflow than normal metrics. We ignore the shared walk of
+# the layer tree, and instead wait until we're sure we even want to do any
+# work. Only then do we go realize all the SlowJobRecord & metrics associated.
+#
 module ScoutApm
   module LayerConverters
     class SlowJobConverter < ConverterBase
-      def initialize(*)
-        super
+      ###################
+      #  Converter API  #
+      ###################
+      def record!
+        return nil unless request.job?
+        @points = ScoutApm::Agent.instance.slow_job_policy.score(request)
 
-        # After call to super, so @request is populated
-        @points = if request.job?
-                    ScoutApm::Agent.instance.slow_job_policy.score(request)
-                  else
-                    -1
-                  end
-
-        setup_subscopable_callbacks
+        # Let the store know we're here, and if it wants our data, it will call
+        # back into #call
+        @store.track_slow_job!(self)
       end
 
-      def name
-        request.unique_name
-      end
+      #####################
+      #  ScoreItemSet API #
+      #####################
+      def name; request.unique_name; end
+      def score; @points; end
 
-      def score
-        @points
-      end
-
+      # Called by the set to force this to actually be created.
       def call
         return nil unless request.job?
-        return nil unless queue_layer
-        return nil unless job_layer
+        return nil unless layer_finder.queue
+        return nil unless layer_finder.job
 
         ScoutApm::Agent.instance.slow_job_policy.stored!(request)
 
@@ -54,23 +56,15 @@ module ScoutApm
         )
       end
 
-      def queue_layer
-        @queue_layer ||= find_first_layer_of_type("Queue")
-      end
-
-      def job_layer
-        @job_layer ||= find_first_layer_of_type("Job")
-      end
-
-      def skip_layer?(layer)
-        super(layer) || layer == queue_layer
-      end
-
       def create_metrics
+        # Create a new walker, and wire up the subscope stuff
+        walker = LayerConverters::DepthFirstWalker.new(self.root_layer)
+        register_hooks(walker)
+
         metric_hash = Hash.new
         allocation_metric_hash = Hash.new
 
-        walker.walk do |layer|
+        walker.on do |layer|
           next if skip_layer?(layer)
 
           # The queue_layer is useful to capture for other reasons, but doesn't
@@ -81,11 +75,18 @@ module ScoutApm
           store_aggregate_metric(layer, metric_hash, allocation_metric_hash)
         end
 
+        # And now run through the walk we just defined
+        walker.walk
+
         metric_hash = attach_backtraces(metric_hash)
         allocation_metric_hash = attach_backtraces(allocation_metric_hash)
 
         [metric_hash, allocation_metric_hash]
       end
+
+      def skip_layer?(layer); super(layer) || layer == queue_layer; end
+      def queue_layer; layer_finder.queue; end
+      def job_layer; layer_finder.job; end
     end
   end
 end

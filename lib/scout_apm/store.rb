@@ -18,26 +18,34 @@ module ScoutApm
     end
     private :current_period
 
+    def find_period(timestamp = nil)
+      if timestamp
+        @reporting_periods[timestamp]
+      else
+        current_period
+      end
+    end
+    private :find_period
+
     # Save newly collected metrics
     def track!(metrics, options={})
       @mutex.synchronize {
-        period = if options[:timestamp]
-                   @reporting_periods[options[:timestamp]]
-                 else
-                   current_period
-                 end
+        period = find_period(options[:timestamp])
         period.absorb_metrics!(metrics)
       }
     end
 
     def track_histograms!(histograms, options={})
       @mutex.synchronize {
-        period = if options[:timestamp]
-                   @reporting_periods[options[:timestamp]]
-                 else
-                   current_period
-                 end
+        period = find_period(options[:timestamp])
         period.merge_histograms!(histograms)
+      }
+    end
+
+    def track_db_query_metrics!(db_query_metric_set, options={})
+      @mutex.synchronize {
+        period = find_period(options[:timestamp])
+        period.merge_db_query_metrics!(db_query_metric_set)
       }
     end
 
@@ -181,6 +189,8 @@ module ScoutApm
 
     attr_reader :metric_set
 
+    attr_reader :db_query_metric_set
+
     def initialize(timestamp)
       @timestamp = timestamp
 
@@ -190,6 +200,8 @@ module ScoutApm
       @histograms = []
 
       @metric_set = MetricSet.new
+      @db_query_metric_set = DbQueryMetricSet.new
+
       @jobs = Hash.new
     end
 
@@ -200,7 +212,8 @@ module ScoutApm
         merge_slow_transactions!(other.slow_transactions_payload).
         merge_jobs!(other.jobs).
         merge_slow_jobs!(other.slow_jobs_payload).
-        merge_histograms!(other.histograms)
+        merge_histograms!(other.histograms).
+        merge_db_query_metrics!(other.db_query_metric_set)
       self
     end
 
@@ -218,6 +231,11 @@ module ScoutApm
     # Makes sure that you don't duplicate error count records
     def merge_metrics!(other_metric_set)
       metric_set.combine!(other_metric_set)
+      self
+    end
+
+    def merge_db_query_metrics!(other_metric_set)
+      db_query_metric_set.combine!(other_metric_set)
       self
     end
 
@@ -277,6 +295,10 @@ module ScoutApm
 
     def slow_jobs_payload
       job_traces.to_a
+    end
+
+    def db_query_metrics_payload
+      db_query_metric_set.metrics_to_report
     end
 
     #################################

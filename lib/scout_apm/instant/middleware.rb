@@ -224,7 +224,12 @@ module ScoutApm
       end
 
       def trace
-        @trace ||= LayerConverters::SlowRequestConverter.new(tracked_request).call
+        @trace ||=
+          begin
+            layer_finder = LayerConverters::FindLayerByType.new(tracked_request)
+            converter = LayerConverters::SlowRequestConverter.new(tracked_request, layer_finder, ScoutApm::FakeStore.new)
+            converter.call
+          end
       end
 
       def payload

@@ -47,6 +47,14 @@ class ActiveRecordMetricNameTest < Minitest::Test
     assert_equal "SQL/Unknown", mn.to_s
   end
 
+  def test_with_sql_name
+    sql = %q|INSERT INTO "users".* VALUES (1,2,3)|
+    name = "SQL"
+
+    mn = ScoutApm::Utils::ActiveRecordMetricName.new(sql, name)
+    assert_equal "SQL/Unknown", mn.to_s
+  end
+
   # TODO: Determine if there should be a distinction between Unknown and Other.
   def test_with_custom_name
     sql = %q|SELECT "users".* FROM "users" /*application:Testapp,controller:public,action:index*/|
