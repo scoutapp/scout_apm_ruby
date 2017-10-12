@@ -58,7 +58,14 @@ class MetricStats
   end
 
   def as_json
-    json_attributes = [:call_count, :total_call_time, :total_exclusive_time, :min_call_time, :max_call_time, :traces]
+    json_attributes = [
+      :call_count,
+      :max_call_time,
+      :min_call_time,
+      :total_call_time,
+      :total_exclusive_time,
+      :traces,
+    ]
     ScoutApm::AttributeArranger.call(self, json_attributes)
   end
 end

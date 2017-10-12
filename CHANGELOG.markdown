@@ -1,13 +1,23 @@
-<<<<<<< HEAD
 # 3.0.0
 
 * ScoutProf BETA
-=======
+
+# 2.3.0
+
+Note: ScoutApm Agent version 2.2.0 was the initial ScoutProf agent that was
+determined quickly to be a big enough change to warrant the move to 3.0. We are not
+reusing that version number to avoid confusion.
+
+* Deeper database query instrumentation. The agent now collects app-wide
+  database usage on every call. This will allow you to better identify
+  persistently slow queries, and capacity bottlenecks.
+* Optimize the approach used during recording each request to avoid unnecessary
+  work, improving performance
+
 # 2.1.32
 
 * Better naming when using Resque + ActiveJob
 * Better naming when using Sidekiq + DelayedExtension
->>>>>>> master
 
 # 2.1.31
 
@@ -46,7 +56,6 @@
 # 2.1.23
 
 * Extend Mongoid instrumentation to 6.x
->>>>>>> master
 
 # 2.1.22
 

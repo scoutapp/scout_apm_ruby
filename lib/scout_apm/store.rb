@@ -3,12 +3,6 @@
 # the layaway file for cross-process aggregation.
 module ScoutApm
   class Store
-    # A hash of reporting periods. { StoreReportingPeriodTimestamp => StoreReportingPeriod }
-    attr_reader :reporting_periods
-
-    # Used to pull metrics into each reporting period, as that reporting period is finished.
-    attr_reader :samplers
-
     def initialize
       @mutex = Mutex.new
       @reporting_periods = Hash.new { |h,k| h[k] = StoreReportingPeriod.new(k) }
@@ -20,29 +14,38 @@ module ScoutApm
     end
 
     def current_period
-      reporting_periods[current_timestamp]
+      @reporting_periods[current_timestamp]
     end
+    private :current_period
+
+    def find_period(timestamp = nil)
+      if timestamp
+        @reporting_periods[timestamp]
+      else
+        current_period
+      end
+    end
+    private :find_period
 
     # Save newly collected metrics
     def track!(metrics, options={})
       @mutex.synchronize {
-        period = if options[:timestamp]
-                   @reporting_periods[options[:timestamp]]
-                 else
-                   current_period
-                 end
+        period = find_period(options[:timestamp])
         period.absorb_metrics!(metrics)
       }
     end
 
     def track_histograms!(histograms, options={})
       @mutex.synchronize {
-        period = if options[:timestamp]
-                   @reporting_periods[options[:timestamp]]
-                 else
-                   current_period
-                 end
+        period = find_period(options[:timestamp])
         period.merge_histograms!(histograms)
+      }
+    end
+
+    def track_db_query_metrics!(db_query_metric_set, options={})
+      @mutex.synchronize {
+        period = find_period(options[:timestamp])
+        period.merge_db_query_metrics!(db_query_metric_set)
       }
     end
 
@@ -83,7 +86,7 @@ module ScoutApm
     def write_to_layaway(layaway, force=false)
       ScoutApm::Agent.instance.logger.debug("Writing to layaway#{" (Forced)" if force}")
 
-        reporting_periods.select { |time, rp| force || (time.timestamp < current_timestamp.timestamp) }.
+        @reporting_periods.select { |time, rp| force || (time.timestamp < current_timestamp.timestamp) }.
                           each   { |time, rp| collect_samplers(rp) }.
                           each   { |time, rp| write_reporting_period(layaway, time, rp) }
     end
@@ -95,10 +98,11 @@ module ScoutApm
     rescue => e
       ScoutApm::Agent.instance.logger.warn("Failed writing data to layaway file: #{e.message} / #{e.backtrace}")
     ensure
-      ScoutApm::Agent.instance.logger.debug("Before delete, reporting periods length: #{reporting_periods.size}")
-      deleted_items = reporting_periods.delete(time)
-      ScoutApm::Agent.instance.logger.debug("After delete, reporting periods length: #{reporting_periods.size}. Did delete #{deleted_items}")
+      ScoutApm::Agent.instance.logger.debug("Before delete, reporting periods length: #{@reporting_periods.size}")
+      deleted_items = @reporting_periods.delete(time)
+      ScoutApm::Agent.instance.logger.debug("After delete, reporting periods length: #{@reporting_periods.size}. Did delete #{deleted_items}")
     end
+    private :write_reporting_period
 
     ######################################
     # Sampler support
@@ -116,6 +120,7 @@ module ScoutApm
         end
       end
     end
+    private :collect_samplers
   end
 
   # A timestamp, normalized to the beginning of a minute. Used as a hash key to
@@ -184,6 +189,8 @@ module ScoutApm
 
     attr_reader :metric_set
 
+    attr_reader :db_query_metric_set
+
     def initialize(timestamp)
       @timestamp = timestamp
 
@@ -193,6 +200,8 @@ module ScoutApm
       @histograms = []
 
       @metric_set = MetricSet.new
+      @db_query_metric_set = DbQueryMetricSet.new
+
       @jobs = Hash.new
     end
 
@@ -203,7 +212,8 @@ module ScoutApm
         merge_slow_transactions!(other.slow_transactions_payload).
         merge_jobs!(other.jobs).
         merge_slow_jobs!(other.slow_jobs_payload).
-        merge_histograms!(other.histograms)
+        merge_histograms!(other.histograms).
+        merge_db_query_metrics!(other.db_query_metric_set)
       self
     end
 
@@ -221,6 +231,11 @@ module ScoutApm
     # Makes sure that you don't duplicate error count records
     def merge_metrics!(other_metric_set)
       metric_set.combine!(other_metric_set)
+      self
+    end
+
+    def merge_db_query_metrics!(other_metric_set)
+      db_query_metric_set.combine!(other_metric_set)
       self
     end
 
@@ -280,6 +295,10 @@ module ScoutApm
 
     def slow_jobs_payload
       job_traces.to_a
+    end
+
+    def db_query_metrics_payload
+      db_query_metric_set.metrics_to_report
     end
 
     #################################

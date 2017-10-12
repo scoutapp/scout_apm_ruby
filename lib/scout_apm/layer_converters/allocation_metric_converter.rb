@@ -1,16 +1,15 @@
 module ScoutApm
   module LayerConverters
     class AllocationMetricConverter < ConverterBase
-      def call
-        scope = scope_layer
-        return {} unless scope
-        return {} unless ScoutApm::Instruments::Allocations::ENABLED
+      def record!
+        return unless scope_layer
+        return unless ScoutApm::Instruments::Allocations::ENABLED
 
-        meta = MetricMeta.new("ObjectAllocations", {:scope => scope.legacy_metric_name})
+        meta = MetricMeta.new("ObjectAllocations", {:scope => scope_layer.legacy_metric_name})
         stat = MetricStats.new
         stat.update!(root_layer.total_allocations)
 
-        { meta => stat }
+        @store.track!({ meta => stat })
       end
     end
   end

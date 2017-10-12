@@ -27,6 +27,14 @@ module ScoutApm
         end
       end
 
+      def model
+        parts.first
+      end
+
+      def normalized_operation
+        parse_operation
+      end
+
       # For the layer lookup.
       def hash
         h = name.downcase.hash
@@ -43,10 +51,6 @@ module ScoutApm
       alias_method :==, :eql?
 
       private
-
-      def model
-        parts.first
-      end
 
       def operation
         if parts.length >= 2
