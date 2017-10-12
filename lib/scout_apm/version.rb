@@ -1,4 +1,4 @@
 module ScoutApm
-  VERSION = "2.3.0.pre3"
+  VERSION = "2.3.0"
 end
 
