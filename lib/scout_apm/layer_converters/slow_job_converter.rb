@@ -56,21 +56,6 @@ module ScoutApm
         )
       end
 
-      def queue_layer
-        @queue_layer ||= find_first_layer_of_type("Queue")
-      end
-
-      def job_layer
-        @job_layer ||= find_first_layer_of_type("Job")
-      end
-
-
-      # The queue_layer is useful to capture for other reasons, but doesn't
-      # create a MetricMeta/Stat of its own
-      def skip_layer?(layer)
-        super(layer) || layer == queue_layer
-      end
-
       def create_metrics
         # Create a new walker, and wire up the subscope stuff
         walker = LayerConverters::DepthFirstWalker.new(self.root_layer)
