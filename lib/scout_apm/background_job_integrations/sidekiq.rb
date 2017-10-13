@@ -101,7 +101,7 @@ module ScoutApm
             # Prevents instances from coming through named like "#<Foo:0x007ffd7a9dd8a0>"
             klass = klass.class unless klass.is_a? Module
 
-            [klass, method].map(&:to_s).join(".")
+            job_class = [klass, method].map(&:to_s).join(".")
           rescue
             DELAYED_WRAPPER_KLASS
           end
