@@ -92,10 +92,16 @@ module ScoutApm
           end
         elsif job_class == DELAYED_WRAPPER_KLASS
           begin
+            # Extract the info out of the wrapper
             yml = msg['args'].first
             deserialized_args = YAML.load(yml)
             klass, method, *rest = deserialized_args
-            job_class = [klass,method].map(&:to_s).join(".")
+
+            # If this is an instance of a class, get the class itself
+            # Prevents instances from coming through named like "#<Foo:0x007ffd7a9dd8a0>"
+            klass = klass.class unless klass.is_a? Module
+
+            [klass, method].map(&:to_s).join(".")
           rescue
             DELAYED_WRAPPER_KLASS
           end
