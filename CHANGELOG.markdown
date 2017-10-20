@@ -2,6 +2,10 @@
 
 * ScoutProf BETA
 
+# 2.3.1
+
+* Fix DevTrace bug
+
 # 2.3.0
 
 Note: ScoutApm Agent version 2.2.0 was the initial ScoutProf agent that was
