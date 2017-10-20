@@ -39,6 +39,14 @@ class FakeConfigOverlay
   def has_key?(key)
     @values.has_key?(key)
   end
+
+  def name
+    "agent-test-config-overlay"
+  end
+
+  def any_keys_found?
+    true
+  end
 end
 
 class FakeEnvironment
@@ -83,8 +91,13 @@ class Minitest::Test
     FakeEnvironment.new(values)
   end
 
+  # XXX: Make it easy to override context here?
   def make_fake_config(values)
-    ScoutApm::Config.new(FakeConfigOverlay.new(values))
+    ScoutApm::Config.new(agent_context, [FakeConfigOverlay.new(values), ScoutApm::Config::ConfigNull.new] )
+  end
+
+  def agent_context
+    ScoutApm::AgentContext.new
   end
 
   DATA_FILE_DIR = File.dirname(__FILE__) + '/tmp'

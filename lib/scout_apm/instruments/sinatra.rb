@@ -1,9 +1,10 @@
+# XXX: Is this file used?
 module ScoutApm
   module Instruments
     class Sinatra
       attr_reader :logger
 
-      def initalize(logger=ScoutApm::Agent.instance.logger)
+      def initalize(logger=ScoutApm::Agent.instance.context.logger)
         @logger = logger
         @installed = false
       end
@@ -16,7 +17,7 @@ module ScoutApm
         @installed = true
 
         if defined?(::Sinatra) && defined?(::Sinatra::Base) && ::Sinatra::Base.private_method_defined?(:dispatch!)
-          ScoutApm::Agent.instance.logger.info "Instrumenting Sinatra"
+          logger.info "Instrumenting Sinatra"
           ::Sinatra::Base.class_eval do
             include ScoutApm::Tracer
             include ScoutApm::Instruments::SinatraInstruments

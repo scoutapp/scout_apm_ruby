@@ -1,9 +1,15 @@
 module ScoutApm
   module Instruments
     class RailsRouter
-      def initalize(logger=ScoutApm::Agent.instance.logger)
-        @logger = logger
+      attr_reader :context
+
+      def initialize(context)
+        @context = context
         @installed = false
+      end
+
+      def logger
+        context.logger
       end
 
       def installed?
@@ -26,8 +32,8 @@ module ScoutApm
               end
             end
 
-            alias call_without_scout_instruments call
-            alias call call_with_scout_instruments
+            alias_method :call_without_scout_instruments, :call
+            alias_method :call, :call_with_scout_instruments
           end
         end
       end

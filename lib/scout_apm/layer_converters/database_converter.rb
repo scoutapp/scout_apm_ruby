@@ -3,7 +3,7 @@ module ScoutApm
     class DatabaseConverter < ConverterBase
       def initialize(*)
         super
-        @db_query_metric_set = DbQueryMetricSet.new
+        @db_query_metric_set = DbQueryMetricSet.new(context)
       end
 
       def register_hooks(walker)

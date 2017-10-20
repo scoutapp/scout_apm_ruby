@@ -42,7 +42,7 @@ module ScoutApm
         ::Sidekiq::Processor.class_eval do
           def initialize_with_scout(boss)
             agent = ::ScoutApm::Agent.instance
-            agent.start_background_worker
+            agent.start
             initialize_without_scout(boss)
           end
 

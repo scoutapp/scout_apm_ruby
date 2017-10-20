@@ -6,7 +6,7 @@ module ScoutApm
       ###################
       def record!
         return nil unless request.web?
-        @points = ScoutApm::Agent.instance.slow_request_policy.score(request)
+        @points = context.slow_request_policy.score(request)
 
         # Let the store know we're here, and if it wants our data, it will call
         # back into #call
@@ -25,10 +25,10 @@ module ScoutApm
         return nil unless request.web?
         return nil unless scope_layer
 
-        ScoutApm::Agent.instance.slow_request_policy.stored!(request)
+        context.slow_request_policy.stored!(request)
 
         # record the change in memory usage
-        mem_delta = ScoutApm::Instruments::Process::ProcessMemory.rss_to_mb(@request.capture_mem_delta!)
+        mem_delta = ScoutApm::Instruments::Process::ProcessMemory.new(context).rss_to_mb(@request.capture_mem_delta!)
 
         uri = request.annotations[:uri] || ""
 
@@ -38,7 +38,8 @@ module ScoutApm
           allocation_metrics = {}
         end
 
-        SlowTransaction.new(uri,
+        SlowTransaction.new(context,
+                            uri,
                             scope_layer.legacy_metric_name,
                             root_layer.total_call_time,
                             timing_metrics,

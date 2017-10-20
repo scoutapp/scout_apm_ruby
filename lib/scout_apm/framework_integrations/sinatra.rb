@@ -25,7 +25,7 @@ module ScoutApm
           "Sinatra"
         end
       rescue => e
-        ScoutApm::Agent.instance.logger.debug "Failed getting Sinatra Application Name: #{e.message}\n#{e.backtrace.join("\n\t")}"
+        ScoutApm::Agent.instance.context.logger.debug "Failed getting Sinatra Application Name: #{e.message}\n#{e.backtrace.join("\n\t")}"
         "Sinatra"
       end
 

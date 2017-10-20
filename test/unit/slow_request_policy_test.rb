@@ -17,9 +17,13 @@ class FakeRequest
 end
 
 class SlowRequestPolicyTest < Minitest::Test
+  def setup
+    @context = ScoutApm::AgentContext.new
+  end
+
   def test_stored_records_current_time
     test_start = Time.now
-    policy = ScoutApm::SlowRequestPolicy.new
+    policy = ScoutApm::SlowRequestPolicy.new(@context)
     request = FakeRequest.new("users/index")
 
     policy.stored!(request)
@@ -27,12 +31,12 @@ class SlowRequestPolicyTest < Minitest::Test
   end
 
   def test_score
-    policy = ScoutApm::SlowRequestPolicy.new
+    policy = ScoutApm::SlowRequestPolicy.new(@context)
     request = FakeRequest.new("users/index")
 
     request.set_duration(10) # 10 seconds
     policy.last_seen[request.unique_name] = Time.now - 120 # 2 minutes since last seen
-    ScoutApm::Agent.instance.request_histograms.add(request.unique_name, 1)
+    @context.request_histograms.add(request.unique_name, 1)
 
     # Actual value I have in console is 1.499
     assert policy.score(request) > 1.45

@@ -26,13 +26,12 @@ module ScoutApm
       def install_before_fork
         ::Resque.before_first_fork do
           begin
-            ScoutApm::Agent.instance.start(:skip_app_server_check => true)
-            ScoutApm::Agent.instance.start_background_worker
-            ScoutApm::Agent.instance.start_remote_server(bind, port)
+            ScoutApm::Agent.instance.start
+            ScoutApm::Agent.instance.context.start_remote_server!(bind, port)
           rescue Errno::EADDRINUSE
-            ScoutApm::Agent.instance.logger.warn "Error while Installing Resque Instruments, Port #{port} already in use. Set via the `remote_agent_port` configuration option"
+            ScoutApm::Agent.instance.context.logger.warn "Error while Installing Resque Instruments, Port #{port} already in use. Set via the `remote_agent_port` configuration option"
           rescue => e
-            ScoutApm::Agent.instance.logger.warn "Error while Installing Resque before_first_fork: #{e.inspect}"
+            ScoutApm::Agent.instance.context.logger.warn "Error while Installing Resque before_first_fork: #{e.inspect}"
           end
         end
       end
@@ -40,10 +39,10 @@ module ScoutApm
       def install_after_fork
         ::Resque.after_fork do
           begin
-            ScoutApm::Agent.instance.use_remote_recorder(bind, port)
+            ScoutApm::Agent.instance.context.become_remote_client!(bind, port)
             inject_job_instrument
           rescue => e
-            ScoutApm::Agent.instance.logger.warn "Error while Installing Resque after_fork: #{e.inspect}"
+            ScoutApm::Agent.instance.context.logger.warn "Error while Installing Resque after_fork: #{e.inspect}"
           end
         end
       end
@@ -77,7 +76,7 @@ module ScoutApm
       end
 
       def config
-        @config || ScoutApm::Agent.instance.config
+        @config || ScoutApm::Agent.instance.context.config
       end
     end
   end

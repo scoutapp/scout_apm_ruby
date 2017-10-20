@@ -3,11 +3,15 @@ require 'scout_apm/utils/sql_sanitizer'
 module ScoutApm
   module Instruments
     class ActiveRecord
-      attr_reader :logger
+      attr_reader :context
 
-      def initalize(logger=ScoutApm::Agent.instance.logger)
-        @logger = logger
+      def initialize(context)
+        @context = context
         @installed = false
+      end
+
+      def logger
+        context.logger
       end
 
       def installed?
@@ -80,14 +84,14 @@ module ScoutApm
             if layer && layer.type == "ActiveRecord"
               layer.annotate_layer(payload)
             elsif layer
-              ScoutApm::Agent.instance.logger.debug("Expected layer type: ActiveRecord, got #{layer && layer.type}")
+              logger.debug("Expected layer type: ActiveRecord, got #{layer && layer.type}")
             else
               # noop, no layer at all. We're probably ignoring this req.
             end
           end
         end
       rescue
-        ScoutApm::Agent.instance.logger.warn "ActiveRecord instrumentation exception: #{$!.message}"
+        logger.warn "ActiveRecord instrumentation exception: #{$!.message}"
       end
     end
 
@@ -102,7 +106,7 @@ module ScoutApm
     ################################################################################
     module ActiveRecordInstruments
       def self.included(instrumented_class)
-        ScoutApm::Agent.instance.logger.info "Instrumenting #{instrumented_class.inspect}"
+        ScoutApm::Agent.instance.context.logger.info "Instrumenting #{instrumented_class.inspect}"
         instrumented_class.class_eval do
           unless instrumented_class.method_defined?(:log_without_scout_instruments)
             alias_method :log_without_scout_instruments, :log
@@ -176,7 +180,7 @@ module ScoutApm
 
     module ActiveRecordQueryingInstruments
       def self.included(instrumented_class)
-        ScoutApm::Agent.instance.logger.info "Instrumenting ActiveRecord::Querying - #{instrumented_class.inspect}"
+        ScoutApm::Agent.instance.context.logger.info "Instrumenting ActiveRecord::Querying - #{instrumented_class.inspect}"
         instrumented_class.class_eval do
           unless instrumented_class.method_defined?(:find_by_sql_without_scout_instruments)
             alias_method :find_by_sql_without_scout_instruments, :find_by_sql
@@ -202,7 +206,7 @@ module ScoutApm
 
     module ActiveRecordFinderMethodsInstruments
       def self.included(instrumented_class)
-        ScoutApm::Agent.instance.logger.info "Instrumenting ActiveRecord::FinderMethods - #{instrumented_class.inspect}"
+        ScoutApm::Agent.instance.context.logger.info "Instrumenting ActiveRecord::FinderMethods - #{instrumented_class.inspect}"
         instrumented_class.class_eval do
           unless instrumented_class.method_defined?(:find_with_associations_without_scout_instruments)
             alias_method :find_with_associations_without_scout_instruments, :find_with_associations

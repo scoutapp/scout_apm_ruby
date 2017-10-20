@@ -6,10 +6,10 @@ module ScoutApm
         attr_reader :num_processors
         attr_accessor :last_run, :last_utime, :last_stime
 
+        def initialize(context)
+          @context = context
 
-        def initialize(num_processors, logger)
-          @num_processors = [num_processors, 1].compact.max
-          @logger = logger
+          @num_processors = [context.environment.num_processors, 1].compact.max
 
           t = ::Process.times
           @last_run = Time.now
@@ -97,6 +97,10 @@ module ScoutApm
           self.last_run = now
           self.last_utime = utime
           self.last_stime = stime
+        end
+
+        def logger
+          context.logger
         end
       end
     end

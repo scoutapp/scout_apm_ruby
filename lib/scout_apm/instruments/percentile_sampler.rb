@@ -18,14 +18,16 @@ module ScoutApm
     end
 
     class PercentileSampler
-      attr_reader :logger
+      def initialize(context)
+        @context = context
+      end
 
-      # A hash of { time => RequestHistograms }
-      attr_reader :histograms
+      def histograms
+        @context.request_histograms_by_time
+      end
 
-      def initialize(logger, histograms)
-        @logger = logger
-        @histograms = histograms
+      def logger
+        @context.logger
       end
 
       def human_name

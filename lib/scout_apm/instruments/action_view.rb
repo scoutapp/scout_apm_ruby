@@ -2,11 +2,15 @@ module ScoutApm
   module Instruments
     # instrumentation for Rails 3 and Rails 4 is the same.
     class ActionView
-      attr_reader :logger
+      attr_reader :context
 
-      def initalize(logger=ScoutApm::Agent.instance.logger)
-        @logger = logger
+      def initialize(context)
+        @context = context
         @installed = false
+      end
+
+      def logger
+        context.logger
       end
 
       def installed?
@@ -17,7 +21,7 @@ module ScoutApm
         @installed = true
 
         if defined?(::ActionView) && defined?(::ActionView::PartialRenderer)
-          ScoutApm::Agent.instance.logger.info "Instrumenting ActionView::PartialRenderer"
+          logger.info "Instrumenting ActionView::PartialRenderer"
           ::ActionView::PartialRenderer.class_eval do
             include ScoutApm::Tracer
 
@@ -32,7 +36,7 @@ module ScoutApm
               :scope => true
           end
 
-          ScoutApm::Agent.instance.logger.info "Instrumenting ActionView::TemplateRenderer"
+          logger.info "Instrumenting ActionView::TemplateRenderer"
           ::ActionView::TemplateRenderer.class_eval do
             include ScoutApm::Tracer
             instrument_method :render_template,

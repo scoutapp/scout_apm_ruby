@@ -1,10 +1,14 @@
 module ScoutApm
   module Utils
     class InstalledGems
-      attr_reader :logger
+      attr_reader :context
 
-      def initialize(logger=ScoutApm::Agent.instance.logger)
-        @logger = logger
+      def initialize(context)
+        @context = context
+      end
+
+      def logger
+        context.logger
       end
 
       def run

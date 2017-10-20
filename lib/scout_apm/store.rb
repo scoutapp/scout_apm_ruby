@@ -3,14 +3,15 @@
 # the layaway file for cross-process aggregation.
 module ScoutApm
   class Store
-    def initialize
+    def initialize(context)
+      @context = context
       @mutex = Mutex.new
-      @reporting_periods = Hash.new { |h,k| h[k] = StoreReportingPeriod.new(k) }
+      @reporting_periods = Hash.new { |h,k| h[k] = StoreReportingPeriod.new(k, @context) }
       @samplers = []
     end
 
     def current_timestamp
-      StoreReportingPeriodTimestamp.new
+      StoreReportingPeriodTimestamp.new(Time.now)
     end
 
     def current_period
@@ -84,11 +85,11 @@ module ScoutApm
     # current-minute metrics.  Useful when we are shutting down the agent
     # during a restart.
     def write_to_layaway(layaway, force=false)
-      ScoutApm::Agent.instance.logger.debug("Writing to layaway#{" (Forced)" if force}")
+      logger.debug("Writing to layaway#{" (Forced)" if force}")
 
-        @reporting_periods.select { |time, rp| force || (time.timestamp < current_timestamp.timestamp) }.
-                          each   { |time, rp| collect_samplers(rp) }.
-                          each   { |time, rp| write_reporting_period(layaway, time, rp) }
+      @reporting_periods.select { |time, rp| force || (time.timestamp < current_timestamp.timestamp) }.
+                         each   { |time, rp| collect_samplers(rp) }.
+                         each   { |time, rp| write_reporting_period(layaway, time, rp) }
     end
 
     def write_reporting_period(layaway, time, rp)
@@ -96,11 +97,11 @@ module ScoutApm
         layaway.write_reporting_period(rp)
       }
     rescue => e
-      ScoutApm::Agent.instance.logger.warn("Failed writing data to layaway file: #{e.message} / #{e.backtrace}")
+      logger.warn("Failed writing data to layaway file: #{e.message} / #{e.backtrace}")
     ensure
-      ScoutApm::Agent.instance.logger.debug("Before delete, reporting periods length: #{@reporting_periods.size}")
+      logger.debug("Before delete, reporting periods length: #{@reporting_periods.size}")
       deleted_items = @reporting_periods.delete(time)
-      ScoutApm::Agent.instance.logger.debug("After delete, reporting periods length: #{@reporting_periods.size}. Did delete #{deleted_items}")
+      logger.debug("After delete, reporting periods length: #{@reporting_periods.size}. Did delete #{deleted_items}")
     end
     private :write_reporting_period
 
@@ -115,12 +116,17 @@ module ScoutApm
         begin
           sampler.metrics(rp.timestamp, self)
         rescue => e
-          ScoutApm::Agent.instance.logger.info "Error reading #{sampler.human_name} for period: #{rp}"
-          ScoutApm::Agent.instance.logger.debug "#{e.message}\n\t#{e.backtrace.join("\n\t")}"
+          logger.info "Error reading #{sampler.human_name} for period: #{rp}"
+          logger.debug "#{e.message}\n\t#{e.backtrace.join("\n\t")}"
         end
       end
     end
     private :collect_samplers
+
+    def logger
+      @context.logger
+    end
+    private :logger
   end
 
   # A timestamp, normalized to the beginning of a minute. Used as a hash key to
@@ -191,7 +197,7 @@ module ScoutApm
 
     attr_reader :db_query_metric_set
 
-    def initialize(timestamp)
+    def initialize(timestamp, context)
       @timestamp = timestamp
 
       @request_traces = ScoredItemSet.new
@@ -200,7 +206,7 @@ module ScoutApm
       @histograms = []
 
       @metric_set = MetricSet.new
-      @db_query_metric_set = DbQueryMetricSet.new
+      @db_query_metric_set = DbQueryMetricSet.new(context)
 
       @jobs = Hash.new
     end

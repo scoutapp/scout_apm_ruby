@@ -109,7 +109,7 @@ require 'scout_apm/config'
 require 'scout_apm/environment'
 require 'scout_apm/agent'
 require 'scout_apm/logger'
-require 'scout_apm/agent/reporting'
+require 'scout_apm/reporting'
 require 'scout_apm/layaway'
 require 'scout_apm/layaway_file'
 require 'scout_apm/reporter'
@@ -162,6 +162,12 @@ require 'scout_apm/remote/message'
 require 'scout_apm/remote/recorder'
 require 'scout_apm/instruments/resque'
 
+require 'scout_apm/agent_context'
+require 'scout_apm/instrument_manager'
+require 'scout_apm/periodic_work'
+require 'scout_apm/agent/preconditions'
+require 'scout_apm/agent/exit_handler'
+
 if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR) && Rails::VERSION::MAJOR >= 3 && defined?(Rails::Railtie)
   module ScoutApm
     class Railtie < Rails::Railtie
@@ -172,7 +178,7 @@ if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR
         app.middleware.use ScoutApm::Middleware
 
         # Attempt to start right away, this will work best for preloading apps, Unicorn & Puma & similar
-        ScoutApm::Agent.instance.start
+        ScoutApm::Agent.instance.install
       end
     end
     class Railtie < Rails::Railtie

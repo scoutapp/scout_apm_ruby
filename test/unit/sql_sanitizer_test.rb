@@ -1,14 +1,8 @@
 require 'test_helper'
 
-require 'scout_apm/utils/sql_sanitizer'
-
 module ScoutApm
   module Utils
     class SqlSanitizerTest < Minitest::Test
-      def setup
-        ScoutApm::Agent.instance.init_logger
-      end
-
       # Too long, and we just bail out to prevent long running instrumentation
       def test_long_sql
         sql = " " * 1001

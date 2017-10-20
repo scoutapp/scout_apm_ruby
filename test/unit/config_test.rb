@@ -3,8 +3,12 @@ require 'test_helper'
 require 'scout_apm/config'
 
 class ConfigTest < Minitest::Test
+  def setup
+    @context = ScoutApm::AgentContext.new
+  end
+
   def test_initalize_without_a_config
-    conf = ScoutApm::Config.without_file
+    conf = ScoutApm::Config.without_file(@context)
 
     # nil for random keys
     assert_nil conf.value('log_file_path')
@@ -21,7 +25,7 @@ class ConfigTest < Minitest::Test
     set_rack_env('production')
 
     conf_file = File.expand_path('../../data/config_test_1.yml', __FILE__)
-    conf = ScoutApm::Config.with_file(conf_file)
+    conf = ScoutApm::Config.with_file(@context, conf_file)
 
     assert_equal 'debug', conf.value('log_level')
     assert_equal 'APM Test Conf (Production)', conf.value('name')
@@ -29,7 +33,7 @@ class ConfigTest < Minitest::Test
 
   def test_loading_file_without_env_in_file
     conf_file = File.expand_path("../../data/config_test_1.yml", __FILE__)
-    conf = ScoutApm::Config.with_file(conf_file, environment: "staging")
+    conf = ScoutApm::Config.with_file(@context, conf_file, environment: "staging")
 
     assert_equal "info", conf.value('log_level') # the default value
     assert_nil nil, conf.value('name')         # the default value
@@ -71,11 +75,11 @@ class ConfigTest < Minitest::Test
   def test_any_keys_found
     ENV.stubs(:has_key?).returns(nil)
 
-    conf = ScoutApm::Config.with_file("a_file_that_doesnt_exist.yml")
+    conf = ScoutApm::Config.with_file(@context, "a_file_that_doesnt_exist.yml")
     assert ! conf.any_keys_found?
 
     ENV.stubs(:has_key?).with("SCOUT_MONITOR").returns("true")
-    conf = ScoutApm::Config.with_file("a_file_that_doesnt_exist.yml")
+    conf = ScoutApm::Config.with_file(@context, "a_file_that_doesnt_exist.yml")
     assert conf.any_keys_found?
   end
 end

@@ -45,13 +45,13 @@ module ScoutApm
       # type - "View" or "ActiveRecord" and similar
       # name - "users/show", "App#find"
       def instrument_method(method_name, options = {})
-        ScoutApm::Agent.instance.logger.info "Instrumenting #{method_name}"
+        ScoutApm::Agent.instance.context.logger.info "Instrumenting #{method_name}"
         type = options[:type] || "Custom"
         name = options[:name] || "#{self.name}/#{method_name.to_s}"
 
         instrumented_name, uninstrumented_name = _determine_instrumented_name(method_name, type)
 
-        ScoutApm::Agent.instance.logger.info "Instrumenting #{instrumented_name}, #{uninstrumented_name}"
+        ScoutApm::Agent.instance.context.logger.info "Instrumenting #{instrumented_name}, #{uninstrumented_name}"
 
         return if !_instrumentable?(method_name) or _instrumented?(instrumented_name, method_name)
 
@@ -91,7 +91,7 @@ module ScoutApm
           name = begin
                    "#{name}"
                  rescue => e
-                   ScoutApm::Agent.instance.logger.error("Error raised while interpreting instrumented name: %s, %s" % ['#{name}', e.message])
+                   ScoutApm::Agent.instance.context.logger.error("Error raised while interpreting instrumented name: %s, %s" % ['#{name}', e.message])
                    "Unknown"
                  end
 
@@ -110,14 +110,14 @@ module ScoutApm
       # The method must exist to be instrumented.
       def _instrumentable?(method_name)
         exists = method_defined?(method_name) || private_method_defined?(method_name)
-        ScoutApm::Agent.instance.logger.warn "The method [#{self.name}##{method_name}] does not exist and will not be instrumented" unless exists
+        ScoutApm::Agent.instance.context.logger.warn "The method [#{self.name}##{method_name}] does not exist and will not be instrumented" unless exists
         exists
       end
 
       # +True+ if the method is already instrumented.
       def _instrumented?(instrumented_name, method_name)
         instrumented = method_defined?(instrumented_name)
-        ScoutApm::Agent.instance.logger.warn("The method [#{self.name}##{method_name}] has already been instrumented") if instrumented
+        ScoutApm::Agent.instance.context.logger.warn("The method [#{self.name}##{method_name}] has already been instrumented") if instrumented
         instrumented
       end
 

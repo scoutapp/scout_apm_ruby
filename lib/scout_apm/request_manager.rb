@@ -19,14 +19,11 @@ module ScoutApm
     end
 
     # Create a new TrackedRequest object for this thread
+    # XXX: Figure out who is in charge of creating a `FakeStore` - previously was here
     def self.create
-      store = if ScoutApm::Agent.instance.apm_enabled?
-                ScoutApm::Agent.instance.store
-              else
-                ScoutApm::FakeStore.new
-              end
-
-      Thread.current[:scout_request] = TrackedRequest.new(store)
+      agent_context = ScoutApm::Agent.instance.context
+      store = agent_context.store
+      Thread.current[:scout_request] = TrackedRequest.new(agent_context, store)
     end
   end
 end

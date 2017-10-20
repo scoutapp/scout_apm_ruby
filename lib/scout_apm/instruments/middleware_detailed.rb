@@ -9,9 +9,15 @@
 module ScoutApm
   module Instruments
     class MiddlewareDetailed
-      def initalize(logger=ScoutApm::Agent.instance.logger)
-        @logger = logger
+      attr_reader :context
+
+      def initialize(context)
+        @context = context
         @installed = false
+      end
+
+      def logger
+        context.logger
       end
 
       def installed?
@@ -24,7 +30,7 @@ module ScoutApm
         if defined?(ActionDispatch) && defined?(ActionDispatch::MiddlewareStack) && defined?(ActionDispatch::MiddlewareStack::Middleware)
           ActionDispatch::MiddlewareStack::Middleware.class_eval do
             def build(app)
-              ScoutApm::Agent.instance.logger.info("Building Middleware #{klass.name}")
+              logger.info("Building Middleware #{klass.name}")
               new_mw = klass.new(app, *args, &block)
               MiddlewareWrapper.new(new_mw, klass.name)
             end

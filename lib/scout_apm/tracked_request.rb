@@ -45,20 +45,21 @@ module ScoutApm
     # An object that responds to `record!(TrackedRequest)` to store this tracked request
     attr_reader :recorder
 
-    def initialize(store)
+    def initialize(agent_context, store)
+      @agent_context = agent_context
       @store = store #this is passed in so we can use a real store (normal operation) or fake store (instant mode only)
       @layers = []
       @call_set = Hash.new { |h, k| h[k] = CallSet.new }
       @annotations = {}
       @ignoring_children = 0
-      @context = Context.new
+      @context = Context.new(agent_context)
       @root_layer = nil
       @error = false
       @stopping = false
       @instant_key = nil
       @mem_start = mem_usage
-      @dev_trace =  ScoutApm::Agent.instance.config.value('dev_trace') && ScoutApm::Agent.instance.environment.env == "development"
-      @recorder = ScoutApm::Agent.instance.recorder
+      @dev_trace =  @agent_context.config.value('dev_trace') && @agent_context.environment.env == "development"
+      @recorder = @agent_context.recorder
 
       ignore_request! if @recorder.nil?
     end
@@ -153,8 +154,9 @@ module ScoutApm
     end
 
     # This may be in bytes or KB based on the OSX. We store this as-is here and only do conversion to MB in Layer Converters.
+    # XXX: Move this to environment?
     def mem_usage
-      ScoutApm::Instruments::Process::ProcessMemory.rss
+      ScoutApm::Instruments::Process::ProcessMemory.new(@agent_context).rss
     end
 
     def capture_mem_delta!
@@ -261,7 +263,7 @@ module ScoutApm
       restore_store if @store.nil?
 
       # Bail out early if the user asked us to ignore this uri
-      return if ScoutApm::Agent.instance.ignored_uris.ignore?(annotations[:uri])
+      return if @agent_context.ignored_uris.ignore?(annotations[:uri])
 
       converters = [
         LayerConverters::Histograms,
@@ -279,7 +281,7 @@ module ScoutApm
       layer_finder = LayerConverters::FindLayerByType.new(self)
       walker = LayerConverters::DepthFirstWalker.new(self.root_layer)
       converters = converters.map do |klass|
-        instance = klass.new(self, layer_finder, @store)
+        instance = klass.new(@agent_context, self, layer_finder, @store)
         instance.register_hooks(walker)
         instance
       end
@@ -407,7 +409,7 @@ module ScoutApm
     end
 
     def logger
-      ScoutApm::Agent.instance.logger
+      @agent_context.logger
     end
 
     # Actually go fetch & make-real any lazily created data.
@@ -422,7 +424,7 @@ module ScoutApm
     # Go re-fetch the store based on what the Agent's official one is. Used
     # after hydrating a dumped TrackedRequest
     def restore_store
-      @store = ScoutApm::Agent.instance.store
+      @store = @agent_context.store
     end
   end
 end

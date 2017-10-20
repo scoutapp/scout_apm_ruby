@@ -6,7 +6,8 @@ require 'addressable'
 
 class NetHttpTest < Minitest::Test
   def setup
-    ScoutApm::Instruments::NetHttp.new.install
+    @context = ScoutApm::AgentContext.new
+    ScoutApm::Instruments::NetHttp.new(@context).install
   end
 
   def test_request_scout_description_for_uri
