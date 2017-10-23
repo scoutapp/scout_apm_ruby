@@ -286,11 +286,19 @@ module ScoutApm
         each {|old_timestamp| request_histograms_by_time.delete(old_timestamp) }
     end
 
-    # If we want to skip the app_server_check, then we must load it.
+    # 1. Dev trace needs to install instruments, even if background
+    #    worker & reporting infrastructure shouldn't start.
+    # 2. If monitor is false, then never allow the agent to start, even
+    #    if the middleware attempts to.
+    # 3. Then allow overriding (skip_app_server_check) if the
+    #    app_server_integration or bg worker checks don't catch things right
+    #    (this often happens in passenger)
+    # 4. Then we only install instruments if we know what's up with app
+    #    server or bg job
     def should_load_instruments?(options={})
-      return true if options[:skip_app_server_check]
       return true if config.value('dev_trace')
       return false if !apm_enabled?
+      return true if options[:skip_app_server_check]
       environment.app_server_integration.found? || !background_job_missing?
     end
 
