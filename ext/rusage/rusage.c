@@ -1,10 +1,35 @@
 // VERSION = "x.y.z"
 #include <ruby.h>
+#ifdef _WIN32
+#define RUSAGE_SELF 0
+#define RUSAGE_CHILDREN 0
+#else
 #include <sys/resource.h>
+#endif
 
 VALUE v_usage_struct;
 
 static VALUE do_rusage_get(int who){
+#ifdef _WIN32
+  return rb_struct_new(v_usage_struct,
+      rb_float_new(0),
+      rb_float_new(0),
+      LONG2NUM(0),
+      LONG2NUM(0),
+      LONG2NUM(0),
+      LONG2NUM(0),
+      LONG2NUM(0),
+      LONG2NUM(0),
+      LONG2NUM(0),
+      LONG2NUM(0),
+      LONG2NUM(0),
+      LONG2NUM(0),
+      LONG2NUM(0),
+      LONG2NUM(0),
+      LONG2NUM(0),
+      LONG2NUM(0)
+   );
+#else // _WIN32
   struct rusage r;
   int ret;
 
@@ -30,6 +55,7 @@ static VALUE do_rusage_get(int who){
       LONG2NUM(r.ru_nvcsw),
       LONG2NUM(r.ru_nivcsw)
    );
+#endif // _WIN32
 }
 
 static VALUE rusage_get(int argc, VALUE* argv, VALUE mod){

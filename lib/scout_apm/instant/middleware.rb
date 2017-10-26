@@ -154,7 +154,7 @@ module ScoutApm
       end
 
       def rack_proxy_response?
-        rack_body.is_a?(Rack::BodyProxy)
+        rack_body.is_a?(::Rack::BodyProxy)
       end
 
       def adjust_older_rails_response
