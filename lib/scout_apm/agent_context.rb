@@ -118,6 +118,10 @@ module ScoutApm
       @recorder ||= RecorderFactory.build(self)
     end
 
+    def dev_trace_enabled?
+      config.value('dev_trace') && environment.env == "development"
+    end
+
     #############
     #  Setters  #
     #############

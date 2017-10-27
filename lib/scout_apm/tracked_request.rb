@@ -39,9 +39,6 @@ module ScoutApm
     # this is set in the controller instumentation (ActionControllerRails3Rails4 according)
     attr_accessor :instant_key
 
-    # Whereas the instant_key gets set per-request in reponse to a URL param, dev_trace is set in the config file
-    attr_accessor :dev_trace
-
     # An object that responds to `record!(TrackedRequest)` to store this tracked request
     attr_reader :recorder
 
@@ -58,8 +55,7 @@ module ScoutApm
       @stopping = false
       @instant_key = nil
       @mem_start = mem_usage
-      @dev_trace =  @agent_context.config.value('dev_trace') && @agent_context.environment.env == "development"
-      @recorder = @agent_context.recorder
+      @recorder = agent_context.recorder
 
       ignore_request! if @recorder.nil?
     end
@@ -151,6 +147,11 @@ module ScoutApm
     # Maintains a lookup Hash of call counts by layer name. Used to determine if we should capture a backtrace.
     def update_call_counts!(layer)
       @call_set[layer.name].update!(layer.desc)
+    end
+
+    # Grab backtraces more aggressively when running in dev trace mode
+    def backtrace_threshold
+      @agent_context.dev_trace_enabled? ? 0.05 : 0.5 # the minimum threshold in seconds to record the backtrace for a metric.
     end
 
     # This may be in bytes or KB based on the OSX. We store this as-is here and only do conversion to MB in Layer Converters.
@@ -360,11 +361,6 @@ module ScoutApm
       @ignoring_children > 0
     end
 
-    # Grab backtraces more aggressively when running in dev trace mode
-    def backtrace_threshold
-      dev_trace ? 0.05 : 0.5 # the minimum threshold in seconds to record the backtrace for a metric.
-    end
-
     ################################################################################
     # Ignoring the rest of a request
     ################################################################################
@@ -374,6 +370,10 @@ module ScoutApm
     # layers, and delete any existing layer info.  This class will still exist,
     # and respond to methods as normal, but `record!` won't be called, and no
     # data will be recorded.
+    #
+    # We still need to keep track of the current layer depth (via
+    # @ignoring_depth counter) so we know when to report that the class was
+    # "reported", and ready to be recreated for the next request.
 
     def ignore_request!
       return if @ignoring_request
@@ -411,6 +411,10 @@ module ScoutApm
     def logger
       @agent_context.logger
     end
+
+    ###########################
+    #  Serialization Helpers
+    ###########################
 
     # Actually go fetch & make-real any lazily created data.
     # Clean up any cleverness in objects.

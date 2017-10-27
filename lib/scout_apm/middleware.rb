@@ -23,14 +23,10 @@ module ScoutApm
 
     def attempt_to_start_agent
       @attempts += 1
-      ScoutApm::Agent.instance.start(:skip_app_server_check => true)
-      ScoutApm::Agent.instance.start_background_worker
+      ScoutApm::Agent.instance.start
       @started = ScoutApm::Agent.instance.context.started? && ScoutApm::Agent.instance.background_worker_running?
     rescue => e
-      # Can't be sure of any logging here, so fall back to ENV var and STDOUT
-      if ENV["SCOUT_LOG_LEVEL"] == "debug"
-        STDOUT.puts "Failed to start via Middleware: #{e.message}\n\t#{e.backtrace.join("\n\t")}"
-      end
+      ScoutApm::Agent.instance.context.logger("Failed to start via Middleware: #{e.message}\n\t#{e.backtrace.join("\n\t")}")
     end
   end
 end
