@@ -30,13 +30,13 @@ module ScoutApm
     end
 
     # Finishes setting up the instrumentation, configuration, and attempts to start the agent.
-    def install(should_start=true)
+    def install(force=false)
       context.config = ScoutApm::Config.with_file(context, context.config.value("config_file"))
 
       context.logger.info "Scout Agent [#{ScoutApm::VERSION}] Initialized"
 
       @instrument_manager = ScoutApm::InstrumentManager.new(context)
-      @instrument_manager.install! if should_load_instruments?
+      @instrument_manager.install! if should_load_instruments? || force
 
       install_background_job_integration
       install_app_server_integration
@@ -50,7 +50,7 @@ module ScoutApm
 
       context.installed!
 
-      if should_start && ScoutApm::Agent::Preconditions.check?(context)
+      if ScoutApm::Agent::Preconditions.check?(context) || force
         start
       end
     end
@@ -109,8 +109,7 @@ module ScoutApm
       return !context.environment.forking?
     end
 
-    def should_load_instruments?(options={})
-      return true if options[:skip_app_server_check]
+    def should_load_instruments?
       return true if context.config.value('dev_trace')
       # XXX: If monitor is true, we want to install, right?
       # return false if context.config.value('monitor')
