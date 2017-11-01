@@ -19,9 +19,7 @@ module ScoutApm
       end
 
       def install
-        @installed = true
-
-        if defined?(::Rails) && ::Rails::VERSION::MAJOR.to_i == 3 && ::Rails.respond_to?(:configuration)
+        if install_via_after_initialize?
           Rails.configuration.after_initialize do
             add_instruments
           end
@@ -30,9 +28,21 @@ module ScoutApm
         end
       end
 
+      # If we have the right version of rails, we should use the hooks provided
+      # to install these instruments
+      def install_via_after_initialize?
+        defined?(::Rails) &&
+          defined?(::Rails::VERSION) &&
+          defined?(::Rails::VERSION::MAJOR) &&
+          ::Rails::VERSION::MAJOR.to_i == 3 &&
+          ::Rails.respond_to?(:configuration)
+      end
+
       def add_instruments
         # Setup Tracer on AR::Base
         if Utils::KlassHelper.defined?("ActiveRecord::Base")
+          @installed = true
+
           ::ActiveRecord::Base.class_eval do
             include ::ScoutApm::Tracer
           end
