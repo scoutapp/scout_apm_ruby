@@ -17,9 +17,9 @@ module ScoutApm
       end
 
       def install
-        @installed = true
-
         if defined?(::InfluxDB)
+          @installed = true
+
           logger.debug "Instrumenting InfluxDB"
 
           ::InfluxDB::Client.class_eval do

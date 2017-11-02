@@ -25,9 +25,9 @@ module ScoutApm
       end
 
       def install
-        @installed = true
-
         if defined?(ActionDispatch) && defined?(ActionDispatch::MiddlewareStack) && defined?(ActionDispatch::MiddlewareStack::Middleware)
+          @installed = true
+
           ActionDispatch::MiddlewareStack::Middleware.class_eval do
             def build(app)
               logger.info("Building Middleware #{klass.name}")

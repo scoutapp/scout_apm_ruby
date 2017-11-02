@@ -17,9 +17,9 @@ module ScoutApm
       end
 
       def install
-        @installed = true
-
         if defined?(::Net) && defined?(::Net::HTTP)
+          @installed = true
+
           logger.info "Instrumenting Net::HTTP"
 
           ::Net::HTTP.class_eval do

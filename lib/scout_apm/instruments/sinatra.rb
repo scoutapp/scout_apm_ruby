@@ -14,9 +14,9 @@ module ScoutApm
       end
 
       def install
-        @installed = true
-
         if defined?(::Sinatra) && defined?(::Sinatra::Base) && ::Sinatra::Base.private_method_defined?(:dispatch!)
+          @installed = true
+
           logger.info "Instrumenting Sinatra"
           ::Sinatra::Base.class_eval do
             include ScoutApm::Tracer

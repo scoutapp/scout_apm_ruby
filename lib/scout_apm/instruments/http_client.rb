@@ -17,9 +17,9 @@ module ScoutApm
       end
 
       def install
-        @installed = true
-
         if defined?(::HTTPClient)
+          @installed = true
+
           logger.info "Instrumenting HTTPClient"
 
           ::HTTPClient.class_eval do

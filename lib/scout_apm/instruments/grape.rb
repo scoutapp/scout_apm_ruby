@@ -17,9 +17,9 @@ module ScoutApm
       end
 
       def install
-        @installed = true
-
         if defined?(::Grape) && defined?(::Grape::Endpoint)
+          @installed = true
+
           logger.info "Instrumenting Grape::Endpoint"
 
           ::Grape::Endpoint.class_eval do

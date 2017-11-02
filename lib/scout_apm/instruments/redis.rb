@@ -17,9 +17,9 @@ module ScoutApm
       end
 
       def install
-        @installed = true
-
         if defined?(::Redis) && defined?(::Redis::Client)
+          @installed = true
+
           logger.info "Instrumenting Redis"
 
           ::Redis::Client.class_eval do

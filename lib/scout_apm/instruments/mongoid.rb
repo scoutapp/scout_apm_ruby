@@ -22,6 +22,7 @@ module ScoutApm
         # Mongoid versions that use Moped should instrument Moped.
         if defined?(::Mongoid) and !defined?(::Moped)
           logger.info "Instrumenting Mongoid 2.x"
+          @installed = true
 
           ### OLD (2.x) mongoids
           if defined?(::Mongoid::Collection)

@@ -14,6 +14,8 @@ module ScoutApm
 
     attr_accessor :options # options passed to the agent when +#start+ is called.
 
+    attr_reader :instrument_manager
+
     # All access to the agent is thru this class method to ensure multiple Agent instances are not initialized per-Ruby process.
     def self.instance(options = {})
       @@instance ||= self.new(options)

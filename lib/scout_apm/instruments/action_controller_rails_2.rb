@@ -17,9 +17,9 @@ module ScoutApm
       end
 
       def install
-        @installed = true
-
         if defined?(::ActionController) && defined?(::ActionController::Base)
+          @installed = true
+
           ::ActionController::Base.class_eval do
             include ScoutApm::Tracer
             include ::ScoutApm::Instruments::ActionControllerRails2Instruments

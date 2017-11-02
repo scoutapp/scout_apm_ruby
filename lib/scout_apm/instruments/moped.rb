@@ -17,10 +17,11 @@ module ScoutApm
       end
 
       def install
-        @installed = true
-
         if defined?(::Moped)
+          @installed = true
+
           logger.info "Instrumenting Moped"
+
           ::Moped::Node.class_eval do
             include ScoutApm::Tracer
 

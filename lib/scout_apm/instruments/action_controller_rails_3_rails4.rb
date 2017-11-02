@@ -18,13 +18,13 @@ module ScoutApm
       end
 
       def install
-        @installed = true
-
         # We previously instrumented ActionController::Metal, which missed
         # before and after filter timing. Instrumenting Base includes those
         # filters, at the expense of missing out on controllers that don't use
         # the full Rails stack.
         if defined?(::ActionController)
+          @installed = true
+
           if defined?(::ActionController::Base)
             logger.info "Instrumenting ActionController::Base"
             ::ActionController::Base.class_eval do

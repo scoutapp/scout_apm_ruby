@@ -167,6 +167,8 @@ require 'scout_apm/instrument_manager'
 require 'scout_apm/periodic_work'
 require 'scout_apm/agent/preconditions'
 require 'scout_apm/agent/exit_handler'
+require 'scout_apm/tasks/doctor'
+require 'scout_apm/tasks/support'
 
 if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR) && Rails::VERSION::MAJOR >= 3 && defined?(Rails::Railtie)
   module ScoutApm
@@ -179,15 +181,16 @@ if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR
 
         # Attempt to start right away, this will work best for preloading apps, Unicorn & Puma & similar
         ScoutApm::Agent.instance.install
-      end
-    end
-    class Railtie < Rails::Railtie
-      initializer 'scout_apm.start' do |app|
+
         # Install the middleware every time in development mode.
         # The middleware is a noop if dev_trace is not enabled in config
         if Rails.env.development?
           app.middleware.use ScoutApm::Instant::Middleware
         end
+      end
+
+      rake_tasks do
+        load "tasks/doctor.rake"
       end
     end
   end

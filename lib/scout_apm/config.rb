@@ -216,13 +216,21 @@ module ScoutApm
       @overlays.any? { |overlay| overlay.any_keys_found? }
     end
 
-    def log_settings(logger)
-      messages = KNOWN_CONFIG_OPTIONS.inject([]) do |memo, key|
+    # Returns an array of config keys, values, and source
+    # {key: "monitor", value: "true", source: "environment"}
+    #
+    def all_settings
+      KNOWN_CONFIG_OPTIONS.inject([]) do |memo, key|
         o = overlay_for_key(key)
-        memo << "#{o.name} - #{key}: #{value(key).inspect}"
+        memo << {:key => key, :value => value(key).inspect, :source => o.name}
       end
+    end
 
-      logger.debug("Resolved Setting Values:\n" + messages.join("\n"))
+    def log_settings(logger)
+      logger.debug(
+        "Resolved Setting Values:\n" +
+        all_settings.map{|hsh| "#{hsh[:source]} - #{hsh[:key]}: #{hsh[:value]}"}.join("\n")
+      )
     end
 
     def logger

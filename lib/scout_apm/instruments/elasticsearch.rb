@@ -17,11 +17,11 @@ module ScoutApm
       end
 
       def install
-        @installed = true
-
         if defined?(::Elasticsearch) &&
             defined?(::Elasticsearch::Transport) &&
             defined?(::Elasticsearch::Transport::Client)
+
+          @installed = true
 
           logger.info "Instrumenting Elasticsearch"
 

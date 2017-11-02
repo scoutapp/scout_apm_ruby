@@ -18,9 +18,9 @@ module ScoutApm
       end
 
       def install
-        @installed = true
-
         if defined?(::ActionView) && defined?(::ActionView::PartialRenderer)
+          @installed = true
+
           logger.info "Instrumenting ActionView::PartialRenderer"
           ::ActionView::PartialRenderer.class_eval do
             include ScoutApm::Tracer

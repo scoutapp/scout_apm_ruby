@@ -72,7 +72,7 @@ class Minitest::Test
   end
 
   def teardown
-    ScoutApm::Agent.instance.shutdown
+    ScoutApm::Agent.instance.stop_background_worker
     File.delete(DATA_FILE_PATH) if File.exist?(DATA_FILE_PATH)
   end
 

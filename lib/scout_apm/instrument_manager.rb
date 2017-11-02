@@ -2,6 +2,8 @@ module ScoutApm
   class InstrumentManager
     attr_reader :context
 
+    attr_reader :installed_instruments
+
     def initialize(context)
       @context = context
       @installed_instruments = []

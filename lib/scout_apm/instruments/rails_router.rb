@@ -17,9 +17,9 @@ module ScoutApm
       end
 
       def install
-        @installed = true
-
         if defined?(ActionDispatch) && defined?(ActionDispatch::Routing) && defined?(ActionDispatch::Routing::RouteSet)
+          @installed = true
+
           ActionDispatch::Routing::RouteSet.class_eval do
             def call_with_scout_instruments(*args)
               req = ScoutApm::RequestManager.lookup

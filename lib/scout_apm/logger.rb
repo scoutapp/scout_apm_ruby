@@ -20,6 +20,8 @@
 #
 module ScoutApm
   class Logger
+    attr_reader :log_destination
+
     def initialize(environment_root, opts={})
       @opts = opts
       @environment_root = environment_root
@@ -39,6 +41,18 @@ module ScoutApm
 
     def log_level=(level)
       @logger.level = level
+    end
+
+    def log_file_path
+      @opts.fetch(:log_file_path, "#{@environment_root}/log") || "#{@environment_root}/log"
+    end
+
+    def stdout?
+      @opts[:stdout] || @opts[:log_file_path] == "STDOUT"
+    end
+
+    def stderr?
+      @opts[:stderr] || @opts[:log_file_path] == "STDERR"
     end
 
     private
@@ -64,24 +78,12 @@ module ScoutApm
       end
     end
 
-    def stdout?
-      @opts[:stdout] || @opts[:log_file_path] == "STDOUT"
-    end
-
-    def stderr?
-      @opts[:stderr] || @opts[:log_file_path] == "STDERR"
-    end
-
     def build_formatter
       if stdout? || stderr?
         TaggedFormatter.new
       else
         DefaultFormatter.new
       end
-    end
-
-    def log_file_path
-      @opts.fetch(:log_file_path, "#{@environment_root}/log") || "#{@environment_root}/log"
     end
 
     def log_level_from_opts
