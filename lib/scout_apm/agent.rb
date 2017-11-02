@@ -73,19 +73,21 @@ module ScoutApm
     end
 
     def log_environment
+      bg_names = context.environment.background_job_integrations.map{|bg| bg.name }.join(", ")
+
       logger.info(
         "Scout Agent [#{ScoutApm::VERSION}] starting for [#{context.environment.application_name}] " +
         "Framework [#{context.environment.framework}] " +
         "App Server [#{context.environment.app_server}] " +
-        "Background Job Framework [#{context.environment.background_job_name}] " +
+        "Background Job Framework [#{bg_names}] " +
         "Hostname [#{context.environment.hostname}]"
       )
     end
 
     def install_background_job_integration
-      if context.environment.background_job_integration
-        context.environment.background_job_integration.install
-        logger.info "Installed Background Job Integration [#{context.environment.background_job_name}]"
+      context.environment.background_job_integrations.each do |int|
+        int.install
+        logger.info "Installed Background Job Integration [#{int.name}]"
       end
     end
 
@@ -165,6 +167,5 @@ module ScoutApm
         @background_worker               &&
         @background_worker.running?
     end
-
   end
 end

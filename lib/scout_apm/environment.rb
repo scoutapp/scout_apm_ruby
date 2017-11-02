@@ -141,16 +141,12 @@ module ScoutApm
       app_server_integration.forking? || (background_job_integration && background_job_integration.forking?)
     end
 
-    def background_job_integration
+    def background_job_integrations
       if Agent.instance.context.config.value("enable_background_jobs")
-        @background_job_integration ||= BACKGROUND_JOB_INTEGRATIONS.detect {|integration| integration.present?}
+        @background_job_integrations ||= BACKGROUND_JOB_INTEGRATIONS.select {|integration| integration.present?}
       else
-        nil
+        []
       end
-    end
-
-    def background_job_name
-      background_job_integration && background_job_integration.name
     end
 
     # If both stdin & stdout are interactive and the Rails::Console constant is defined

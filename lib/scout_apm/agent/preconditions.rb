@@ -62,7 +62,7 @@ module ScoutApm
       end
 
       def self.background_job_missing?(context)
-        context.environment.background_job_integration.nil? # && !options[:skip_background_job_check]
+        context.environment.background_job_integrations.length == 0
       end
     end
   end
