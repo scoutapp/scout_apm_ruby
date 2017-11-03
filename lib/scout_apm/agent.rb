@@ -40,7 +40,7 @@ module ScoutApm
       @instrument_manager = ScoutApm::InstrumentManager.new(context)
       @instrument_manager.install! if should_load_instruments? || force
 
-      install_background_job_integration
+      install_background_job_integrations
       install_app_server_integration
 
       # XXX: Should this happen at application start?
@@ -84,7 +84,10 @@ module ScoutApm
       )
     end
 
-    def install_background_job_integration
+    # Attempts to install all background job integrations. This can come up if
+    # an app has both Resque and Sidekiq - we want both to be installed if
+    # possible, it's no harm to have the "wrong" one also installed while running.
+    def install_background_job_integrations
       context.environment.background_job_integrations.each do |int|
         int.install
         logger.info "Installed Background Job Integration [#{int.name}]"
