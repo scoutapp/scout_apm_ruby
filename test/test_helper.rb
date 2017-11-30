@@ -9,6 +9,8 @@ require 'mocha/mini_test'
 require 'pry'
 
 
+require 'active_support/core_ext/string/inflections'
+
 require 'scout_apm'
 
 Kernel.module_eval do
