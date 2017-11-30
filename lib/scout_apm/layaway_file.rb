@@ -29,9 +29,6 @@ module ScoutApm
 
     def serialize(data)
       Marshal.dump(data)
-    rescue
-      pp data
-      binding.pry
     end
 
     def deserialize(data)
