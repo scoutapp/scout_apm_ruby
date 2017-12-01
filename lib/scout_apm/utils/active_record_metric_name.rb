@@ -99,6 +99,17 @@ module ScoutApm
       DELETE_LABEL = 'destroy'.freeze
       UNKNOWN_LABEL = 'SQL/other'.freeze
 
+      # Attempt to do some basic parsing of SQL via regexes to extract the SQL
+      # verb (select, update, etc) and the table being operated on.
+      #
+      # This is a fallback from what ActiveRecord gives us, we prefer its
+      # names. But sometimes it is giving us a no-name query, and we have to
+      # attempt to figure it out ourselves.
+      #
+      # This relies on ActiveSupport's classify method. If it's not present,
+      # just skip the attempt to rename here. This could happen in a Grape or
+      # Sinatra application that doesn't import ActiveSupport. At this point,
+      # you're already using ActiveRecord, so it's likely loaded anyway.
       def regex_name(sql)
         # We rely on the ActiveSupport inflections code here. Bail early if we can't use it.
         return UNKNOWN_LABEL unless UNKNOWN_LABEL.respond_to?(:classify)
@@ -122,10 +133,6 @@ module ScoutApm
         end
       rescue
         UNKNOWN_LABEL
-      end
-
-      def name_table(underscored)
-        underscored.gsub(/(?:\A.|_.)/ ) { |match| match.start_with?("_") ? match[1].upcase : match.upcase }
       end
     end
   end
