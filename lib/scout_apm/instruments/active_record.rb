@@ -3,11 +3,15 @@ require 'scout_apm/utils/sql_sanitizer'
 module ScoutApm
   module Instruments
     class ActiveRecord
-      attr_reader :logger
+      attr_reader :context
 
-      def initalize(logger=ScoutApm::Agent.instance.logger)
-        @logger = logger
+      def initialize(context)
+        @context = context
         @installed = false
+      end
+
+      def logger
+        context.logger
       end
 
       def installed?
@@ -15,9 +19,7 @@ module ScoutApm
       end
 
       def install
-        @installed = true
-
-        if defined?(::Rails) && ::Rails::VERSION::MAJOR.to_i == 3 && ::Rails.respond_to?(:configuration)
+        if install_via_after_initialize?
           Rails.configuration.after_initialize do
             add_instruments
           end
@@ -26,9 +28,21 @@ module ScoutApm
         end
       end
 
+      # If we have the right version of rails, we should use the hooks provided
+      # to install these instruments
+      def install_via_after_initialize?
+        defined?(::Rails) &&
+          defined?(::Rails::VERSION) &&
+          defined?(::Rails::VERSION::MAJOR) &&
+          ::Rails::VERSION::MAJOR.to_i == 3 &&
+          ::Rails.respond_to?(:configuration)
+      end
+
       def add_instruments
         # Setup Tracer on AR::Base
         if Utils::KlassHelper.defined?("ActiveRecord::Base")
+          @installed = true
+
           ::ActiveRecord::Base.class_eval do
             include ::ScoutApm::Tracer
           end
@@ -48,11 +62,16 @@ module ScoutApm
           end
         end
 
-        if Utils::KlassHelper.defined?("ActiveRecord::Relation")
-          ::ActiveRecord::Relation.class_eval do
-            include ::ScoutApm::Instruments::ActiveRecordRelationInstruments
-          end
-        end
+        # Disabled until we can determine how to use Module#prepend in the
+        # agent. Otherwise, this will cause infinite loops if NewRelic is
+        # installed. We can't just use normal Module#include, since the
+        # original methods don't call super the way Base#save does
+        #
+        #if Utils::KlassHelper.defined?("ActiveRecord::Relation")
+        #  ::ActiveRecord::Relation.class_eval do
+        #    include ::ScoutApm::Instruments::ActiveRecordRelationInstruments
+        #  end
+        #end
 
         if Utils::KlassHelper.defined?("ActiveRecord::Querying")
           ::ActiveRecord::Querying.module_eval do
@@ -75,14 +94,14 @@ module ScoutApm
             if layer && layer.type == "ActiveRecord"
               layer.annotate_layer(payload)
             elsif layer
-              ScoutApm::Agent.instance.logger.debug("Expected layer type: ActiveRecord, got #{layer && layer.type}")
+              logger.debug("Expected layer type: ActiveRecord, got #{layer && layer.type}")
             else
               # noop, no layer at all. We're probably ignoring this req.
             end
           end
         end
       rescue
-        ScoutApm::Agent.instance.logger.warn "ActiveRecord instrumentation exception: #{$!.message}"
+        logger.warn "ActiveRecord instrumentation exception: #{$!.message}"
       end
     end
 
@@ -97,7 +116,7 @@ module ScoutApm
     ################################################################################
     module ActiveRecordInstruments
       def self.included(instrumented_class)
-        ScoutApm::Agent.instance.logger.info "Instrumenting #{instrumented_class.inspect}"
+        ScoutApm::Agent.instance.context.logger.info "Instrumenting #{instrumented_class.inspect}"
         instrumented_class.class_eval do
           unless instrumented_class.method_defined?(:log_without_scout_instruments)
             alias_method :log_without_scout_instruments, :log
@@ -171,7 +190,7 @@ module ScoutApm
 
     module ActiveRecordQueryingInstruments
       def self.included(instrumented_class)
-        ScoutApm::Agent.instance.logger.info "Instrumenting ActiveRecord::Querying - #{instrumented_class.inspect}"
+        ScoutApm::Agent.instance.context.logger.info "Instrumenting ActiveRecord::Querying - #{instrumented_class.inspect}"
         instrumented_class.class_eval do
           unless instrumented_class.method_defined?(:find_by_sql_without_scout_instruments)
             alias_method :find_by_sql_without_scout_instruments, :find_by_sql
@@ -197,7 +216,7 @@ module ScoutApm
 
     module ActiveRecordFinderMethodsInstruments
       def self.included(instrumented_class)
-        ScoutApm::Agent.instance.logger.info "Instrumenting ActiveRecord::FinderMethods - #{instrumented_class.inspect}"
+        ScoutApm::Agent.instance.context.logger.info "Instrumenting ActiveRecord::FinderMethods - #{instrumented_class.inspect}"
         instrumented_class.class_eval do
           unless instrumented_class.method_defined?(:find_with_associations_without_scout_instruments)
             alias_method :find_with_associations_without_scout_instruments, :find_with_associations
@@ -222,23 +241,7 @@ module ScoutApm
     end
 
     module ActiveRecordUpdateInstruments
-      def self.included(instrumented_class)
-        ScoutApm::Agent.instance.logger.info "Instrumenting ActiveRecord Save: - #{instrumented_class.inspect}"
-        instrumented_class.class_eval do
-          unless instrumented_class.method_defined?(:save_without_scout_instruments)
-            alias_method :save_without_scout_instruments, :save
-            alias_method :save, :save_with_scout_instruments
-          end
-
-          unless instrumented_class.method_defined?(:"savebang_without_scout_instruments")
-            alias_method :"savebang_without_scout_instruments", :"save!"
-            alias_method :"save!", :"savebang_with_scout_instruments"
-          end
-        end
-
-      end
-
-      def savebang_with_scout_instruments(*args, &block)
+      def save(*args, &block)
         model = self.class.name
         operation = self.persisted? ? "Update" : "Create"
 
@@ -247,14 +250,14 @@ module ScoutApm
         req.start_layer(layer)
         req.ignore_children!
         begin
-          savebang_without_scout_instruments(*args, &block)
+          super(*args, &block)
         ensure
           req.acknowledge_children!
           req.stop_layer
         end
       end
 
-      def save_with_scout_instruments(*args, &block)
+      def save!(*args, &block)
         model = self.class.name
         operation = self.persisted? ? "Update" : "Create"
 
@@ -263,7 +266,7 @@ module ScoutApm
         req.start_layer(layer)
         req.ignore_children!
         begin
-          save_without_scout_instruments(*args, &block)
+          super(*args, &block)
         ensure
           req.acknowledge_children!
           req.stop_layer

@@ -8,7 +8,9 @@ class DbQueryMetricSetTest < Minitest::Test
     config = make_fake_config(
       'database_metric_limit' => 5, # The hard limit on db metrics
       'database_metric_report_limit' => 2,)
-    set = DbQueryMetricSet.new(config)
+    context = ScoutApm::AgentContext.new().tap{|c| c.config = config }
+    set = DbQueryMetricSet.new(context)
+
     set << fake_stat("a", 10)
     set << fake_stat("b", 20)
     set << fake_stat("c", 30)
@@ -23,7 +25,8 @@ class DbQueryMetricSetTest < Minitest::Test
     config = make_fake_config(
       'database_metric_limit' => 50, # much larger max, uninterested in hitting it.
       'database_metric_report_limit' => 2,)
-    set = DbQueryMetricSet.new(config)
+    context = ScoutApm::AgentContext.new().tap{|c| c.config = config }
+    set = DbQueryMetricSet.new(context)
     set << fake_stat("a", 10)
     set << fake_stat("b", 20)
     set << fake_stat("c", 30)
@@ -36,10 +39,14 @@ class DbQueryMetricSetTest < Minitest::Test
   end
 
   def test_combine
-    set1 = DbQueryMetricSet.new
+    config = make_fake_config(
+      'database_metric_limit' => 5, # The hard limit on db metrics
+      'database_metric_report_limit' => 2,)
+    context = ScoutApm::AgentContext.new().tap{|c| c.config = config }
+    set1 = DbQueryMetricSet.new(context)
     set1 << fake_stat("a", 10)
     set1 << fake_stat("b", 20)
-    set2 = DbQueryMetricSet.new
+    set2 = DbQueryMetricSet.new(context)
     set2 << fake_stat("c", 10)
     set2 << fake_stat("d", 20)
 

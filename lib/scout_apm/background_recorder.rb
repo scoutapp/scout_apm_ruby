@@ -4,13 +4,18 @@
 
 module ScoutApm
   class BackgroundRecorder
+    attr_reader :context
+
     attr_reader :queue
     attr_reader :thread
-    attr_reader :logger
 
-    def initialize(logger)
-      @logger = logger
+    def initialize(context)
+      @context = context
       @queue = Queue.new
+    end
+
+    def logger
+      context.logger
     end
 
     def start

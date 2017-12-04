@@ -1,11 +1,17 @@
 module ScoutApm
   class GitRevision
-
     attr_accessor :sha
 
-    def initialize
+    attr_reader :context
+
+    def initialize(context)
+      @context = context
       @sha = detect
-      ScoutApm::Agent.instance.logger.debug "Detected Git Revision [#{@sha}]"
+      logger.debug "Detected Git Revision [#{@sha}]"
+    end
+
+    def logger
+      context.logger
     end
 
     private
@@ -30,7 +36,7 @@ module ScoutApm
       # Capistrano 3.0 - 3.1.x
       version || File.open(File.join(app_root, '..', 'revisions.log')).to_a.last.strip.sub(/.*as release ([0-9]+).*/, '\1')
     rescue
-      ScoutApm::Agent.instance.logger.debug "Unable to detect Git Revision from Capistrano: #{$!.message}"
+      logger.debug "Unable to detect Git Revision from Capistrano: #{$!.message}"
       nil
     end
 
@@ -39,13 +45,12 @@ module ScoutApm
         `git rev-parse --short HEAD`.strip 
       end
     rescue
-      ScoutApm::Agent.instance.logger.debug "Unable to detect Git Revision from Git: #{$!.message}"
+      logger.debug "Unable to detect Git Revision from Git: #{$!.message}"
       nil
     end
 
     def app_root
-      ScoutApm::Environment.instance.root
+      context.environment.root
     end
-
   end
 end

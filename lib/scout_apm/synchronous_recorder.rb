@@ -4,10 +4,14 @@
 
 module ScoutApm
   class SynchronousRecorder
-    attr_reader :logger
+    attr_reader :context
 
-    def initialize(logger)
-      @logger = logger
+    def initialize(context)
+      @context = context
+    end
+
+    def logger
+      context.logger
     end
 
     def start

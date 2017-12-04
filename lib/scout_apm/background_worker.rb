@@ -6,9 +6,16 @@ module ScoutApm
 
     attr_reader :period
 
-    def initialize(period=DEFAULT_PERIOD)
+    attr_reader :context
+
+    def initialize(context, period=DEFAULT_PERIOD)
+      @context = context
       @period = period
       @keep_running = true
+    end
+
+    def logger
+      context.logger
     end
 
     def running?
@@ -16,7 +23,7 @@ module ScoutApm
     end
 
     def stop
-      ScoutApm::Agent.instance.logger.debug "Background Worker: stop requested"
+      logger.debug "Background Worker: stop requested"
       @keep_running = false
     end
 
@@ -29,7 +36,7 @@ module ScoutApm
     def start(&block)
       @task = block
 
-      ScoutApm::Agent.instance.logger.debug "Background Worker: Starting Background Worker, running every #{period} seconds"
+      logger.debug "Background Worker: starting to run every #{period} seconds"
 
       # The first run should be 1 period of time from now
       next_time = Time.now + period
@@ -47,7 +54,7 @@ module ScoutApm
 
           # Bail out if @keep_running is false
           unless @keep_running
-            ScoutApm::Agent.instance.logger.debug "Background Worker: breaking from loop"
+            logger.debug "Background Worker: breaking from loop"
             break
           end
 
@@ -58,9 +65,9 @@ module ScoutApm
             next_time += period
           end
         rescue
-          ScoutApm::Agent.instance.logger.debug "Background Worker Exception!"
-          ScoutApm::Agent.instance.logger.debug $!.message
-          ScoutApm::Agent.instance.logger.debug $!.backtrace
+          logger.debug "Background Worker Exception!"
+          logger.debug $!.message
+          logger.debug $!.backtrace
         end
       end
     end

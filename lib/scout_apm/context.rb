@@ -5,9 +5,16 @@
 # For misc context, use @Context#add@.
 module ScoutApm
   class Context
-    def initialize
+    attr_reader :context
+
+    def initialize(context)
+      @context = context
       @extra = {}
       @user = {}
+    end
+
+    def logger
+      context.logger
     end
 
     # Generates a hash representation of the Context.
@@ -78,7 +85,7 @@ module ScoutApm
       if value.nil?
         false # don't log this ... easy to happen
       elsif !valid_type?([String, Symbol, Numeric, Time, Date, TrueClass, FalseClass],value)
-        ScoutApm::Agent.instance.logger.info "The value for [#{key_value.keys.first}] is not a valid type [#{value.class}]."
+        logger.info "The value for [#{key_value.keys.first}] is not a valid type [#{value.class}]."
         false
       else
         true
@@ -92,12 +99,12 @@ module ScoutApm
         false # don't log this ... easy to happen
       # ensure a string or a symbol
       elsif !valid_type?([String, Symbol],key)
-        ScoutApm::Agent.instance.logger.info "The key [#{key}] is not a valid type [#{key.class}]."
+        logger.info "The key [#{key}] is not a valid type [#{key.class}]."
         return false
       end
       # only alphanumeric, dash, and underscore allowed.
       if key.to_s.match(/[^\w-]/)
-        ScoutApm::Agent.instance.logger.info "They key name [#{key}] is not valid."
+        logger.info "They key name [#{key}] is not valid."
         return false
       end
       true

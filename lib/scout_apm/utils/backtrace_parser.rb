@@ -11,7 +11,7 @@ module ScoutApm
 
       attr_reader :call_stack
 
-      def initialize(call_stack, root=ScoutApm::Environment.instance.root)
+      def initialize(call_stack, root=ScoutApm::Agent.instance.context.environment.root)
         @call_stack = call_stack
         # We can't use a constant as it'd be too early to fetch environment info
         #

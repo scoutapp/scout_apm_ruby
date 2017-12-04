@@ -55,7 +55,7 @@ module ScoutApm
           DevTraceResponseManipulator.new(env, rack_response).call
         rescue Exception => e
           # If anything went wrong at all, just bail out and return the unmodified response.
-          ScoutApm::Agent.instance.logger.debug("DevTrace: Raised an exception: #{e.message}, #{e.backtrace}")
+          ScoutApm::Agent.instance.context.logger.debug("DevTrace: Raised an exception: #{e.message}, #{e.backtrace}")
           rack_response
         end
       end
@@ -79,7 +79,7 @@ module ScoutApm
         return rack_response unless preconditions_met?
 
         if ajax_request?
-          ScoutApm::Agent.instance.logger.debug("DevTrace: in middleware, dev_trace is active, and response has a body. This is either AJAX or JSON. Path=#{path}; ContentType=#{content_type}")
+          ScoutApm::Agent.instance.context.logger.debug("DevTrace: in middleware, dev_trace is active, and response has a body. This is either AJAX or JSON. Path=#{path}; ContentType=#{content_type}")
           adjust_ajax_header
         else
           adjust_html_response
@@ -116,7 +116,7 @@ module ScoutApm
       end
 
       def dev_trace_disabled?
-        ! ScoutApm::Agent.instance.config.value('dev_trace')
+        ! ScoutApm::Agent.instance.context.config.value('dev_trace')
       end
 
       ########################
@@ -154,7 +154,7 @@ module ScoutApm
       end
 
       def rack_proxy_response?
-        rack_body.is_a?(Rack::BodyProxy)
+        rack_body.is_a?(::Rack::BodyProxy)
       end
 
       def adjust_older_rails_response
@@ -212,7 +212,7 @@ module ScoutApm
       ##############################
 
       def logger
-        ScoutApm::Agent.instance.logger
+        ScoutApm::Agent.instance.context.logger
       end
 
       def tracked_request
@@ -220,18 +220,23 @@ module ScoutApm
       end
 
       def apm_host
-        ScoutApm::Agent.instance.config.value("direct_host")
+        ScoutApm::Agent.instance.context.config.value("direct_host")
       end
 
       def trace
-        @trace ||= LayerConverters::SlowRequestConverter.new(tracked_request).call
+        @trace ||=
+          begin
+            layer_finder = LayerConverters::FindLayerByType.new(tracked_request)
+            converter = LayerConverters::SlowRequestConverter.new(ScoutApm::Agent.instance.context, tracked_request, layer_finder, ScoutApm::FakeStore.new)
+            converter.call
+          end
       end
 
       def payload
         @payload ||=
           begin
             metadata = {
-              :app_root      => ScoutApm::Environment.instance.root.to_s,
+              :app_root      => ScoutApm::Agent.instance.context.environment.root.to_s,
               :unique_id     => env['action_dispatch.request_id'], # note, this is a different unique_id than what "normal" payloads use
               :agent_version => ScoutApm::VERSION,
               :platform      => "ruby",

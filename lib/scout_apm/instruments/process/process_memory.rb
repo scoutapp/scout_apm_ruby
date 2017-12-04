@@ -2,23 +2,24 @@ module ScoutApm
   module Instruments
     module Process
       class ProcessMemory
-        attr_reader :logger
-
-        # Account for Darwin returning maxrss in bytes and Linux in KB. Used by the slow converters. Doesn't feel like this should go here though...more of a utility.
-        def self.rss_to_mb(rss)
-          rss.to_f/1024/(ScoutApm::Agent.instance.environment.os == 'darwin' ? 1024 : 1)
+        # Account for Darwin returning maxrss in bytes and Linux in KB. Used by
+        # the slow converters. Doesn't feel like this should go here
+        # though...more of a utility.
+        def rss_to_mb(rss)
+          kilobyte_adjust = @context.environment.os == 'darwin' ? 1024 : 1
+          rss.to_f / 1024 / kilobyte_adjust
         end
 
-        def self.rss
+        def rss
           ::Process.rusage.maxrss
         end
 
-        def self.rss_in_mb
+        def rss_in_mb
           rss_to_mb(rss)
         end
 
-        def initialize(logger)
-          @logger = logger
+        def initialize(context)
+          @context = context
         end
 
         def metric_type
@@ -46,7 +47,11 @@ module ScoutApm
         end
 
         def run
-          self.class.rss_in_mb.tap { |res| logger.debug "#{human_name}: #{res.inspect}" }
+          rss_in_mb.tap { |res| logger.debug "#{human_name}: #{res.inspect}" }
+        end
+
+        def logger
+          @context.logger
         end
       end
     end

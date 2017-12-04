@@ -24,8 +24,12 @@ module ScoutApm
     # has been running.
     attr_reader :last_seen
 
+    # The AgentContext we're running in
+    attr_reader :context
 
-    def initialize
+    def initialize(context)
+      @context = context
+
       zero_time = Time.now
       @last_seen = Hash.new { |h, k| h[k] = zero_time }
     end
@@ -54,7 +58,7 @@ module ScoutApm
       age = Time.now - last_seen[unique_name]
 
       # What approximate percentile was this request?
-      percentile = ScoutApm::Agent.instance.request_histograms.approximate_quantile_of_value(unique_name, total_time)
+      percentile = context.request_histograms.approximate_quantile_of_value(unique_name, total_time)
 
       return speed_points(total_time) + percentile_points(percentile) + age_points(age)
     end

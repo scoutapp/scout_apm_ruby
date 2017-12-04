@@ -2,9 +2,14 @@
 module ScoutApm
   class LayawayFile
     attr_reader :path
+    attr_reader :context
 
-    def initialize(path)
+    def initialize(context, path)
       @path = path
+    end
+
+    def logger
+      context.logger
     end
 
     def load
@@ -12,8 +17,8 @@ module ScoutApm
       deserialize(data)
     rescue NameError, ArgumentError, TypeError => e
       # Marshal error
-      ScoutApm::Agent.instance.logger.info("Unable to load data from Layaway file, resetting.")
-      ScoutApm::Agent.instance.logger.debug("#{e.message}, #{e.backtrace.join("\n\t")}")
+      logger.info("Unable to load data from Layaway file, resetting.")
+      logger.debug("#{e.message}, #{e.backtrace.join("\n\t")}")
       nil
     end
 

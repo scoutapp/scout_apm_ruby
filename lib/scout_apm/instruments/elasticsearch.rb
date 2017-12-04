@@ -1,11 +1,15 @@
 module ScoutApm
   module Instruments
     class Elasticsearch
-      attr_reader :logger
+      attr_reader :context
 
-      def initalize(logger=ScoutApm::Agent.instance.logger)
-        @logger = logger
+      def initialize(context)
+        @context = context
         @installed = false
+      end
+
+      def logger
+        context.logger
       end
 
       def installed?
@@ -13,13 +17,13 @@ module ScoutApm
       end
 
       def install
-        @installed = true
-
         if defined?(::Elasticsearch) &&
             defined?(::Elasticsearch::Transport) &&
             defined?(::Elasticsearch::Transport::Client)
 
-          ScoutApm::Agent.instance.logger.info "Instrumenting Elasticsearch"
+          @installed = true
+
+          logger.info "Instrumenting Elasticsearch"
 
           ::Elasticsearch::Transport::Client.class_eval do
             include ScoutApm::Tracer

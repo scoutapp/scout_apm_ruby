@@ -2,11 +2,13 @@ module ScoutApm
   module LayerConverters
     class ConverterBase
 
+      attr_reader :context
       attr_reader :request
       attr_reader :root_layer
       attr_reader :layer_finder
 
-      def initialize(request, layer_finder, store=nil)
+      def initialize(context, request, layer_finder, store=nil)
+        @context = context
         @request = request
         @layer_finder = layer_finder
         @store = store

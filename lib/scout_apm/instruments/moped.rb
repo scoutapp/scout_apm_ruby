@@ -1,11 +1,15 @@
 module ScoutApm
   module Instruments
     class Moped
-      attr_reader :logger
+      attr_reader :context
 
-      def initalize(logger=ScoutApm::Agent.instance.logger)
-        @logger = logger
+      def initialize(context)
+        @context = context
         @installed = false
+      end
+
+      def logger
+        context.logger
       end
 
       def installed?
@@ -13,10 +17,11 @@ module ScoutApm
       end
 
       def install
-        @installed = true
-
         if defined?(::Moped)
-          ScoutApm::Agent.instance.logger.info "Instrumenting Moped"
+          @installed = true
+
+          logger.info "Instrumenting Moped"
+
           ::Moped::Node.class_eval do
             include ScoutApm::Tracer
 

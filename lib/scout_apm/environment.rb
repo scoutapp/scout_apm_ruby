@@ -59,7 +59,7 @@ module ScoutApm
     end
 
     def application_name
-      Agent.instance.config.value("name") ||
+      Agent.instance.context.config.value("name") ||
         framework_integration.application_name ||
         "App"
     end
@@ -86,10 +86,10 @@ module ScoutApm
     end
 
     def scm_subdirectory
-      @scm_subdirectory ||= if Agent.instance.config.value('scm_subdirectory').empty?
+      @scm_subdirectory ||= if Agent.instance.context.config.value('scm_subdirectory').empty?
         ''
       else
-        Agent.instance.config.value('scm_subdirectory').sub(/^\//, '') # Trim any leading slash
+        Agent.instance.context.config.value('scm_subdirectory').sub(/^\//, '') # Trim any leading slash
       end
     end
 
@@ -98,7 +98,7 @@ module ScoutApm
     end
 
     def framework_root
-      if override_root = Agent.instance.config.value("application_root")
+      if override_root = Agent.instance.context.config.value("application_root")
         return override_root
       end
       if framework == :rails
@@ -113,11 +113,11 @@ module ScoutApm
     end
 
     def hostname
-      @hostname ||= Agent.instance.config.value("hostname") || platform_integration.hostname
+      @hostname ||= Agent.instance.context.config.value("hostname") || platform_integration.hostname
     end
 
     def git_revision
-      @git_revision ||= ScoutApm::GitRevision.new
+      @git_revision ||= ScoutApm::GitRevision.new(Agent.instance.context)
     end
 
     # Returns the whole integration object
@@ -141,16 +141,12 @@ module ScoutApm
       app_server_integration.forking? || (background_job_integration && background_job_integration.forking?)
     end
 
-    def background_job_integration
-      if Agent.instance.config.value("enable_background_jobs")
-        @background_job_integration ||= BACKGROUND_JOB_INTEGRATIONS.detect {|integration| integration.present?}
+    def background_job_integrations
+      if Agent.instance.context.config.value("enable_background_jobs")
+        @background_job_integrations ||= BACKGROUND_JOB_INTEGRATIONS.select {|integration| integration.present?}
       else
-        nil
+        []
       end
-    end
-
-    def background_job_name
-      background_job_integration && background_job_integration.name
     end
 
     # If both stdin & stdout are interactive and the Rails::Console constant is defined

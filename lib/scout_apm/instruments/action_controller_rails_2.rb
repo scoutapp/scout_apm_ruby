@@ -1,11 +1,15 @@
 module ScoutApm
   module Instruments
     class ActionControllerRails2
-      attr_reader :logger
+      attr_reader :context
 
-      def initalize(logger=ScoutApm::Agent.instance.logger)
-        @logger = logger
+      def initialize(context)
+        @context = context
         @installed = false
+      end
+
+      def logger
+        context.logger
       end
 
       def installed?
@@ -13,15 +17,15 @@ module ScoutApm
       end
 
       def install
-        @installed = true
-
         if defined?(::ActionController) && defined?(::ActionController::Base)
+          @installed = true
+
           ::ActionController::Base.class_eval do
             include ScoutApm::Tracer
             include ::ScoutApm::Instruments::ActionControllerRails2Instruments
           end
 
-          ScoutApm::Agent.instance.logger.info "Instrumenting ActionView::Template"
+          logger.info "Instrumenting ActionView::Template"
           ::ActionView::Template.class_eval do
             include ::ScoutApm::Tracer
             instrument_method :render, :type => "View", :name => '#{path[%r{^(/.*/)?(.*)$},2]}/Rendering', :scope => true
@@ -33,7 +37,8 @@ module ScoutApm
 
     module ActionControllerRails2Instruments
       def self.included(instrumented_class)
-        ScoutApm::Agent.instance.logger.info "Instrumenting #{instrumented_class.inspect}"
+        # XXX: Don't lookup context by global
+        ScoutApm::Agent.instance.context.logger.info "Instrumenting #{instrumented_class.inspect}"
         instrumented_class.class_eval do
           unless instrumented_class.method_defined?(:perform_action_without_scout_instruments)
             alias_method :perform_action_without_scout_instruments, :perform_action

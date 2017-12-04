@@ -81,16 +81,18 @@ require 'scout_apm/instruments/elasticsearch'
 require 'scout_apm/instruments/active_record'
 require 'scout_apm/instruments/action_controller_rails_2'
 require 'scout_apm/instruments/action_controller_rails_3_rails4'
+require 'scout_apm/instruments/action_view'
 require 'scout_apm/instruments/middleware_summary'
 require 'scout_apm/instruments/middleware_detailed' # Disabled by default, see the file for more details
 require 'scout_apm/instruments/rails_router'
 require 'scout_apm/instruments/grape'
 require 'scout_apm/instruments/sinatra'
+require 'allocations'
+
 require 'scout_apm/instruments/process/process_cpu'
 require 'scout_apm/instruments/process/process_memory'
 require 'scout_apm/instruments/percentile_sampler'
-require 'scout_apm/instruments/action_view'
-require 'allocations'
+require 'scout_apm/instruments/samplers'
 
 begin
   require 'stacks'
@@ -105,7 +107,6 @@ require 'scout_apm/utils/active_record_metric_name'
 require 'scout_apm/utils/backtrace_parser'
 require 'scout_apm/utils/installed_gems'
 require 'scout_apm/utils/klass_helper'
-require 'scout_apm/utils/null_logger'
 require 'scout_apm/utils/scm'
 require 'scout_apm/utils/sql_sanitizer'
 require 'scout_apm/utils/time'
@@ -116,8 +117,8 @@ require 'scout_apm/utils/gzip_helper'
 require 'scout_apm/config'
 require 'scout_apm/environment'
 require 'scout_apm/agent'
-require 'scout_apm/agent/logging'
-require 'scout_apm/agent/reporting'
+require 'scout_apm/logger'
+require 'scout_apm/reporting'
 require 'scout_apm/layaway'
 require 'scout_apm/layaway_file'
 require 'scout_apm/reporter'
@@ -171,6 +172,14 @@ require 'scout_apm/remote/message'
 require 'scout_apm/remote/recorder'
 require 'scout_apm/instruments/resque'
 
+require 'scout_apm/agent_context'
+require 'scout_apm/instrument_manager'
+require 'scout_apm/periodic_work'
+require 'scout_apm/agent/preconditions'
+require 'scout_apm/agent/exit_handler'
+require 'scout_apm/tasks/doctor'
+require 'scout_apm/tasks/support'
+
 if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR) && Rails::VERSION::MAJOR >= 3 && defined?(Rails::Railtie)
   module ScoutApm
     class Railtie < Rails::Railtie
@@ -181,16 +190,17 @@ if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR
         app.middleware.use ScoutApm::Middleware
 
         # Attempt to start right away, this will work best for preloading apps, Unicorn & Puma & similar
-        ScoutApm::Agent.instance.start
-      end
-    end
-    class Railtie < Rails::Railtie
-      initializer 'scout_apm.start' do |app|
+        ScoutApm::Agent.instance.install
+
         # Install the middleware every time in development mode.
         # The middleware is a noop if dev_trace is not enabled in config
         if Rails.env.development?
           app.middleware.use ScoutApm::Instant::Middleware
         end
+      end
+
+      rake_tasks do
+        load "tasks/doctor.rake"
       end
     end
   end

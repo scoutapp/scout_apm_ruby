@@ -3,7 +3,7 @@ module ScoutApm
   module Serializers
     class PayloadSerializer
       def self.serialize(metadata, metrics, slow_transactions, jobs, slow_jobs, histograms, db_query_metrics)
-        if ScoutApm::Agent.instance.config.value("report_format") == 'json'
+        if ScoutApm::Agent.instance.context.config.value("report_format") == 'json'
           ScoutApm::Serializers::PayloadSerializerToJson.serialize(metadata, metrics, slow_transactions, jobs, slow_jobs, histograms, db_query_metrics)
         else
           metadata = metadata.dup
