@@ -107,7 +107,8 @@ module ScoutApm
     end
 
     def store
-      @store ||= ScoutApm::Store.new(self)
+      return @store if @store
+      self.store = ScoutApm::Store.new(self)
     end
 
     def layaway
@@ -160,7 +161,10 @@ module ScoutApm
       @store = store
 
       # Installs the default samplers
-      ScoutApm::Instruments::Samplers::DEFAULT_SAMPLERS.each { |s| store.add_sampler(s) }
+      # Don't install samplers on nil stores
+      if store
+        ScoutApm::Instruments::Samplers::DEFAULT_SAMPLERS.each { |s| store.add_sampler(s) }
+      end
     end
 
     def recorder=(recorder)

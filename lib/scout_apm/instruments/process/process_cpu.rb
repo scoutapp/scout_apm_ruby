@@ -2,14 +2,14 @@ module ScoutApm
   module Instruments
     module Process
       class ProcessCpu
-        attr_reader :logger
         attr_reader :num_processors
         attr_accessor :last_run, :last_utime, :last_stime
+        attr_reader :context
 
         def initialize(context)
           @context = context
 
-          @num_processors = [context.environment.num_processors, 1].compact.max
+          @num_processors = [context.environment.processors, 1].compact.max
 
           t = ::Process.times
           @last_run = Time.now

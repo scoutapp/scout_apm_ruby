@@ -107,8 +107,8 @@ module ScoutApm
 
     ######################################
     # Sampler support
-    def add_sampler(sampler)
-      @samplers << sampler
+    def add_sampler(sampler_klass)
+      @samplers << sampler_klass.new(@context)
     end
 
     def collect_samplers(rp)

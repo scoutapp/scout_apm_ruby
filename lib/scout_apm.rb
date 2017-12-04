@@ -80,16 +80,18 @@ require 'scout_apm/instruments/elasticsearch'
 require 'scout_apm/instruments/active_record'
 require 'scout_apm/instruments/action_controller_rails_2'
 require 'scout_apm/instruments/action_controller_rails_3_rails4'
+require 'scout_apm/instruments/action_view'
 require 'scout_apm/instruments/middleware_summary'
 require 'scout_apm/instruments/middleware_detailed' # Disabled by default, see the file for more details
 require 'scout_apm/instruments/rails_router'
 require 'scout_apm/instruments/grape'
 require 'scout_apm/instruments/sinatra'
+require 'allocations'
+
 require 'scout_apm/instruments/process/process_cpu'
 require 'scout_apm/instruments/process/process_memory'
 require 'scout_apm/instruments/percentile_sampler'
-require 'scout_apm/instruments/action_view'
-require 'allocations'
+require 'scout_apm/instruments/samplers'
 
 require 'scout_apm/app_server_load'
 
