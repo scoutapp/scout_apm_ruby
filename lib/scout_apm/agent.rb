@@ -142,7 +142,7 @@ module ScoutApm
 
       ScoutApm::Agent::ExitHandler.new(context).install
 
-      if ScoutApm::Agent.instance.config.value('profile')
+      if context.config.value('profile')
         # After we fork, setup the handlers here.
         ScoutApm::Instruments::Stacks.install
         ScoutApm::Instruments::Stacks.start
