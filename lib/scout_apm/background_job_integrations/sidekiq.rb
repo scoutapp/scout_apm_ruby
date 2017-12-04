@@ -63,7 +63,7 @@ module ScoutApm
         queue_layer = ScoutApm::Layer.new('Queue', queue)
         job_layer = ScoutApm::Layer.new('Job', job_class(msg))
 
-        if ScoutApm::Agent.instance.config.value('profile') && SidekiqMiddleware.version_supports_profiling?
+        if ScoutApm::Agent.instance.context.config.value('profile') && SidekiqMiddleware.version_supports_profiling?
           # Capture ScoutProf if we can
           #req.enable_profiled_thread!
           #job_layer.set_root_class(job_class)
