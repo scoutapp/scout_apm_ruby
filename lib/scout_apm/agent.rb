@@ -148,8 +148,6 @@ module ScoutApm
         ScoutApm::Instruments::Stacks.start
       end
 
-      @recorder = create_recorder
-      logger.info("recorder is now: #{@recorder.class}")
       periodic_work = ScoutApm::PeriodicWork.new(context)
 
       @background_worker = ScoutApm::BackgroundWorker.new(context)

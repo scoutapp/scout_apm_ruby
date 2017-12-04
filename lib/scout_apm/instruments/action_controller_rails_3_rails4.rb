@@ -82,7 +82,7 @@ module ScoutApm
               resolved_name = scout_action_name(*args)
               layer = ScoutApm::Layer.new("Controller", "#{controller_path}/#{resolved_name}")
 
-              if ScoutApm::Agent.instance.config.value('profile') && ScoutApm::Instruments::Stacks::ENABLED
+              if ScoutApm::Agent.instance.context.config.value('profile') && ScoutApm::Instruments::Stacks::ENABLED
                 if defined?(ScoutApm::Instruments::Stacks::INSTALLED) && ScoutApm::Instruments::Stacks::INSTALLED
                   # Capture ScoutProf if we can
                   req.enable_profiled_thread!

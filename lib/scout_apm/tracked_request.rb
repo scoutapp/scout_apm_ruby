@@ -110,7 +110,7 @@ module ScoutApm
       if finalized?
         stop_request
       else
-        continue_sampling_for_layers if ScoutApm::Agent.instance.config.value('profile')
+        continue_sampling_for_layers if @agent_context.config.value('profile')
       end
     end
 
@@ -199,7 +199,7 @@ module ScoutApm
     def stop_request
       @stopping = true
 
-      if ScoutApm::Agent.instance.config.value('profile')
+      if @agent_context.config.value('profile')
         ScoutApm::Instruments::Stacks.stop_sampling(true)
         ScoutApm::Instruments::Stacks.update_indexes(0, 0)
       end
