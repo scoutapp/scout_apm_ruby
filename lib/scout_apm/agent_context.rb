@@ -75,6 +75,10 @@ module ScoutApm
       @started
     end
 
+    def shutting_down?
+      @shutting_down
+    end
+
     def installed?
       @installed
     end
@@ -155,6 +159,10 @@ module ScoutApm
 
     def started!
       @started = true
+    end
+
+    def shutting_down!
+      @shutting_down = true
     end
 
     def store=(store)

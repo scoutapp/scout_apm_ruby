@@ -322,7 +322,25 @@ module ScoutApm
         trace = converter.call
         ScoutApm::InstantReporting.new(trace, instant_key).call
       end
+
+      if web? || job?
+        ensure_background_worker
+      end
     end
+
+    # Ensure the background worker thread is up & running - a fallback if other
+    # detection doesn't achieve this at boot.
+    def ensure_background_worker
+      agent = ScoutApm::Agent.instance
+      agent.start
+
+      if agent.start_background_worker(:quiet)
+        agent.logger.info("Force Started BG Worker")
+      end
+    rescue => e
+      true
+    end
+
 
     # Only call this after the request is complete
     def unique_name

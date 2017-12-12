@@ -34,6 +34,7 @@ module ScoutApm
       def shutdown
         logger.info "Shutting down ScoutApm"
         return if !context.started?
+        context.shutting_down!
         ScoutApm::Instruments::Stacks.uninstall
         ::ScoutApm::Agent.instance.stop_background_worker
       end
