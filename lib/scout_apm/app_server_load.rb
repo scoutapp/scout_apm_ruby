@@ -41,6 +41,10 @@ module ScoutApm
         :paas               => to_s_safe(ScoutApm::Environment.instance.platform_integration.name),
         :git_sha            => to_s_safe(ScoutApm::Environment.instance.git_revision.sha)
       }
+    ensure
+      # Sometimes :database_engine and :database_adapter can cause a reference to an AR connection.
+      # Make sure we release all AR connections held by this thread.
+      ActiveRecord::Base.clear_active_connections! if Utils::KlassHelper.defined?("ActiveRecord::Base")
     end
 
     # Calls `.to_s` on the object passed in.

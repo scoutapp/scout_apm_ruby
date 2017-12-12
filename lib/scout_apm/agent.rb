@@ -173,7 +173,7 @@ module ScoutApm
     # Sends a ping to APM right away, smoothes out onboarding
     # Collects up any relevant info (framework, app server, system time, ruby version, etc)
     def app_server_load_hook
-      AppServerLoad.new.run
+      @app_server_load ||= AppServerLoad.new.run
     end
 
     def exit_handler_supported?
