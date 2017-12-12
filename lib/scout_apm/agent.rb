@@ -61,8 +61,12 @@ module ScoutApm
     # installed, and starting the background worker.
     #
     # Does not attempt to start twice.
-    def start
-      return if context.started?
+    def start(_opts={})
+      if context.started?
+        start_background_worker unless background_worker_running?
+        return
+      end
+
       install unless context.installed?
 
       context.started!
