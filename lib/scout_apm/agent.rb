@@ -131,15 +131,24 @@ module ScoutApm
     #  Background Worker Lifecycle  #
     #################################
 
-    def start_background_worker
+    # Creates the worker thread. The worker thread is a loop that runs continuously. It sleeps for +Agent#period+ and when it wakes,
+    # processes data, either saving it to disk or reporting to Scout.
+    # => true if thread & worker got started
+    # => false if it wasn't started (either due to already running, or other preconditions)
+    def start_background_worker(quiet=false)
       if !context.config.value('monitor')
-        logger.debug "Not starting background worker as monitoring isn't enabled."
+        logger.debug "Not starting background worker as monitoring isn't enabled." unless quiet
         return false
       end
 
       if background_worker_running?
-        logger.info "Not starting background worker, already started"
-        return
+        logger.info "Not starting background worker, already started" unless quiet
+        return false
+      end
+
+      if context.shutting_down?
+        logger.info "Not starting background worker, already in process of shutting down" unless quiet
+        return false
       end
 
       logger.info "Initializing worker thread."
@@ -154,6 +163,8 @@ module ScoutApm
           periodic_work.run
         }
       end
+
+      return true
     end
 
     def stop_background_worker
