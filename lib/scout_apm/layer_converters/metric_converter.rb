@@ -18,7 +18,7 @@ module ScoutApm
         walker.on do |layer|
           next if skip_layer?(layer)
 
-          ScoutApm::Agent.instance.trace("MetricConverter inside walker layer: #{layer.type}, #{layer.name}", :skip_backtrace)
+          ScoutApm::Agent.instance.trace("MetricConverter layer: #{layer.type}/#{layer.name}, \"#{layer.desc}\"", :skip_backtrace)
 
           meta_options = if layer == scope_layer # We don't scope the controller under itself
                           {}
