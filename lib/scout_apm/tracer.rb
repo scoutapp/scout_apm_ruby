@@ -31,9 +31,11 @@ module ScoutApm
         req.start_layer(layer)
         req.ignore_children! if options[:ignore_children]
 
+        ScoutApm::Agent.instance.trace("Tracer.instrument created LID(#{layer.object_id}) with type: #{type} and name: #{name}- #{options.inspect}")
         begin
           yield
         ensure
+          ScoutApm::Agent.instance.trace("Tracer.instrument stopped LID(#{layer.object_id})")
           req.acknowledge_children! if options[:ignore_children]
           req.stop_layer
         end

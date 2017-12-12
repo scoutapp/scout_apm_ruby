@@ -12,8 +12,10 @@ module ScoutApm
       req = Thread.current[:scout_request]
 
       if req && (req.stopping? || req.recorded?)
+        ScoutApm::Agent.instance.trace("RequestManager.find req is present, but stopping")
         nil
       else
+        ScoutApm::Agent.instance.trace("RequestManager.find found request: #{req.object_id}")
         req
       end
     end
@@ -26,7 +28,11 @@ module ScoutApm
                 ScoutApm::FakeStore.new
               end
 
-      Thread.current[:scout_request] = TrackedRequest.new(store)
+      req = TrackedRequest.new(store)
+
+      ScoutApm::Agent.instance.trace("RequestManager.create created new request: #{req.object_id}")
+
+      Thread.current[:scout_request] = req
     end
   end
 end

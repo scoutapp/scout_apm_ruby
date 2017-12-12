@@ -391,5 +391,12 @@ module ScoutApm
       @recorder = ScoutApm::Remote::Recorder.new(host, port, logger)
       @store = ScoutApm::FakeStore.new
     end
+
+    def trace(msg, skip_backtrace=false)
+      if config.value("debug_tracing")
+        logger.debug("[DEBUG TRACE] [TID #{Thread.current.object_id}] #{msg}")
+        logger.debug("[DEBUG TRACE BACKTRACE] #{caller.take(10).inspect}") unless skip_backtrace
+      end
+    end
   end
 end

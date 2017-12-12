@@ -286,6 +286,8 @@ module ScoutApm
       walker.walk
       converters.each {|i| i.record! }
 
+      ScoutApm::Agent.instance.trace("TrackedRequest.record! recorders ran: #{self.object_id}")
+
       # If there's an instant_key, it means we need to report this right away
       if web? && instant?
         converter = converters.find{|c| c.class == LayerConverters::SlowRequestConverter}

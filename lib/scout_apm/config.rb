@@ -36,6 +36,7 @@ require 'scout_apm/environment'
 module ScoutApm
   class Config
     KNOWN_CONFIG_OPTIONS = [
+        'debug_tracing',
         'application_root',
         'async_recording',
         'compress_payload',
