@@ -39,6 +39,7 @@ module ScoutApm
     # be started (when forking).
     def initialize(options = {})
       @started = false
+      @shutting_down = false
       @process_start_time = Time.now
       @options ||= options
 
@@ -236,6 +237,10 @@ module ScoutApm
       @started
     end
 
+    def shutting_down?
+      @shutdown == true
+    end
+
     # The worker thread will automatically start UNLESS:
     # * A supported application server isn't detected (example: running via Rails console)
     # * A supported application server is detected, but it forks. In this case,
@@ -256,18 +261,28 @@ module ScoutApm
 
     # Creates the worker thread. The worker thread is a loop that runs continuously. It sleeps for +Agent#period+ and when it wakes,
     # processes data, either saving it to disk or reporting to Scout.
-    def start_background_worker
+    # => true if thread & worker got started
+    # => false if it wasn't started (either due to already running, or other preconditions)
+    def start_background_worker(quiet=false)
       if !apm_enabled?
-        logger.debug "Not starting background worker as monitoring isn't enabled."
+        logger.debug "Not starting background worker as monitoring isn't enabled." unless quiet
         return false
       end
-      logger.info "Not starting background worker, already started" and return if background_worker_running?
+      if background_worker_running?
+        logger.info "Not starting background worker, already started" unless quiet
+        return false
+      end
+      if shutting_down?
+        logger.info "Not starting background worker, already in process of shutting down" unless quiet
+        return false
+      end
+
       logger.info "Initializing worker thread."
 
       install_exit_handler
 
       @recorder = create_recorder
-      logger.info("recorder is now: #{@recorder.class}")
+      logger.info("Recorder is now: #{@recorder.class}")
 
       @background_worker = ScoutApm::BackgroundWorker.new
       @background_worker_thread = Thread.new do
@@ -277,6 +292,8 @@ module ScoutApm
           clean_old_percentiles
         }
       end
+
+      return true
     end
 
     def clean_old_percentiles
