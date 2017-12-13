@@ -46,7 +46,9 @@ module ScoutApm
       # XXX: Should this happen at application start?
       # Should this ever happen after fork?
       # We start a thread in this, which can screw stuff up when we then fork.
-      AppServerLoad.new(context).run
+      #
+      # Save it into a variable to prevent it from ever running twice
+      @app_server_load ||= AppServerLoad.new(context).run
 
       logger.info "Scout Agent [#{ScoutApm::VERSION}] installed"
 
