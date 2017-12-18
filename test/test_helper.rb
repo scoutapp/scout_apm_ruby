@@ -9,6 +9,8 @@ require 'mocha/mini_test'
 require 'pry'
 
 
+require 'active_support/core_ext/string/inflections'
+
 require 'scout_apm'
 
 Kernel.module_eval do
@@ -39,6 +41,14 @@ class FakeConfigOverlay
   def has_key?(key)
     @values.has_key?(key)
   end
+
+  def name
+    "agent-test-config-overlay"
+  end
+
+  def any_keys_found?
+    true
+  end
 end
 
 class FakeEnvironment
@@ -64,7 +74,7 @@ class Minitest::Test
   end
 
   def teardown
-    ScoutApm::Agent.instance.shutdown
+    ScoutApm::Agent.instance.stop_background_worker
     File.delete(DATA_FILE_PATH) if File.exist?(DATA_FILE_PATH)
   end
 
@@ -83,8 +93,13 @@ class Minitest::Test
     FakeEnvironment.new(values)
   end
 
+  # XXX: Make it easy to override context here?
   def make_fake_config(values)
-    ScoutApm::Config.new(FakeConfigOverlay.new(values))
+    ScoutApm::Config.new(agent_context, [FakeConfigOverlay.new(values), ScoutApm::Config::ConfigNull.new] )
+  end
+
+  def agent_context
+    ScoutApm::AgentContext.new
   end
 
   DATA_FILE_DIR = File.dirname(__FILE__) + '/tmp'

@@ -10,7 +10,7 @@ module ScoutApm
       ###################
       def record!
         return nil unless request.job?
-        @points = ScoutApm::Agent.instance.slow_job_policy.score(request)
+        @points = context.slow_job_policy.score(request)
 
         # Let the store know we're here, and if it wants our data, it will call
         # back into #call
@@ -29,10 +29,10 @@ module ScoutApm
         return nil unless layer_finder.queue
         return nil unless layer_finder.job
 
-        ScoutApm::Agent.instance.slow_job_policy.stored!(request)
+        context.slow_job_policy.stored!(request)
 
         # record the change in memory usage
-        mem_delta = ScoutApm::Instruments::Process::ProcessMemory.rss_to_mb(request.capture_mem_delta!)
+        mem_delta = ScoutApm::Instruments::Process::ProcessMemory.new(context).rss_to_mb(request.capture_mem_delta!)
 
         timing_metrics, allocation_metrics = create_metrics
 
@@ -41,6 +41,7 @@ module ScoutApm
         end
 
         SlowJobRecord.new(
+          context,
           queue_layer.name,
           job_layer.name,
           root_layer.stop_time,

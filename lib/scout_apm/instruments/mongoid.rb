@@ -1,11 +1,15 @@
 module ScoutApm
   module Instruments
     class Mongoid
-      attr_reader :logger
+      attr_reader :context
 
-      def initalize(logger=ScoutApm::Agent.instance.logger)
-        @logger = logger
+      def initialize(context)
+        @context = context
         @installed = false
+      end
+
+      def logger
+        context.logger
       end
 
       def installed?
@@ -17,7 +21,8 @@ module ScoutApm
 
         # Mongoid versions that use Moped should instrument Moped.
         if defined?(::Mongoid) and !defined?(::Moped)
-          ScoutApm::Agent.instance.logger.info "Instrumenting Mongoid 2.x"
+          logger.info "Instrumenting Mongoid 2.x"
+          @installed = true
 
           ### OLD (2.x) mongoids
           if defined?(::Mongoid::Collection)
@@ -33,7 +38,7 @@ module ScoutApm
 
           ### 5.x Mongoid
           if (mongoid_v5? || mongoid_v6?) && defined?(::Mongoid::Contextual::Mongo)
-            ScoutApm::Agent.instance.logger.info "Instrumenting Mongoid 5.x/6.x"
+            logger.info "Instrumenting Mongoid 5.x/6.x"
             # All the public methods from Mongoid::Contextual::Mongo.
             # TODO: Geo and MapReduce support (?). They are in other Contextual::* classes
             methods = [

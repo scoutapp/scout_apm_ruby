@@ -1,11 +1,15 @@
 module ScoutApm
   module Instruments
     class Redis
-      attr_reader :logger
+      attr_reader :context
 
-      def initalize(logger=ScoutApm::Agent.instance.logger)
-        @logger = logger
+      def initialize(context)
+        @context = context
         @installed = false
+      end
+
+      def logger
+        context.logger
       end
 
       def installed?
@@ -13,10 +17,10 @@ module ScoutApm
       end
 
       def install
-        @installed = true
-
         if defined?(::Redis) && defined?(::Redis::Client)
-          ScoutApm::Agent.instance.logger.info "Instrumenting Redis"
+          @installed = true
+
+          logger.info "Instrumenting Redis"
 
           ::Redis::Client.class_eval do
             include ScoutApm::Tracer

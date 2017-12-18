@@ -39,26 +39,23 @@ module ScoutApm
     # this is set in the controller instumentation (ActionControllerRails3Rails4 according)
     attr_accessor :instant_key
 
-    # Whereas the instant_key gets set per-request in reponse to a URL param, dev_trace is set in the config file
-    attr_accessor :dev_trace
-
     # An object that responds to `record!(TrackedRequest)` to store this tracked request
     attr_reader :recorder
 
-    def initialize(store)
+    def initialize(agent_context, store)
+      @agent_context = agent_context
       @store = store #this is passed in so we can use a real store (normal operation) or fake store (instant mode only)
       @layers = []
       @call_set = Hash.new { |h, k| h[k] = CallSet.new }
       @annotations = {}
       @ignoring_children = 0
-      @context = Context.new
+      @context = Context.new(agent_context)
       @root_layer = nil
       @error = false
       @stopping = false
       @instant_key = nil
       @mem_start = mem_usage
-      @dev_trace =  ScoutApm::Agent.instance.config.value('dev_trace') && ScoutApm::Agent.instance.environment.env == "development"
-      @recorder = ScoutApm::Agent.instance.recorder
+      @recorder = agent_context.recorder
 
       ignore_request! if @recorder.nil?
     end
@@ -113,7 +110,7 @@ module ScoutApm
       if finalized?
         stop_request
       else
-        continue_sampling_for_layers if ScoutApm::Agent.instance.config.value('profile')
+        continue_sampling_for_layers if @agent_context.config.value('profile')
       end
     end
 
@@ -157,9 +154,15 @@ module ScoutApm
       @call_set[layer.name].update!(layer.desc)
     end
 
+    # Grab backtraces more aggressively when running in dev trace mode
+    def backtrace_threshold
+      @agent_context.dev_trace_enabled? ? 0.05 : 0.5 # the minimum threshold in seconds to record the backtrace for a metric.
+    end
+
     # This may be in bytes or KB based on the OSX. We store this as-is here and only do conversion to MB in Layer Converters.
+    # XXX: Move this to environment?
     def mem_usage
-      ScoutApm::Instruments::Process::ProcessMemory.rss
+      ScoutApm::Instruments::Process::ProcessMemory.new(@agent_context).rss
     end
 
     def capture_mem_delta!
@@ -196,7 +199,7 @@ module ScoutApm
     def stop_request
       @stopping = true
 
-      if ScoutApm::Agent.instance.config.value('profile')
+      if @agent_context.config.value('profile')
         ScoutApm::Instruments::Stacks.stop_sampling(true)
         ScoutApm::Instruments::Stacks.update_indexes(0, 0)
       end
@@ -288,7 +291,7 @@ module ScoutApm
       restore_store if @store.nil?
 
       # Bail out early if the user asked us to ignore this uri
-      return if ScoutApm::Agent.instance.ignored_uris.ignore?(annotations[:uri])
+      return if @agent_context.ignored_uris.ignore?(annotations[:uri])
 
       converters = [
         LayerConverters::Histograms,
@@ -306,7 +309,7 @@ module ScoutApm
       layer_finder = LayerConverters::FindLayerByType.new(self)
       walker = LayerConverters::DepthFirstWalker.new(self.root_layer)
       converters = converters.map do |klass|
-        instance = klass.new(self, layer_finder, @store)
+        instance = klass.new(@agent_context, self, layer_finder, @store)
         instance.register_hooks(walker)
         instance
       end
@@ -319,7 +322,25 @@ module ScoutApm
         trace = converter.call
         ScoutApm::InstantReporting.new(trace, instant_key).call
       end
+
+      if web? || job?
+        ensure_background_worker
+      end
     end
+
+    # Ensure the background worker thread is up & running - a fallback if other
+    # detection doesn't achieve this at boot.
+    def ensure_background_worker
+      agent = ScoutApm::Agent.instance
+      agent.start
+
+      if agent.start_background_worker(:quiet)
+        agent.logger.info("Force Started BG Worker")
+      end
+    rescue => e
+      true
+    end
+
 
     # Only call this after the request is complete
     def unique_name
@@ -385,11 +406,6 @@ module ScoutApm
       @ignoring_children > 0
     end
 
-    # Grab backtraces more aggressively when running in dev trace mode
-    def backtrace_threshold
-      dev_trace ? 0.05 : 0.5 # the minimum threshold in seconds to record the backtrace for a metric.
-    end
-
     ################################################################################
     # Ignoring the rest of a request
     ################################################################################
@@ -399,6 +415,10 @@ module ScoutApm
     # layers, and delete any existing layer info.  This class will still exist,
     # and respond to methods as normal, but `record!` won't be called, and no
     # data will be recorded.
+    #
+    # We still need to keep track of the current layer depth (via
+    # @ignoring_depth counter) so we know when to report that the class was
+    # "reported", and ready to be recreated for the next request.
 
     def ignore_request!
       return if @ignoring_request
@@ -434,8 +454,12 @@ module ScoutApm
     end
 
     def logger
-      ScoutApm::Agent.instance.logger
+      @agent_context.logger
     end
+
+    ###########################
+    #  Serialization Helpers
+    ###########################
 
     # Actually go fetch & make-real any lazily created data.
     # Clean up any cleverness in objects.
@@ -449,7 +473,7 @@ module ScoutApm
     # Go re-fetch the store based on what the Agent's official one is. Used
     # after hydrating a dumped TrackedRequest
     def restore_store
-      @store = ScoutApm::Agent.instance.store
+      @store = @agent_context.store
     end
   end
 end

@@ -3,11 +3,15 @@ require 'scout_apm/utils/sql_sanitizer'
 module ScoutApm
   module Instruments
     class ActiveRecord
-      attr_reader :logger
+      attr_reader :context
 
-      def initalize(logger=ScoutApm::Agent.instance.logger)
-        @logger = logger
+      def initialize(context)
+        @context = context
         @installed = false
+      end
+
+      def logger
+        context.logger
       end
 
       def installed?
@@ -15,9 +19,7 @@ module ScoutApm
       end
 
       def install
-        @installed = true
-
-        if defined?(::Rails) && ::Rails::VERSION::MAJOR.to_i == 3 && ::Rails.respond_to?(:configuration)
+        if install_via_after_initialize?
           Rails.configuration.after_initialize do
             add_instruments
           end
@@ -26,9 +28,21 @@ module ScoutApm
         end
       end
 
+      # If we have the right version of rails, we should use the hooks provided
+      # to install these instruments
+      def install_via_after_initialize?
+        defined?(::Rails) &&
+          defined?(::Rails::VERSION) &&
+          defined?(::Rails::VERSION::MAJOR) &&
+          ::Rails::VERSION::MAJOR.to_i == 3 &&
+          ::Rails.respond_to?(:configuration)
+      end
+
       def add_instruments
         # Setup Tracer on AR::Base
         if Utils::KlassHelper.defined?("ActiveRecord::Base")
+          @installed = true
+
           ::ActiveRecord::Base.class_eval do
             include ::ScoutApm::Tracer
           end
@@ -80,14 +94,14 @@ module ScoutApm
             if layer && layer.type == "ActiveRecord"
               layer.annotate_layer(payload)
             elsif layer
-              ScoutApm::Agent.instance.logger.debug("Expected layer type: ActiveRecord, got #{layer && layer.type}")
+              logger.debug("Expected layer type: ActiveRecord, got #{layer && layer.type}")
             else
               # noop, no layer at all. We're probably ignoring this req.
             end
           end
         end
       rescue
-        ScoutApm::Agent.instance.logger.warn "ActiveRecord instrumentation exception: #{$!.message}"
+        logger.warn "ActiveRecord instrumentation exception: #{$!.message}"
       end
     end
 
@@ -102,7 +116,7 @@ module ScoutApm
     ################################################################################
     module ActiveRecordInstruments
       def self.included(instrumented_class)
-        ScoutApm::Agent.instance.logger.info "Instrumenting #{instrumented_class.inspect}"
+        ScoutApm::Agent.instance.context.logger.info "Instrumenting #{instrumented_class.inspect}"
         instrumented_class.class_eval do
           unless instrumented_class.method_defined?(:log_without_scout_instruments)
             alias_method :log_without_scout_instruments, :log
@@ -176,7 +190,7 @@ module ScoutApm
 
     module ActiveRecordQueryingInstruments
       def self.included(instrumented_class)
-        ScoutApm::Agent.instance.logger.info "Instrumenting ActiveRecord::Querying - #{instrumented_class.inspect}"
+        ScoutApm::Agent.instance.context.logger.info "Instrumenting ActiveRecord::Querying - #{instrumented_class.inspect}"
         instrumented_class.class_eval do
           unless instrumented_class.method_defined?(:find_by_sql_without_scout_instruments)
             alias_method :find_by_sql_without_scout_instruments, :find_by_sql
@@ -202,7 +216,7 @@ module ScoutApm
 
     module ActiveRecordFinderMethodsInstruments
       def self.included(instrumented_class)
-        ScoutApm::Agent.instance.logger.info "Instrumenting ActiveRecord::FinderMethods - #{instrumented_class.inspect}"
+        ScoutApm::Agent.instance.context.logger.info "Instrumenting ActiveRecord::FinderMethods - #{instrumented_class.inspect}"
         instrumented_class.class_eval do
           unless instrumented_class.method_defined?(:find_with_associations_without_scout_instruments)
             alias_method :find_with_associations_without_scout_instruments, :find_with_associations

@@ -1,14 +1,25 @@
+# Note, this class must be Marshal Dumpable
 module ScoutApm
   class DbQueryMetricSet
     include Enumerable
 
     attr_reader :metrics # the raw metrics. You probably want #metrics_to_report
-    attr_reader :config # A ScoutApm::Config instance
+    attr_reader :context
 
-    def initialize(config=ScoutApm::Agent.instance.config)
+    def marshal_dump
+      [ @metrics ]
+    end
+
+    def marshal_load(array)
+      @metrics = array.first
+      @context = ScoutApm::Agent.instance.context
+    end
+
+    def initialize(context)
+      @context = context
+
       # A hash of DbQueryMetricStats values, keyed by DbQueryMetricStats.key
       @metrics = Hash.new
-      @config = config
     end
 
     def each
@@ -54,7 +65,7 @@ module ScoutApm
     end
 
     def metrics_to_report
-      report_limit = config.value('database_metric_report_limit')
+      report_limit = context.config.value('database_metric_report_limit')
       if metrics.size > report_limit
         metrics.
           values.
@@ -73,8 +84,9 @@ module ScoutApm
     end
 
     def at_limit?
-      @limit ||= config.value('database_metric_limit')
+      @limit ||= context.config.value('database_metric_limit')
       metrics.size >= @limit
     end
+
   end
 end

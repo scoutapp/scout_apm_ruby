@@ -1,12 +1,11 @@
 module ScoutApm
   module Utils
     class ActiveRecordMetricName
-      DEFAULT_METRIC = "SQL/Unknown"
-
       attr_reader :sql, :name
+      DEFAULT_METRIC = 'SQL/other'.freeze
 
       def initialize(sql, name)
-        @sql = sql
+        @sql = sql || ""
         @name = name.to_s
       end
 
@@ -17,13 +16,11 @@ module ScoutApm
       # name: Place Load
       # metric_name: Place/find
       def to_s
-        return DEFAULT_METRIC unless name
-        return DEFAULT_METRIC unless model && operation
-
-        if parsed = parse_operation
+        parsed = parse_operation
+        if parsed
           "#{model}/#{parsed}"
         else
-          "SQL/other"
+          regex_name(sql)
         end
       end
 
@@ -75,6 +72,67 @@ module ScoutApm
             operation
           end
         end
+      end
+
+
+      ########################
+      #  Regex based naming  #
+      ########################
+      #
+      WHITE_SPACE = '\s*'
+      REGEX_OPERATION = '(SELECT|UPDATE|INSERT|DELETE)'
+      FROM = 'FROM'
+      INTO = 'INTO'
+      NON_GREEDY_CONSUME = '.*?'
+      TABLE = '(?:"|`)?(.*?)(?:"|`)?\s'
+      COUNT = 'COUNT\(.*?\)'
+
+      SELECT_REGEX = /\A#{WHITE_SPACE}(SELECT)#{WHITE_SPACE}(#{COUNT})?#{NON_GREEDY_CONSUME}#{FROM}#{WHITE_SPACE}#{TABLE}/i.freeze
+      UPDATE_REGEX = /\A#{WHITE_SPACE}(UPDATE)#{WHITE_SPACE}#{TABLE}/i.freeze
+      INSERT_REGEX = /\A#{WHITE_SPACE}(INSERT)#{WHITE_SPACE}#{INTO}#{WHITE_SPACE}#{TABLE}/i.freeze
+      DELETE_REGEX = /\A#{WHITE_SPACE}(DELETE)#{WHITE_SPACE}#{FROM}#{TABLE}/i.freeze
+
+      COUNT_LABEL = 'count'.freeze
+      SELECT_LABEL = 'find'.freeze
+      UPDATE_LABEL = 'save'.freeze
+      INSERT_LABEL = 'create'.freeze
+      DELETE_LABEL = 'destroy'.freeze
+      UNKNOWN_LABEL = 'SQL/other'.freeze
+
+      # Attempt to do some basic parsing of SQL via regexes to extract the SQL
+      # verb (select, update, etc) and the table being operated on.
+      #
+      # This is a fallback from what ActiveRecord gives us, we prefer its
+      # names. But sometimes it is giving us a no-name query, and we have to
+      # attempt to figure it out ourselves.
+      #
+      # This relies on ActiveSupport's classify method. If it's not present,
+      # just skip the attempt to rename here. This could happen in a Grape or
+      # Sinatra application that doesn't import ActiveSupport. At this point,
+      # you're already using ActiveRecord, so it's likely loaded anyway.
+      def regex_name(sql)
+        # We rely on the ActiveSupport inflections code here. Bail early if we can't use it.
+        return UNKNOWN_LABEL unless UNKNOWN_LABEL.respond_to?(:classify)
+
+        if match = SELECT_REGEX.match(sql)
+          operation =
+            if match[2]
+              COUNT_LABEL
+            else
+              SELECT_LABEL
+            end
+          "#{match[3].classify}/#{operation}"
+        elsif match = UPDATE_REGEX.match(sql)
+          "#{match[2].classify}/#{UPDATE_LABEL}"
+        elsif match = INSERT_REGEX.match(sql)
+          "#{match[2].classify}/#{INSERT_LABEL}"
+        elsif match = DELETE_REGEX.match(sql)
+          "#{match[2].classify}/#{DELETE_LABEL}"
+        else
+          UNKNOWN_LABEL
+        end
+      rescue
+        UNKNOWN_LABEL
       end
     end
   end

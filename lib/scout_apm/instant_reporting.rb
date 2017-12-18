@@ -15,12 +15,12 @@ module ScoutApm
         # Serialize that trace. We reuse the PayloadSerializer, but only provide the metadata and traces.
         # In this case, the traces array will always have just one element.
         metadata = {
-            :app_root      => ScoutApm::Environment.instance.root.to_s,
-            :unique_id     => ScoutApm::Utils::UniqueId.simple,
-            :agent_version => ScoutApm::VERSION,
-            :agent_time    => Time.now.iso8601,
-            :agent_pid     => Process.pid,
-            :platform      => "ruby",
+          :app_root      => ScoutApm::Agent.instance.context.environment.root.to_s,
+          :unique_id     => ScoutApm::Utils::UniqueId.simple,
+          :agent_version => ScoutApm::VERSION,
+          :agent_time    => Time.now.iso8601,
+          :agent_pid     => Process.pid,
+          :platform      => "ruby",
         }
 
         metrics = []
@@ -31,7 +31,7 @@ module ScoutApm
         payload = ScoutApm::Serializers::PayloadSerializer.serialize(metadata, metrics, traces, jobs, slow_jobs)
 
         # Hand it off to the reporter for POST to our servers
-        reporter = Reporter.new(:instant_trace, Agent.instance.config, Agent.instance.logger, @instant_key)
+        reporter = Reporter.new(context, :instant_trace, @instant_key)
         reporter.report(payload, {'Content-Type' => 'application/json'} )
       end
     end

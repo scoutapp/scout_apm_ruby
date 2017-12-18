@@ -52,8 +52,11 @@ module ScoutApm
         'hostname',
         'ignore',
         'key',
+        'log_class',
         'log_file_path',
         'log_level',
+        'log_stderr',
+        'log_stdout',
         'monitor',
         'name',
         'profile',
@@ -159,29 +162,30 @@ module ScoutApm
 
     # Load up a config instance without attempting to load a file.
     # Useful for bootstrapping.
-    def self.without_file
+    def self.without_file(context)
       overlays = [
         ConfigEnvironment.new,
         ConfigDefaults.new,
         ConfigNull.new,
       ]
-      new(overlays)
+      new(context, overlays)
     end
 
     # Load up a config instance, attempting to load a yaml file.  Allows a
     # definite location if requested, or will attempt to load the default
     # configuration file: APP_ROOT/config/scout_apm.yml
-    def self.with_file(file_path=nil, config={})
+    def self.with_file(context, file_path=nil, config={})
       overlays = [
         ConfigEnvironment.new,
-        ConfigFile.new(file_path, config),
+        ConfigFile.new(context, file_path, config),
         ConfigDefaults.new,
         ConfigNull.new,
       ]
-      new(overlays)
+      new(context, overlays)
     end
 
-    def initialize(overlays)
+    def initialize(context, overlays)
+      @context = context
       @overlays = Array(overlays)
     end
 
@@ -192,7 +196,7 @@ module ScoutApm
 
     def value(key)
       if ! KNOWN_CONFIG_OPTIONS.include?(key)
-        ScoutApm::Agent.instance.logger.debug("Requested looking up a unknown configuration key: #{key} (not a problem. Evaluate and add to config.rb)")
+        logger.debug("Requested looking up a unknown configuration key: #{key} (not a problem. Evaluate and add to config.rb)")
       end
 
       o = overlay_for_key(key)
@@ -212,12 +216,25 @@ module ScoutApm
       @overlays.any? { |overlay| overlay.any_keys_found? }
     end
 
-    def log_settings
-      messages = KNOWN_CONFIG_OPTIONS.inject([]) do |memo, key|
+    # Returns an array of config keys, values, and source
+    # {key: "monitor", value: "true", source: "environment"}
+    #
+    def all_settings
+      KNOWN_CONFIG_OPTIONS.inject([]) do |memo, key|
         o = overlay_for_key(key)
-        memo << "#{o.name} - #{key}: #{value(key).inspect}"
+        memo << {:key => key, :value => value(key).inspect, :source => o.name}
       end
-      ScoutApm::Agent.instance.logger.debug("Resolved Setting Values:\n" + messages.join("\n"))
+    end
+
+    def log_settings(logger)
+      logger.debug(
+        "Resolved Setting Values:\n" +
+        all_settings.map{|hsh| "#{hsh[:source]} - #{hsh[:key]}: #{hsh[:value]}"}.join("\n")
+      )
+    end
+
+    def logger
+      @context.logger
     end
 
     class ConfigDefaults
@@ -310,7 +327,8 @@ module ScoutApm
     # is not found, inaccessbile, or unparsable, log a message to that effect,
     # and move on.
     class ConfigFile
-      def initialize(file_path=nil, config={})
+      def initialize(context, file_path=nil, config={})
+        @context = context
         @config = config || {}
         @resolved_file_path = file_path || determine_file_path
         load_file(@resolved_file_path)
@@ -340,6 +358,8 @@ module ScoutApm
       end
 
       private
+
+      attr_reader :context
 
       def load_file(file)
         @settings = {}
@@ -376,26 +396,15 @@ module ScoutApm
       end
 
       def determine_file_path
-        File.join(ScoutApm::Environment.instance.root, "config", "scout_apm.yml")
+        File.join(context.environment.root, "config", "scout_apm.yml")
       end
 
       def app_environment
-        @config[:environment] || ScoutApm::Environment.instance.env
+        @config[:environment] || context.environment.env
       end
 
       def logger
-        if ScoutApm::Agent.instance.logger
-          return ScoutApm::Agent.instance.logger
-        else
-          l = Logger.new(STDOUT)
-          if ENV["SCOUT_LOG_LEVEL"] == "debug"
-            l.level = Logger::DEBUG
-          else
-            l.level = Logger::INFO
-          end
-
-          return l
-        end
+        context.logger
       end
     end
   end

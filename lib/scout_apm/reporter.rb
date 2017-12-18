@@ -5,16 +5,22 @@ module ScoutApm
     CA_FILE     = File.join( File.dirname(__FILE__), *%w[.. .. data cacert.pem] )
     VERIFY_MODE = OpenSSL::SSL::VERIFY_PEER | OpenSSL::SSL::VERIFY_FAIL_IF_NO_PEER_CERT
 
-    attr_reader :config
-    attr_reader :logger
     attr_reader :type
+    attr_reader :context
     attr_reader :instant_key
 
-    def initialize(type = :checkin, config=Agent.instance.config, logger=Agent.instance.logger, instant_key=nil)
-      @config = config
-      @logger = logger
+    def initialize(context, type, instant_key=nil)
+      @context = context
       @type = type
       @instant_key = instant_key
+    end
+
+    def config
+      context.config
+    end
+
+    def logger
+      context.logger
     end
 
     def report(payload, headers = {})
@@ -27,14 +33,14 @@ module ScoutApm
         headers.merge!(compression_headers)
 
         compress_payload_size = payload.length
-        ScoutApm::Agent.instance.logger.debug("Original Size: #{original_payload_size} Compressed Size: #{compress_payload_size}")
+        logger.debug("Original Size: #{original_payload_size} Compressed Size: #{compress_payload_size}")
       end
 
       post_payload(hosts, payload, headers)
     end
 
     def uri(host)
-      encoded_app_name = CGI.escape(Environment.instance.application_name)
+      encoded_app_name = CGI.escape(context.environment.application_name)
       key = config.value('key')
 
       case type
@@ -100,7 +106,7 @@ module ScoutApm
 
     # Headers passed up with all API requests.
     def default_http_headers
-      { "Agent-Hostname" => ScoutApm::Environment.instance.hostname,
+      { "Agent-Hostname" => context.environment.hostname,
         "Content-Type"   => "application/octet-stream",
         "Agent-Version"  => ScoutApm::VERSION,
       }

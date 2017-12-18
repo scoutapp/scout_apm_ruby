@@ -138,7 +138,7 @@ module ScoutApm
     # In Ruby 2.0+, we can pass the range directly to the caller to reduce the memory footprint.
     def caller_array
       # omits the first several callers which are in the ScoutAPM stack.
-      if ScoutApm::Environment.instance.ruby_2?
+      if ScoutApm::Agent.instance.context.environment.ruby_2?
         caller(3...BACKTRACE_CALLER_LIMIT)
       else
         caller[3...BACKTRACE_CALLER_LIMIT]
@@ -152,7 +152,7 @@ module ScoutApm
     end
 
     def start_sampling
-      if ScoutApm::Agent.instance.config.value('profile') && traced?
+      if ScoutApm::Agent.instance.context.config.value('profile') && traced?
         ScoutApm::Instruments::Stacks.update_indexes(frame_index, trace_index)
         ScoutApm::Instruments::Stacks.start_sampling
       else
@@ -161,7 +161,7 @@ module ScoutApm
     end
 
     def record_traces!
-      if ScoutApm::Agent.instance.config.value('profile')
+      if ScoutApm::Agent.instance.context.config.value('profile')
         ScoutApm::Instruments::Stacks.stop_sampling(false)
         if traced?
           traces.raw_traces = ScoutApm::Instruments::Stacks.profile_frames

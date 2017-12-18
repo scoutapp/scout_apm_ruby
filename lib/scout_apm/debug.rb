@@ -31,7 +31,7 @@ module ScoutApm
     end
 
     def logger
-      ScoutApm::Agent.instance.logger
+      ScoutApm::Agent.instance.context.logger
     end
   end
 end

@@ -3,15 +3,17 @@ require 'test_helper'
 require 'scout_apm/store'
 
 class FakeFailingLayaway
+  attr_reader :rps_written
   def write_reporting_period(rp)
-    raise "Always fails. Sucks."
+    @rps_written ||= []
+    @rps_written << rp
   end
 end
 
 class StoreTest < Minitest::Test
   # TODO: Introduce a clock object to avoid having to use 'force'
   def test_writing_layaway_removes_timestamps
-    s = ScoutApm::Store.new
+    s = ScoutApm::Store.new(ScoutApm::AgentContext.new)
     s.track_one!("Controller", "user/show", 10)
 
     assert_equal(1, s.instance_variable_get('@reporting_periods').size)
@@ -22,13 +24,14 @@ class StoreTest < Minitest::Test
   end
 
   def test_writing_layaway_removes_stale_timestamps
+    context = ScoutApm::AgentContext.new
     current_time = Time.now.utc
-    current_rp = ScoutApm::StoreReportingPeriod.new(current_time)
-    stale_rp = ScoutApm::StoreReportingPeriod.new(current_time - current_time.sec - 120)
+    current_rp = ScoutApm::StoreReportingPeriod.new(current_time, context)
+    stale_rp = ScoutApm::StoreReportingPeriod.new(current_time - current_time.sec - 120, context)
 
-    s = ScoutApm::Store.new
-    ScoutApm::Instruments::Process::ProcessMemory.new(Logger.new(StringIO.new)).metrics(stale_rp.timestamp, s)
-    ScoutApm::Instruments::Process::ProcessMemory.new(Logger.new(StringIO.new)).metrics(current_rp.timestamp, s)
+    s = ScoutApm::Store.new(context)
+    ScoutApm::Instruments::Process::ProcessMemory.new(context).metrics(stale_rp.timestamp, s)
+    ScoutApm::Instruments::Process::ProcessMemory.new(context).metrics(current_rp.timestamp, s)
     assert_equal 2, s.instance_variable_get('@reporting_periods').size
 
     s.write_to_layaway(FakeFailingLayaway.new, true)
@@ -43,7 +46,7 @@ class StoreReportingPeriodTest < Minitest::Test
   attr_reader :subject
 
   def setup
-    @subject = ScoutApm::StoreReportingPeriod.new(ScoutApm::StoreReportingPeriodTimestamp.new)
+    @subject = ScoutApm::StoreReportingPeriod.new(ScoutApm::StoreReportingPeriodTimestamp.new(Time.now), ScoutApm::AgentContext.new)
   end
 
   # Check default values at creation time

@@ -9,13 +9,13 @@ class PercentileSamplerTest < Minitest::Test
   attr_reader :subject
 
   def setup
-    @subject = PercentileSampler.new(logger, histograms)
+    @context = ScoutApm::AgentContext.new
+    @subject = PercentileSampler.new(@context)
   end
 
-
   def test_initialize_with_logger_and_histogram_set
-    assert_equal subject.logger, logger
-    assert_equal subject.histograms, histograms
+    assert_equal subject.logger, @context.logger
+    assert_equal subject.histograms, @context.request_histograms_by_time
   end
 
   def test_implements_instrument_interface
@@ -113,11 +113,7 @@ class PercentileSamplerTest < Minitest::Test
   end
 
   def histograms
-    @histograms ||= begin
-                      @request_histograms_by_time = Hash.new { |hash, key|
-                        hash[key] = ScoutApm::RequestHistograms.new
-                      }
-                    end
+    @context.request_histograms_by_time
   end
 
   def histogram

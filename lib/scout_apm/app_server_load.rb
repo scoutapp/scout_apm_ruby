@@ -1,9 +1,11 @@
 module ScoutApm
   class AppServerLoad
     attr_reader :logger
+    attr_reader :context
 
-    def initialize(logger=Agent.instance.logger)
-      @logger = logger
+    def initialize(context)
+      @context = context
+      @logger = context.logger
     end
 
     def run
@@ -13,7 +15,7 @@ module ScoutApm
           logger.debug("Full Application Startup Info: #{data.inspect}")
 
           payload = ScoutApm::Serializers::AppServerLoadSerializer.serialize(data)
-          reporter = Reporter.new(:app_server_load)
+          reporter = Reporter.new(context, :app_server_load)
           reporter.report(payload)
 
           logger.debug("Finished sending Startup Info")
@@ -28,19 +30,23 @@ module ScoutApm
 
     def data
       { :server_time        => to_s_safe(Time.now),
-        :framework          => to_s_safe(ScoutApm::Environment.instance.framework_integration.human_name),
-        :framework_version  => to_s_safe(ScoutApm::Environment.instance.framework_integration.version),
-        :environment        => to_s_safe(ScoutApm::Environment.instance.framework_integration.env),
-        :app_server         => to_s_safe(ScoutApm::Environment.instance.app_server),
+        :framework          => to_s_safe(environment.framework_integration.human_name),
+        :framework_version  => to_s_safe(environment.framework_integration.version),
+        :environment        => to_s_safe(environment.framework_integration.env),
+        :app_server         => to_s_safe(environment.app_server),
         :ruby_version       => RUBY_VERSION,
-        :hostname           => to_s_safe(ScoutApm::Environment.instance.hostname),
-        :database_engine    => to_s_safe(ScoutApm::Environment.instance.database_engine),      # Detected
-        :database_adapter   => to_s_safe(ScoutApm::Environment.instance.raw_database_adapter), # Raw
-        :application_name   => to_s_safe(ScoutApm::Environment.instance.application_name),
-        :libraries          => ScoutApm::Utils::InstalledGems.new.run,
-        :paas               => to_s_safe(ScoutApm::Environment.instance.platform_integration.name),
-        :git_sha            => to_s_safe(ScoutApm::Environment.instance.git_revision.sha)
+        :hostname           => to_s_safe(environment.hostname),
+        :database_engine    => to_s_safe(environment.database_engine),      # Detected
+        :database_adapter   => to_s_safe(environment.raw_database_adapter), # Raw
+        :application_name   => to_s_safe(environment.application_name),
+        :libraries          => ScoutApm::Utils::InstalledGems.new(context).run,
+        :paas               => to_s_safe(environment.platform_integration.name),
+        :git_sha            => to_s_safe(environment.git_revision.sha)
       }
+    ensure
+      # Sometimes :database_engine and :database_adapter can cause a reference to an AR connection.
+      # Make sure we release all AR connections held by this thread.
+      ActiveRecord::Base.clear_active_connections! if Utils::KlassHelper.defined?("ActiveRecord::Base")
     end
 
     # Calls `.to_s` on the object passed in.
@@ -51,6 +57,10 @@ module ScoutApm
       else
         'to_s error'
       end
+    end
+
+    def environment
+      context.environment
     end
   end
 end

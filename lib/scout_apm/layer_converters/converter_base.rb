@@ -2,11 +2,13 @@ module ScoutApm
   module LayerConverters
     class ConverterBase
 
+      attr_reader :context
       attr_reader :request
       attr_reader :root_layer
       attr_reader :layer_finder
 
-      def initialize(request, layer_finder, store=nil)
+      def initialize(context, request, layer_finder, store=nil)
+        @context = context
         @request = request
         @layer_finder = layer_finder
         @store = store
@@ -218,17 +220,14 @@ module ScoutApm
 
       # Debug logging for scoutprof traces
       def debug_scoutprof(layer)
-        agent = ScoutApm::Agent.instance
-        config = agent.config
-
         if layer.type =~ %r{^(Controller|Queue|Job)$}.freeze
-          if config.value('profile')
-            agent.logger.debug do
+          if context.config.value('profile')
+            context.logger.debug do
               traces_inspect = layer.traces.inspect
               "****** Slow Request #{layer.type} Traces (#{layer.name}, tet: #{layer.total_exclusive_time}, tct: #{layer.total_call_time}), total raw traces: #{layer.traces.cube.total_count}, total clean traces: #{layer.traces.total_count}, skipped gc: #{layer.traces.skipped_in_gc}, skipped handler: #{layer.traces.skipped_in_handler}, skipped registered #{layer.traces.skipped_in_job_registered}, skipped not_running #{layer.traces.skipped_in_not_running}:\n#{traces_inspect}"
             end
           else
-            agent.logger.debug "****** Slow Request #{layer.type} Traces: Scoutprof is not enabled"
+            context.logger.debug "****** Slow Request #{layer.type} Traces: Scoutprof is not enabled"
           end
         end
       end

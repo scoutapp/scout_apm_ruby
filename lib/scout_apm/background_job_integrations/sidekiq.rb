@@ -42,7 +42,7 @@ module ScoutApm
         ::Sidekiq::Processor.class_eval do
           def initialize_with_scout(boss)
             agent = ::ScoutApm::Agent.instance
-            agent.start_background_worker
+            agent.start
             initialize_without_scout(boss)
           end
 
@@ -63,7 +63,7 @@ module ScoutApm
         queue_layer = ScoutApm::Layer.new('Queue', queue)
         job_layer = ScoutApm::Layer.new('Job', job_class(msg))
 
-        if ScoutApm::Agent.instance.config.value('profile') && SidekiqMiddleware.version_supports_profiling?
+        if ScoutApm::Agent.instance.context.config.value('profile') && SidekiqMiddleware.version_supports_profiling?
           # Capture ScoutProf if we can
           #req.enable_profiled_thread!
           #job_layer.set_root_class(job_class)

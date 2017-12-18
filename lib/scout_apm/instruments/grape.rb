@@ -1,11 +1,15 @@
 module ScoutApm
   module Instruments
     class Grape
-      attr_reader :logger
+      attr_reader :context
 
-      def initalize(logger=ScoutApm::Agent.instance.logger)
-        @logger = logger
+      def initialize(context)
+        @context = context
         @installed = false
+      end
+
+      def logger
+        context.logger
       end
 
       def installed?
@@ -13,10 +17,10 @@ module ScoutApm
       end
 
       def install
-        @installed = true
-
         if defined?(::Grape) && defined?(::Grape::Endpoint)
-          ScoutApm::Agent.instance.logger.info "Instrumenting Grape::Endpoint"
+          @installed = true
+
+          logger.info "Instrumenting Grape::Endpoint"
 
           ::Grape::Endpoint.class_eval do
             include ScoutApm::Instruments::GrapeEndpointInstruments
@@ -33,7 +37,7 @@ module ScoutApm
         request = ::Grape::Request.new(env || args.first)
         req = ScoutApm::RequestManager.lookup
 
-        path = ScoutApm::Agent.instance.config.value("uri_reporting") == 'path' ? request.path : request.fullpath
+        path = ScoutApm::Agent.instance.context.config.value("uri_reporting") == 'path' ? request.path : request.fullpath
         req.annotate_request(:uri => path)
 
         # IP Spoofing Protection can throw an exception, just move on w/o remote ip
@@ -50,7 +54,7 @@ module ScoutApm
                   self.options[:path].first,
           ].compact.map{ |n| n.to_s }.join("/")
         rescue => e
-          ScoutApm::Agent.instance.logger.info("Error getting Grape Endpoint Name. Error: #{e.message}. Options: #{self.options.inspect}")
+          logger.info("Error getting Grape Endpoint Name. Error: #{e.message}. Options: #{self.options.inspect}")
           name = "Grape/Unknown"
         end
 

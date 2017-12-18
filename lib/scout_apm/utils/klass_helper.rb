@@ -5,6 +5,12 @@ module ScoutApm
       # KlassHelper.defined?("ActiveRecord::Base")   #=> true / false
 
       def self.defined?(*names)
+        lookup(*names) != :missing_class
+      end
+
+      # KlassHelper.lookup("ActiveRecord::Base") => ActiveRecord::Base
+      # KlassHelper.lookup("ActiveRecord::SomethingThatDoesNotExist") => :missing_class
+      def self.lookup(*names)
         if names.length == 1
           names = names[0].split("::")
         end
@@ -15,11 +21,11 @@ module ScoutApm
           begin
             obj = obj.const_get(name)
           rescue NameError
-            return false
+            return :missing_class
           end
         end
 
-        true
+        obj
       end
     end
   end
