@@ -135,7 +135,6 @@ module ScoutApm
         req = ScoutApm::RequestManager.lookup
         current_layer = req.current_layer
 
-
         # If we call #log, we have a real query to run, and we've already
         # gotten through the cache gatekeeper. Since we want to only trace real
         # queries, and not repeated identical queries that just hit cache, we
@@ -150,6 +149,10 @@ module ScoutApm
           # TODO: Get rid of call .to_s, need to find this without forcing a previous run of the name logic
           if current_layer.name.to_s == Utils::ActiveRecordMetricName::DEFAULT_METRIC
             current_layer.name = metric_name
+          end
+
+          # Capture the last "real" sql statement in a grouping
+          if sql != "COMMIT" && sql != "BEGIN"
             current_layer.desc = desc
           end
 
