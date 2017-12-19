@@ -93,6 +93,11 @@ module ScoutApm
 
         if Utils::KlassHelper.defined?("ActiveSupport::Notifications")
           ScoutApm::Agent.instance.trace("ActiveRecord.add_instruments ActiveRecord::Notification found, setting up subscriber")
+
+          ActiveSupport::Notifications.subscribe("sql.active_record") do |event_name, start, stop, uuid, payload|
+            ScoutApm::Agent.instance.trace("ActiveRecord.add_instruments ActiveRecord::Notification subscriber fired Event(#{event_name}), Start/Stop(#{start} / #{stop}), UUID(#{uuid}), Payload(#{payload.inspect})")
+          end
+
           ActiveSupport::Notifications.subscribe("instantiation.active_record") do |event_name, start, stop, uuid, payload|
             req = ScoutApm::RequestManager.lookup
             layer = req.current_layer
