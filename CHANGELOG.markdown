@@ -2,6 +2,16 @@
 
 * ScoutProf BETA
 
+# 2.4.0
+
+* Rework agent startup sequence
+
+# 2.3.2
+
+* More robust startup sequence when using `rails server` vs. directly launching an app server
+* Avoid incompatibility with 3rd party gems that aggressively obtain database connections
+>>>>>>> max-sql-length
+
 # 2.3.1
 
 * Fix DevTrace bug
