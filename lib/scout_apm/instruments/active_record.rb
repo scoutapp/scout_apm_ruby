@@ -94,15 +94,15 @@ module ScoutApm
         if Utils::KlassHelper.defined?("ActiveSupport::Notifications")
           ScoutApm::Agent.instance.trace("ActiveRecord.add_instruments ActiveRecord::Notification found, setting up subscriber")
           ActiveSupport::Notifications.subscribe("instantiation.active_record") do |event_name, start, stop, uuid, payload|
-            ScoutApm::Agent.instance.trace("ActiveRecord.add_instruments ActiveRecord::Notification subscriber fired")
             req = ScoutApm::RequestManager.lookup
             layer = req.current_layer
 
+            ScoutApm::Agent.instance.trace("ActiveRecord.add_instruments ActiveRecord::Notification subscriber fired Event(#{event_name}), Start/Stop(#{start} / #{stop}), UUID(#{uuid}), Payload(#{payload.inspect})")
             if layer && layer.type == "ActiveRecord"
               ScoutApm::Agent.instance.trace("ActiveRecord.add_instruments ActiveRecord::Notification layer was AR: LID(#{layer.object_id}), annotating with #{payload.inspect}")
               layer.annotate_layer(payload)
             elsif layer
-              ScoutApm::Agent.instance.trace("ActiveRecord.add_instruments ActiveRecord::Notification layer was *NOT* AR: LID(#{layer.object_id})")
+              ScoutApm::Agent.instance.trace("ActiveRecord.add_instruments ActiveRecord::Notification layer was *NOT* AR: LID(#{layer.object_id}) - was type: #{layer.type}")
               ScoutApm::Agent.instance.logger.debug("Expected layer type: ActiveRecord, got #{layer && layer.type}")
             else
               # noop, no layer at all. We're probably ignoring this req.
