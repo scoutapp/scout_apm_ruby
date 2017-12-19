@@ -10,7 +10,6 @@
 
 * More robust startup sequence when using `rails server` vs. directly launching an app server
 * Avoid incompatibility with 3rd party gems that aggressively obtain database connections
->>>>>>> max-sql-length
 
 # 2.3.1
 
