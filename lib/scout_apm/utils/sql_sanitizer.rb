@@ -74,8 +74,10 @@ module ScoutApm
         encodings.all?{|enc| Encoding.find(enc) rescue false}
       end
 
+      MAX_SQL_LENGTH = 16384
+
       def scrubbed(str)
-        return '' if !str.is_a?(String) || str.length > 4000 # safeguard - don't sanitize or scrub large SQL statements
+        return '' if !str.is_a?(String) || str.length > MAX_SQL_LENGTH # safeguard - don't sanitize or scrub large SQL statements
         return str if !str.respond_to?(:encode) # Ruby <= 1.8 doesn't have string encoding
         return str if str.valid_encoding? # Whatever encoding it is, it is valid and we can operate on it
         ScoutApm::Agent.instance.logger.debug "Scrubbing invalid sql encoding."
