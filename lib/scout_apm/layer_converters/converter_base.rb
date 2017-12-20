@@ -148,8 +148,8 @@ module ScoutApm
       def make_meta_options_desc_hash(layer, max_desc_length=16384)
         if layer.desc
           desc_s = layer.desc.to_s
-          trimmed_desc = desc_s[0 .. max_desc_length]
-          {:desc => trimmed_desc}
+          # trimmed_desc = desc_s[0 .. max_desc_length]
+          {:desc => desc_s } #trimmed_desc}
         else
           {}
         end
