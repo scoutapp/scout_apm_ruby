@@ -5,6 +5,7 @@
 # 2.3.3
 
 * Capture ActiveRecord calls that generate more complex queries
+* More aggressively determine names of complex queries (to determine "User/find", "Account/create" and similar)
 
 # 2.3.2
 
