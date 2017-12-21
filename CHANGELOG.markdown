@@ -1,3 +1,7 @@
+# 2.3.3
+
+* Capture ActiveRecord calls that generate more complex queries
+
 # 2.3.2
 
 * More robust startup sequence when using `rails server` vs. directly launching an app server
