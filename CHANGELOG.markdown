@@ -1,7 +1,13 @@
+# 2.3.4
+
+* Capture 300 characters of a url from net/http and httpclient instruments (up from 100).
+
 # 2.3.3
 
 * Capture ActiveRecord calls that generate more complex queries
 * More aggressively determine names of complex queries (to determine "User/find", "Account/create" and similar)
+* Increases the maximum size of SQL queries that are sanitized to 16KB from 4 KB
+* Captures all SQL individual queries generated in a given AR call (previous only a single query was captured)
 
 # 2.3.2
 
