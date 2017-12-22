@@ -63,6 +63,7 @@ module ScoutApm
         'report_format',
         'scm_subdirectory',
         'uri_reporting',
+        'instrument_http_url_length',
     ]
 
     ################################################################################
@@ -150,6 +151,7 @@ module ScoutApm
       "monitor"                => BooleanCoercion.new,
       'database_metric_limit'  => IntegerCoercion.new,
       'database_metric_report_limit' => IntegerCoercion.new,
+      'instrument_http_url_length' => IntegerCoercion.new,
     }
 
 
@@ -239,6 +241,7 @@ module ScoutApm
         'remote_agent_port'      => 7721, # picked at random
         'database_metric_limit'  => 5000, # The hard limit on db metrics
         'database_metric_report_limit' => 1000,
+        'instrument_http_url_length' => 300,
       }.freeze
 
       def value(key)
