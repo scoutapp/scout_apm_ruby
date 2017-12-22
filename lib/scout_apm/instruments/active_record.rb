@@ -1,6 +1,38 @@
 require 'scout_apm/utils/sql_sanitizer'
 
 module ScoutApm
+  class SqlList
+    attr_reader :sqls
+
+    def initialize(sql=nil)
+      @sqls = []
+
+      if !sql.nil?
+        push(sql)
+      end
+    end
+
+    def <<(sql)
+      push(sql)
+    end
+
+    def push(sql)
+      if !(Utils::SqlSanitizer === sql)
+        sql = Utils::SqlSanitizer.new(sql)
+      end
+      @sqls << sql
+    end
+
+    # All of this one, then all of the other.
+    def merge(other)
+      @sqls += other.sqls
+    end
+
+    def to_s
+      @sqls.map{|s| s.to_s }.join(";\n")
+    end
+  end
+
   module Instruments
     class ActiveRecord
       attr_reader :context
@@ -129,12 +161,11 @@ module ScoutApm
         # Extract data from the arguments
         sql, name = args
         metric_name = Utils::ActiveRecordMetricName.new(sql, name)
-        desc = Utils::SqlSanitizer.new(sql)
+        desc = SqlList.new(sql)
 
         # Get current ScoutApm context
         req = ScoutApm::RequestManager.lookup
         current_layer = req.current_layer
-
 
         # If we call #log, we have a real query to run, and we've already
         # gotten through the cache gatekeeper. Since we want to only trace real
@@ -150,8 +181,12 @@ module ScoutApm
           # TODO: Get rid of call .to_s, need to find this without forcing a previous run of the name logic
           if current_layer.name.to_s == Utils::ActiveRecordMetricName::DEFAULT_METRIC
             current_layer.name = metric_name
-            current_layer.desc = desc
           end
+
+          if current_layer.desc.nil?
+            current_layer.desc = SqlList.new
+          end
+          current_layer.desc.merge(desc)
 
           log_without_scout_instruments(*args, &block)
 
@@ -229,6 +264,7 @@ module ScoutApm
         req = ScoutApm::RequestManager.lookup
         layer = ScoutApm::Layer.new("ActiveRecord", Utils::ActiveRecordMetricName::DEFAULT_METRIC)
         layer.annotate_layer(:ignorable => true)
+        layer.desc = SqlList.new
         req.start_layer(layer)
         req.ignore_children!
         begin
@@ -247,6 +283,7 @@ module ScoutApm
 
         req = ScoutApm::RequestManager.lookup
         layer = ScoutApm::Layer.new("ActiveRecord", Utils::ActiveRecordMetricName.new("", "#{model} #{operation}"))
+        layer.desc = SqlList.new
         req.start_layer(layer)
         req.ignore_children!
         begin
