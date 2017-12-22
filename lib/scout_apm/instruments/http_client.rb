@@ -26,9 +26,12 @@ module ScoutApm
             include ScoutApm::Tracer
 
             def request_with_scout_instruments(*args, &block)
+
               method = args[0].to_s
               url = args[1]
-              url = url && url.to_s[0..99]
+
+              max_length = ScoutApm::Agent.instance.config.value('instrument_http_url_length')
+              url = url && url.to_s[0..(max_length - 1)]
 
               self.class.instrument("HTTP", method, :desc => url) do
                 request_without_scout_instruments(*args, &block)

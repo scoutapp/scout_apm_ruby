@@ -2,6 +2,10 @@
 
 * Rework agent startup sequence
 
+# 2.3.4
+
+* Capture 300 characters of a url from net/http and httpclient instruments (up from 100).
+
 # 2.3.3
 
 * Capture ActiveRecord calls that generate more complex queries
