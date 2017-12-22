@@ -30,7 +30,7 @@ module ScoutApm
               method = args[0].to_s
               url = args[1]
 
-              max_length = ScoutApm::Agent.instance.config.value('instrument_http_url_length')
+              max_length = ScoutApm::Agent.instance.context.config.value('instrument_http_url_length')
               url = url && url.to_s[0..(max_length - 1)]
 
               self.class.instrument("HTTP", method, :desc => url) do
