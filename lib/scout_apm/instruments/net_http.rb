@@ -35,7 +35,7 @@ module ScoutApm
               path = req.path
               path = path.path if path.respond_to?(:path)
 
-              max_length = ScoutApm::Agent.instance.config.value('instrument_http_url_length')
+              max_length = ScoutApm::Agent.instance.context.config.value('instrument_http_url_length')
               (@address + path.split('?').first)[0..(max_length - 1)]
             end
 
