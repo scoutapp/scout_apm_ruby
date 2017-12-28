@@ -14,7 +14,6 @@ require 'socket'
 require 'thread'
 require 'time'
 require 'yaml'
-require 'webrick'
 
 #####################################
 # Gem Requires
