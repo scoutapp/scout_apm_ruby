@@ -43,18 +43,18 @@ module ScoutApm
       install_background_job_integrations
       install_app_server_integration
 
-      # XXX: Should this happen at application start?
-      # Should this ever happen after fork?
-      # We start a thread in this, which can screw stuff up when we then fork.
-      #
-      # Save it into a variable to prevent it from ever running twice
-      @app_server_load ||= AppServerLoad.new(context).run
-
       logger.info "Scout Agent [#{ScoutApm::VERSION}] installed"
 
       context.installed!
 
       if ScoutApm::Agent::Preconditions.check?(context) || force
+        # XXX: Should this happen at application start?
+        # Should this ever happen after fork?
+        # We start a thread in this, which can screw stuff up when we then fork.
+        #
+        # Save it into a variable to prevent it from ever running twice
+        @app_server_load ||= AppServerLoad.new(context).run
+
         start
       end
     end
