@@ -17,6 +17,8 @@ module ScoutApm
       end
 
       def start
+        require 'webrick'
+
         @server = WEBrick::HTTPServer.new(
           :BindAddress => bind,
           :Port => port,
