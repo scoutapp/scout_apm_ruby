@@ -59,9 +59,22 @@ module ScoutApm
       layaway_file.write(reporting_period)
     end
 
-    # Claims a given timestamp (getting a lock on a particular filename),
-    # then yields ReportingPeriods collected up from all the files.
-    # If the yield returns truthy, delete the layaway files that made it up.
+    # Claims a given timestamp by getting an exclusive lock on a timestamped
+    # coordinator file. The coordinator file never contains data, it's just a
+    # syncronization mechanism.
+    #
+    # Once the 'claim' is obtained:
+    #   * load and yield each ReportingPeriod from the layaway files.
+    #   * if there are reporting periods:
+    #     * yields any ReportingPeriods collected up from all the files.
+    #     * deletes all of the layaway files (including the coordinator) for the timestamp
+    #   * if not
+    #     * delete the coordinator
+    #   * remove any stale layaway files that may be hanging around.
+    #   * Finally unlock and ensure the coordinator file is cleared.
+    #
+    # If a claim file can't be obtained, return false without doing any work
+    # Another process is handling the reporting.
     def with_claim(timestamp)
       coordinator_file = glob_pattern(timestamp, :coordinator)
 
