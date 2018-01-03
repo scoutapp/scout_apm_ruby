@@ -50,7 +50,8 @@ module ScoutApm
 
     def write_reporting_period(reporting_period, files_limit = MAX_FILES_LIMIT)
       if at_layaway_file_limit?(files_limit)
-        ScoutApm::Agent.instance.logger.error("Hit layaway file limit. Not writing to layaway file")
+        # This will happen constantly once we hit this case, so only log the first time
+        @wrote_layaway_limit_error_message ||= ScoutApm::Agent.instance.logger.error("Hit layaway file limit. Not writing to layaway file")
         return false
       end
       filename = file_for(reporting_period.timestamp)
