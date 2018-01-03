@@ -124,8 +124,6 @@ module ScoutApm
 
     def should_load_instruments?
       return true if context.config.value('dev_trace')
-      # XXX: If monitor is true, we want to install, right?
-      # return false if context.config.value('monitor')
       context.environment.app_server_integration.found? || context.environment.background_job_integrations.any?
     end
 
