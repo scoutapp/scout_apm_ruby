@@ -51,12 +51,8 @@ module ScoutApm
 
     def write_reporting_period(reporting_period, files_limit = MAX_FILES_LIMIT)
       if at_layaway_file_limit?(files_limit)
-<<<<<<< HEAD
-        logger.error("Hit layaway file limit. Not writing to layaway file")
-=======
         # This will happen constantly once we hit this case, so only log the first time
-        @wrote_layaway_limit_error_message ||= ScoutApm::Agent.instance.logger.error("Hit layaway file limit. Not writing to layaway file")
->>>>>>> 2.3.5
+        @wrote_layaway_limit_error_message ||= logger.error("Hit layaway file limit. Not writing to layaway file")
         return false
       end
       filename = file_for(reporting_period.timestamp)
@@ -104,18 +100,12 @@ module ScoutApm
 
               logger.debug("Deleting the now-reported layaway files for #{timestamp.to_s}")
               delete_files_for(timestamp) # also removes the coodinator_file
-<<<<<<< HEAD
-
-              logger.debug("Checking for any Stale layaway files")
-              delete_stale_files(timestamp.to_time - STALE_AGE)
-=======
->>>>>>> 2.3.5
             else
               File.unlink(coordinator_file)
               logger.debug("No layaway files to report")
             end
 
-            ScoutApm::Agent.instance.logger.debug("Checking for any Stale layaway files")
+            logger.debug("Checking for any Stale layaway files")
             delete_stale_files(timestamp.to_time - STALE_AGE)
 
             true
