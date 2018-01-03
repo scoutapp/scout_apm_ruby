@@ -86,13 +86,13 @@ module ScoutApm
 
               ScoutApm::Agent.instance.logger.debug("Deleting the now-reported layaway files for #{timestamp.to_s}")
               delete_files_for(timestamp) # also removes the coodinator_file
-
-              ScoutApm::Agent.instance.logger.debug("Checking for any Stale layaway files")
-              delete_stale_files(timestamp.to_time - STALE_AGE)
             else
               File.unlink(coordinator_file)
               ScoutApm::Agent.instance.logger.debug("No layaway files to report")
             end
+
+            ScoutApm::Agent.instance.logger.debug("Checking for any Stale layaway files")
+            delete_stale_files(timestamp.to_time - STALE_AGE)
 
             true
           rescue Exception => e
