@@ -126,7 +126,7 @@ module ScoutApm
       return true if context.config.value('dev_trace')
       # XXX: If monitor is true, we want to install, right?
       # return false if context.config.value('monitor')
-      context.environment.app_server_integration.found? || context.environment.background_job_integration
+      context.environment.app_server_integration.found? || context.environment.background_job_integrations.any?
     end
 
     #################################
