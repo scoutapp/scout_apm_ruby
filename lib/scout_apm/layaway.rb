@@ -51,7 +51,8 @@ module ScoutApm
 
     def write_reporting_period(reporting_period, files_limit = MAX_FILES_LIMIT)
       if at_layaway_file_limit?(files_limit)
-        logger.error("Hit layaway file limit. Not writing to layaway file")
+        # This will happen constantly once we hit this case, so only log the first time
+        @wrote_layaway_limit_error_message ||= logger.error("Hit layaway file limit. Not writing to layaway file")
         return false
       end
       filename = file_for(reporting_period.timestamp)
@@ -59,9 +60,22 @@ module ScoutApm
       layaway_file.write(reporting_period)
     end
 
-    # Claims a given timestamp (getting a lock on a particular filename),
-    # then yields ReportingPeriods collected up from all the files.
-    # If the yield returns truthy, delete the layaway files that made it up.
+    # Claims a given timestamp by getting an exclusive lock on a timestamped
+    # coordinator file. The coordinator file never contains data, it's just a
+    # syncronization mechanism.
+    #
+    # Once the 'claim' is obtained:
+    #   * load and yield each ReportingPeriod from the layaway files.
+    #   * if there are reporting periods:
+    #     * yields any ReportingPeriods collected up from all the files.
+    #     * deletes all of the layaway files (including the coordinator) for the timestamp
+    #   * if not
+    #     * delete the coordinator
+    #   * remove any stale layaway files that may be hanging around.
+    #   * Finally unlock and ensure the coordinator file is cleared.
+    #
+    # If a claim file can't be obtained, return false without doing any work
+    # Another process is handling the reporting.
     def with_claim(timestamp)
       coordinator_file = glob_pattern(timestamp, :coordinator)
 
@@ -86,13 +100,13 @@ module ScoutApm
 
               logger.debug("Deleting the now-reported layaway files for #{timestamp.to_s}")
               delete_files_for(timestamp) # also removes the coodinator_file
-
-              logger.debug("Checking for any Stale layaway files")
-              delete_stale_files(timestamp.to_time - STALE_AGE)
             else
               File.unlink(coordinator_file)
               logger.debug("No layaway files to report")
             end
+
+            logger.debug("Checking for any Stale layaway files")
+            delete_stale_files(timestamp.to_time - STALE_AGE)
 
             true
           rescue Exception => e

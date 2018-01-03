@@ -15,7 +15,6 @@ require 'thread'
 require 'time'
 require 'yaml'
 require 'rbconfig'
-require 'webrick'
 
 #####################################
 # Gem Requires
