@@ -2,6 +2,13 @@
 
 * Rework agent startup sequence
 
+# 2.3.5
+
+* More robust recovery from stale layaway files
+* Quiet logging when hitting unusual layaway file limits
+* Better naming for Sidekiq delayed method jobs
+* Webrick is only required if actually needed
+
 # 2.3.4
 
 * Capture 300 characters of a url from net/http and httpclient instruments (up from 100).
