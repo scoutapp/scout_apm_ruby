@@ -51,7 +51,6 @@ module ScoutApm
               queue = job.queue || "default"
 
               req = ScoutApm::RequestManager.lookup
-              req.job!
 
               begin
                 latency = Time.now - job.created_at

@@ -11,7 +11,6 @@ class SidekiqTest < Minitest::Test
   def test_middleware_call_happy_path
     fake_request = mock
     fake_request.expects(:annotate_request)
-    fake_request.expects(:job!)
     fake_request.expects(:start_layer).twice
     fake_request.expects(:stop_layer).twice
     fake_request.expects(:error!).never
@@ -29,7 +28,6 @@ class SidekiqTest < Minitest::Test
   def test_middleware_call_job_exception
     fake_request = mock
     fake_request.expects(:annotate_request)
-    fake_request.expects(:job!)
     fake_request.expects(:start_layer).twice
     fake_request.expects(:stop_layer).twice
     fake_request.expects(:error!)
@@ -47,7 +45,6 @@ class SidekiqTest < Minitest::Test
   def test_middleware_call_edge_cases
     fake_request = mock
     fake_request.expects(:annotate_request)
-    fake_request.expects(:job!)
     fake_request.expects(:start_layer).twice
     fake_request.expects(:stop_layer).twice
     fake_request.expects(:error!)

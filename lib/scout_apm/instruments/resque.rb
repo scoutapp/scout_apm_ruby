@@ -11,7 +11,6 @@ module ScoutApm
         end
 
         req = ScoutApm::RequestManager.lookup
-        req.job!
 
         begin
           req.start_layer(ScoutApm::Layer.new('Queue', queue))
