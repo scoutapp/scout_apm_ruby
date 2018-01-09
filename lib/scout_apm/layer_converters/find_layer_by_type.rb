@@ -16,6 +16,10 @@ module ScoutApm
         @scope ||= call(["Controller", "Job"])
       end
 
+      def controller
+        @controller ||= call(["Controller"])
+      end
+
       def job
         @job ||= call(["Job"])
       end

@@ -26,10 +26,6 @@ module ScoutApm
     # Can be nil if we never reach a Rails Controller
     attr_reader :headers
 
-    # What kind of request is this? A trace of a web request, or a background job?
-    # Use job! and web! to set, and job? and web? to query
-    attr_reader :request_type
-
     # This maintains a lookup hash of Layer names and call counts. It's used to trigger fetching a backtrace on n+1 calls.
     # Note that layer names might not be Strings - can alse be Utils::ActiveRecordMetricName. Also, this would fail for layers
     # with same names across multiple types.
@@ -222,20 +218,14 @@ module ScoutApm
       @headers = headers
     end
 
-    def job!
-      @request_type = "job"
-    end
-
+    # This request is a job transaction iff it has a 'Job' layer
     def job?
-      request_type == "job"
+      layer_finder.job != nil
     end
 
-    def web!
-      @request_type = "web"
-    end
-
+    # This request is a web transaction iff it has a 'Controller' layer
     def web?
-      request_type == "web"
+      layer_finder.controller != nil
     end
 
     def instant?
@@ -279,7 +269,6 @@ module ScoutApm
         LayerConverters::SlowRequestConverter,
       ]
 
-      layer_finder = LayerConverters::FindLayerByType.new(self)
       walker = LayerConverters::DepthFirstWalker.new(self.root_layer)
       converters = converters.map do |klass|
         instance = klass.new(@agent_context, self, layer_finder, @store)
@@ -299,6 +288,10 @@ module ScoutApm
       if web? || job?
         ensure_background_worker
       end
+    end
+
+    def layer_finder
+      @layer_finder ||= LayerConverters::FindLayerByType.new(self)
     end
 
     # Ensure the background worker thread is up & running - a fallback if other

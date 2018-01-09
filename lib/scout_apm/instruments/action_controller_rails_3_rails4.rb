@@ -77,8 +77,6 @@ module ScoutApm
               req.context.add_user(:ip => request.remote_ip) rescue nil
               req.set_headers(request.headers)
 
-              req.web!
-
               resolved_name = scout_action_name(*args)
               req.start_layer( ScoutApm::Layer.new("Controller", "#{controller_path}/#{resolved_name}") )
               begin

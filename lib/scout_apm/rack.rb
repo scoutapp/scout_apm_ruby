@@ -10,8 +10,8 @@ module ScoutApm
       req.annotate_request(:uri => env["REQUEST_PATH"]) rescue nil
       req.context.add_user(:ip => env["REMOTE_ADDR"]) rescue nil
 
-      req.web!
-      req.start_layer(ScoutApm::Layer.new('Controller', endpoint_name))
+      layer = ScoutApm::Layer.new('Controller', endpoint_name)
+      req.start_layer(layer)
 
       begin
         yield

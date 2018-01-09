@@ -57,7 +57,6 @@ module ScoutApm
     class SidekiqMiddleware
       def call(_worker, msg, queue)
         req = ScoutApm::RequestManager.lookup
-        req.job!
         req.annotate_request(:queue_latency => latency(msg))
 
         begin

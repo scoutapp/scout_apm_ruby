@@ -44,7 +44,6 @@ module ScoutApm
         req.context.add_user(:ip => request.ip) rescue nil
 
         req.set_headers(request.headers)
-        req.web!
 
         begin
           name = ["Grape",
