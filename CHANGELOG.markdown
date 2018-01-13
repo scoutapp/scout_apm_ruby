@@ -1,6 +1,9 @@
 # 2.4.0
 
 * Rework agent startup sequence
+* Install all background job instrumentations if you're running more than one
+* Capture longer individual SQL statements
+* Capture multiple SQL statements if multiple are run during a single AR call.
 
 # 2.3.5
 
