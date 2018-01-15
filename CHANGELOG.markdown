@@ -1,3 +1,7 @@
+# 2.4.1
+
+* Fix logging on STDOUT only platforms (Heroku)
+
 # 2.4.0
 
 * Rework agent startup sequence
