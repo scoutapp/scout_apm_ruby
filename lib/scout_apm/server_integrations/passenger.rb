@@ -29,7 +29,7 @@ module ScoutApm
         # This does run when a process stops.
         PhusionPassenger.on_event(:stopping_worker_process) do
           logger.debug "Passenger is stopping a worker process, shutting down the agent."
-          ScoutApm::Agent.instance.shutdown
+          ScoutApm::Agent.instance.stop_background_worker
         end
       end
 
