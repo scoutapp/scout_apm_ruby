@@ -1,3 +1,7 @@
+# 2.4.2
+
+* Fix shutdown hook for Passenger
+
 # 2.4.1
 
 * Fix logging on STDOUT only platforms (Heroku)
