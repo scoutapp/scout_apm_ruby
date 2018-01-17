@@ -48,13 +48,6 @@ module ScoutApm
       context.installed!
 
       if ScoutApm::Agent::Preconditions.check?(context) || force
-        # XXX: Should this happen at application start?
-        # Should this ever happen after fork?
-        # We start a thread in this, which can screw stuff up when we then fork.
-        #
-        # Save it into a variable to prevent it from ever running twice
-        @app_server_load ||= AppServerLoad.new(context).run
-
         start
       end
     end
@@ -74,6 +67,9 @@ module ScoutApm
       context.started!
 
       log_environment
+
+      # Save it into a variable to prevent it from ever running twice
+      @app_server_load ||= AppServerLoad.new(context).run
 
       start_background_worker
     end
