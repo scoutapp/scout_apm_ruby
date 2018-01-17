@@ -1,3 +1,7 @@
+# 2.4.3
+
+* Ensure a startup hook runs on forking webservers
+
 # 2.4.2
 
 * Fix shutdown hook for Passenger
