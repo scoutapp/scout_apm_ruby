@@ -220,7 +220,7 @@ module ScoutApm
         {
           :log_level     => config.value('log_level'),
           :log_file_path => config.value('log_file_path'),
-          :stdout        => config.value('log_stdout'),
+          :stdout        => config.value('log_stdout') || environment.platform_integration.log_to_stdout?,
           :stderr        => config.value('log_stderr'),
           :logger_class  => config.value('log_class'),
         }

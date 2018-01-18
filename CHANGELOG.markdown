@@ -2,9 +2,24 @@
 
 * ScoutProf BETA
 
+# 2.4.3
+
+* Ensure a startup hook runs on forking webservers
+
+# 2.4.2
+
+* Fix shutdown hook for Passenger
+
+# 2.4.1
+
+* Fix logging on STDOUT only platforms (Heroku)
+
 # 2.4.0
 
 * Rework agent startup sequence
+* Install all background job instrumentations if you're running more than one
+* Capture longer individual SQL statements
+* Capture multiple SQL statements if multiple are run during a single AR call.
 
 # 2.3.5
 

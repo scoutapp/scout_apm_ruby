@@ -40,7 +40,11 @@ module ScoutApm
     def fatal(*args, &block); @logger.fatal(*args, &block); end
 
     def log_level=(level)
-      @logger.level = level
+      @logger.level = log_level_from_opts(level)
+    end
+
+    def log_level
+      @logger.level
     end
 
     def log_file_path
@@ -48,11 +52,11 @@ module ScoutApm
     end
 
     def stdout?
-      @opts[:stdout] || @opts[:log_file_path] == "STDOUT"
+      @opts[:stdout] || (@opts[:log_file_path] || "").upcase == "STDOUT"
     end
 
     def stderr?
-      @opts[:stderr] || @opts[:log_file_path] == "STDERR"
+      @opts[:stderr] || (@opts[:log_file_path] || "").upcase == "STDERR"
     end
 
     private
@@ -86,13 +90,16 @@ module ScoutApm
       end
     end
 
-    def log_level_from_opts
-      case @opts[:log_level]
+    def log_level_from_opts(explicit=nil)
+      candidate = explicit || (@opts[:log_level] || "").downcase
+
+      case candidate
       when "debug" then ::Logger::DEBUG
       when "info" then ::Logger::INFO
       when "warn" then ::Logger::WARN
       when "error" then ::Logger::ERROR
       when "fatal" then ::Logger::FATAL
+      when ::Logger::DEBUG, ::Logger::INFO, ::Logger::WARN, ::Logger::ERROR, ::Logger::FATAL then candidate
       else ::Logger::INFO
       end
     end
@@ -116,11 +123,12 @@ module ScoutApm
     # Check if this path is ok for a log file.
     # Does it exist?
     # Is it writable?
-    # XXX: Implement
     def validate_path(candidate)
-      !candidate.nil?
-    end
+      return false if candidate.nil?
 
+      directory = File.dirname(candidate)
+      File.writable?(directory)
+    end
 
     class DefaultFormatter < ::Logger::Formatter
       def call(severity, time, progname, msg)
