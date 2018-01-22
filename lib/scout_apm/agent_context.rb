@@ -52,8 +52,8 @@ module ScoutApm
     # expected to have its accepting webserver up and running
     def become_remote_client!(host, port)
       logger.debug("Becoming Remote Agent (reporting to: #{host}:#{port})")
-      recorder = ScoutApm::Remote::Recorder.new(host, port, logger)
-      store = ScoutApm::FakeStore.new
+      @recorder = ScoutApm::Remote::Recorder.new(host, port, logger)
+      @store = ScoutApm::FakeStore.new
     end
 
 
