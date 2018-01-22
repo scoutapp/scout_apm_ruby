@@ -22,7 +22,12 @@ module ScoutApm
 
         PRECONDITION_DETECTED_SERVER = {
           :message => proc {|environ| "Deferring agent start. Standing by for first request" },
-          :check => proc { |context| !app_server_missing?(context) && !background_job_missing?(context) },
+          :check => proc { |context|
+            app_server_missing = !context.environment.app_server_integration(true).found?
+            background_job_missing = context.environment.background_job_integrations.length == 0
+
+            !app_server_missing && !background_job_missing
+          },
         },
 
         PRECONDITION_ALREADY_STARTED = {
@@ -36,33 +41,28 @@ module ScoutApm
         },
       ]
 
-      def self.check?(context)
-        failed_preconditions = PRECONDITIONS.inject(Array.new) { |errors, condition|
-          met = condition[:check].call(context)
-          errors << condition[:message].call(context.environment) unless met
-          errors
-        }
+      def check?(context)
+        @check_result ||=
+          begin
+            failed_preconditions = PRECONDITIONS.inject(Array.new) { |errors, condition|
+              met = condition[:check].call(context)
+              errors << condition[:message].call(context.environment) unless met
+              errors
+            }
 
-        if failed_preconditions.any?
-          failed_preconditions.each {|msg| context.logger.warn(msg) }
-          force? # if forced, return true anyway
-        else
-          # No errors, we met preconditions
-          true
-        end
+            if failed_preconditions.any?
+              failed_preconditions.each {|msg| context.logger.warn(msg) }
+              force? # if forced, return true anyway
+            else
+              # No errors, we met preconditions
+              true
+            end
+          end
       end
 
       # XXX: Wire up options here and below in the appserver & bg server detections
-      def self.force?
+      def force?
         false
-      end
-
-      def self.app_server_missing?(context)
-        !context.environment.app_server_integration(true).found? # && !options[:skip_app_server_check]
-      end
-
-      def self.background_job_missing?(context)
-        context.environment.background_job_integrations.length == 0
       end
     end
   end
