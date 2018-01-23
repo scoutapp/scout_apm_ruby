@@ -2,6 +2,12 @@
 
 * ScoutProf BETA
 
+# 2.4.4
+
+* Prevent agent from starting when monitor=false
+* Fix double-counting of HTTP requests when multiple http libraries are present
+* Fix an issue with Resque instrumentation
+
 # 2.4.3
 
 * Ensure a startup hook runs on forking webservers

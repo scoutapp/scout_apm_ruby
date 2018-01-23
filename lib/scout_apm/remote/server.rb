@@ -41,7 +41,7 @@ module ScoutApm
 
             logger.debug("Remote: Server returned after #start call, thread exiting")
           rescue => e
-            logger.debug("Remote: Server Exception, #{e}")
+            logger.debug("Remote: Server Exception, #{e},\n#{e.backtrace.join("\n\t")}")
           end
         end
       end

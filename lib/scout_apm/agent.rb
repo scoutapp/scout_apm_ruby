@@ -47,7 +47,8 @@ module ScoutApm
 
       context.installed!
 
-      if ScoutApm::Agent::Preconditions.check?(context) || force
+      @preconditions = ScoutApm::Agent::Preconditions.new
+      if @preconditions.check?(context) || force
         start
       end
     end
@@ -55,8 +56,12 @@ module ScoutApm
     # Unconditionally starts the agent. This includes verifying instruments are
     # installed, and starting the background worker.
     #
-    # Does not attempt to start twice.
-    def start(_opts={})
+    # The monitor precondition is checked explicitly, and we will *never* start with monitor = false
+    #
+    # This does not attempt to start twice
+    def start(opts={})
+      return unless context.config.value('monitor')
+
       if context.started?
         start_background_worker unless background_worker_running?
         return
