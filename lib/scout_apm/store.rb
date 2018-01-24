@@ -88,8 +88,13 @@ module ScoutApm
       logger.debug("Writing to layaway#{" (Forced)" if force}")
 
       @reporting_periods.select { |time, rp| force || (time.timestamp < current_timestamp.timestamp) }.
-                         each   { |time, rp| collect_samplers(rp) }.
                          each   { |time, rp| write_reporting_period(layaway, time, rp) }
+    end
+
+    # For each tick (minute), be sure we have a reporting period, and that samplers are run for it.
+    def tick!
+      rp = current_period
+      collect_samplers(rp)
     end
 
     def write_reporting_period(layaway, time, rp)
