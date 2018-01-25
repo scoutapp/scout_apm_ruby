@@ -52,7 +52,7 @@ module ScoutApm
     def write_reporting_period(reporting_period, files_limit = MAX_FILES_LIMIT)
       if at_layaway_file_limit?(files_limit)
         # This will happen constantly once we hit this case, so only log the first time
-        @wrote_layaway_limit_error_message ||= logger.error("Hit layaway file limit. Not writing to layaway file")
+        @wrote_layaway_limit_error_message ||= logger.error("Layaway: Hit layaway file limit. Not writing to layaway file")
         return false
       end
       filename = file_for(reporting_period.timestamp)
@@ -102,19 +102,19 @@ module ScoutApm
             if rps.any?
               yield rps
 
-              logger.debug("Deleting the now-reported layaway files for #{timestamp.to_s}")
+              logger.debug("Layaway: Deleting the now-reported files for #{timestamp.to_s}")
               delete_files_for(timestamp) # also removes the coodinator_file
             else
               File.unlink(coordinator_file)
-              logger.debug("No layaway files to report")
+              logger.debug("Layaway: No files to report")
             end
 
-            logger.debug("Checking for any Stale layaway files")
+            logger.debug("Layaway: Checking for any stale files")
             delete_stale_files(timestamp.to_time - STALE_AGE)
 
             true
           rescue Exception => e
-            logger.debug("Caught an exception in with_claim, with the coordination file locked: #{e.message}, #{e.backtrace.inspect}")
+            logger.debug("Layaway: Caught an exception in with_claim, with the coordination file locked: #{e.message}, #{e.backtrace.inspect}")
             raise
           ensure
             # Unlock the file when done!
@@ -130,7 +130,7 @@ module ScoutApm
 
     def delete_files_for(timestamp)
       all_files_for(timestamp).each { |layaway|
-        logger.debug("Deleting layaway file: #{layaway}")
+        logger.debug("Layaway: Deleting file: #{layaway}")
         File.unlink(layaway)
       }
     end
@@ -141,10 +141,10 @@ module ScoutApm
         compact.
         uniq.
         select { |timestamp| timestamp.to_i < older_than.strftime(TIME_FORMAT).to_i }.
-          tap  { |timestamps| logger.debug("Deleting stale layaway files with timestamps: #{timestamps.inspect}") }.
+          tap  { |timestamps| logger.debug("Layaway: Deleting stale files with timestamps: #{timestamps.inspect}") }.
         map    { |timestamp| delete_files_for(timestamp) }
     rescue => e
-      logger.debug("Problem deleting stale files: #{e.message}, #{e.backtrace.inspect}")
+      logger.debug("Layaway: Problem deleting stale files: #{e.message}, #{e.backtrace.inspect}")
     end
 
     private
@@ -210,8 +210,7 @@ module ScoutApm
         map{ |timestamp, list| [timestamp, list.length] }
       ]
 
-
-      logger.debug("Total in #{directory}: #{files_in_temp}. Total Layaway Files: #{all_filenames.size}.  By Timestamp: #{count_per_timestamp.inspect}")
+      logger.debug("Layaway: Total Files in #{directory}: #{files_in_temp}. Total Layaway Files: #{all_filenames.size}.  By Timestamp: #{count_per_timestamp.inspect}")
     end
   end
 end
