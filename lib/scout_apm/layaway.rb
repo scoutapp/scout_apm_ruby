@@ -55,10 +55,10 @@ module ScoutApm
         @wrote_layaway_limit_error_message ||= logger.error("Layaway: Hit layaway file limit. Not writing to layaway file")
         return false
       end
+      logger.debug("Layaway: wrote time period: #{reporting_period.timestamp}")
       filename = file_for(reporting_period.timestamp)
       layaway_file = LayawayFile.new(context, filename)
       layaway_file.write(reporting_period)
-      logger.debug("Layaway: wrote time period: #{reporting_period.timestamp}")
     rescue => e
       logger.debug("Layaway: error writing: #{e.message}, #{e.backtrace.inspect}")
       raise e
