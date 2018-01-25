@@ -6,6 +6,7 @@ module ScoutApm
 
     def initialize(context, path)
       @path = path
+      @context = context
     end
 
     def logger
