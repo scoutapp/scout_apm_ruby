@@ -35,15 +35,14 @@ module ScoutApm
     def install(force=false)
       context.config = ScoutApm::Config.with_file(context, context.config.value("config_file"))
 
-      context.logger.info "Scout Agent [#{ScoutApm::VERSION}] Initialized"
+      logger.info "Scout Agent [#{ScoutApm::VERSION}] Initialized"
 
-      @instrument_manager = ScoutApm::InstrumentManager.new(context)
-      @instrument_manager.install! if should_load_instruments? || force
+      instrument_manager.install! if should_load_instruments? || force
 
       install_background_job_integrations
       install_app_server_integration
 
-      logger.info "Scout Agent [#{ScoutApm::VERSION}] installed"
+      logger.info "Scout Agent [#{ScoutApm::VERSION}] Installed"
 
       context.installed!
 
@@ -69,6 +68,8 @@ module ScoutApm
 
       install unless context.installed?
 
+      instrument_manager.install! if should_load_instruments?
+
       context.started!
 
       log_environment
@@ -77,6 +78,10 @@ module ScoutApm
       @app_server_load ||= AppServerLoad.new(context).run
 
       start_background_worker
+    end
+
+    def instrument_manager
+      @instrument_manager ||= ScoutApm::InstrumentManager.new(context)
     end
 
     def log_environment
@@ -123,10 +128,13 @@ module ScoutApm
       return !context.environment.forking?
     end
 
+    # monitor is the key configuration here. If it is true, then we want the
+    # instruments. If it is false, we mostly don't want them, unless you're
+    # asking for devtrace (ie. not reporting to apm servers as a real app, but
+    # only for local browsers).
     def should_load_instruments?
       return true if context.config.value('dev_trace')
-      return false unless context.config.value('monitor')
-      context.environment.app_server_integration.found? || context.environment.background_job_integrations.any?
+      context.config.value('monitor')
     end
 
     #################################

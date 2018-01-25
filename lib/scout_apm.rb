@@ -204,5 +204,5 @@ if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR
     end
   end
 else
-  ScoutApm::Agent.instance.start
+  ScoutApm::Agent.instance.install
 end

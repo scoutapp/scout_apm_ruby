@@ -326,10 +326,6 @@ module ScoutApm
     def ensure_background_worker
       agent = ScoutApm::Agent.instance
       agent.start
-
-      if agent.start_background_worker(:quiet)
-        agent.logger.info("Force Started BG Worker")
-      end
     rescue => e
       true
     end

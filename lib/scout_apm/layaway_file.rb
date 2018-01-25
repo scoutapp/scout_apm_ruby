@@ -6,6 +6,7 @@ module ScoutApm
 
     def initialize(context, path)
       @path = path
+      @context = context
     end
 
     def logger
@@ -17,7 +18,7 @@ module ScoutApm
       deserialize(data)
     rescue NameError, ArgumentError, TypeError => e
       # Marshal error
-      logger.info("Unable to load data from Layaway file, resetting.")
+      logger.info("LayawayFile: Unable to load data")
       logger.debug("#{e.message}, #{e.backtrace.join("\n\t")}")
       nil
     end

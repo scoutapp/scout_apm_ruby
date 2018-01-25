@@ -37,5 +37,8 @@ module ScoutApm
 
     def add_sampler(sampler)
     end
+
+    def tick!
+    end
   end
 end

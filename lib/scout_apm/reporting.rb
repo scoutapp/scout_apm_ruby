@@ -24,6 +24,9 @@ module ScoutApm
     #
     # At any given point, there is data in each of those steps, moving its way through the process
     def process_metrics
+      # Do any per-minute work necessary for the store
+      context.store.tick!
+
       # Write the previous minute's data to the shared-across-process layaway file.
       context.store.write_to_layaway(context.layaway)
 
