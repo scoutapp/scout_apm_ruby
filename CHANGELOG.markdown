@@ -2,6 +2,11 @@
 
 * ScoutProf BETA
 
+# 2.4.5
+
+* More robust installation of instruments at startup
+* Several (very) minor bug fixes
+
 # 2.4.4
 
 * Prevent agent from starting when monitor=false
