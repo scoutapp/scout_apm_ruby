@@ -68,7 +68,7 @@ module ScoutApm
 
       install unless context.installed?
 
-      instrument_manager.install! # noop if it was installed earlier
+      instrument_manager.install! if should_load_instruments?
 
       context.started!
 
