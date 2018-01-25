@@ -58,6 +58,10 @@ module ScoutApm
       filename = file_for(reporting_period.timestamp)
       layaway_file = LayawayFile.new(context, filename)
       layaway_file.write(reporting_period)
+      logger.debug("Layaway: wrote time period: #{reporting_period.timestamp}")
+    rescue => e
+      logger.debug("Layaway: error writing: #{e.message}, #{e.backtrace.inspect}")
+      raise e
     end
 
     # Claims a given timestamp by getting an exclusive lock on a timestamped
