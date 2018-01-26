@@ -251,7 +251,7 @@ module ScoutApm
 
       # If we didn't have store, but we're trying to record anyway, go
       # figure that out. (this happens in Remote Agent scenarios)
-      restore_store if @store.nil?
+      restore_from_dump! if @agent_context.nil?
 
       # Bail out early if the user asked us to ignore this uri
       return if @agent_context.ignored_uris.ignore?(annotations[:uri])
@@ -430,11 +430,14 @@ module ScoutApm
       @call_set = nil
       @store = nil
       @recorder = nil
+      @agent_context = nil
     end
 
     # Go re-fetch the store based on what the Agent's official one is. Used
     # after hydrating a dumped TrackedRequest
-    def restore_store
+    def restore_from_dump!
+      @agent_context = ScoutApm::Agent.instance.context
+      @recorder = @agent_context.recorder
       @store = @agent_context.store
     end
   end

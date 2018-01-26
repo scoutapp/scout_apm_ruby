@@ -41,7 +41,7 @@ module ScoutApm
       @remote_server = ScoutApm::Remote::Server.new(
         bind,
         port,
-        ScoutApm::Remote::Router.new(ScoutApm::SynchronousRecorder.new(logger), logger),
+        ScoutApm::Remote::Router.new(ScoutApm::SynchronousRecorder.new(self), logger),
         logger
       )
 
