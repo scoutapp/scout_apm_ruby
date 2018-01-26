@@ -8,11 +8,12 @@
 # :stdout => true                          - explicitly force the log to write to stdout (if set, ignore log_file_path)
 # :stderr => true                          - explicitly force the log to write to stderr (if set, ignore log_file_path)
 # :logger_class => Class or String         - a class to use as the underlying logger. Defaults to Ruby's Logger. See notes
-# :log_level => symbol, string, or integer - defualts to INFO level
+# :log_level => symbol, string, or integer - defaults to INFO level
 #
 # The :logger_class option
 #   - allows any class to be used as the underlying logger. Currently requires to respond to:
 #     - debug, info, warn, error, fatal in both string and block form.
+#     - debug?, info?, warn?, error?, fatal?
 #     - #level= with a number (0 = debug, 1 = info, 2= warn, 3=error, 4=fatal)
 #     - #formatter= that takes a Ruby Logger::Formatter class. This method must be here, but the value may be ignored
 #
@@ -38,6 +39,12 @@ module ScoutApm
     def warn(*args, &block); @logger.warn(*args, &block); end
     def error(*args, &block); @logger.error(*args, &block); end
     def fatal(*args, &block); @logger.fatal(*args, &block); end
+
+    def debug?; @logger.debug?; end
+    def info?; @logger.info?; end
+    def warn?; @logger.warn?; end
+    def error?; @logger.error?; end
+    def fatal?; @logger.fatal?; end
 
     def log_level=(level)
       @logger.level = log_level_from_opts(level)
