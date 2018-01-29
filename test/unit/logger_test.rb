@@ -1,10 +1,12 @@
 require 'test_helper'
+require 'fileutils'
 
 require 'scout_apm/logger'
 
 class LoggerTest < Minitest::Test
   def setup
     @env_root = Pathname.new(File.dirname(__FILE__)) + "../../"
+    FileUtils.mkdir_p(@env_root + "log")
   end
 
   def test_detect_stdout
