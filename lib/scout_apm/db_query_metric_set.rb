@@ -4,7 +4,6 @@ module ScoutApm
     include Enumerable
 
     attr_reader :metrics # the raw metrics. You probably want #metrics_to_report
-    attr_reader :context
 
     def marshal_dump
       [ @metrics ]
@@ -20,6 +19,12 @@ module ScoutApm
 
       # A hash of DbQueryMetricStats values, keyed by DbQueryMetricStats.key
       @metrics = Hash.new
+    end
+
+    # Need to look this up again if we end up as nil. Which I guess can happen
+    # after a Marshal load?
+    def context
+      @context ||= ScoutApm::Agent.instance.context
     end
 
     def each
