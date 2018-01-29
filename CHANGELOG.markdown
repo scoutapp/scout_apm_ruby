@@ -2,6 +2,10 @@
 
 * ScoutProf BETA
 
+# 2.4.6
+
+* Fix an edge case for Resque instrumentation
+
 # 2.4.5
 
 * More robust installation of instruments at startup
