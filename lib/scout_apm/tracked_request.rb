@@ -38,6 +38,13 @@ module ScoutApm
     # An object that responds to `record!(TrackedRequest)` to store this tracked request
     attr_reader :recorder
 
+    # When we see these layers, it means a real request is going through the
+    # system. We toggle a flag to turn on some slightly more expensive
+    # instrumentation (backtrace collection and the like) that would be too
+    # expensive in situations where the framework is constantly churning. We
+    # see that on Sidekiq.
+    REQUEST_TYPES = ["Controller", "Job"]
+
     def initialize(agent_context, store)
       @agent_context = agent_context
       @store = store #this is passed in so we can use a real store (normal operation) or fake store (instant mode only)
@@ -65,6 +72,10 @@ module ScoutApm
       return ignoring_start_layer if ignoring_request?
 
       start_request(layer) unless @root_layer
+
+      if REQUEST_TYPES.include?(layer.type)
+        real_request!
+      end
       @layers.push(layer)
     end
 
@@ -105,6 +116,15 @@ module ScoutApm
       end
     end
 
+    def real_request!
+      @real_request = true
+    end
+
+    # Have we seen a "controller" or "job" layer so far?
+    def real_request?
+      !!@real_request
+    end
+
     # Grab the currently running layer. Useful for adding additional data as we
     # learn it. This is useful in ActiveRecord instruments, where we start the
     # instrumentation early, and gradually learn more about the request that
@@ -128,7 +148,7 @@ module ScoutApm
       # Only capture backtraces if we're in a real "request". Otherwise we
       # can spend lot of time capturing backtraces from the internals of
       # Sidekiq, only to throw them away immediately.
-      return false unless (web? || job?)
+      return false unless real_request?
 
       # Capture any individually slow layer.
       return true if layer.total_exclusive_time > backtrace_threshold
@@ -218,16 +238,6 @@ module ScoutApm
       @headers = headers
     end
 
-    # This request is a job transaction iff it has a 'Job' layer
-    def job?
-      layer_finder.job != nil
-    end
-
-    # This request is a web transaction iff it has a 'Controller' layer
-    def web?
-      layer_finder.controller != nil
-    end
-
     def instant?
       return false if ignoring_request?
 
@@ -289,6 +299,19 @@ module ScoutApm
         ensure_background_worker
       end
     end
+
+    # This request is a job transaction iff it has a 'Job' layer
+    # Use this only during recording
+    def job?
+      layer_finder.job != nil
+    end
+
+    # This request is a web transaction iff it has a 'Controller' layer
+    # Use this only during recording
+    def web?
+      layer_finder.controller != nil
+    end
+
 
     def layer_finder
       @layer_finder ||= LayerConverters::FindLayerByType.new(self)
