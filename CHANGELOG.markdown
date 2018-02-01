@@ -2,6 +2,10 @@
 
 * ScoutProf BETA
 
+# 2.4.7
+
+* Fix issue recording backtraces
+
 # 2.4.6
 
 * Fix an edge case for Resque instrumentation
