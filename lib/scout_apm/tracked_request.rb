@@ -59,6 +59,7 @@ module ScoutApm
       @instant_key = nil
       @mem_start = mem_usage
       @recorder = agent_context.recorder
+      @real_request = false
 
       ignore_request! if @recorder.nil?
     end
@@ -122,7 +123,7 @@ module ScoutApm
 
     # Have we seen a "controller" or "job" layer so far?
     def real_request?
-      !!@real_request
+      @real_request
     end
 
     # Grab the currently running layer. Useful for adding additional data as we
