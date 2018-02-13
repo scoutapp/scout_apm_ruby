@@ -1,3 +1,7 @@
+# 2.4.8
+
+* Fix issue with detailed middleware instrumentation
+
 # 2.4.7
 
 * Fix issue recording backtraces
