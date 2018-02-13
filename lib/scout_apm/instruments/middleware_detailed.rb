@@ -30,7 +30,7 @@ module ScoutApm
 
           ActionDispatch::MiddlewareStack::Middleware.class_eval do
             def build(app)
-              logger.info("Building Middleware #{klass.name}")
+              ScoutApm::Agent.instance.context.logger.info("Instrumenting Middleware #{klass.name}")
               new_mw = klass.new(app, *args, &block)
               MiddlewareWrapper.new(new_mw, klass.name)
             end
