@@ -39,6 +39,8 @@ module ScoutApm
           ### 5.x Mongoid
           if (mongoid_v5? || mongoid_v6?) && defined?(::Mongoid::Contextual::Mongo)
             logger.info "Instrumenting Mongoid 5.x/6.x"
+            logger.info "Mongo: Exact Mongoid version: #{::Mongoid::VERSION}"
+
             # All the public methods from Mongoid::Contextual::Mongo.
             # TODO: Geo and MapReduce support (?). They are in other Contextual::* classes
             methods = [
@@ -52,9 +54,11 @@ module ScoutApm
 
             methods.each do |method|
               if ::Mongoid::Contextual::Mongo.method_defined?(method)
+                ScoutApm::Agent.instance.context.logger.info("Mongo: Instrumenting ::Mongoid::Contextual::Mongo method: #{method}")
+
                 with_scout_instruments = %Q[
                 def #{method}_with_scout_instruments(*args, &block)
-
+                  ScoutApm::Agent.instance.context.logger.info("Mongo: Executing instrumented method: #{method}")
 
                   req = ScoutApm::RequestManager.lookup
                   *db, collection = view.collection.namespace.split(".")
@@ -77,9 +81,12 @@ module ScoutApm
                   layer = ScoutApm::Layer.new("MongoDB", name)
                   layer.desc = filter.inspect
 
+                  ScoutApm::Agent.instance.context.logger.info("Mongo: Starting layer for name: \#{name}")
                   req.start_layer( layer )
                   begin
                     #{method}_without_scout_instruments(*args, &block)
+                  rescue => e
+                    ScoutApm::Agent.instance.context.logger.info("Mongo: Caught an exception: \#{e.message}")
                   ensure
                     req.stop_layer
                   end
@@ -90,6 +97,8 @@ module ScoutApm
                 ]
 
                 ::Mongoid::Contextual::Mongo.class_eval(with_scout_instruments)
+              else
+                ScoutApm::Agent.instance.context.logger.info("Mongo: Not Instrumenting method (not found): #{method}")
               end
             end
           end
