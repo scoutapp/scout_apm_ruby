@@ -12,31 +12,36 @@ module ScoutApm
       klass.extend ClassMethods
     end
 
+    # Type: the Layer type - "View" or similar
+    # Name: specific name - "users/_gravatar". The object must respond to "#to_s". This allows us to be more efficient - in most cases, the metric name isn't needed unless we are processing a slow transaction.
+    # A Block: The code to be instrumented
+    #
+    # Options:
+    # * :ignore_children - will not instrument any method calls beneath this call. Example use case: InfluxDB uses Net::HTTP, which is instrumented. However, we can provide more specific data if we know we're doing an influx call, so we'd rather just instrument the Influx call and ignore Net::HTTP.
+    #   when rendering the transaction tree in the UI.
+    # * :desc - Additional capture, SQL, or HTTP url or similar
+    # * :scope - set to true if you want to make this layer a subscope
+    def self.instrument(type, name, options={}) # Takes a block
+      layer = ScoutApm::Layer.new(type, name)
+      layer.desc = options[:desc] if options[:desc]
+      layer.subscopable!          if options[:scope]
+
+      req = ScoutApm::RequestManager.lookup
+      req.start_layer(layer)
+      req.ignore_children! if options[:ignore_children]
+
+      begin
+        yield
+      ensure
+        req.acknowledge_children! if options[:ignore_children]
+        req.stop_layer
+      end
+    end
+
     module ClassMethods
-      # Type: the Layer type - "View" or similar
-      # Name: specific name - "users/_gravatar". The object must respond to "#to_s". This allows us to be more efficient - in most cases, the metric name isn't needed unless we are processing a slow transaction.
-      # A Block: The code to be instrumented
-      #
-      # Options:
-      # * :ignore_children - will not instrument any method calls beneath this call. Example use case: InfluxDB uses Net::HTTP, which is instrumented. However, we can provide more specific data if we know we're doing an influx call, so we'd rather just instrument the Influx call and ignore Net::HTTP.
-      #   when rendering the transaction tree in the UI.
-      # * :desc - Additional capture, SQL, or HTTP url or similar
-      # * :scope - set to true if you want to make this layer a subscope
-      def instrument(type, name, options={}) # Takes a block
-        layer = ScoutApm::Layer.new(type, name)
-        layer.desc = options[:desc] if options[:desc]
-        layer.subscopable!          if options[:scope]
-
-        req = ScoutApm::RequestManager.lookup
-        req.start_layer(layer)
-        req.ignore_children! if options[:ignore_children]
-
-        begin
-          yield
-        ensure
-          req.acknowledge_children! if options[:ignore_children]
-          req.stop_layer
-        end
+      # See ScoutApm::Tracer.instrument
+      def instrument(type, name, options={}, &block)
+        ScoutApm::Tracer.instrument(type, name, options, &block)
       end
 
       # Wraps a method in a call to #instrument via aggressive monkey patching.

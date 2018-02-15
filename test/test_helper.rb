@@ -68,6 +68,7 @@ end
 # Helpers available to all tests
 class Minitest::Test
   def setup
+    Thread.current[:scout_request] = nil
     reopen_logger
     FileUtils.mkdir_p(DATA_FILE_DIR)
     ENV['SCOUT_DATA_FILE'] = DATA_FILE_PATH
@@ -106,6 +107,26 @@ class Minitest::Test
   DATA_FILE_PATH = "#{DATA_FILE_DIR}/scout_apm.db"
 end
 
+class FakeRecorder
+  attr_reader :requests
+
+  def initialize
+    @requests = []
+  end
+
+  def start
+    # nothing to do
+    self
+  end
+
+  def stop
+    # nothing to do
+  end
+
+  def record!(request)
+    @requests << request
+  end
+end
 
 module CustomAsserts
   def assert_false(thing)
