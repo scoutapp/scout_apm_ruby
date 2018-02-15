@@ -90,7 +90,6 @@ module ScoutApm
       end
 
       def _instrumented_method_string(instrumented_name, uninstrumented_name, type, name, options={})
-        klass = (self === Module) ? "self" : "self.class"
         method_str = <<-EOF
         def #{instrumented_name}(*args, &block)
           name = begin
@@ -100,7 +99,7 @@ module ScoutApm
                    "Unknown"
                  end
 
-          #{klass}.instrument( "#{type}",
+          ::ScoutApm::Tracer.instrument( "#{type}",
                                name,
                                {:scope => #{options[:scope] || false}}
                              ) do
