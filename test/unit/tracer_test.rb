@@ -29,6 +29,26 @@ class TracerTest < Minitest::Test
     assert_recorded(recorder, "Test", "name")
   end
 
+  def test_instrument_inside_method
+    recorder = FakeRecorder.new
+    ScoutApm::Agent.instance.context.recorder = recorder
+
+    klass = Class.new { include ScoutApm::Tracer }
+    klass.class_eval %q{
+    attr_reader :invoked
+    def work
+      ScoutApm::Tracer.instrument("Test", "name") do
+        @invoked = true
+      end
+    end
+    }
+    klass_instance = klass.new
+    klass_instance.work
+
+    assert klass_instance.invoked, "instrumented code was not invoked"
+    assert_recorded(recorder, "Test", "name")
+  end
+
   def test_instrument_method
     recorder = FakeRecorder.new
     ScoutApm::Agent.instance.context.recorder = recorder
@@ -36,7 +56,7 @@ class TracerTest < Minitest::Test
     klass = Class.new { include ScoutApm::Tracer }
 
     invoked = false
-    klass.define_method(:work) { invoked = true }
+    klass.send(:define_method, :work) { invoked = true }
     klass.instrument_method(:work, type: "Test", name: "name")
 
     klass.new.work
