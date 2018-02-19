@@ -1,8 +1,13 @@
+# Disable all cops by default
+AllCops:
+  DisabledByDefault: true
+
 # 80 is stifling, especially with a few levels of nesting before we even start.
 # So bump it to 100 to keep really long lines from creeping in.
 Metrics/LineLength:
+  Enabled: true
   Max: 100
 
-Style/UseHashRocketsWithSymbolValues: false
-
-
+Style/HashSyntax:
+  Enabled: true
+  EnforcedStyle: hash_rockets

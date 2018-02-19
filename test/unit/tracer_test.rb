@@ -57,7 +57,7 @@ class TracerTest < Minitest::Test
 
     invoked = false
     klass.send(:define_method, :work) { invoked = true }
-    klass.instrument_method(:work, type: "Test", name: "name")
+    klass.instrument_method(:work, :type => "Test", :name => "name")
 
     klass.new.work
 

@@ -7,7 +7,8 @@ class DbQueryMetricSetTest < Minitest::Test
   def test_hard_limit
     config = make_fake_config(
       'database_metric_limit' => 5, # The hard limit on db metrics
-      'database_metric_report_limit' => 2,)
+      'database_metric_report_limit' => 2
+    )
     context = ScoutApm::AgentContext.new().tap{|c| c.config = config }
     set = DbQueryMetricSet.new(context)
 
@@ -24,7 +25,8 @@ class DbQueryMetricSetTest < Minitest::Test
   def test_report_limit
     config = make_fake_config(
       'database_metric_limit' => 50, # much larger max, uninterested in hitting it.
-      'database_metric_report_limit' => 2,)
+      'database_metric_report_limit' => 2
+    )
     context = ScoutApm::AgentContext.new().tap{|c| c.config = config }
     set = DbQueryMetricSet.new(context)
     set << fake_stat("a", 10)
@@ -41,7 +43,8 @@ class DbQueryMetricSetTest < Minitest::Test
   def test_combine
     config = make_fake_config(
       'database_metric_limit' => 5, # The hard limit on db metrics
-      'database_metric_report_limit' => 2,)
+      'database_metric_report_limit' => 2
+    )
     context = ScoutApm::AgentContext.new().tap{|c| c.config = config }
     set1 = DbQueryMetricSet.new(context)
     set1 << fake_stat("a", 10)
@@ -56,8 +59,9 @@ class DbQueryMetricSetTest < Minitest::Test
 
   def fake_stat(key, call_time)
     OpenStruct.new(
-      key: key,
-      call_time: call_time)
+      :key => key,
+      :call_time => call_time
+    )
   end
 end
 end
