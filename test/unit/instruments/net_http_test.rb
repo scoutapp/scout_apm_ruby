@@ -11,7 +11,12 @@ class NetHttpTest < Minitest::Test
   end
 
   def test_request_scout_description_for_uri
-    req = Net::HTTP::Get.new(URI('http://example.org/here'))
+    if RUBY_VERSION <= '1.9.3'
+      req = Net::HTTP::Get.new('/here')
+    else
+      req = Net::HTTP::Get.new(URI('http://example.org/here'))
+    end
+
     assert_equal '/here', Net::HTTP.new('').request_scout_description(req)
   end
 
