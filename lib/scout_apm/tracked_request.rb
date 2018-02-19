@@ -126,6 +126,16 @@ module ScoutApm
       @real_request
     end
 
+    # Finds a request layer (of type "Controller" or "Job") and renames it
+    def rename_request_layer(name)
+      @layers.reverse_each do |layer|
+        next unless REQUEST_TYPES.include?(layer.type)
+
+        layer.name = name
+        break
+      end
+    end
+
     # Grab the currently running layer. Useful for adding additional data as we
     # learn it. This is useful in ActiveRecord instruments, where we start the
     # instrumentation early, and gradually learn more about the request that
