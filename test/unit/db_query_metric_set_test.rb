@@ -54,7 +54,7 @@ class DbQueryMetricSetTest < Minitest::Test
     set2 << fake_stat("d", 20)
 
     combined = set1.combine!(set2)
-    assert_equal ["a", "b", "c", "d"], combined.metrics.map{|_k, m| m.key}
+    assert_equal ["a", "b", "c", "d"], combined.metrics.map{|_k, m| m.key}.sort
   end
 
   def fake_stat(key, call_time)
