@@ -86,6 +86,8 @@ module ScoutApm
       end
 
       def test_scrubs_invalid_encoding
+        skip "Ruby 1.8.7 has no concept of encoding" if RUBY_VERSION.start_with?("1.8.")
+
         sql = "SELECT `blogs`.* FROM `blogs` WHERE (title = 'a\255c')".force_encoding('UTF-8')
         assert_equal false, sql.valid_encoding?
         ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :mysql }
