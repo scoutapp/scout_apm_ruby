@@ -10,6 +10,8 @@ module ScoutApm
       end
 
       def test_postgres_simple_select_of_first
+        skip "Broken on Ruby 1.8.7 because regular expressions do not support look-behinds" if RUBY_VERSION.start_with?("1.8.")
+
         sql = %q|SELECT  "users".* FROM "users"  ORDER BY "users"."id" ASC LIMIT 1|
         ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :postgres }
         assert_equal %q|SELECT "users".* FROM "users" ORDER BY "users"."id" ASC LIMIT 1|, ss.to_s
@@ -55,6 +57,8 @@ module ScoutApm
       end
 
       def test_mysql_limit
+        skip "Broken on Ruby 1.8.7 because regular expressions do not support look-behinds" if RUBY_VERSION.start_with?("1.8.")
+
         sql = %q|SELECT  `blogs`.* FROM `blogs`  ORDER BY `blogs`.`id` ASC LIMIT 1|
         ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :mysql }
         assert_equal %q|SELECT  `blogs`.* FROM `blogs`  ORDER BY `blogs`.`id` ASC LIMIT 1|, ss.to_s
