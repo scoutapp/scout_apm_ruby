@@ -1,4 +1,4 @@
-require_relative '../../test_helper'
+require 'test_helper'
 require 'scout_apm/utils/backtrace_parser'
 
 class BacktraceParserTest < Minitest::Test

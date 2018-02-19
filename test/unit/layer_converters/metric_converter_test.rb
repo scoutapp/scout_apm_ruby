@@ -1,5 +1,5 @@
 require 'test_helper'
-require_relative 'stubs'
+require File.join(File.dirname(__FILE__), 'stubs')
 
 module ScoutApm
 module LayerConverters
