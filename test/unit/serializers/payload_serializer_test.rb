@@ -46,7 +46,7 @@ class PayloadSerializerTest < Minitest::Test
         stats.min_call_time = 0.034881757
         stats.sum_of_squares = 0.007382350213180609
         stats.total_call_time = 0.113403176
-        stats.total_exclusive_time = 0.07813208899999999
+        stats.total_exclusive_time = 0.078132088
       }
     }
     payload = ScoutApm::Serializers::PayloadSerializerToJson.serialize({}, metrics, {}, [], [], [], {})
@@ -82,7 +82,7 @@ class PayloadSerializerTest < Minitest::Test
         "max_call_time" => 0.078521419,
         "min_call_time" => 0.034881757,
         "total_call_time" => 0.113403176,
-        "total_exclusive_time" => 0.07813208899999999,
+        "total_exclusive_time" => 0.078132088,
       }
     ]
     assert_equal formatted_metrics, JSON.parse(payload)["metrics"]
