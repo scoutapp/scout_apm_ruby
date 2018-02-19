@@ -2,7 +2,7 @@ require 'test_helper'
 
 require 'scout_apm/instruments/net_http'
 
-require 'addressable'
+require 'addressable/uri'
 
 class NetHttpTest < Minitest::Test
   def setup
