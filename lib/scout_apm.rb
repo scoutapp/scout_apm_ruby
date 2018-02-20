@@ -86,6 +86,7 @@ require 'scout_apm/instruments/middleware_summary'
 require 'scout_apm/instruments/middleware_detailed' # Disabled by default, see the file for more details
 require 'scout_apm/instruments/rails_router'
 require 'scout_apm/instruments/grape'
+require 'scout_apm/instruments/webmachine/reel'
 require 'scout_apm/instruments/sinatra'
 require 'allocations'
 
