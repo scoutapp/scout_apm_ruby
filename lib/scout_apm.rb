@@ -62,6 +62,7 @@ require 'scout_apm/background_job_integrations/resque'
 require 'scout_apm/framework_integrations/rails_2'
 require 'scout_apm/framework_integrations/rails_3_or_4'
 require 'scout_apm/framework_integrations/sinatra'
+require 'scout_apm/framework_integrations/webmachine'
 require 'scout_apm/framework_integrations/ruby'
 
 require 'scout_apm/platform_integrations/heroku'
