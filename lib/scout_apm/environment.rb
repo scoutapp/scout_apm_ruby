@@ -19,6 +19,7 @@ module ScoutApm
       ScoutApm::ServerIntegrations::Rainbows.new(STDOUT_LOGGER),
       ScoutApm::ServerIntegrations::Puma.new(STDOUT_LOGGER),
       ScoutApm::ServerIntegrations::Thin.new(STDOUT_LOGGER),
+      ScoutApm::ServerIntegrations::Reel.new(STDOUT_LOGGER),
       ScoutApm::ServerIntegrations::Webrick.new(STDOUT_LOGGER),
       ScoutApm::ServerIntegrations::Null.new(STDOUT_LOGGER), # must be last
     ]
@@ -33,6 +34,7 @@ module ScoutApm
       ScoutApm::FrameworkIntegrations::Rails2.new,
       ScoutApm::FrameworkIntegrations::Rails3Or4.new,
       ScoutApm::FrameworkIntegrations::Sinatra.new,
+      ScoutApm::FrameworkIntegrations::Webmachine.new,
       ScoutApm::FrameworkIntegrations::Ruby.new, # Fallback if none match
     ]
 
