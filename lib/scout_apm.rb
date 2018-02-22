@@ -51,6 +51,7 @@ require 'scout_apm/server_integrations/puma'
 require 'scout_apm/server_integrations/rainbows'
 require 'scout_apm/server_integrations/thin'
 require 'scout_apm/server_integrations/unicorn'
+require 'scout_apm/server_integrations/reel'
 require 'scout_apm/server_integrations/webrick'
 require 'scout_apm/server_integrations/null'
 
