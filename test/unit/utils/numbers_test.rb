@@ -1,4 +1,4 @@
-require_relative '../../test_helper'
+require 'test_helper'
 require 'scout_apm/utils/numbers'
 
 class NumbersTest < Minitest::Test

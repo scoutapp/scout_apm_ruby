@@ -5,7 +5,7 @@ require 'scout_apm/logger'
 
 class LoggerTest < Minitest::Test
   def setup
-    @env_root = Pathname.new(File.dirname(__FILE__)) + "../../"
+    @env_root = Pathname.new(File.expand_path(File.join(File.dirname(__FILE__), "..", "..")))
     FileUtils.mkdir_p(@env_root + "log")
   end
 

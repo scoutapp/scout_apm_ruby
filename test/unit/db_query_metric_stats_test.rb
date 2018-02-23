@@ -8,20 +8,20 @@ class DbQueryMetricStatsTest < Minitest::Test
     stat = build("table", "op", "Controller/public/index", 1, 10, 20)
 
     assert_equal({
-      model_name: "table",
-      operation: "op",
-      call_count: 1,
-      transaction_count: 0,
-      scope: "Controller/public/index",
-      histogram: [[10.0, 1]],
+      :model_name => "table",
+      :operation => "op",
+      :call_count => 1,
+      :transaction_count => 0,
+      :scope => "Controller/public/index",
+      :histogram => [[10.0, 1]],
 
-      max_call_time: 10.0,
-      min_call_time: 10.0,
-      call_time: 10.0,
+      :max_call_time => 10.0,
+      :min_call_time => 10.0,
+      :call_time => 10.0,
 
-      max_rows_returned: 20,
-      min_rows_returned: 20,
-      rows_returned: 20,
+      :max_rows_returned => 20,
+      :min_rows_returned => 20,
+      :rows_returned => 20,
     }, stat.as_json)
   end
 
@@ -90,9 +90,9 @@ class DbQueryMetricStatsTest < Minitest::Test
   #  Helpers  #
   #############
   DEFAULTS = {
-    call_count: 1,
-    call_time: 10.0,
-    rows_returned: 20,
+    :call_count => 1,
+    :call_time => 10.0,
+    :rows_returned => 20,
   }
 
   def build(model_name="User",
