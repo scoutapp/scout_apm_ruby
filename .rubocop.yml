@@ -5,7 +5,7 @@ AllCops:
 # 80 is stifling, especially with a few levels of nesting before we even start.
 # So bump it to 100 to keep really long lines from creeping in.
 Metrics/LineLength:
-  Enabled: true
+  Enabled: false
   Max: 100
 
 Style/HashSyntax:
