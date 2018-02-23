@@ -85,7 +85,8 @@ class PayloadSerializerTest < Minitest::Test
         "total_exclusive_time" => 0.078132088,
       }
     ]
-    assert_equal formatted_metrics, JSON.parse(payload)["metrics"]
+    assert_equal formatted_metrics,
+      JSON.parse(payload)["metrics"].sort_by { |m| m["key"]["bucket"] }
   end
 
   def test_escapes_json_quotes
