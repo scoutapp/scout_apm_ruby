@@ -7,7 +7,7 @@ module ScoutApm
 
     # Renames the last Controller or Job layer
     def self.rename(name)
-      ::ScoutApm::RequestManager.lookup.rename_request_layer(name)
+      ::ScoutApm::RequestManager.lookup.name_override = name
     end
   end
 end

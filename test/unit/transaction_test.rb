@@ -11,19 +11,4 @@ class TransactionTest < Minitest::Test
 
     assert_equal 0, recorder.requests.length
   end
-
-  def test_rename_request
-    recorder = FakeRecorder.new
-    ScoutApm::Agent.instance.context.recorder = recorder
-
-    ScoutApm::Tracer.instrument("Controller", "old") do
-      ScoutApm::Tracer.instrument("View", "foo/bar") do
-        ScoutApm::Transaction.rename("new")
-      end
-    end
-
-    assert_equal 1, recorder.requests.length
-    req = recorder.requests[0]
-    assert_equal "new", req.root_layer.name
-  end
 end

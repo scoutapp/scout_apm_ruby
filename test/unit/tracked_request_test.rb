@@ -35,4 +35,37 @@ class TrackedRequestLayerManipulationTest < Minitest::Test
 
     assert_equal "Controller", tr.current_layer.type
   end
+
+  def test_name_override_job
+    # layers are Middleware -> Controller
+    middleware_layer = ScoutApm::Layer.new("Middleware", "foo")
+    controller_layer = ScoutApm::Layer.new("Controller", "users/index")
+
+    tr = ScoutApm::TrackedRequest.new(ScoutApm::AgentContext.new, ScoutApm::FakeStore.new)
+    tr.start_layer(middleware_layer)
+    tr.name_override = "override"
+    tr.start_layer(controller_layer)
+    tr.stop_layer
+    tr.stop_layer
+
+    assert_equal "override", controller_layer.name
+  end
+
+  def test_name_override_controller
+    # layers are Middleware -> Queue -> Job
+    middleware_layer = ScoutApm::Layer.new("Middleware", "foo")
+    queue_layer = ScoutApm::Layer.new("Queue", "bar")
+    job_layer = ScoutApm::Layer.new("Job", "FooJob")
+
+    tr = ScoutApm::TrackedRequest.new(ScoutApm::AgentContext.new, ScoutApm::FakeStore.new)
+    tr.start_layer(middleware_layer)
+    tr.name_override = "override"
+    tr.start_layer(queue_layer)
+    tr.start_layer(job_layer)
+    tr.stop_layer
+    tr.stop_layer
+    tr.stop_layer
+
+    assert_equal "override", job_layer.name
+  end
 end
