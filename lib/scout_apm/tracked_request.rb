@@ -271,13 +271,7 @@ module ScoutApm
       # Bail out early if the user asked us to ignore this uri
       return if @agent_context.ignored_uris.ignore?(annotations[:uri])
 
-      # Apply name override if needed
-      unless name_override.nil?
-        scope_layer = layer_finder.scope
-        unless scope_layer.nil?
-          scope_layer.name = name_override
-        end
-      end
+      apply_name_override
 
       converters = [
         LayerConverters::Histograms,
@@ -475,6 +469,17 @@ module ScoutApm
       @agent_context = ScoutApm::Agent.instance.context
       @recorder = @agent_context.recorder
       @store = @agent_context.store
+    end
+
+    private
+
+    def apply_name_override
+      return unless name_override
+
+      scope_layer = layer_finder.scope
+      if scope_layer
+        scope_layer.name = name_override
+      end
     end
   end
 end
