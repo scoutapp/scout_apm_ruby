@@ -10,19 +10,6 @@ class TrackedRequestDumpAndLoadTest < Minitest::Test
     loaded = Marshal.load(dumped)
     assert_false loaded.nil?
   end
-
-  def test_restore_store
-    faux_store = ScoutApm::FakeStore.new
-    context = ScoutApm::AgentContext.new
-    tr = ScoutApm::TrackedRequest.new(context, faux_store)
-    assert_equal faux_store, tr.instance_variable_get("@store")
-
-    tr.prepare_to_dump!
-    assert_nil tr.instance_variable_get("@store")
-
-    tr.restore_store
-    assert_equal context.store, tr.instance_variable_get("@store")
-  end
 end
 
 class TrackedRequestLayerManipulationTest < Minitest::Test
@@ -47,5 +34,38 @@ class TrackedRequestLayerManipulationTest < Minitest::Test
     tr.stop_layer
 
     assert_equal "Controller", tr.current_layer.type
+  end
+
+  def test_name_override_controller
+    # layers are Middleware -> Controller
+    middleware_layer = ScoutApm::Layer.new("Middleware", "foo")
+    controller_layer = ScoutApm::Layer.new("Controller", "users/index")
+
+    tr = ScoutApm::TrackedRequest.new(ScoutApm::AgentContext.new, ScoutApm::FakeStore.new)
+    tr.start_layer(middleware_layer)
+    tr.name_override = "override"
+    tr.start_layer(controller_layer)
+    tr.stop_layer
+    tr.stop_layer
+
+    assert_equal "override", controller_layer.name
+  end
+
+  def test_name_override_job
+    # layers are Middleware -> Queue -> Job
+    middleware_layer = ScoutApm::Layer.new("Middleware", "foo")
+    queue_layer = ScoutApm::Layer.new("Queue", "bar")
+    job_layer = ScoutApm::Layer.new("Job", "FooJob")
+
+    tr = ScoutApm::TrackedRequest.new(ScoutApm::AgentContext.new, ScoutApm::FakeStore.new)
+    tr.start_layer(middleware_layer)
+    tr.name_override = "override"
+    tr.start_layer(queue_layer)
+    tr.start_layer(job_layer)
+    tr.stop_layer
+    tr.stop_layer
+    tr.stop_layer
+
+    assert_equal "override", job_layer.name
   end
 end

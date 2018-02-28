@@ -38,6 +38,10 @@ module ScoutApm
     # An object that responds to `record!(TrackedRequest)` to store this tracked request
     attr_reader :recorder
 
+    # If specified, an override for the name of the request. If unspecified,
+    # the name is determined from the name of the Controller or Job layer.
+    attr_accessor :name_override
+
     # When we see these layers, it means a real request is going through the
     # system. We toggle a flag to turn on some slightly more expensive
     # instrumentation (backtrace collection and the like) that would be too
@@ -267,6 +271,8 @@ module ScoutApm
       # Bail out early if the user asked us to ignore this uri
       return if @agent_context.ignored_uris.ignore?(annotations[:uri])
 
+      apply_name_override
+
       converters = [
         LayerConverters::Histograms,
         LayerConverters::MetricConverter,
@@ -463,6 +469,17 @@ module ScoutApm
       @agent_context = ScoutApm::Agent.instance.context
       @recorder = @agent_context.recorder
       @store = @agent_context.store
+    end
+
+    private
+
+    def apply_name_override
+      return unless name_override
+
+      scope_layer = layer_finder.scope
+      if scope_layer
+        scope_layer.name = name_override
+      end
     end
   end
 end
