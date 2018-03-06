@@ -25,6 +25,10 @@ class DepthFirstWalkerTest < Minitest::Test
   # / \
   # F  G
   def test_walk_interesting_tree
+    # The test could be rewritten to support 1.8.7, but it would likely be much
+    # harder to read.
+    skip "Lack of set ordering in Ruby 1.8.7 prevents this test from running correctly" if RUBY_VERSION.start_with?("1.8.")
+
     calls = []
     a = Layer.new("A", "x")
     b = Layer.new("B", "x")

@@ -1,4 +1,4 @@
-require_relative '../test_helper'
+require 'test_helper'
 
 require 'scout_apm/ignored_uris'
 

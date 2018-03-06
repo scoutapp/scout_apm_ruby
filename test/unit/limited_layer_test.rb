@@ -47,7 +47,7 @@ class LimitedLayerTest < Minitest::Test
       :total_call_time => tct,
       :total_exclusive_time => tet,
       :total_allocations => a_tct,
-      :total_exclusive_allocations => a_tet,
+      :total_exclusive_allocations => a_tet
     )
   end
 end

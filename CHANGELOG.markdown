@@ -2,6 +2,18 @@
 
 * ScoutProf BETA
 
+# 2.4.9
+
+* ScoutApm::Transaction#rename and #ignore API
+* Explicit custom instrumentation with ScoutApm::Tracer#instrument blocks,
+  without needing to include a module
+* Quieter logging in normal startup cases
+* Upgraded testing infrastructure
+
+# 2.4.8
+
+* Fix issue with detailed middleware instrumentation
+
 # 2.4.7
 
 * Fix issue recording backtraces

@@ -23,13 +23,17 @@ Gem::Specification.new do |s|
   s.extensions << 'ext/rusage/extconf.rb'
 
   s.add_development_dependency "minitest"
-  s.add_development_dependency 'mocha'
+  s.add_development_dependency "mocha"
   s.add_development_dependency "pry"
-  s.add_development_dependency "m"
   s.add_development_dependency "simplecov"
   s.add_development_dependency "rake-compiler"
   s.add_development_dependency "addressable"
-  s.add_development_dependency "guard"
-  s.add_development_dependency "guard-minitest"
   s.add_development_dependency "activesupport"
+
+  if RUBY_VERSION >= "1.9.3"
+    s.add_development_dependency "rubocop"
+    s.add_development_dependency "guard"
+    s.add_development_dependency "guard-minitest"
+    s.add_development_dependency "m"
+  end
 end

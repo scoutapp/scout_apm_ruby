@@ -35,8 +35,8 @@ class HistogramTest < Minitest::Test
       end
     }
 
-    assert_equal 1.5, hist.quantile(0).round(1)
-    assert_equal 9.5, hist.quantile(100).round(1)
+    assert_equal 1.5, round(hist.quantile(0), 1)
+    assert_equal 9.5, round(hist.quantile(100), 1)
   end
 
   def test_combine
@@ -55,8 +55,8 @@ class HistogramTest < Minitest::Test
     }
 
     combined = hist1.combine!(hist2)
-    assert_equal 1.5, combined.quantile(0).round(1)
-    assert_equal 9.5, combined.quantile(100).round(1)
+    assert_equal 1.5, round(combined.quantile(0), 1)
+    assert_equal 9.5, round(combined.quantile(100), 1)
     assert_equal 200, combined.total
   end
 
@@ -102,6 +102,13 @@ class HistogramTest < Minitest::Test
     }
 
     assert_equal 5.5, hist.mean
+  end
+
+  private
+
+  # Ruby 1.8 compatible round with precision
+  def round(number, precision)
+    ((number * 10**precision).round.to_f) / (10**precision)
   end
 end
 
