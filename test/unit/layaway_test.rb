@@ -46,4 +46,35 @@ class LayawayTest < Minitest::Test
 
     layaway.delete_files_for(:all)
   end
+
+  def test_layaway_stale_regex_pattern
+    data_dir = '/tmp/scout_apm_test/shared/scout_apm'
+    FileUtils.mkdir_p data_dir
+    # Clean out files
+    FileUtils.safe_unlink(Dir.glob("#{data_dir}/scout_*_*.data"))
+
+    config = make_fake_config({'data_file' => data_dir})
+    env = make_fake_environment(:root => '/tmp/scout_apm_test')
+    context = ScoutApm::AgentContext.new().tap{|c| c.config = config; c.environment = env }
+    layaway = ScoutApm::Layaway.new(context)
+
+    not_stale_time_integer = Time.now.strftime(ScoutApm::Layaway::TIME_FORMAT).to_i
+    stale_time_integer = not_stale_time_integer - (ScoutApm::Layaway::STALE_AGE + 2)
+
+    not_stale_file_names = [File.join(data_dir, "scout_#{not_stale_time_integer}_1.data"),
+                            File.join(data_dir, "scout_#{not_stale_time_integer}_20.data")]
+    stale_file_names = [File.join(data_dir, "scout_#{stale_time_integer}_1.data"),
+                        File.join(data_dir, "scout_#{stale_time_integer}_20.data")]
+    all_file_names = not_stale_file_names + stale_file_names
+
+    (all_file_names).each do |filename|
+        File.new(filename, 'w')
+    end
+
+    assert_equal Pathname.new("/tmp/scout_apm_test/shared/scout_apm"), ScoutApm::Layaway.new(context).directory
+    assert_equal all_file_names.sort, Dir.glob("#{data_dir}/*data").sort
+
+    layaway.delete_stale_files(not_stale_time_integer - ScoutApm::Layaway::STALE_AGE)
+    assert_equal not_stale_file_names.sort, Dir.glob("#{data_dir}/*data").sort
+  end
 end
