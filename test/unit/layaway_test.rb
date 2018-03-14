@@ -58,23 +58,27 @@ class LayawayTest < Minitest::Test
     context = ScoutApm::AgentContext.new().tap{|c| c.config = config; c.environment = env }
     layaway = ScoutApm::Layaway.new(context)
 
-    not_stale_time_integer = Time.now.strftime(ScoutApm::Layaway::TIME_FORMAT).to_i
-    stale_time_integer = not_stale_time_integer - (ScoutApm::Layaway::STALE_AGE + 2)
 
-    not_stale_file_names = [File.join(data_dir, "scout_#{not_stale_time_integer}_1.data"),
-                            File.join(data_dir, "scout_#{not_stale_time_integer}_20.data")]
-    stale_file_names = [File.join(data_dir, "scout_#{stale_time_integer}_1.data"),
-                        File.join(data_dir, "scout_#{stale_time_integer}_20.data")]
+    not_stale_time = Time.now
+    not_stale_time_formatted = not_stale_time.strftime(ScoutApm::Layaway::TIME_FORMAT)
+
+    stale_time = not_stale_time - (ScoutApm::Layaway::STALE_AGE + 120) # ScoutApm::Layaway::STALE_AGE is in seconds. Add another 2 minutes to STALE_AGE
+    stale_time_formatted = stale_time.strftime(ScoutApm::Layaway::TIME_FORMAT)
+
+    not_stale_file_names = [File.join(data_dir, "scout_#{not_stale_time_formatted}_1.data"),
+                            File.join(data_dir, "scout_#{not_stale_time_formatted}_20.data")]
+    stale_file_names = [File.join(data_dir, "scout_#{stale_time_formatted}_1.data"),
+                        File.join(data_dir, "scout_#{stale_time_formatted}_20.data")]
     all_file_names = not_stale_file_names + stale_file_names
 
     (all_file_names).each do |filename|
-        File.new(filename, 'w')
+      File.new(filename, 'w').close
     end
 
     assert_equal Pathname.new("/tmp/scout_apm_test/shared/scout_apm"), ScoutApm::Layaway.new(context).directory
     assert_equal all_file_names.sort, Dir.glob("#{data_dir}/*data").sort
 
-    layaway.delete_stale_files(not_stale_time_integer - ScoutApm::Layaway::STALE_AGE)
+    layaway.delete_stale_files(not_stale_time - ScoutApm::Layaway::STALE_AGE)
     assert_equal not_stale_file_names.sort, Dir.glob("#{data_dir}/*data").sort
   end
 end

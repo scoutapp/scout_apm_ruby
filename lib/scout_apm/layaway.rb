@@ -188,7 +188,7 @@ module ScoutApm
     end
 
     def timestamp_from_filename(filename)
-      match = filename.match(%r{scout_(\d+)_\d+\.data})
+      match = filename.match(%r{scout_(\d+)_\d+\.data\z})
       if match
         match[1]
       else
