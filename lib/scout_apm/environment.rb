@@ -165,15 +165,18 @@ module ScoutApm
     end
 
     def ruby_19?
-      @ruby_19 ||= defined?(RUBY_ENGINE) && RUBY_ENGINE == "ruby" && RUBY_VERSION.match(/^1\.9/)
+      return @ruby_19 if defined?(@ruby_19)
+      @ruby_19 = defined?(RUBY_ENGINE) && RUBY_ENGINE == "ruby" && RUBY_VERSION.match(/^1\.9/)
     end
 
     def ruby_187?
-      @ruby_187 ||= defined?(RUBY_VERSION) && RUBY_VERSION.match(/^1\.8\.7/)
+      return @ruby_187 if defined?(@ruby_187)
+      @ruby_187 = defined?(RUBY_VERSION) && RUBY_VERSION.match(/^1\.8\.7/)
     end
 
     def ruby_2?
-      @ruby_2 ||= defined?(RUBY_VERSION) && RUBY_VERSION.match(/^2/)
+      return @ruby_2 if defined?(@ruby_2)
+      @ruby_2 = defined?(RUBY_VERSION) && RUBY_VERSION.match(/^2/)
     end
 
     # Returns a string representation of the OS (ex: darwin, linux)
