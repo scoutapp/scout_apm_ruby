@@ -286,6 +286,11 @@ module ScoutApm
         LayerConverters::SlowRequestConverter,
       ]
 
+      if @agent_context.transaction_reporters.any?
+        converters += @agent_context.transaction_reporters
+        puts "converters: #{converters.inspect}"
+      end
+
       walker = LayerConverters::DepthFirstWalker.new(self.root_layer)
       converters = converters.map do |klass|
         instance = klass.new(@agent_context, self, layer_finder, @store)

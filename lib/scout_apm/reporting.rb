@@ -86,10 +86,20 @@ module ScoutApm
       logger.debug("Sending payload w/ Headers: #{headers.inspect}")
 
       reporter.report(payload, headers)
+
+      run_payload_reporters(metadata, metrics)
     rescue => e
       logger.warn "Error on checkin"
       logger.info e.message
       logger.debug e.backtrace
+    end
+
+    def run_payload_reporters(metadata, metrics)
+      return unless context.payload_reporters.any?
+
+      context.payload_reporters.each do |klass|
+        klass.new(metadata,metrics).record!
+      end
     end
 
     def log_deliver(metrics, slow_transactions, metadata, jobs_traces, histograms)

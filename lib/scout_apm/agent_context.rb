@@ -1,5 +1,9 @@
 module ScoutApm
   class AgentContext
+
+    attr_accessor :payload_reporters
+    attr_accessor :transaction_reporters
+
     # Initially start up without attempting to load a configuration file. We
     # need to be able to lookup configuration options like "application_root"
     # which would then in turn influence where the yaml configuration file is
@@ -9,6 +13,8 @@ module ScoutApm
     def initialize()
       @logger = LoggerFactory.build_minimal_logger
       @process_start_time = Time.now
+      @payload_reporters = []
+      @transaction_reporters = []
     end
 
     def marshal_dump
