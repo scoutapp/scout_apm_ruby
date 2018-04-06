@@ -208,8 +208,9 @@ module ScoutApm
     # Entry-point of instruments.
     #
     # We instrument both ActiveRecord::Querying#find_by_sql and
-    # ActiveRecord::FinderMethods#find_with_associations.  These are early in
-    # the chain of calls when you're using ActiveRecord.
+    # ActiveRecord::FinderMethods#find_with_associations
+    # (ActiveRecord::FinderMethods#apply_join_dependency in Rails >= 5.2).
+    # These are early in the chain of calls when you're using ActiveRecord.
     #
     # Later on, they will call into #log, which we also instrument, at which
     # point, we can fill in additional data gathered at that point (name, sql)
@@ -253,9 +254,16 @@ module ScoutApm
       def self.included(instrumented_class)
         ScoutApm::Agent.instance.context.logger.info "Instrumenting ActiveRecord::FinderMethods - #{instrumented_class.inspect}"
         instrumented_class.class_eval do
-          unless instrumented_class.method_defined?(:find_with_associations_without_scout_instruments)
+          if (instrumented_class.method_defined?(:find_with_associations) || instrumented_class.private_method_defined?(:find_with_associations)) && \
+              !instrumented_class.method_defined?(:find_with_associations_without_scout_instruments)
             alias_method :find_with_associations_without_scout_instruments, :find_with_associations
             alias_method :find_with_associations, :find_with_associations_with_scout_instruments
+          end
+
+          if instrumented_class.private_method_defined?(:apply_join_dependency) && !instrumented_class.private_method_defined?(:apply_join_dependency_without_scout_instruments)
+            alias_method :apply_join_dependency_without_scout_instruments, :apply_join_dependency
+            alias_method :apply_join_dependency, :apply_join_dependency_with_scout_instruments
+            private :apply_join_dependency
           end
         end
       end
@@ -269,6 +277,21 @@ module ScoutApm
         req.ignore_children!
         begin
           find_with_associations_without_scout_instruments(*args, &block)
+        ensure
+          req.acknowledge_children!
+          req.stop_layer
+        end
+      end
+
+      def apply_join_dependency_with_scout_instruments(*args, &block)
+        req = ScoutApm::RequestManager.lookup
+        layer = ScoutApm::Layer.new("ActiveRecord", Utils::ActiveRecordMetricName::DEFAULT_METRIC)
+        layer.annotate_layer(:ignorable => true)
+        layer.desc = SqlList.new
+        req.start_layer(layer)
+        req.ignore_children!
+        begin
+          apply_join_dependency_without_scout_instruments(*args, &block)
         ensure
           req.acknowledge_children!
           req.stop_layer
