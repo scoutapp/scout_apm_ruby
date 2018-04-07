@@ -2,9 +2,18 @@
 
 [![Build Status](https://travis-ci.org/scoutapp/scout_apm_ruby.svg?branch=master)](https://travis-ci.org/scoutapp/scout_apm_ruby)
 
-A Ruby gem for detailed Rails application performance analysis. Metrics are
+A Ruby gem for detailed Rails application performance analysis. Metrics and transaction traces are
 reported to [Scout](https://scoutapp.com), a hosted application monitoring
 service.
+
+## What's the special sauce? 🤔
+
+Glad you asked! The Scout agent can do some special things:
+
+* A unique focus on identifying those hard-to-investigate outliers like memory bloat, N+1s, and user-specific problems. [See an example workflow](http://scoutapp.com/newrelic-alternative).
+* [Low-overhead](http://blog.scoutapp.com/articles/2016/02/07/overhead-benchmarks-new-relic-vs-scout)
+* View your performance metrics during development with [DevTrace](http://help.apm.scoutapp.com/#devtrace) and in production via [server_timing](https://github.com/scoutapp/ruby_server_timing).
+* Production-Safe profiling of custom code via [ScoutProf](http://help.apm.scoutapp.com/#scoutprof) (BETA).
 
 ## Getting Started
 
