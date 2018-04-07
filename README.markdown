@@ -8,7 +8,7 @@ service.
 
 ## What's the special sauce? 🤔
 
-Glad you asked! The Scout agent can do some special things:
+The Scout agent is engineered to do some wonderful things:
 
 * A unique focus on identifying those hard-to-investigate outliers like memory bloat, N+1s, and user-specific problems. [See an example workflow](http://scoutapp.com/newrelic-alternative).
 * [Low-overhead](http://blog.scoutapp.com/articles/2016/02/07/overhead-benchmarks-new-relic-vs-scout)
