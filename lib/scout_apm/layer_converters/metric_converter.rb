@@ -38,6 +38,7 @@ module ScoutApm
 
       def record!
         @store.track!(@metrics)
+        @metrics
       end
     end
   end

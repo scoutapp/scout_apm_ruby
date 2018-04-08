@@ -8,8 +8,10 @@ module ScoutApm
         meta = MetricMeta.new("ObjectAllocations", {:scope => scope_layer.legacy_metric_name})
         stat = MetricStats.new
         stat.update!(root_layer.total_allocations)
+        metrics = { meta => stat }
 
-        @store.track!({ meta => stat })
+        @store.track!(metrics)
+        nil
       end
     end
   end

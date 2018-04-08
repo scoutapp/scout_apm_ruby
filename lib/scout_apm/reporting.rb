@@ -49,6 +49,7 @@ module ScoutApm
           merged = rps.inject { |memo, rp| memo.merge(rp) }
           logger.debug("Merged #{rps.length} reporting periods, delivering")
           deliver_period(merged)
+          ScoutApm::Extensions.run_reporting_callbacks(merged, metadata(reporting_period))
           true
         rescue => e
           logger.debug("Error merging reporting periods #{e.message}")
@@ -63,6 +64,17 @@ module ScoutApm
       end
     end
 
+    def metadata(reporting_period)
+      {
+        :app_root      => context.environment.root.to_s,
+        :unique_id     => ScoutApm::Utils::UniqueId.simple,
+        :agent_version => ScoutApm::VERSION,
+        :agent_time    => reporting_period.timestamp.to_s,
+        :agent_pid     => Process.pid,
+        :platform      => "ruby",
+      }
+    end
+
     def deliver_period(reporting_period)
       metrics = reporting_period.metrics_payload
       slow_transactions = reporting_period.slow_transactions_payload
@@ -71,14 +83,7 @@ module ScoutApm
       histograms = reporting_period.histograms
       db_query_metrics = reporting_period.db_query_metrics_payload
 
-      metadata = {
-        :app_root      => context.environment.root.to_s,
-        :unique_id     => ScoutApm::Utils::UniqueId.simple,
-        :agent_version => ScoutApm::VERSION,
-        :agent_time    => reporting_period.timestamp.to_s,
-        :agent_pid     => Process.pid,
-        :platform      => "ruby",
-      }
+      metadata = metadata(reporting_period)
 
       log_deliver(metrics, slow_transactions, metadata, slow_jobs, histograms)
 
@@ -86,20 +91,10 @@ module ScoutApm
       logger.debug("Sending payload w/ Headers: #{headers.inspect}")
 
       reporter.report(payload, headers)
-
-      run_payload_reporters(metadata, metrics)
     rescue => e
       logger.warn "Error on checkin"
       logger.info e.message
       logger.debug e.backtrace
-    end
-
-    def run_payload_reporters(metadata, metrics)
-      return unless context.payload_reporters.any?
-
-      context.payload_reporters.each do |klass|
-        klass.new(metadata,metrics).record!
-      end
     end
 
     def log_deliver(metrics, slow_transactions, metadata, jobs_traces, histograms)

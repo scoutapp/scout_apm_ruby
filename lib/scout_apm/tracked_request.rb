@@ -64,7 +64,6 @@ module ScoutApm
       @mem_start = mem_usage
       @recorder = agent_context.recorder
       @real_request = false
-
       ignore_request! if @recorder.nil?
     end
 
@@ -273,32 +272,30 @@ module ScoutApm
 
       apply_name_override
 
-      converters = [
-        LayerConverters::Histograms,
-        LayerConverters::MetricConverter,
-        LayerConverters::ErrorConverter,
-        LayerConverters::AllocationMetricConverter,
-        LayerConverters::RequestQueueTimeConverter,
-        LayerConverters::JobConverter,
-        LayerConverters::DatabaseConverter,
+      # Make a constant, then call converters.dup.each so it isn't inline?
+      converters = {
+        :histograms => LayerConverters::Histograms,
+        :metrics => LayerConverters::MetricConverter,
+        :errors => LayerConverters::ErrorConverter,
+        :allocation_metrics => LayerConverters::AllocationMetricConverter,
+        :queue_time => LayerConverters::RequestQueueTimeConverter,
+        :job => LayerConverters::JobConverter,
+        :db => LayerConverters::DatabaseConverter,
 
-        LayerConverters::SlowJobConverter,
-        LayerConverters::SlowRequestConverter,
-      ]
-
-      if @agent_context.transaction_reporters.any?
-        converters += @agent_context.transaction_reporters
-        puts "converters: #{converters.inspect}"
-      end
+        :slow_job => LayerConverters::SlowJobConverter,
+        :slow_req => LayerConverters::SlowRequestConverter,
+      }
 
       walker = LayerConverters::DepthFirstWalker.new(self.root_layer)
-      converters = converters.map do |klass|
+      converters.each do |slug, klass|
         instance = klass.new(@agent_context, self, layer_finder, @store)
         instance.register_hooks(walker)
-        instance
+        converters[slug] = instance
       end
       walker.walk
-      converters.each {|i| i.record! }
+      converters.each {|slug,i| converters[slug] = i.record! }
+
+      ScoutApm::Extensions::Config.run_transaction_callbacks(converters,context,layer_finder.scope)
 
       # If there's an instant_key, it means we need to report this right away
       if web? && instant?

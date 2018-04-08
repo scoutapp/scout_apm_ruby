@@ -1,8 +1,7 @@
 module ScoutApm
   class AgentContext
 
-    attr_accessor :payload_reporters
-    attr_accessor :transaction_reporters
+    attr_accessor :extensions
 
     # Initially start up without attempting to load a configuration file. We
     # need to be able to lookup configuration options like "application_root"
@@ -13,8 +12,7 @@ module ScoutApm
     def initialize()
       @logger = LoggerFactory.build_minimal_logger
       @process_start_time = Time.now
-      @payload_reporters = []
-      @transaction_reporters = []
+      @extensions = ScoutApm::Extensions::Config.new
     end
 
     def marshal_dump

@@ -10,8 +10,10 @@ module ScoutApm
         meta = MetricMeta.new("Errors/#{scope_layer.legacy_metric_name}", {})
         stat = MetricStats.new
         stat.update!(1)
-
-        @store.track!({ meta => stat })
+        metrics = { meta => stat }
+        
+        @store.track!(metrics)
+        metrics
       end
     end
   end
