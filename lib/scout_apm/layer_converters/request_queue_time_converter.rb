@@ -31,7 +31,7 @@ module ScoutApm
         metrics = { meta => stat }
         
         @store.track!(metrics)
-        metrics
+        metrics  # this result must be returned so it can be accessed by transaction callback extensions
       end
 
       private

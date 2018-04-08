@@ -11,7 +11,7 @@ module ScoutApm
         metrics = { meta => stat }
 
         @store.track!(metrics)
-        nil
+        nil # not returning anything in the layer results ... not used
       end
     end
   end
