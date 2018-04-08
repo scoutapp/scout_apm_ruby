@@ -49,7 +49,7 @@ module ScoutApm
           merged = rps.inject { |memo, rp| memo.merge(rp) }
           logger.debug("Merged #{rps.length} reporting periods, delivering")
           deliver_period(merged)
-          ScoutApm::Extensions.run_reporting_callbacks(merged, metadata(reporting_period))
+          ScoutApm::Extensions.run_reporting_period_callbacks(merged, metadata(reporting_period))
           true
         rescue => e
           logger.debug("Error merging reporting periods #{e.message}")
