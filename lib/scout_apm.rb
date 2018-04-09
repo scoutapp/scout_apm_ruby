@@ -174,6 +174,7 @@ require 'scout_apm/tasks/support'
 
 require 'scout_apm/extensions/config'
 require 'scout_apm/extensions/transaction_callback_base'
+require 'scout_apm/extensions/periodic_callback_base'
 
 if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR) && Rails::VERSION::MAJOR >= 3 && defined?(Rails::Railtie)
   module ScoutApm

@@ -2,6 +2,7 @@ require 'test_helper'
 
 class TransactionCallbacksTest < Minitest::Test
 
+  # This is more of an integration test to ensure that we don't break TrackedRequest.
   def test_broken_callback_does_not_break_tracked_request
     ScoutApm::Extensions::Config.add_transaction_callback(BrokenCallback)
 
@@ -21,7 +22,7 @@ class TransactionCallbacksTest < Minitest::Test
     tr.start_layer(controller_layer)
     tr.stop_layer
 
-    assert Thread.current[:callback_output]
+    assert Thread.current[:transaction_callback_output]
   end
 
   # Doesn't inherit from TransactionCallbackBase
@@ -31,7 +32,7 @@ class TransactionCallbacksTest < Minitest::Test
   # Sets a Thread local so we can verify that the callback ran.
   class TransactionCallback < ScoutApm::Extensions::TransactionCallbackBase
     def call
-      Thread.current[:callback_output] = true
+      Thread.current[:transaction_callback_output] = true
     end
   end
 

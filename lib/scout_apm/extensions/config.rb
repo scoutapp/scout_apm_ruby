@@ -3,7 +3,7 @@ module ScoutApm
     # Extensions can be configured to fan out data to additional services.
     class Config
       attr_accessor :transaction_callbacks
-      attr_accessor :reporting_period_callbacks
+      attr_accessor :periodic_callbacks
 
       # Adds a new callback that runs after a transaction completes via +TrackedRequest#record!+.
       # These run inline during the request and thus should add minimal overhead and NOT make inline HTTP calls to outside services.
@@ -15,17 +15,17 @@ module ScoutApm
       # Adds call that runs when the per-minute report data is sent to Scout.
       # These run in a background thread so external HTTP calls are OK.
       # +callback+ must inherit from +ScoutApm::Extensions::ReportingPeriodCallbackBase+.
-      def self.add_reporting_period_callback(callback)
-        agent_context.extensions.reporting_period_callbacks << callback
+      def self.add_periodic_callback(callback)
+        agent_context.extensions.periodic_callbacks << callback
       end
 
       # Runs each reporting period callback. 
       # Each callback runs inside a begin/rescue block so a broken callback doesn't prevent other
       # callbacks from executing or reporting data from being sent. 
-      def self.run_reporting_period_callbacks(reporting_period,metadata)
-        return unless agent_context.extensions.reporting_period_callbacks.any?
+      def self.run_periodic_callbacks(reporting_period,metadata)
+        return unless agent_context.extensions.periodic_callbacks.any?
 
-        agent_context.extensions.reporting_period_callbacks.each do |klass|
+        agent_context.extensions.periodic_callbacks.each do |klass|
           begin
             klass.new(reporting_period, metadata).call
           rescue => e
@@ -57,7 +57,7 @@ module ScoutApm
 
       def initialize
         @transaction_callbacks = []
-        @reporting_period_callbacks = []
+        @periodic_callbacks = []
       end
 
       def self.agent_context
