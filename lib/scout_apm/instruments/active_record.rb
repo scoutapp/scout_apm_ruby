@@ -112,9 +112,9 @@ module ScoutApm
           end
         end
 
-        rails_3_2_or_above = defined?(::ActiveRecord::VERSION::MAJOR) && \
-          defined?(::ActiveRecord::VERSION::MINOR) && \
-          (::ActiveRecord::VERSION::MAJOR.to_i > 3 || \
+        rails_3_2_or_above = defined?(::ActiveRecord::VERSION::MAJOR) &&
+          defined?(::ActiveRecord::VERSION::MINOR) &&
+          (::ActiveRecord::VERSION::MAJOR.to_i > 3 ||
            (::ActiveRecord::VERSION::MAJOR.to_i == 3 && ::ActiveRecord::VERSION::MINOR.to_i >= 2))
         if rails_3_2_or_above
           if Utils::KlassHelper.defined?("ActiveRecord::Relation")
