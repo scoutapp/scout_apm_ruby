@@ -287,15 +287,15 @@ module ScoutApm
       }
 
       walker = LayerConverters::DepthFirstWalker.new(self.root_layer)
-      converters.each do |slug, klass|
+      converter_instances = converters.each_with_object({}) do |(slug, klass),memo|
         instance = klass.new(@agent_context, self, layer_finder, @store)
         instance.register_hooks(walker)
-        converters[slug] = instance
+        memo[slug] = instance
       end
       walker.walk
-      converters.each {|slug,i| converters[slug] = i.record! }
+      converter_results = converter_instances.each_with_object({}) {|(slug,i),memo| memo[slug] = i.record! }
 
-      ScoutApm::Extensions::Config.run_transaction_callbacks(converters,context,layer_finder.scope)
+      ScoutApm::Extensions::Config.run_transaction_callbacks(converter_results,context,layer_finder.scope)
 
       # If there's an instant_key, it means we need to report this right away
       if web? && instant?
