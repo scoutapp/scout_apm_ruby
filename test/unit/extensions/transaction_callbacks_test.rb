@@ -25,13 +25,13 @@ class TransactionCallbacksTest < Minitest::Test
     assert Thread.current[:transaction_callback_output]
   end
 
-  # Doesn't inherit from TransactionCallbackBase
+  # Doesn't have a +call+ method.
   class BrokenCallback
   end
 
   # Sets a Thread local so we can verify that the callback ran.
-  class TransactionCallback < ScoutApm::Extensions::TransactionCallbackBase
-    def call
+  class TransactionCallback
+    def call(payload)
       Thread.current[:transaction_callback_output] = true
     end
   end

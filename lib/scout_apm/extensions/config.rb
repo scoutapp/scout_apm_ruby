@@ -22,7 +22,7 @@ module ScoutApm
       # Runs each reporting period callback. 
       # Each callback runs inside a begin/rescue block so a broken callback doesn't prevent other
       # callbacks from executing or reporting data from being sent. 
-      def self.run_periodic_callbacks(reporting_period,metadata)
+      def self.run_periodic_callbacks(reporting_period, metadata)
         return unless agent_context.extensions.periodic_callbacks.any?
 
         agent_context.extensions.periodic_callbacks.each do |klass|
@@ -39,14 +39,16 @@ module ScoutApm
       # Runs each transaction callback.
       # Each callback runs inside a begin/rescue block so a broken callback doesn't prevent other
       # callbacks from executing or the transaction from being recorded. 
-      def self.run_transaction_callbacks(converter_results,context,scope_layer)
+      def self.run_transaction_callbacks(converter_results, context, scope_layer)
         # It looks like layer_finder.scope = nil when a Sidekiq job is retried
         return unless scope_layer
         return unless agent_context.extensions.transaction_callbacks.any?
 
+        payload = ScoutApm::Extensions::TransactionCallbackPayload.new(converter_results,context,scope_layer)
+
         agent_context.extensions.transaction_callbacks.each do |klass|
           begin
-            klass.new(converter_results,context,scope_layer).call
+            klass.new.call(payload)
           rescue => e
             logger.warn "Error running transaction callback extension=#{klass}"
             logger.info e.message
