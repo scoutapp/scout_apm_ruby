@@ -21,6 +21,12 @@ module ScoutApm
           # serializing process)
           if data.is_a?(Time)
             attribute_hash[attribute] = data
+          elsif data.nil?
+            # Rails 3.0.x returns the string "null" when calling nil.as_json,
+            # while every newer rails returns `nil` back. We were seeing "null"
+            # as desc fields where they shouldn't have been. Force the result
+            # to be the actual type nil
+            nil
           elsif data.respond_to?(:as_json)
             attribute_hash[attribute] = data.as_json
           else
