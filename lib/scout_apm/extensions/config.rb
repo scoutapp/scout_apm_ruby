@@ -7,7 +7,7 @@ module ScoutApm
 
       # Adds a new callback that runs after a transaction completes via +TrackedRequest#record!+.
       # These run inline during the request and thus should add minimal overhead and NOT make inline HTTP calls to outside services.
-      # +callback+ must inherit from +ScoutApm::Extensions::TransactionCallbackBase+.
+      # +callback+ must define a +call(payload)+ method.
       def self.add_transaction_callback(callback)
         agent_context.extensions.transaction_callbacks << callback
       end

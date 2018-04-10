@@ -173,7 +173,6 @@ require 'scout_apm/tasks/doctor'
 require 'scout_apm/tasks/support'
 
 require 'scout_apm/extensions/config'
-require 'scout_apm/extensions/transaction_callback_base'
 require 'scout_apm/extensions/transaction_callback_payload'
 require 'scout_apm/extensions/periodic_callback_base'
 
