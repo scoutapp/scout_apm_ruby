@@ -5,14 +5,22 @@ class PeriodicCallbacksTest < Minitest::Test
   # We don't have a test that ensures we actually report data to the server, so we can't be 100% sure this doesn't break
   # reporting.
   def test_broken_callback_does_not_throw_exception
-    ScoutApm::Extensions::Config.add_periodic_callback(BrokenCallback)
+    ScoutApm::Extensions::Config.add_periodic_callback(BrokenCallback.new)
     ScoutApm::Extensions::Config.run_periodic_callbacks(reporting_period,metadata)
   end
 
   def test_callback_runs
-    ScoutApm::Extensions::Config.add_periodic_callback(PeriodicCallback)
+    Thread.current[:periodic_callback_output] = nil
+    ScoutApm::Extensions::Config.add_periodic_callback(PeriodicCallback.new)
     ScoutApm::Extensions::Config.run_periodic_callbacks(reporting_period,metadata)
     assert Thread.current[:periodic_callback_output]
+  end
+
+  def run_proc_callback
+    Thread.current[:proc_periodic] = nil
+    ScoutApm::Extensions::Config.add_periodic_callback(Proc.new { |reporting_period, metadata| Thread.current[:proc_periodic] = Time.at(metadata[:agent_time].to_i) })
+    ScoutApm::Extensions::Config.run_periodic_callbacks(reporting_period,metadata)
+    assert Thread.current[:proc_periodic]
   end
 
   # Doesn't inherit from PeriodicCallbackBase
@@ -20,8 +28,8 @@ class PeriodicCallbacksTest < Minitest::Test
   end
 
   # Sets a Thread local so we can verify that the callback ran.
-  class PeriodicCallback < ScoutApm::Extensions::PeriodicCallbackBase
-    def call
+  class PeriodicCallback
+    def call(reporting_period,metadata)
       Thread.current[:periodic_callback_output] = true
     end
   end

@@ -48,7 +48,7 @@ module ScoutApm
         begin
           merged = rps.inject { |memo, rp| memo.merge(rp) }
           logger.debug("Merged #{rps.length} reporting periods, delivering")
-          metadata = metadata(reporting_period)
+          metadata = metadata(merged)
           deliver_period(merged,metadata)
           ScoutApm::Extensions::Config.run_periodic_callbacks(merged, metadata)
           true

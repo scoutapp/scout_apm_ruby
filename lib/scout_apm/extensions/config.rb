@@ -7,14 +7,14 @@ module ScoutApm
 
       # Adds a new callback that runs after a transaction completes via +TrackedRequest#record!+.
       # These run inline during the request and thus should add minimal overhead and NOT make inline HTTP calls to outside services.
-      # +callback+ must define a +call(payload)+ method.
+      # +callback+ must be an object that respond to a +call(payload)+ method.
       def self.add_transaction_callback(callback)
         agent_context.extensions.transaction_callbacks << callback
       end
 
       # Adds call that runs when the per-minute report data is sent to Scout.
       # These run in a background thread so external HTTP calls are OK.
-      # +callback+ must inherit from +ScoutApm::Extensions::ReportingPeriodCallbackBase+.
+      # +callback+ must be an object that responds to a +call(reporting_period, metadata)+ method.
       def self.add_periodic_callback(callback)
         agent_context.extensions.periodic_callbacks << callback
       end
@@ -25,11 +25,11 @@ module ScoutApm
       def self.run_periodic_callbacks(reporting_period, metadata)
         return unless agent_context.extensions.periodic_callbacks.any?
 
-        agent_context.extensions.periodic_callbacks.each do |klass|
+        agent_context.extensions.periodic_callbacks.each do |callback|
           begin
-            klass.new(reporting_period, metadata).call
+            callback.call(reporting_period, metadata)
           rescue => e
-            logger.warn "Error running reporting callback extension=#{klass}"
+            logger.warn "Error running reporting callback extension=#{callback}"
             logger.info e.message
             logger.debug e.backtrace
           end
@@ -46,11 +46,11 @@ module ScoutApm
 
         payload = ScoutApm::Extensions::TransactionCallbackPayload.new(converter_results,context,scope_layer)
 
-        agent_context.extensions.transaction_callbacks.each do |klass|
+        agent_context.extensions.transaction_callbacks.each do |callback|
           begin
-            klass.new.call(payload)
+            callback.call(payload)
           rescue => e
-            logger.warn "Error running transaction callback extension=#{klass}"
+            logger.warn "Error running transaction callback extension=#{callback}"
             logger.info e.message
             logger.debug e.backtrace
           end
