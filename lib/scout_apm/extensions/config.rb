@@ -1,5 +1,6 @@
 module ScoutApm
   module Extensions
+    # !!! Extensions are a 0.x level API and breakage is expected as the API is refined.
     # Extensions fan out data collected by the agent to additional services.
     class Config
       attr_reader   :agent_context
