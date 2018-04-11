@@ -13,7 +13,7 @@ module ScoutApm
         @scope_layer = scope_layer
       end
 
-      # A flat hash of the context associated w/this transaction
+      # A flat hash of the context associated w/this transaction (ie user ip and another other data added to context).
       def context
         @context.to_flat_hash
       end

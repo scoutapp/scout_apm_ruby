@@ -1,21 +1,30 @@
 module ScoutApm
   module Extensions
-    # Extensions can be configured to fan out data to additional services.
+    # Extensions fan out data collected by the agent to additional services.
     class Config
       attr_reader   :agent_context
       attr_accessor :transaction_callbacks
       attr_accessor :periodic_callbacks
 
-      # Adds a new callback that runs after a transaction completes via +TrackedRequest#record!+.
-      # These run inline during the request and thus should add minimal overhead and NOT make inline HTTP calls to outside services.
+      # Adds a new callback that runs after a transaction completes.
+      # These run inline during the request and thus should add minimal overhead. 
+      # For example, a transaction callback should NOT make inline HTTP calls to outside services.
       # +callback+ must be an object that respond to a +call(payload)+ method.
+      #
+      # Example:
+      # ScoutApm::Extensions::Config.add_transaction_callback(Proc.new { |payload| puts "Duration: #{payload.duration_ms}" })
+      #
+      # +payload+ is a +ScoutApm::Extensions::TransactionCallbackPayload+ object.
       def self.add_transaction_callback(callback)
         agent_context.extensions.transaction_callbacks << callback
       end
 
-      # Adds call that runs when the per-minute report data is sent to Scout.
+      # Adds a callback that runs when the per-minute report data is sent to Scout.
       # These run in a background thread so external HTTP calls are OK.
       # +callback+ must be an object that responds to a +call(reporting_period, metadata)+ method.
+      # 
+      # Example:
+      # ScoutApm::Extensions::Config.add_periodic_callback(Proc.new { |reporting_period, metadata| ... })
       def self.add_periodic_callback(callback)
         agent_context.extensions.periodic_callbacks << callback
       end
