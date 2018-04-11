@@ -288,13 +288,17 @@ module ScoutApm
       }
 
       walker = LayerConverters::DepthFirstWalker.new(self.root_layer)
-      converter_instances = converters.each_with_object({}) do |(slug, klass),memo|
+      converter_instances = converters.inject({}) do |memo, (slug, klass)|
         instance = klass.new(@agent_context, self, layer_finder, @store)
         instance.register_hooks(walker)
         memo[slug] = instance
+        memo
       end
       walker.walk
-      converter_results = converter_instances.each_with_object({}) {|(slug,i),memo| memo[slug] = i.record! }
+      converter_results = converter_instances.inject({}) do |memo, (slug,i)| 
+        memo[slug] = i.record!
+        memo
+      end
 
       @agent_context.extensions.run_transaction_callbacks(converter_results,context,layer_finder.scope)
 
