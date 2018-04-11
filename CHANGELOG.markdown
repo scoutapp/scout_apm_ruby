@@ -2,6 +2,10 @@
 
 * ScoutProf BETA
 
+# 2.4.11
+
+* Adds transaction + periodic reporting callback extension support
+
 # 2.4.10
 
 * Improve ActiveRecord instrumentation across Rails 3.2+, and adding support

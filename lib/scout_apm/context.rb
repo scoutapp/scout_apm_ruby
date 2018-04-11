@@ -23,6 +23,15 @@ module ScoutApm
       @extra.merge({:user => @user})
     end
 
+    def to_flat_hash
+      h = to_hash
+      user = h.delete(:user)
+      if user
+        user.each { |k,v| h["user_#{k}"] = v}
+      end
+      h
+    end
+
     def self.current
       RequestManager.lookup.context
     end
