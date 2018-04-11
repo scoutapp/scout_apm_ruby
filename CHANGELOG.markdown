@@ -1,3 +1,8 @@
+# 2.4.10
+
+* Improve ActiveRecord instrumentation across Rails 3.2+, and adding support
+  for the newly released Rails 5.2
+
 # 2.4.9
 
 * ScoutApm::Transaction#rename and #ignore API

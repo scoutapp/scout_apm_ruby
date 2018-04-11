@@ -112,10 +112,22 @@ module ScoutApm
           end
         end
 
-        if Utils::KlassHelper.defined?("ActiveRecord::FinderMethods")
-          ::ActiveRecord::FinderMethods.module_eval do
-            include ::ScoutApm::Tracer
-            include ::ScoutApm::Instruments::ActiveRecordFinderMethodsInstruments
+        rails_3_2_or_above = defined?(::ActiveRecord::VERSION::MAJOR) &&
+          defined?(::ActiveRecord::VERSION::MINOR) &&
+          (::ActiveRecord::VERSION::MAJOR.to_i > 3 ||
+           (::ActiveRecord::VERSION::MAJOR.to_i == 3 && ::ActiveRecord::VERSION::MINOR.to_i >= 2))
+        if rails_3_2_or_above
+          if Utils::KlassHelper.defined?("ActiveRecord::Relation")
+            ::ActiveRecord::Relation.module_eval do
+              include ::ScoutApm::Instruments::ActiveRecordRelationQueryInstruments
+            end
+          end
+        else
+          if Utils::KlassHelper.defined?("ActiveRecord::FinderMethods")
+            ::ActiveRecord::FinderMethods.module_eval do
+              include ::ScoutApm::Tracer
+              include ::ScoutApm::Instruments::ActiveRecordFinderMethodsInstruments
+            end
           end
         end
 
@@ -207,12 +219,21 @@ module ScoutApm
     ################################################################################
     # Entry-point of instruments.
     #
-    # We instrument both ActiveRecord::Querying#find_by_sql and
-    # ActiveRecord::FinderMethods#find_with_associations.  These are early in
-    # the chain of calls when you're using ActiveRecord.
+    # Instrumentation starts in ActiveRecord::Relation#exec_queries (Rails >=
+    # 3.2.0) or ActiveRecord::FinderMethods#find_with_assocations (previous
+    # Rails versions).
     #
-    # Later on, they will call into #log, which we also instrument, at which
-    # point, we can fill in additional data gathered at that point (name, sql)
+    # ActiveRecord::Querying#find_by_sql is instrumented in all Rails versions
+    # even though it is also invoked by #exec_queries/#find_by_associations
+    # because it can be invoked directly from user code (e.g.,
+    # Post.find_by_sql("SELECT * FROM posts")). The layer started by
+    # #exec_queries/#find_by_assocations is marked to ignore children, so it
+    # will not cause duplicate layers in the former case.
+    #
+    # These methods are early in the chain of calls invoked when executing an
+    # ActiveRecord query, before the cache is consulted. If the query is later
+    # determined to be a cache miss, `#log` will be invoked, which we also
+    # instrument, and more details will be filled in (name, sql).
     #
     # Caveats:
     #   * We don't have a name for the query yet.
@@ -269,6 +290,33 @@ module ScoutApm
         req.ignore_children!
         begin
           find_with_associations_without_scout_instruments(*args, &block)
+        ensure
+          req.acknowledge_children!
+          req.stop_layer
+        end
+      end
+    end
+
+    module ActiveRecordRelationQueryInstruments
+      def self.included(instrumented_class)
+        ScoutApm::Agent.instance.context.logger.info "Instrumenting ActiveRecord::Relation#exec_queries - #{instrumented_class.inspect}"
+        instrumented_class.class_eval do
+          unless instrumented_class.method_defined?(:exec_queries_without_scout_instruments)
+            alias_method :exec_queries_without_scout_instruments, :exec_queries
+            alias_method :exec_queries, :exec_queries_with_scout_instruments
+          end
+        end
+      end
+
+      def exec_queries_with_scout_instruments(*args, &block)
+        req = ScoutApm::RequestManager.lookup
+        layer = ScoutApm::Layer.new("ActiveRecord", Utils::ActiveRecordMetricName::DEFAULT_METRIC)
+        layer.annotate_layer(:ignorable => true)
+        layer.desc = SqlList.new
+        req.start_layer(layer)
+        req.ignore_children!
+        begin
+          exec_queries_without_scout_instruments(*args, &block)
         ensure
           req.acknowledge_children!
           req.stop_layer
