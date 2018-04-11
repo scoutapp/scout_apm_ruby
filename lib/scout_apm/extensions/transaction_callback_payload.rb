@@ -6,7 +6,8 @@ module ScoutApm
       # A Hash that stores the output of each layer converter by name. See the naming conventions in +TrackedRequest+.
       attr_accessor :converter_results
 
-      def initialize(converter_results,context,scope_layer)
+      def initialize(agent_context,converter_results,context,scope_layer)
+        @agent_context = agent_context
         @converter_results = converter_results
         @context = context
         @scope_layer = scope_layer
@@ -37,11 +38,11 @@ module ScoutApm
       end
 
       def hostname
-        ScoutApm::Agent.instance.context.environment.hostname
+        @agent_context.environment.hostname
       end
 
       def app_name
-        ScoutApm::Agent.instance.context.config.value('name')
+        @agent_context.config.value('name')
       end
 
       # Returns +true+ if the transaction raised an exception.

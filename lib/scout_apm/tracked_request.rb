@@ -115,6 +115,7 @@ module ScoutApm
         layer.capture_backtrace!
       end
 
+
       if finalized?
         stop_request
       end
@@ -295,7 +296,7 @@ module ScoutApm
       walker.walk
       converter_results = converter_instances.each_with_object({}) {|(slug,i),memo| memo[slug] = i.record! }
 
-      ScoutApm::Extensions::Config.run_transaction_callbacks(converter_results,context,layer_finder.scope)
+      @agent_context.extensions.run_transaction_callbacks(converter_results,context,layer_finder.scope)
 
       # If there's an instant_key, it means we need to report this right away
       if web? && instant?

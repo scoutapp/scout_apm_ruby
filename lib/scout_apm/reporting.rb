@@ -50,7 +50,7 @@ module ScoutApm
           logger.debug("Merged #{rps.length} reporting periods, delivering")
           metadata = metadata(merged)
           deliver_period(merged,metadata)
-          ScoutApm::Extensions::Config.run_periodic_callbacks(merged, metadata)
+          context.extensions.run_periodic_callbacks(merged, metadata)
           true
         rescue => e
           logger.debug("Error merging reporting periods #{e.message}")

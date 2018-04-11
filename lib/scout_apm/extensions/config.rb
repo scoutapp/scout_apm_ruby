@@ -2,6 +2,7 @@ module ScoutApm
   module Extensions
     # Extensions can be configured to fan out data to additional services.
     class Config
+      attr_reader   :agent_context
       attr_accessor :transaction_callbacks
       attr_accessor :periodic_callbacks
 
@@ -19,13 +20,19 @@ module ScoutApm
         agent_context.extensions.periodic_callbacks << callback
       end
 
+      def initialize(agent_context)
+        @agent_context = agent_context
+        @transaction_callbacks = []
+        @periodic_callbacks = []
+      end
+
       # Runs each reporting period callback. 
       # Each callback runs inside a begin/rescue block so a broken callback doesn't prevent other
       # callbacks from executing or reporting data from being sent. 
-      def self.run_periodic_callbacks(reporting_period, metadata)
-        return unless agent_context.extensions.periodic_callbacks.any?
+      def run_periodic_callbacks(reporting_period, metadata)
+        return unless periodic_callbacks.any?
 
-        agent_context.extensions.periodic_callbacks.each do |callback|
+        periodic_callbacks.each do |callback|
           begin
             callback.call(reporting_period, metadata)
           rescue => e
@@ -39,14 +46,14 @@ module ScoutApm
       # Runs each transaction callback.
       # Each callback runs inside a begin/rescue block so a broken callback doesn't prevent other
       # callbacks from executing or the transaction from being recorded. 
-      def self.run_transaction_callbacks(converter_results, context, scope_layer)
+      def run_transaction_callbacks(converter_results, context, scope_layer)
         # It looks like layer_finder.scope = nil when a Sidekiq job is retried
         return unless scope_layer
-        return unless agent_context.extensions.transaction_callbacks.any?
+        return unless transaction_callbacks.any?
 
-        payload = ScoutApm::Extensions::TransactionCallbackPayload.new(converter_results,context,scope_layer)
+        payload = ScoutApm::Extensions::TransactionCallbackPayload.new(agent_context,converter_results,context,scope_layer)
 
-        agent_context.extensions.transaction_callbacks.each do |callback|
+        transaction_callbacks.each do |callback|
           begin
             callback.call(payload)
           rescue => e
@@ -57,16 +64,11 @@ module ScoutApm
         end
       end
 
-      def initialize
-        @transaction_callbacks = []
-        @periodic_callbacks = []
-      end
-
       def self.agent_context
         ScoutApm::Agent.instance.context
       end
 
-      def self.logger
+      def logger
         agent_context.logger
       end
 

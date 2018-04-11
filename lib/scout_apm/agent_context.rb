@@ -12,7 +12,7 @@ module ScoutApm
     def initialize()
       @logger = LoggerFactory.build_minimal_logger
       @process_start_time = Time.now
-      @extensions = ScoutApm::Extensions::Config.new
+      @extensions = ScoutApm::Extensions::Config.new(self)
     end
 
     def marshal_dump

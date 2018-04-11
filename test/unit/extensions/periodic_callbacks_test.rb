@@ -6,24 +6,25 @@ class PeriodicCallbacksTest < Minitest::Test
   # reporting.
   def test_broken_callback_does_not_throw_exception
     ScoutApm::Extensions::Config.add_periodic_callback(BrokenCallback.new)
-    ScoutApm::Extensions::Config.run_periodic_callbacks(reporting_period,metadata)
+    # Runs via agent context as calling +add_periodic_callback+ initializing the context + extension config.
+    ScoutApm::Agent.instance.context.extensions.run_periodic_callbacks(reporting_period,metadata)
   end
 
   def test_callback_runs
     Thread.current[:periodic_callback_output] = nil
     ScoutApm::Extensions::Config.add_periodic_callback(PeriodicCallback.new)
-    ScoutApm::Extensions::Config.run_periodic_callbacks(reporting_period,metadata)
+    ScoutApm::Agent.instance.context.extensions.run_periodic_callbacks(reporting_period,metadata)
     assert Thread.current[:periodic_callback_output]
   end
 
   def run_proc_callback
     Thread.current[:proc_periodic] = nil
     ScoutApm::Extensions::Config.add_periodic_callback(Proc.new { |reporting_period, metadata| Thread.current[:proc_periodic] = Time.at(metadata[:agent_time].to_i) })
-    ScoutApm::Extensions::Config.run_periodic_callbacks(reporting_period,metadata)
+    ScoutApm::Agent.instance.context.extensions.run_periodic_callbacks(reporting_period,metadata)
     assert Thread.current[:proc_periodic]
   end
 
-  # Doesn't inherit from PeriodicCallbackBase
+  # Doesn't respond to +call+.
   class BrokenCallback
   end
 
