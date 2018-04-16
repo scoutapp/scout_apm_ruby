@@ -53,15 +53,46 @@ class TracerTest < Minitest::Test
     recorder = FakeRecorder.new
     ScoutApm::Agent.instance.context.recorder = recorder
 
-    klass = Class.new { include ScoutApm::Tracer }
+    klass = Class.new do
+      include ScoutApm::Tracer
 
-    invoked = false
-    klass.send(:define_method, :work) { invoked = true }
-    klass.instrument_method(:work, :type => "Test", :name => "name")
+      attr_reader :invoked
 
-    klass.new.work
+      def work
+        @invoked = true
+      end
+      instrument_method :work, :type => "Test", :name => "name"
+    end
 
-    assert invoked, "instrumented code was not invoked"
+    instance = klass.new
+    instance.work
+
+    assert instance.invoked, "instrumented code was not invoked"
+    assert_recorded(recorder, "Test", "name")
+  end
+
+  def test_instrument_method_hierarchy
+    recorder = FakeRecorder.new
+
+    ScoutApm::Agent.instance.context.recorder = recorder
+
+    parent = Class.new do
+      include ScoutApm::Tracer
+
+      attr_reader :invoked
+
+      def work
+        @invoked = true
+      end
+      instrument_method :work, :type => "Test", :name => "name"
+    end
+
+    child = Class.new(parent)
+
+    instance = child.new
+    instance.work
+
+    assert instance.invoked, "instrumented code was not invoked"
     assert_recorded(recorder, "Test", "name")
   end
 

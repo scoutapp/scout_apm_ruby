@@ -56,17 +56,26 @@ module ScoutApm
 
         instrumented_name, uninstrumented_name = _determine_instrumented_name(method_name, type)
 
-        ScoutApm::Agent.instance.context.logger.info "Instrumenting #{instrumented_name}, #{uninstrumented_name}"
-
         return if !_instrumentable?(method_name) or _instrumented?(instrumented_name, method_name)
 
-        class_eval(
-          _instrumented_method_string(instrumented_name, uninstrumented_name, type, name, {:scope => options[:scope] }),
-          __FILE__, __LINE__
-        )
+        if ScoutApm::Environment.instance.supports_module_prepend?
+          ScoutApm::Agent.instance.context.logger.info "Instrumenting #{method_name} (using Module#prepend)"
 
-        alias_method uninstrumented_name, method_name
-        alias_method method_name, instrumented_name
+          _scout_instrumentation_module.class_eval(
+            _instrumented_method_string(method_name, "super", type, name, { :scope => options[:scope] }),
+            __FILE__, __LINE__
+          )
+        else
+          ScoutApm::Agent.instance.context.logger.info "Instrumenting #{instrumented_name}, #{uninstrumented_name}"
+
+          class_eval(
+            _instrumented_method_string(instrumented_name, uninstrumented_name, type, name, { :scope => options[:scope] }),
+            __FILE__, __LINE__
+          )
+
+          alias_method uninstrumented_name, method_name
+          alias_method method_name, instrumented_name
+        end
       end
 
       private
@@ -120,27 +129,53 @@ module ScoutApm
 
       # +True+ if the method is already instrumented.
       def _instrumented?(instrumented_name, method_name)
-        instrumented = method_defined?(instrumented_name)
+        instrumented = \
+          if ScoutApm::Environment.instance.supports_module_prepend?
+            _scout_instrumentation_module.method_defined?(method_name)
+          else
+            method_defined?(instrumented_name)
+          end
+
         ScoutApm::Agent.instance.context.logger.warn("The method [#{self.name}##{method_name}] has already been instrumented") if instrumented
         instrumented
       end
 
       # given a method and a metric, this method returns the
       # untraced alias of the method name
+      #
+      # Not used if Module#prepend is supported (Ruby >= 2.0.0)
       def _uninstrumented_method_name(method_name, type)
         "#{_sanitize_name(method_name)}_without_scout_instrument"
       end
 
       # given a method and a metric, this method returns the traced
       # alias of the method name
+      #
+      # Not used if Module#prepend is supported (Ruby >= 2.0.0)
       def _instrumented_method_name(method_name, type)
         "#{_sanitize_name(method_name)}_with_scout_instrument"
       end
 
       # Method names like +any?+ or +replace!+ contain a trailing character that would break when
       # eval'd as ? and ! aren't allowed inside method names.
+      #
+      # Not used if Module#prepend is supported (Ruby >= 2.0.0)
       def _sanitize_name(name)
         name.to_s.tr_s('^a-zA-Z0-9', '_')
+      end
+
+      # Returns a module that is prepended to the class where methods
+      # containing instrumentation code can be added. Methods on this module
+      # should must call `super` to invoke the original method.
+      #
+      # Only used if Module#prepend is supported (Ruby >= 2.0.0)
+      def _scout_instrumentation_module
+        return @_scout_instrumentation_module if defined?(@_scout_instrumentation_module)
+
+        @_scout_instrumentation_module = Module.new
+        prepend(@_scout_instrumentation_module)
+
+        @_scout_instrumentation_module
       end
     end
   end
