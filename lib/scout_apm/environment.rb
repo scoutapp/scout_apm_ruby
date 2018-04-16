@@ -179,6 +179,11 @@ module ScoutApm
       @ruby_2 = defined?(RUBY_VERSION) && RUBY_VERSION.match(/^2/)
     end
 
+    # Returns true if this Ruby version supports Module#prepend.
+    def supports_module_prepend?
+      ruby_2?
+    end
+
     # Returns a string representation of the OS (ex: darwin, linux)
     def os
       return @os if @os
