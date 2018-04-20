@@ -118,8 +118,14 @@ module ScoutApm
            (::ActiveRecord::VERSION::MAJOR.to_i == 3 && ::ActiveRecord::VERSION::MINOR.to_i >= 2))
         if rails_3_2_or_above
           if Utils::KlassHelper.defined?("ActiveRecord::Relation")
-            ::ActiveRecord::Relation.module_eval do
-              include ::ScoutApm::Instruments::ActiveRecordRelationQueryInstruments
+            if @context.environment.supports_module_prepend?
+              ::ActiveRecord::Relation.module_eval do
+                prepend ::ScoutApm::Instruments::ActiveRecordRelationQueryInstruments
+              end
+            else
+              ::ActiveRecord::Relation.module_eval do
+                include ::ScoutApm::Instruments::ActiveRecordRelationQueryInstruments
+              end
             end
           end
         else
@@ -298,6 +304,10 @@ module ScoutApm
     end
 
     module ActiveRecordRelationQueryInstruments
+      def self.prepended(instrumented_class)
+        ScoutApm::Agent.instance.context.logger.info "Instrumenting ActiveRecord::Relation#exec_queries - #{instrumented_class.inspect} (prepending)"
+      end
+
       def self.included(instrumented_class)
         ScoutApm::Agent.instance.context.logger.info "Instrumenting ActiveRecord::Relation#exec_queries - #{instrumented_class.inspect}"
         instrumented_class.class_eval do
@@ -308,7 +318,7 @@ module ScoutApm
         end
       end
 
-      def exec_queries_with_scout_instruments(*args, &block)
+      def exec_queries(*args, &block)
         req = ScoutApm::RequestManager.lookup
         layer = ScoutApm::Layer.new("ActiveRecord", Utils::ActiveRecordMetricName::DEFAULT_METRIC)
         layer.annotate_layer(:ignorable => true)
@@ -316,11 +326,22 @@ module ScoutApm
         req.start_layer(layer)
         req.ignore_children!
         begin
-          exec_queries_without_scout_instruments(*args, &block)
+          if ScoutApm::Environment.instance.supports_module_prepend?
+            super(*args, &block)
+          else
+            exec_queries_without_scout_instruments(*args, &block)
+          end
         ensure
           req.acknowledge_children!
           req.stop_layer
         end
+      end
+
+      # If prepend is not supported, rename the method and use
+      # alias_method_style chaining instead
+      if !ScoutApm::Environment.instance.supports_module_prepend?
+        alias_method :exec_queries_with_scout_instruments, :exec_queries
+        remove_method :exec_queries
       end
     end
 
