@@ -28,8 +28,10 @@ module ScoutApm
         meta = MetricMeta.new("QueueTime/Request", {:scope => scope_layer.legacy_metric_name})
         stat = MetricStats.new(true)
         stat.update!(queue_time)
-
-        @store.track!({ meta => stat })
+        metrics = { meta => stat }
+        
+        @store.track!(metrics)
+        metrics  # this result must be returned so it can be accessed by transaction callback extensions
       end
 
       private

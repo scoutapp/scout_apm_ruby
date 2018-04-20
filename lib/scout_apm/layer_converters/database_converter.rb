@@ -32,6 +32,8 @@ module ScoutApm
         # only due to 1 http request)
         @db_query_metric_set.increment_transaction_count!
         @store.track_db_query_metrics!(@db_query_metric_set)
+
+        nil # not returning anything in the layer results ... not used
       end
 
       def skip_layer?(layer)

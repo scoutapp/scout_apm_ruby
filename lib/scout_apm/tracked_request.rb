@@ -64,7 +64,6 @@ module ScoutApm
       @mem_start = mem_usage
       @recorder = agent_context.recorder
       @real_request = false
-
       ignore_request! if @recorder.nil?
     end
 
@@ -115,6 +114,7 @@ module ScoutApm
       if capture_backtrace?(layer)
         layer.capture_backtrace!
       end
+
 
       if finalized?
         stop_request
@@ -273,27 +273,34 @@ module ScoutApm
 
       apply_name_override
 
-      converters = [
-        LayerConverters::Histograms,
-        LayerConverters::MetricConverter,
-        LayerConverters::ErrorConverter,
-        LayerConverters::AllocationMetricConverter,
-        LayerConverters::RequestQueueTimeConverter,
-        LayerConverters::JobConverter,
-        LayerConverters::DatabaseConverter,
+      # Make a constant, then call converters.dup.each so it isn't inline?
+      converters = {
+        :histograms => LayerConverters::Histograms,
+        :metrics => LayerConverters::MetricConverter,
+        :errors => LayerConverters::ErrorConverter,
+        :allocation_metrics => LayerConverters::AllocationMetricConverter,
+        :queue_time => LayerConverters::RequestQueueTimeConverter,
+        :job => LayerConverters::JobConverter,
+        :db => LayerConverters::DatabaseConverter,
 
-        LayerConverters::SlowJobConverter,
-        LayerConverters::SlowRequestConverter,
-      ]
+        :slow_job => LayerConverters::SlowJobConverter,
+        :slow_req => LayerConverters::SlowRequestConverter,
+      }
 
       walker = LayerConverters::DepthFirstWalker.new(self.root_layer)
-      converters = converters.map do |klass|
+      converter_instances = converters.inject({}) do |memo, (slug, klass)|
         instance = klass.new(@agent_context, self, layer_finder, @store)
         instance.register_hooks(walker)
-        instance
+        memo[slug] = instance
+        memo
       end
       walker.walk
-      converters.each {|i| i.record! }
+      converter_results = converter_instances.inject({}) do |memo, (slug,i)| 
+        memo[slug] = i.record!
+        memo
+      end
+
+      @agent_context.extensions.run_transaction_callbacks(converter_results,context,layer_finder.scope)
 
       # If there's an instant_key, it means we need to report this right away
       if web? && instant?

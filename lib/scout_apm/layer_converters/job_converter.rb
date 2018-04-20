@@ -55,6 +55,7 @@ module ScoutApm
         )
 
         @store.track_job!(record)
+        record  # this result must be returned so it can be accessed by transaction callback extensions
       end
 
       # This isn't stored as a specific layer, so grabbing it doesn't use the

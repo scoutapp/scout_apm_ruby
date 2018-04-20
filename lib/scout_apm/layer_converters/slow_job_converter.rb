@@ -15,6 +15,7 @@ module ScoutApm
         # Let the store know we're here, and if it wants our data, it will call
         # back into #call
         @store.track_slow_job!(self)
+        nil # not returning anything in the layer results ... not used
       end
 
       #####################
