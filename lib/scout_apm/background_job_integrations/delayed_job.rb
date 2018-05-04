@@ -53,7 +53,7 @@ module ScoutApm
               req = ScoutApm::RequestManager.lookup
 
               begin
-                latency = Time.now - job.created_at
+                latency = Time.now - job.run_at
                 req.annotate_request(:queue_latency => latency)
               rescue
               end
