@@ -56,6 +56,11 @@ module ScoutApm
       self.current.add_user(hash)
     end
 
+    def self.get(key)
+      h = self.current.instance_variable_get("@extra")
+      h ? h[key] : nil
+    end
+
     private
 
     def update_context(attr,hash)
@@ -112,7 +117,7 @@ module ScoutApm
         return false
       end
       # only alphanumeric, dash, and underscore allowed.
-      if key.to_s.match(/[^\w-]/)
+      if key.to_s.match(/[^\w\.-]/)
         logger.info "They key name [#{key}] is not valid."
         return false
       end
