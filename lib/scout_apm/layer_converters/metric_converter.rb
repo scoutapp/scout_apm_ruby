@@ -38,6 +38,7 @@ module ScoutApm
 
       def record!
         @store.track!(@metrics)
+        @metrics  # this result must be returned so it can be accessed by transaction callback extensions
       end
     end
   end

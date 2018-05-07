@@ -48,7 +48,9 @@ module ScoutApm
         begin
           merged = rps.inject { |memo, rp| memo.merge(rp) }
           logger.debug("Merged #{rps.length} reporting periods, delivering")
-          deliver_period(merged)
+          metadata = metadata(merged)
+          deliver_period(merged,metadata)
+          context.extensions.run_periodic_callbacks(merged, metadata)
           true
         rescue => e
           logger.debug("Error merging reporting periods #{e.message}")
@@ -63,15 +65,8 @@ module ScoutApm
       end
     end
 
-    def deliver_period(reporting_period)
-      metrics = reporting_period.metrics_payload
-      slow_transactions = reporting_period.slow_transactions_payload
-      jobs = reporting_period.jobs
-      slow_jobs = reporting_period.slow_jobs_payload
-      histograms = reporting_period.histograms
-      db_query_metrics = reporting_period.db_query_metrics_payload
-
-      metadata = {
+    def metadata(reporting_period)
+      {
         :app_root      => context.environment.root.to_s,
         :unique_id     => ScoutApm::Utils::UniqueId.simple,
         :agent_version => ScoutApm::VERSION,
@@ -79,6 +74,15 @@ module ScoutApm
         :agent_pid     => Process.pid,
         :platform      => "ruby",
       }
+    end
+
+    def deliver_period(reporting_period,metadata)
+      metrics = reporting_period.metrics_payload
+      slow_transactions = reporting_period.slow_transactions_payload
+      jobs = reporting_period.jobs
+      slow_jobs = reporting_period.slow_jobs_payload
+      histograms = reporting_period.histograms
+      db_query_metrics = reporting_period.db_query_metrics_payload
 
       log_deliver(metrics, slow_transactions, metadata, slow_jobs, histograms)
 

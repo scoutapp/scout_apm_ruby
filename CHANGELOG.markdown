@@ -2,6 +2,11 @@
 
 * ScoutProf BETA
 
+# 2.4.11
+
+* Adds transaction + periodic reporting callback extension support
+* Use Module#prepend if available for ActiveRecord `exec_query` instrument
+
 # 2.4.10
 
 * Improve ActiveRecord instrumentation across Rails 3.2+, and adding support
