@@ -12,8 +12,6 @@ module ScoutApm
       val = ScoutApm::Context.get(stat).to_f
       ScoutApm::Context.add({stat => val + 1})
       relay(:increment, args)
-    rescue Exception => e
-      binding.pry
     end
 
     def decrement(*args)
@@ -21,8 +19,6 @@ module ScoutApm
       val = ScoutApm::Context.get(stat).to_f
       ScoutApm::Context.add({stat => val - 1})
       relay(:decrement, args)
-    rescue Exception => e
-      binding.pry
     end
 
     def count(*args)
@@ -30,8 +26,6 @@ module ScoutApm
       val = ScoutApm::Context.get(stat).to_f
       ScoutApm::Context.add({stat => val + args[1]})
       relay(:count, args)
-    rescue Exception => e
-      binding.pry
     end
 
     def timing(*args)
@@ -39,8 +33,6 @@ module ScoutApm
       val = ScoutApm::Context.get(stat).to_f
       ScoutApm::Context.add({stat => val + args[1]})
       relay(:timing, args)
-    rescue Exception => e
-      binding.pry
     end
 
     def time(*args, &block)
@@ -49,8 +41,6 @@ module ScoutApm
       res = underlying.send(:time, *args, &block)
       ScoutApm::Context.add({stat => (Time.now - start)*1000})
       res
-    rescue Exception => e
-      binding.pry
     end
 
     def method_missing(m, *args, &block)
@@ -61,14 +51,10 @@ module ScoutApm
       else
         underlying.send(m.to_sym)
       end
-    rescue Exception => e
-      binding.pry
     end
 
     def relay(operation, args)
       underlying.send(operation, *args)
-    rescue Exception => e
-      binding.pry
     end
   end
 end
