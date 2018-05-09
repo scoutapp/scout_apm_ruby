@@ -67,6 +67,12 @@ module ScoutApm
         'scm_subdirectory',
         'uri_reporting',
         'instrument_http_url_length',
+        'core_agent_dir',
+        'core_agent_download',
+        'core_agent_launch',
+        'core_agent_version',
+        'download_url',
+        'socket_path',
     ]
 
     ################################################################################
@@ -259,6 +265,12 @@ module ScoutApm
         'database_metric_limit'  => 5000, # The hard limit on db metrics
         'database_metric_report_limit' => 1000,
         'instrument_http_url_length' => 300,
+        'core_agent_dir'         => '/tmp/scout_apm_core',
+        'core_agent_download'    => true,
+        'core_agent_launch'      => true,
+        'core_agent_version'     => 'latest',
+        'download_url'           => 'https://s3-us-west-1.amazonaws.com/scout-public-downloads/apm_core_agent/release',
+        'socket_path'            => "/tmp/scout_apm_core/scout_apm_core-latest-#{ScoutApm::Environment.instance.arch}-#{ScoutApm::Environment.instance.core_agent_platform}/core-agent.sock"
       }.freeze
 
       def value(key)

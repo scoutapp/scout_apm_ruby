@@ -3,6 +3,8 @@ source "http://rubygems.org"
 # Specify your gem's dependencies in scout_apm.gemspec
 gemspec
 
+gem "minitar", "~> 0.6.1"
+
 # Pin development dependencies more conservatively for Ruby 1.8.7
 if RUBY_VERSION <= "1.8.7"
   gem "activesupport", "~> 3.2"

@@ -196,6 +196,20 @@ module ScoutApm
       end
     end
 
+    def arch
+      @arch ||= RbConfig::CONFIG['target_cpu']
+    end
+
+    def core_agent_platform
+      if os == 'linux'
+        return 'unknown-linux-gnu'
+      elsif os == 'darwin'
+        return 'apple-darwin'
+      else
+        return 'unknown'
+      end
+    end
+
     ### framework checks
 
     def sinatra?

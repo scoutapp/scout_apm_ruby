@@ -46,6 +46,8 @@ module ScoutApm
 
       context.installed!
 
+      ScoutApm::CoreAgentManager.new(context).launch
+
       @preconditions = ScoutApm::Agent::Preconditions.new
       if @preconditions.check?(context) || force
         start
