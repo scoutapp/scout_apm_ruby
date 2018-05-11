@@ -77,7 +77,7 @@ module ScoutApm
     end
 
     def log_file
-      if path = context.config.value('log_file')
+      if path = context.config.value('log_file_path')
         return ['--log-file', path]
       else
         return []

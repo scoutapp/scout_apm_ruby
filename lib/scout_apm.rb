@@ -105,6 +105,7 @@ require 'scout_apm/utils/time'
 require 'scout_apm/utils/unique_id'
 require 'scout_apm/utils/numbers'
 require 'scout_apm/utils/gzip_helper'
+require 'scout_apm/utils/queue_with_timeout'
 
 require 'scout_apm/config'
 require 'scout_apm/environment'
@@ -175,7 +176,9 @@ require 'scout_apm/tasks/support'
 require 'scout_apm/extensions/config'
 require 'scout_apm/extensions/transaction_callback_payload'
 
-require 'scout_apm/core_agent_manager'
+require 'scout_apm/core_agent/manager'
+require 'scout_apm/core_agent/socket'
+require 'scout_apm/core_agent/register_command'
 
 if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR) && Rails::VERSION::MAJOR >= 3 && defined?(Rails::Railtie)
   module ScoutApm
