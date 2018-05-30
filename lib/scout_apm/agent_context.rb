@@ -60,7 +60,6 @@ module ScoutApm
       @store = ScoutApm::FakeStore.new
     end
 
-
     ###############
     #  Accessors  #
     ###############

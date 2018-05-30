@@ -46,6 +46,11 @@ module ScoutApm
     # If no annotations are ever set, this will return nil
     attr_reader :annotations
 
+    # The layer (span) UUID
+    attr_reader :uuid
+
+    attr_accessor :parent_uuid
+
     BACKTRACE_CALLER_LIMIT = 50 # maximum number of lines to send thru for backtrace analysis
 
     def initialize(type, name, start_time = Time.now)
@@ -59,6 +64,8 @@ module ScoutApm
       @children = nil
       @annotations = nil
       @desc = nil
+      @uuid = 'span-' + SecureRandom.uuid
+      @parent_uuid = nil
     end
 
     def limited?
@@ -125,6 +132,7 @@ module ScoutApm
     # May not be safe to call in every rails app, relies on Time#iso8601
     def to_s
       name_clause = "#{type}/#{name}"
+      uuid_clause = "UUID: #{uuid} Parent UUID: #{parent_uuid}"
 
       total_string = total_call_time == 0 ? nil : "Total: #{total_call_time}"
       self_string = total_exclusive_time == 0 ? nil : "Self: #{total_exclusive_time}"
@@ -134,7 +142,7 @@ module ScoutApm
       desc_clause = "Description: #{desc.inspect}"
       children_clause = "Children: #{children.length}"
 
-      "<Layer: #{name_clause} #{time_clause} #{desc_clause} #{children_clause}>"
+      "<Layer: #{name_clause} #{time_clause} #{uuid_clause} #{desc_clause} #{children_clause}>"
     end
 
     ######################################

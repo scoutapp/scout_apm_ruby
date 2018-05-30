@@ -46,8 +46,10 @@ module ScoutApm
 
       context.installed!
 
-      ScoutApm::CoreAgentManager.new(context).launch
-      ScoutApm::CoreAgentSocket.instance(context).run
+      ScoutApm::CoreAgent::RequestManager.new(context)
+
+      ScoutApm::CoreAgent::Manager.new(context).launch
+      ScoutApm::CoreAgent::Socket.instance(context).run
 
       @preconditions = ScoutApm::Agent::Preconditions.new
       if @preconditions.check?(context) || force

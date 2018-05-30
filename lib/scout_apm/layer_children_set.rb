@@ -69,6 +69,14 @@ module ScoutApm
       end
     end
 
+    def size
+      children.size
+    end
+
+    def length
+      children.length
+    end
+
     # hold off initializing this until we know we need it
     def init_limited_layers
       @limited_layers ||= Hash.new { |hash, key| hash[key] = LimitedLayer.new(key) }

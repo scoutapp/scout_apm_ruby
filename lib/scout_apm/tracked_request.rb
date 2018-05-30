@@ -64,6 +64,7 @@ module ScoutApm
       @mem_start = mem_usage
       @recorder = agent_context.recorder
       @real_request = false
+      @uuid = 'req-' + SecureRandom.uuid
       ignore_request! if @recorder.nil?
     end
 
@@ -106,7 +107,10 @@ module ScoutApm
       layer.record_stop_time!
       layer.record_allocations!
 
-      @layers[-1].add_child(layer) if @layers.any?
+      if @layers.any?
+        @layers[-1].add_child(layer)
+        layer.parent_uuid = @layers[-1].uuid
+      end
 
       # This must be called before checking if a backtrace should be collected as the call count influences our capture logic.
       # We call `#update_call_counts in stop layer to ensure the layer has a final desc. Layer#desc is updated during the AR instrumentation flow.
@@ -208,9 +212,11 @@ module ScoutApm
     def stop_request
       @stopping = true
 
-      if recorder
-        recorder.record!(self)
-      end
+      ScoutApm::CoreAgent::RequestManager.instance.add_tracked_request(self)
+      # TODO: remove recorder code here and elsewhere.
+      #if recorder
+      #  recorder.record!(self)
+      #end
     end
 
     def stopping?
