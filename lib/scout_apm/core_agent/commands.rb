@@ -18,8 +18,12 @@ module ScoutApm
     end
 
     class BatchCommand
-      def initialize(commands)
+      def initialize(commands=[])
         @commands = commands
+      end
+
+      def <<(command)
+        @commands << command
       end
 
       def message
