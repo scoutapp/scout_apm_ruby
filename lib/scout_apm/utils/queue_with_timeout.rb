@@ -1,5 +1,5 @@
 module ScoutApm
-class QueueWithTimeout
+  class QueueWithTimeout
     attr_reader :max_size
 
     def initialize(max_size = nil)
@@ -8,7 +8,7 @@ class QueueWithTimeout
       @max_size = max_size
       @received = ConditionVariable.new
     end
-   
+
     def <<(x)
       @mutex.synchronize do
         return false if full?
