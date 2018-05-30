@@ -10,6 +10,7 @@ module ScoutApm
         return {'Register' => {
           'app' => @app,
           'key' => @key,
+          'language' => 'ruby',
           'api_version' => '1.0',
         }}
       end

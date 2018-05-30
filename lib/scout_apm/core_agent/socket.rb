@@ -8,7 +8,7 @@ module ScoutApm
       attr_reader :logger
       attr_reader :context
 
-      # All access to the agent is thru this class method to ensure multiple Agent instances are not initialized per-Ruby process.
+      # Socket is a singleton
       def self.instance(options = {})
         @@instance ||= self.new(options)
       end
@@ -16,13 +16,16 @@ module ScoutApm
       def initialize(context)
         @context = context
         @logger = context.logger
+
         # Socket related
         @socket_path = context.config.value('socket_path')
         @socket = nil
+
         # Threading control related
         @started_event = false
         @stop_event = false
         @stopped_event = false
+
         # Command queues
         @command_queue = ScoutApm::Utils::QueueWithTimeout.new
         @run_lock = Mutex.new
@@ -146,8 +149,10 @@ module ScoutApm
       end
 
       def register
-        socket_send(ScoutApm::CoreAgent::RegisterCommand.new(context.config.value('name'),
-                                                  context.config.value('key')))
+        socket_send(
+          ScoutApm::CoreAgent::RegisterCommand.new(
+            context.config.value('name'),
+            context.config.value('key')))
       end
 
       def connect(connect_attempts=5, retry_wait_secs=1)
