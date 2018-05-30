@@ -24,7 +24,7 @@ module ScoutApm
         @stop_event = false
         @stopped_event = false
         # Command queues
-        @command_queue = ScoutApm::QueueWithTimeout.new
+        @command_queue = ScoutApm::Utils::QueueWithTimeout.new
         @run_lock = Mutex.new
       end
 
