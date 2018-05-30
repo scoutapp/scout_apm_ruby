@@ -177,11 +177,10 @@ require 'scout_apm/tasks/support'
 require 'scout_apm/extensions/config'
 require 'scout_apm/extensions/transaction_callback_payload'
 
-require 'scout_apm/core_agent/request_buffer'
-require 'scout_apm/core_agent/request_manager'
 require 'scout_apm/core_agent/manager'
 require 'scout_apm/core_agent/socket'
 require 'scout_apm/core_agent/commands'
+require 'scout_apm/core_agent/recorder'
 
 if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR) && Rails::VERSION::MAJOR >= 3 && defined?(Rails::Railtie)
   module ScoutApm

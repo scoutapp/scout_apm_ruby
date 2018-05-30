@@ -46,8 +46,6 @@ module ScoutApm
 
       context.installed!
 
-      ScoutApm::CoreAgent::RequestManager.new(context)
-
       ScoutApm::CoreAgent::Manager.new(context).launch
       ScoutApm::CoreAgent::Socket.instance(context).run
 

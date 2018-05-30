@@ -1,6 +1,5 @@
 module ScoutApm
   module CoreAgent
-
     class RegisterCommand
       def initialize(app, key)
         @app = app

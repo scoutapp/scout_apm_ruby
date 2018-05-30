@@ -212,11 +212,9 @@ module ScoutApm
     def stop_request
       @stopping = true
 
-      ScoutApm::CoreAgent::RequestManager.instance.add_tracked_request(self)
-      # TODO: remove recorder code here and elsewhere.
-      #if recorder
-      #  recorder.record!(self)
-      #end
+      if recorder
+        recorder.record!(self)
+      end
     end
 
     def stopping?
