@@ -109,7 +109,7 @@ module ScoutApm
       private
 
       def socket_send(command, async=true)
-        msg = command.message()
+        msg = command.message
 
         begin
           data = JSON.generate(msg)
