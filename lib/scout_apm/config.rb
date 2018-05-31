@@ -270,6 +270,8 @@ module ScoutApm
         'core_agent_launch'      => true,
         'core_agent_version'     => 'latest',
         'download_url'           => 'https://s3-us-west-1.amazonaws.com/scout-public-downloads/apm_core_agent/release',
+
+        # Core Agent TODO: Fix the reference to `latest` here.
         'socket_path'            => "/tmp/scout_apm_core/scout_apm_core-latest-#{ScoutApm::Environment.instance.arch}-#{ScoutApm::Environment.instance.core_agent_platform}/core-agent.sock"
       }.freeze
 
