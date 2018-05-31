@@ -21,6 +21,8 @@ Gem::Specification.new do |s|
   s.extensions << 'ext/allocations/extconf.rb'
   s.extensions << 'ext/rusage/extconf.rb'
 
+  s.add_dependency "minitar"
+
   s.add_development_dependency "minitest"
   s.add_development_dependency "mocha"
   s.add_development_dependency "pry"
