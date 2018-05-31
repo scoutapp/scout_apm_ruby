@@ -6,7 +6,7 @@ module RuboCop
 
         def on_send(send_node)
           if (!scout_send?(send_node) || !scout_send?(send_node.parent)) && send_node.block_node.nil?
-            add_offense(send_node, location: :expression) unless scout_send?(send_node) || scout_send?(send_node.parent)
+            add_offense(send_node, location: :expression)
           end
         end
 
