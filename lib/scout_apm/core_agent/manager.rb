@@ -93,12 +93,12 @@ module ScoutApm
       end
 
       def log_level
-        level = context.config.value('log_level')
+        level = context.config.value('core_agent_log_level')
         return ['--log-level', level]
       end
 
       def log_file
-        if path = context.config.value('log_file_path')
+        if path = context.config.value('core_agent_log')
           return ['--log-file', path]
         else
           return []
@@ -181,6 +181,7 @@ module ScoutApm
         end
       rescue StandardError => e
         logger.error("Exception raised while downloading Core Agent: #{e}")
+        logger.error(e.backtrace.join("\n\t"))
       ensure
         release_download_lock
       end

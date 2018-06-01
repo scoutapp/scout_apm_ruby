@@ -62,4 +62,50 @@ class QueueWithTimeoutTest < Minitest::Test
     assert_equal(ThreadError, exception_caught.class)
     assert_equal("queue empty", exception_caught.message)
   end
+
+  def test_blocking_with_data_before_timeout
+    q = QueueWithTimeout.new
+    value_received = nil
+    exception_caught = nil
+
+    timeout = 10.0
+    # Expects to not time out
+    t = Thread.new do
+      begin
+        value_received = q.shift(true, timeout)
+      rescue => e
+        exception_caught = e
+      end
+    end
+
+    sleep(0.001)
+    q << "a"
+    sleep(0.001) # gives thread a chance to wake up
+
+    assert_equal("a", value_received)
+    assert_nil(exception_caught)
+  end
+
+  def test_blocking_with_data_before_shift
+    q = QueueWithTimeout.new
+    value_received = nil
+    exception_caught = nil
+
+    timeout = 1
+    sleep(0.001)
+    q << "a"
+
+    t = Thread.new do
+      begin
+        value_received = q.shift(true, timeout)
+      rescue => e
+        exception_caught = e
+      end
+    end
+
+    sleep(0.001) # gives thread a chance to wake up
+
+    assert_equal("a", value_received)
+    assert_nil(exception_caught)
+  end
 end

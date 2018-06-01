@@ -42,7 +42,7 @@ module ScoutApm
 
       def message
         {'StartSpan': {
-          'timestamp': @timestamp.iso8601,
+          'timestamp': @timestamp.utc.round(10).iso8601(6),
           'request_id': @request_id,
           'span_id': @span_id,
           'parent_id': @parent,
@@ -60,7 +60,7 @@ module ScoutApm
 
       def message
         {'StopSpan': {
-          'timestamp': @timestamp.iso8601,
+          'timestamp': @timestamp.utc.round(10).iso8601(6),
           'request_id': @request_id,
           'span_id': @span_id,
         }}
@@ -76,7 +76,7 @@ module ScoutApm
 
       def message
         {'StartRequest': {
-          'timestamp': @timestamp.iso8601,
+          'timestamp': @timestamp.utc.round(10).iso8601(6),
           'request_id': @request_id,
         }}
       end
@@ -90,7 +90,7 @@ module ScoutApm
 
       def message
         {'FinishRequest': {
-          'timestamp': @timestamp.iso8601,
+          'timestamp': @timestamp.utc.round(10).iso8601(6),
           'request_id': @request_id,
         }}
       end
@@ -108,7 +108,7 @@ module ScoutApm
 
       def message
         {'TagSpan': {
-          'timestamp': @timestamp.iso8601,
+          'timestamp': @timestamp.utc.round(10).iso8601(6),
           'request_id': @request_id,
           'span_id': @span_id,
           'tag': @tag,
@@ -119,7 +119,7 @@ module ScoutApm
 
 
     class TagRequest
-      def initialize(request_id, tag, value)
+      def initialize(request_id, tag, value, timestamp=Time.now)
         @timestamp = timestamp
         @request_id = request_id
         @tag = tag
@@ -128,7 +128,7 @@ module ScoutApm
 
       def message
         {'TagRequest': {
-          'timestamp': @timestamp.iso8601,
+          'timestamp': @timestamp.utc.round(10).iso8601(6),
           'request_id': @request_id,
           'tag': @tag,
           'value': @value,
@@ -149,7 +149,7 @@ module ScoutApm
         {'ApplicationEvent': {
           'event_type':  @event_type,
           'event_value': @event_value,
-          'timestamp': @timestamp.iso8601,
+          'timestamp': @timestamp.utc.round(10).iso8601(6),
           'source': @source,
         }}
       end

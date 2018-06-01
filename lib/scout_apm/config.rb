@@ -269,6 +269,8 @@ module ScoutApm
         'core_agent_download'    => true,
         'core_agent_launch'      => true,
         'core_agent_version'     => 'latest',
+        'core_agent_log'         => nil,
+        'core_agent_log_level'   => "info",
         'download_url'           => 'https://s3-us-west-1.amazonaws.com/scout-public-downloads/apm_core_agent/release',
 
         # Core Agent TODO: Fix the reference to `latest` here.

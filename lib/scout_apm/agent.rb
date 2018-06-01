@@ -47,7 +47,6 @@ module ScoutApm
       context.installed!
 
       ScoutApm::CoreAgent::Manager.new(context).launch
-      ScoutApm::CoreAgent::Socket.instance(context).run
 
       @preconditions = ScoutApm::Agent::Preconditions.new
       if @preconditions.check?(context) || force
@@ -78,9 +77,9 @@ module ScoutApm
       log_environment
 
       # Save it into a variable to prevent it from ever running twice
-      @app_server_load ||= AppServerLoad.new(context).run
+      # @app_server_load ||= AppServerLoad.new(context).run
 
-      start_background_worker
+      # start_background_worker
     end
 
     def instrument_manager

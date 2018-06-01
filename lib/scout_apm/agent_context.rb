@@ -90,6 +90,10 @@ module ScoutApm
       @logger ||= LoggerFactory.build(config, environment)
     end
 
+    def socket
+      @socket ||= ScoutApm::CoreAgent::Socket.new(self)
+    end
+
     def ignored_uris
       @ignored_uris ||= ScoutApm::IgnoredUris.new(config.value('ignore'))
     end
@@ -207,13 +211,7 @@ module ScoutApm
 
   class RecorderFactory
     def self.build(context)
-      if context.config.value("async_recording")
-        context.logger.debug("Using asynchronous recording")
-        ScoutApm::BackgroundRecorder.new(context).start
-      else
-        context.logger.debug("Using synchronous recording")
-        ScoutApm::SynchronousRecorder.new(context).start
-      end
+      ScoutApm::CoreAgent::Recorder.new(context).start
     end
   end
 

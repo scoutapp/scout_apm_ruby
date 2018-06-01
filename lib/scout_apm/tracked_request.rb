@@ -482,8 +482,6 @@ module ScoutApm
       @store = @agent_context.store
     end
 
-    private
-
     def apply_name_override
       return unless name_override
 
