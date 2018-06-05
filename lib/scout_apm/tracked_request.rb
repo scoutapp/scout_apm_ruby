@@ -115,7 +115,6 @@ module ScoutApm
         layer.capture_backtrace!
       end
 
-
       if finalized?
         stop_request
       end
@@ -298,6 +297,21 @@ module ScoutApm
       converter_results = converter_instances.inject({}) do |memo, (slug,i)| 
         memo[slug] = i.record!
         memo
+      end
+
+      # logging spans
+      layers = []
+      walker = LayerConverters::DepthFirstWalker.new(self.root_layer)
+      walker.on do |layer|
+        layers << layer.to_hash
+      end
+
+      # POC code to emit raw layers and store locally in the database.
+      if defined?(TransactionTrace) && defined?(TransactionTrace::LoggedTrace)
+        walker.walk
+        if  LayerConverters::FindLayerByType.new(self).scope
+          TransactionTrace::LoggedTrace.create(layers: layers, name: LayerConverters::FindLayerByType.new(self).scope.name)
+        end
       end
 
       @agent_context.extensions.run_transaction_callbacks(converter_results,context,layer_finder.scope)

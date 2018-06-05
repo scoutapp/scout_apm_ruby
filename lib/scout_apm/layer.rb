@@ -137,6 +137,22 @@ module ScoutApm
       "<Layer: #{name_clause} #{time_clause} #{desc_clause} #{children_clause}>"
     end
 
+    def to_hash
+      {
+        name: name,
+        type: type,
+        total_call_time: total_call_time,
+        total_exclusive_time: total_exclusive_time,
+        start_time: start_time.round(10).iso8601(6),
+        stop_time: stop_time.try { |t| t.round(10).iso8601(6) },
+        desc: desc.inspect
+      }
+    end
+
+    def to_json
+      to_hash.to_json
+    end
+
     ######################################
     # Time Calculations
     ######################################
