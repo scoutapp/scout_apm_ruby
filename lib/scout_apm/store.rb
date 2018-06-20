@@ -205,8 +205,8 @@ module ScoutApm
     def initialize(timestamp, context)
       @timestamp = timestamp
 
-      @request_traces = ScoredItemSet.new
-      @job_traces = ScoredItemSet.new
+      @request_traces = ScoredItemSet.new(context.config.value('max_traces'))
+      @job_traces = ScoredItemSet.new(context.config.value('max_traces'))
 
       @histograms = []
 
