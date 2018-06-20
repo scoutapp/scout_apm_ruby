@@ -114,8 +114,8 @@ module ScoutApm
       @request_histograms_by_time ||= Hash.new { |h, k| h[k] = ScoutApm::RequestHistograms.new }
     end
 
-    def request_time_consumed
-      @request_time_consumed ||= ScoutApm::RequestTimeConsumed.new
+    def transaction_time_consumed
+      @transaction_time_consumed ||= ScoutApm::TransactionTimeConsumed.new
     end
 
     def store

@@ -64,7 +64,7 @@ module ScoutApm
       # What approximate percentile was this request?
       percentile = context.request_histograms.approximate_quantile_of_value(unique_name, total_time)
 
-      percent_of_total_time = context.request_time_consumed.percent_of_total(unique_name)
+      percent_of_total_time = context.transaction_time_consumed.percent_of_total(unique_name)
 
       return speed_points(total_time) + percentile_points(percentile) + age_points(age) + percent_time_points(percent_of_total_time)
     end

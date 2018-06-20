@@ -1,5 +1,5 @@
 module ScoutApm
-  class RequestTimeConsumed
+  class TransactionTimeConsumed
     # Private Accessor:
     # A hash of Endpoint Name to an time consumed record
     attr_reader :endpoints
