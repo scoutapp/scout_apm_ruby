@@ -273,6 +273,8 @@ module ScoutApm
 
       apply_name_override
 
+      @agent_context.request_time_consumed.add(unique_name, root_layer.total_call_time)
+
       # Make a constant, then call converters.dup.each so it isn't inline?
       converters = {
         :histograms => LayerConverters::Histograms,
