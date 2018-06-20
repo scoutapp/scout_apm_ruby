@@ -37,9 +37,14 @@ class SlowRequestPolicyTest < Minitest::Test
     request.set_duration(10) # 10 seconds
     policy.last_seen[request.unique_name] = Time.now - 120 # 2 minutes since last seen
     @context.request_histograms.add(request.unique_name, 1)
+    @context.request_time_consumed.add(request.unique_name, 1)
 
-    # Actual value I have in console is 1.499
-    assert policy.score(request) > 1.45
-    assert policy.score(request) < 1.55
+    # Actual value I have in console is 4.01
+    # Score uses Time.now to compare w/ last_seen, and will tick up slowly as
+    # time passes, hence the range below.
+    score = policy.score(request)
+
+    assert score > 3.95
+    assert score < 4.05
   end
 end
