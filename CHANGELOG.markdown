@@ -2,6 +2,10 @@
 
 * ScoutProf BETA
 
+# 2.4.12
+
+* Calculates DelayedJob queue latency correctly when jobs are scheduled to run in the future
+
 # 2.4.11
 
 * Adds transaction + periodic reporting callback extension support
