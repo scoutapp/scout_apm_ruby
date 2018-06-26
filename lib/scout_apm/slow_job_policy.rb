@@ -17,6 +17,10 @@ module ScoutApm
     # Outliers are worth up to "1000ms" of weight
     POINT_MULTIPLIER_PERCENTILE = 1.0
 
+    # Points for an endpoint's who's throughput * response time is a large % of
+    # overall time spent processing requests
+    POINT_MULTIPLIER_PERCENT_TIME = 2.5
+
     # A hash of Job Names to the last time we stored a slow trace for it.
     #
     # Defaults to a start time that is pretty close to application boot time.
@@ -60,7 +64,9 @@ module ScoutApm
       # What approximate percentile was this request?
       percentile = context.request_histograms.approximate_quantile_of_value(unique_name, total_time)
 
-      return speed_points(total_time) + percentile_points(percentile) + age_points(age)
+      percent_of_total_time = context.transaction_time_consumed.percent_of_total(unique_name)
+
+      return speed_points(total_time) + percentile_points(percentile) + age_points(age) + percent_time_points(percent_of_total_time)
     end
 
     private
@@ -89,6 +95,17 @@ module ScoutApm
 
     def age_points(age)
       age / 60.0 * POINT_MULTIPLIER_AGE
+    end
+
+    # Of the total time spent handling endpoints in this app, if this endpoint
+    # is a higher percent, it should get more points.
+    #
+    # A: 20 calls @ 100ms each => 2 seconds of total time
+    # B: 10 calls @ 100ms each => 1 second of total time
+    #
+    # Then A is 66% of the total call time
+    def percent_time_points(percent) # Scale 0.0 - 1.0
+      percent * POINT_MULTIPLIER_PERCENT_TIME
     end
   end
 end

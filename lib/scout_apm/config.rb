@@ -20,6 +20,7 @@ require 'scout_apm/environment'
 # key              - the account key with Scout APM. Found in Settings in the Web UI
 # log_file_path    - either a directory or "STDOUT".
 # log_level        - DEBUG / INFO / WARN as usual
+# max_traces       - Internal: An experiment in trace quality, this requires a server-side setting as well. Setting this to a higher value will make your app server work harder for no benefit.
 # monitor          - true or false.  False prevents any instrumentation from starting
 # name             - override the name reported to APM. This is the name that shows in the Web UI
 # profile          - turn on/off scoutprof (only applicable in Gem versions including scoutprof)
@@ -57,6 +58,7 @@ module ScoutApm
         'log_level',
         'log_stderr',
         'log_stdout',
+        'max_traces',
         'monitor',
         'name',
         'profile',
@@ -151,6 +153,7 @@ module ScoutApm
       "dev_trace"              => BooleanCoercion.new,
       "enable_background_jobs" => BooleanCoercion.new,
       "ignore"                 => JsonCoercion.new,
+      "max_traces"             => IntegerCoercion.new,
       "monitor"                => BooleanCoercion.new,
       'database_metric_limit'  => IntegerCoercion.new,
       'database_metric_report_limit' => IntegerCoercion.new,
@@ -250,6 +253,7 @@ module ScoutApm
         'host'                   => 'https://checkin.scoutapp.com',
         'ignore'                 => [],
         'log_level'              => 'info',
+        'max_traces'             => 10,
         'profile'                => true, # for scoutprof
         'report_format'          => 'json',
         'scm_subdirectory'       => '',
