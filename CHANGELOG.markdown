@@ -2,6 +2,10 @@
 
 * ScoutProf BETA
 
+# 2.4.13
+
+* Incorporating total time consumed into transaction trace policy
+
 # 2.4.12
 
 * Calculates DelayedJob queue latency correctly when jobs are scheduled to run in the future
