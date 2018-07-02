@@ -1,3 +1,7 @@
+# 2.4.14
+
+* Fix database connection issue when installed in an app also using the Textacular gem
+
 # 2.4.13
 
 * Incorporating total time consumed into transaction trace policy
