@@ -55,12 +55,21 @@ module ScoutApm
         end
       end
 
+      # Note, this code intentionally avoids `.respond_to?` because of an
+      # infinite loop created by the Textacular gem (tested against 3.2.2 of
+      # that gem), which some customers have installed.
+      #
+      # The loop was:
+      #   - Ask for database adapter
+      #   - Do .respond_to? on AR::Base to look for connection_config (which isn't present on some versions of rails)
+      #   - Textacular gem has a monkey-patch that queries the columns of the db
+      #     This obtains a connection, and runs a query.
+      #   - Scout tries to run SQLSanitizer against the query, which needs the database adapter.
+      #   - Goes back to first step.
+      #
+      # We avoid this issue by not calling .respond_to? here, and instead using the less optimal `rescue nil` approach
       def raw_database_adapter
-        adapter = if ActiveRecord::Base.respond_to?(:connection_config)
-                    ActiveRecord::Base.connection_config[:adapter].to_s
-                  else
-                    nil
-                  end
+        adapter = ActiveRecord::Base.connection_config[:adapter].to_s rescue nil
 
         if adapter.nil?
           adapter = ActiveRecord::Base.configurations[env]["adapter"]
