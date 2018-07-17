@@ -86,6 +86,8 @@ module ScoutApm
       NON_GREEDY_CONSUME = '.*?'
       TABLE = '(?:"|`)?(.*?)(?:"|`)?\s'
       COUNT = 'COUNT\(.*?\)'
+      BEGIN_STATEMENT = 'BEGIN'.freeze # BEGIN is a reserved keyword
+      COMMIT = 'COMMIT'.freeze
 
       SELECT_REGEX = /\A#{WHITE_SPACE}(SELECT)#{WHITE_SPACE}(#{COUNT})?#{NON_GREEDY_CONSUME}#{FROM}#{WHITE_SPACE}#{TABLE}/i.freeze
       UPDATE_REGEX = /\A#{WHITE_SPACE}(UPDATE)#{WHITE_SPACE}#{TABLE}/i.freeze
@@ -128,6 +130,10 @@ module ScoutApm
           "#{match[2].classify}/#{INSERT_LABEL}"
         elsif match = DELETE_REGEX.match(sql)
           "#{match[2].classify}/#{DELETE_LABEL}"
+        elsif sql == BEGIN_STATEMENT
+          "SQL/#{BEGIN_STATEMENT.downcase}"
+        elsif sql == COMMIT
+          "SQL/#{COMMIT.downcase}"
         else
           UNKNOWN_LABEL
         end
