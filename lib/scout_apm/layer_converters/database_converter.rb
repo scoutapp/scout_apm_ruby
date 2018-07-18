@@ -13,7 +13,6 @@ module ScoutApm
 
         walker.on do |layer|
           next if skip_layer?(layer)
-
           stat = DbQueryMetricStats.new(
             model_name(layer),
             operation_name(layer),
@@ -52,23 +51,11 @@ module ScoutApm
       DEFAULT_OPERATION = "other"
 
       def model_name(layer)
-        if layer.name.respond_to?(:model)
-          layer.name.model || DEFAULT_MODEL
-        else
-          DEFAULT_MODEL
-        end
-      rescue
-        DEFAULT_MODEL
+        layer.name.to_s.split("/").first || DEFAULT_MODEL
       end
 
       def operation_name(layer)
-        if layer.name.respond_to?(:normalized_operation)
-          layer.name.normalized_operation || DEFAULT_OPERATION
-        else
-          DEFAULT_OPERATION
-        end
-      rescue
-        DEFAULT_OPERATION
+        layer.name.to_s.split("/")[1] || DEFAULT_OPERATION
       end
 
       def records_returned(layer)
