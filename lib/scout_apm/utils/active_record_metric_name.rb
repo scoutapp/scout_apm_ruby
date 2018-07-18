@@ -12,6 +12,8 @@ module ScoutApm
       # Converts an SQL string and the name (typically assigned automatically
       # by rails) into a Scout metric_name.
       #
+      # This prefers to use the ActiveRecord-provided name over parsing SQL as parsing is slower.
+      #
       # sql: SELECT "places".* FROM "places"  ORDER BY "places"."position" ASC
       # name: Place Load
       # metric_name: Place/find
@@ -25,10 +27,12 @@ module ScoutApm
         end
       end
 
+      # This only returns a value if a name is provided via +initialize+.
       def model
         parts.first
       end
 
+      # This only returns a value if a name is provided via +initialize+.
       def normalized_operation
         parse_operation
       end
@@ -50,12 +54,14 @@ module ScoutApm
 
       private
 
+      # This only returns a value if a name is provided via +initialize+.
       def operation
         if parts.length >= 2
           parts[1].downcase
         end
       end
 
+      # This only returns a value if a name is provided via +initialize+.
       def parts
         name.split(" ")
       end
