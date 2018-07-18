@@ -16,11 +16,12 @@ module ScoutApm
       # name: Place Load
       # metric_name: Place/find
       def to_s
+        return @to_s if @to_s
         parsed = parse_operation
         if parsed
-          "#{model}/#{parsed}"
+          @to_s = "#{model}/#{parsed}"
         else
-          regex_name(sql)
+          @to_s = regex_name(sql)
         end
       end
 
