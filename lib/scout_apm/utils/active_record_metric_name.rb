@@ -130,7 +130,7 @@ module ScoutApm
             else
               SELECT_LABEL
             end
-          "#{match[3].gsub!(/\W/,'').classify}/#{operation}"
+          "#{match[3].gsub(/\W/,'').classify}/#{operation}"
         elsif match = UPDATE_REGEX.match(sql)
           "#{match[2].classify}/#{UPDATE_LABEL}"
         elsif match = INSERT_REGEX.match(sql)
