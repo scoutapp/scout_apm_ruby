@@ -44,11 +44,16 @@ To use DevTrace, our free in-browser development profiler:
 
 1. Add the gem to your Gemfile:
 
-    gem 'scout_apm'
-    
+```ruby
+# Gemfile
+gem 'scout_apm'
+```
+
 2. Start your Rails app with the SCOUT_DEV_TRACE environment variable:
 
-    SCOUT_DEV_TRACE=true rails server
+```
+SCOUT_DEV_TRACE=true rails server
+```
 
 ## Docs
 
