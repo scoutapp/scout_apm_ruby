@@ -40,7 +40,7 @@ Your config file should look like:
 
 ## DevTrace Quickstart
 
-To use DevTrace, our free in-browser development profiler:
+To use DevTrace, our free, no-signup, in-browser development profiler:
 
 1. Add the gem to your Gemfile:
 
