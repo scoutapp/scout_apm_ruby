@@ -38,6 +38,18 @@ Your config file should look like:
     production:
       <<: *defaults
 
+## DevTrace Quickstart
+
+To use DevTrace, our free in-browser development profiler:
+
+1. Add the gem to your Gemfile:
+
+    gem 'scout_apm'
+    
+2. Start your Rails app with the SCOUT_DEV_TRACE environment variable:
+
+    SCOUT_DEV_TRACE=true rails server
+
 ## Docs
 
 For the complete list of supported frameworks, Rubies, configuration options
