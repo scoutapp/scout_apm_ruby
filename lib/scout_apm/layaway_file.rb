@@ -30,6 +30,17 @@ module ScoutApm
 
     def serialize(data)
       Marshal.dump(data)
+    rescue => e
+      begin
+        logger.warn("Failed Serializing LayawayFile: #{e.message}, #{e.backtrace}")
+
+        filename = "/tmp/scout_failed_layaway_#{Time.now.iso8601}.dump"
+        File.open(filename, 'w') do |f|
+          f.write(data.inspect)
+        end
+      rescue => e
+        logger.warn("Failed dumping bad LayawayFile: #{e.message}")
+      end
     end
 
     def deserialize(data)
