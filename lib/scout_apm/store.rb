@@ -87,12 +87,13 @@ module ScoutApm
     # current-minute metrics.  Useful when we are shutting down the agent
     # during a restart.
     def write_to_layaway(layaway, force=false)
-      @mutex.synchronize {
         logger.debug("Writing to layaway#{" (Forced)" if force}")
 
-        @reporting_periods.select { |time, rp| force || (time.timestamp < current_timestamp.timestamp) }.
-                          each   { |time, rp| write_reporting_period(layaway, time, rp) }
-      }
+        @reporting_periods.select { |time, rp|
+          @mutex.synchronize {
+            force || (time.timestamp < current_timestamp.timestamp)
+          }
+        }.each   { |time, rp| write_reporting_period(layaway, time, rp) }
     end
 
     # For each tick (minute), be sure we have a reporting period, and that samplers are run for it.
@@ -107,7 +108,7 @@ module ScoutApm
       logger.warn("Failed writing data to layaway file: #{e.message} / #{e.backtrace}")
     ensure
       logger.debug("Before delete, reporting periods length: #{@reporting_periods.size}")
-      deleted_items = @reporting_periods.delete(time)
+      @mutex.synchronize { deleted_items = @reporting_periods.delete(time) }
       logger.debug("After delete, reporting periods length: #{@reporting_periods.size}. Did delete #{deleted_items}")
     end
     private :write_reporting_period
