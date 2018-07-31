@@ -108,7 +108,7 @@ module ScoutApm
       logger.warn("Failed writing data to layaway file: #{e.message} / #{e.backtrace}")
     ensure
       logger.debug("Before delete, reporting periods length: #{@reporting_periods.size}")
-      @mutex.synchronize { deleted_items = @reporting_periods.delete(time) }
+      deleted_items = @mutex.synchronize { @reporting_periods.delete(time) }
       logger.debug("After delete, reporting periods length: #{@reporting_periods.size}. Did delete #{deleted_items}")
     end
     private :write_reporting_period
