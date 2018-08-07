@@ -2,6 +2,15 @@
 
 * ScoutProf BETA
 
+# 2.4.15
+
+* Fix bug that causes no data to be reported to Scout when DataDog is installed (#211)
+* Fix `NoMethodError for LayerChildrenSet` when `log_level: debug` in certain situations.
+
+# 2.4.14
+
+* Fix database connection issue when installed in an app also using the Textacular gem
+
 # 2.4.13
 
 * Incorporating total time consumed into transaction trace policy
