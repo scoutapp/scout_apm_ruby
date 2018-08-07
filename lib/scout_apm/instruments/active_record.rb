@@ -142,7 +142,10 @@ module ScoutApm
             req = ScoutApm::RequestManager.lookup
             layer = req.current_layer
             if layer && layer.type == "ActiveRecord"
-              layer.annotate_layer(payload)
+              layer.annotate_layer({
+                :class_name => payload[:class_name],
+                :record_count => payload[:record_count]
+              })
             elsif layer
               logger.debug("Expected layer type: ActiveRecord, got #{layer && layer.type}")
             else
