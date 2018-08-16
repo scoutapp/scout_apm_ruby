@@ -1,3 +1,7 @@
+# 2.4.16
+
+* Fix synchronization bug in Store (#205, PR #210)
+
 # 2.4.15
 
 * Fix bug that causes no data to be reported to Scout when DataDog is installed (#211)
