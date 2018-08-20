@@ -1,3 +1,8 @@
+# Head
+
+* Renames SQL `BEGIN` and `COMMIT` statements from `SQL#other` to `SQL#begin` and `SQL#commit`, respectively.
+* Makes naming between transaction and database metrics consistent. Previously, database metrics lacking a provided ActiveRecord label were named `SQL#other`.
+
 # 2.4.14
 
 * Fix database connection issue when installed in an app also using the Textacular gem
