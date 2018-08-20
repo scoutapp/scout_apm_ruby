@@ -2,6 +2,15 @@
 
 * ScoutProf BETA
 
+# 2.4.17
+
+* Renames SQL `BEGIN` and `COMMIT` statements from `SQL#other` to `SQL#begin` and `SQL#commit`, respectively.
+* Makes naming between transaction and database metrics consistent. Previously, database metrics lacking a provided ActiveRecord label were named `SQL#other`.
+
+# 2.4.16
+
+* Fix synchronization bug in Store (#205, PR #210)
+
 # 2.4.15
 
 * Fix bug that causes no data to be reported to Scout when DataDog is installed (#211)

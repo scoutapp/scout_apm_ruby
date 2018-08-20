@@ -5,8 +5,10 @@ module ScoutApm
   class Store
     def initialize(context)
       @context = context
-      @mutex = Mutex.new
-      @reporting_periods = Hash.new { |h,k| h[k] = StoreReportingPeriod.new(k, @context) }
+      @mutex = Monitor.new
+      @reporting_periods = Hash.new { |h,k|
+        @mutex.synchronize { h[k] = StoreReportingPeriod.new(k, @context) }
+      }
       @samplers = []
     end
 
@@ -87,8 +89,13 @@ module ScoutApm
     def write_to_layaway(layaway, force=false)
       logger.debug("Writing to layaway#{" (Forced)" if force}")
 
-      @reporting_periods.select { |time, rp| force || (time.timestamp < current_timestamp.timestamp) }.
-                         each   { |time, rp| write_reporting_period(layaway, time, rp) }
+      to_report = @mutex.synchronize {
+        @reporting_periods.select { |time, rp|
+          force || (time.timestamp < current_timestamp.timestamp)
+        }
+      }
+
+      to_report.each { |time, rp| write_reporting_period(layaway, time, rp) }
     end
 
     # For each tick (minute), be sure we have a reporting period, and that samplers are run for it.
@@ -98,14 +105,12 @@ module ScoutApm
     end
 
     def write_reporting_period(layaway, time, rp)
-      @mutex.synchronize {
         layaway.write_reporting_period(rp)
-      }
     rescue => e
       logger.warn("Failed writing data to layaway file: #{e.message} / #{e.backtrace}")
     ensure
       logger.debug("Before delete, reporting periods length: #{@reporting_periods.size}")
-      deleted_items = @reporting_periods.delete(time)
+      deleted_items = @mutex.synchronize { @reporting_periods.delete(time) }
       logger.debug("After delete, reporting periods length: #{@reporting_periods.size}. Did delete #{deleted_items}")
     end
     private :write_reporting_period
