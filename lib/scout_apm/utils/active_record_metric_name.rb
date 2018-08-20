@@ -12,22 +12,27 @@ module ScoutApm
       # Converts an SQL string and the name (typically assigned automatically
       # by rails) into a Scout metric_name.
       #
+      # This prefers to use the ActiveRecord-provided name over parsing SQL as parsing is slower.
+      #
       # sql: SELECT "places".* FROM "places"  ORDER BY "places"."position" ASC
       # name: Place Load
       # metric_name: Place/find
       def to_s
+        return @to_s if @to_s
         parsed = parse_operation
         if parsed
-          "#{model}/#{parsed}"
+          @to_s = "#{model}/#{parsed}"
         else
-          regex_name(sql)
+          @to_s = regex_name(sql)
         end
       end
 
+      # This only returns a value if a name is provided via +initialize+.
       def model
         parts.first
       end
 
+      # This only returns a value if a name is provided via +initialize+.
       def normalized_operation
         parse_operation
       end
@@ -49,12 +54,14 @@ module ScoutApm
 
       private
 
+      # This only returns a value if a name is provided via +initialize+.
       def operation
         if parts.length >= 2
           parts[1].downcase
         end
       end
 
+      # This only returns a value if a name is provided via +initialize+.
       def parts
         name.split(" ")
       end
@@ -86,6 +93,8 @@ module ScoutApm
       NON_GREEDY_CONSUME = '.*?'
       TABLE = '(?:"|`)?(.*?)(?:"|`)?\s'
       COUNT = 'COUNT\(.*?\)'
+      BEGIN_STATEMENT = 'BEGIN'.freeze # BEGIN is a reserved keyword
+      COMMIT = 'COMMIT'.freeze
 
       SELECT_REGEX = /\A#{WHITE_SPACE}(SELECT)#{WHITE_SPACE}(#{COUNT})?#{NON_GREEDY_CONSUME}#{FROM}#{WHITE_SPACE}#{TABLE}/i.freeze
       UPDATE_REGEX = /\A#{WHITE_SPACE}(UPDATE)#{WHITE_SPACE}#{TABLE}/i.freeze
@@ -121,13 +130,17 @@ module ScoutApm
             else
               SELECT_LABEL
             end
-          "#{match[3].classify}/#{operation}"
+          "#{match[3].gsub(/\W/,'').classify}/#{operation}"
         elsif match = UPDATE_REGEX.match(sql)
           "#{match[2].classify}/#{UPDATE_LABEL}"
         elsif match = INSERT_REGEX.match(sql)
           "#{match[2].classify}/#{INSERT_LABEL}"
         elsif match = DELETE_REGEX.match(sql)
           "#{match[2].classify}/#{DELETE_LABEL}"
+        elsif sql == BEGIN_STATEMENT
+          "SQL/#{BEGIN_STATEMENT.downcase}"
+        elsif sql == COMMIT
+          "SQL/#{COMMIT.downcase}"
         else
           UNKNOWN_LABEL
         end
