@@ -3,6 +3,15 @@
 * Renames SQL `BEGIN` and `COMMIT` statements from `SQL#other` to `SQL#begin` and `SQL#commit`, respectively.
 * Makes naming between transaction and database metrics consistent. Previously, database metrics lacking a provided ActiveRecord label were named `SQL#other`.
 
+# 2.4.16
+
+* Fix synchronization bug in Store (#205, PR #210)
+
+# 2.4.15
+
+* Fix bug that causes no data to be reported to Scout when DataDog is installed (#211)
+* Fix `NoMethodError for LayerChildrenSet` when `log_level: debug` in certain situations.
+
 # 2.4.14
 
 * Fix database connection issue when installed in an app also using the Textacular gem
