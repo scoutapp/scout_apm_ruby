@@ -22,6 +22,12 @@ module ScoutApm
         request_start = root_layer.start_time
         queue_time = (request_start - parsed_start).to_f
 
+        if queue_time < 0
+          @context.logger.info("Negative Queue time: request_start: #{request_start.to_f} (#{request_start}), parsed_start: #{parsed_start.to_f} (#{parsed_start}), now: #{Time.now.to_f} (#{Time.now}). Found in header: #{@located_by}, Raw header: #{@raw_header}")
+        elsif queue_time > 10_000
+          @context.logger.info("Large Queue time: request_start: #{request_start.to_f} (#{request_start}), parsed_start: #{parsed_start.to_f} (#{parsed_start}), now: #{Time.now.to_f} (#{Time.now}). Found in header: #{@located_by}, Raw header: #{@raw_header}")
+        end
+
         # If we end up with a negative value, just bail out and don't report anything
         return if queue_time < 0
 
@@ -42,9 +48,10 @@ module ScoutApm
       def locate_timestamp
         return nil unless headers
 
-        header = HEADERS.find { |candidate| headers[candidate] }
+        header = HEADERS.find { |candidate| @located_by = candidate; headers[candidate] }
         if header
           data = headers[header]
+          @raw_header = data
           data.to_s.gsub(/(t=|\.)/, '')
         else
           nil
