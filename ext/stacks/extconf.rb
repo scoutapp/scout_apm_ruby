@@ -15,6 +15,7 @@ can_compile &&= have_func('rb_profile_frame_classpath')
 # Explicitly link against librt
 if have_macro('__linux__')
   can_compile &&= have_library('rt') # for timer_create, timer_settime
+  can_compile &&= have_macro('__GLIBC__') # Check for glibc (we don't compile against MUSL)
 end
 
 # Pick the atomics implementation
