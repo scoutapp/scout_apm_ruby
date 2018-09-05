@@ -56,7 +56,16 @@ module ScoutApm
     # and time them.
     class ShoryukenMiddleware
       def call(worker_instance, queue, msg, body)
-        job_class = worker_instance.class.to_s
+        job_class =
+          begin
+            if worker_instance.class.to_s == ACTIVE_JOB_KLASS
+              body["job_class"]
+            else
+              worker_instance.class.to_s
+            end
+          rescue
+            UNKNOWN_CLASS_PLACEHOLDER
+          end
 
         req = ScoutApm::RequestManager.lookup
         req.annotate_request(:queue_latency => latency(msg))
