@@ -64,6 +64,16 @@ class ActiveRecordMetricNameTest < Minitest::Test
     assert_equal "User/find", mn.to_s
   end
 
+  def test_begin_statement
+    mn = ScoutApm::Utils::ActiveRecordMetricName.new("BEGIN", nil)
+    assert_equal "SQL/begin", mn.to_s
+  end
+
+  def test_commit
+    mn = ScoutApm::Utils::ActiveRecordMetricName.new("COMMIT", nil)
+    assert_equal "SQL/commit", mn.to_s
+  end
+
 
   # Regex test cases, pass these in w/ "SQL" as the AR provided name field
   [
@@ -89,8 +99,6 @@ class ActiveRecordMetricNameTest < Minitest::Test
     # Stuff we don't care about in SQL
     ["SQL/other", 'SET SESSION statement_timeout = ?'],
     ["SQL/other", 'SHOW TIME ZONE'],
-    ["SQL/other", 'BEGIN'],
-    ["SQL/other", 'COMMIT'],
 
     # Empty strings, or invalid SQL
     ["SQL/other", ''],
