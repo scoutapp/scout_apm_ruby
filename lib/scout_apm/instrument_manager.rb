@@ -47,7 +47,7 @@ module ScoutApm
       return if already_installed?(instrument_klass)
 
       if skip_instrument?(instrument_klass)
-        logger.info "Skipping Disabled Instrument: #{instrument_short_name} - To re-enable, change `disabled_instruments` key in scout_apm.yml"
+        logger.info "Skipping Disabled Instrument: #{instrument_klass} - To re-enable, change `disabled_instruments` key in scout_apm.yml"
         return
       end
 
