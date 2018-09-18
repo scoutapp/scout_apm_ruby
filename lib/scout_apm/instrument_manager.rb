@@ -41,6 +41,12 @@ module ScoutApm
       logger.warn $!.backtrace
     end
 
+    # Allows users to skip individual instruments via the config file
+    def skip_instrument?(instrument_klass)
+      instrument_short_name = instrument_klass.name.split("::").last
+      (config.value("disabled_instruments") || []).include?(instrument_short_name)
+    end
+
     private
 
     def install_instrument(instrument_klass)
@@ -54,12 +60,6 @@ module ScoutApm
       instance = instrument_klass.new(context)
       @installed_instruments << instance
       instance.install
-    end
-
-    # Allows users to skip individual instruments via the config file
-    def skip_instrument?(instrument_klass)
-      instrument_short_name = instrument_klass.name.split("::").last
-      (config.value("disabled_instruments") || []).include?(instrument_short_name)
     end
 
     def already_installed?(instrument_klass)
