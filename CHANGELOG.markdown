@@ -2,6 +2,11 @@
 
 * ScoutProf BETA
 
+# 2.4.18
+
+* Add Shoryuken Support (#215)
+* Add Sneakers Support (#216)
+
 # 2.4.17
 
 * Renames SQL `BEGIN` and `COMMIT` statements from `SQL#other` to `SQL#begin` and `SQL#commit`, respectively.

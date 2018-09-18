@@ -41,25 +41,25 @@ module ScoutApm
       logger.warn $!.backtrace
     end
 
+    # Allows users to skip individual instruments via the config file
+    def skip_instrument?(instrument_klass)
+      instrument_short_name = instrument_klass.name.split("::").last
+      (config.value("disabled_instruments") || []).include?(instrument_short_name)
+    end
+
     private
 
     def install_instrument(instrument_klass)
       return if already_installed?(instrument_klass)
 
       if skip_instrument?(instrument_klass)
-        logger.info "Skipping Disabled Instrument: #{instrument_short_name} - To re-enable, change `disabled_instruments` key in scout_apm.yml"
+        logger.info "Skipping Disabled Instrument: #{instrument_klass} - To re-enable, change `disabled_instruments` key in scout_apm.yml"
         return
       end
 
       instance = instrument_klass.new(context)
       @installed_instruments << instance
       instance.install
-    end
-
-    # Allows users to skip individual instruments via the config file
-    def skip_instrument?(instrument_klass)
-      instrument_short_name = instrument_klass.name.split("::").last
-      (config.value("disabled_instruments") || []).include?(instrument_short_name)
     end
 
     def already_installed?(instrument_klass)
