@@ -1,3 +1,7 @@
+# Master
+
+* Fix disabled_instruments (#220)
+
 # 2.4.18
 
 * Add Shoryuken Support (#215)
