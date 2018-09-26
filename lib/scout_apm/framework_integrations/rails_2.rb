@@ -15,7 +15,8 @@ module ScoutApm
 
       def present?
         defined?(::Rails) &&
-          defined?(ActionController) &&
+          defined?(::Rails::VERSION) &&
+            defined?(ActionController) &&
           Rails::VERSION::MAJOR < 3
       end
 
