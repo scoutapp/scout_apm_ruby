@@ -67,6 +67,7 @@ module ScoutApm
         'remote_agent_host',
         'remote_agent_port',
         'report_format',
+        'revision_sha',
         'scm_subdirectory',
         'start_resque_server_instrument',
         'uri_reporting',

@@ -17,7 +17,7 @@ module ScoutApm
     private
 
     def detect
-      detect_from_env_var    ||
+      detect_from_config     ||
       detect_from_heroku     ||
       detect_from_capistrano ||
       detect_from_git
@@ -27,8 +27,11 @@ module ScoutApm
       ENV['HEROKU_SLUG_COMMIT']
     end
 
-    def detect_from_env_var
-      ENV['SCOUT_REVISION_SHA']
+    # Config will locate the value from:
+    #   ENV variable - SCOUT_REVISION_SHA
+    #   YAML setting - revision_sha
+    def detect_from_config
+      context.config.value('revision_sha')
     end
 
     def detect_from_capistrano
