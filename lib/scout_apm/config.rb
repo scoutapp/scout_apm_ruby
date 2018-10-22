@@ -30,6 +30,7 @@ require 'scout_apm/environment'
 # uri_reporting    - 'path' or 'full_path' default is 'full_path', which reports URL params as well as the path.
 # remote_agent_host - Internal: What host to bind to, and also send messages to for remote. Default: 127.0.0.1.
 # remote_agent_port - What port to bind the remote webserver to
+# start_resque_server_instrument - Used in special situations with certain Resque installs
 #
 # Any of these config settings can be set with an environment variable prefixed
 # by SCOUT_ and uppercasing the key: SCOUT_LOG_LEVEL for instance.
@@ -67,6 +68,7 @@ module ScoutApm
         'remote_agent_port',
         'report_format',
         'scm_subdirectory',
+        'start_resque_server_instrument',
         'uri_reporting',
         'instrument_http_url_length',
     ]
@@ -158,6 +160,7 @@ module ScoutApm
       'database_metric_limit'  => IntegerCoercion.new,
       'database_metric_report_limit' => IntegerCoercion.new,
       'instrument_http_url_length' => IntegerCoercion.new,
+      'start_resque_server_instrument' => BooleanCoercion.new,
     }
 
 
@@ -263,6 +266,7 @@ module ScoutApm
         'database_metric_limit'  => 5000, # The hard limit on db metrics
         'database_metric_report_limit' => 1000,
         'instrument_http_url_length' => 300,
+        'start_resque_server_instrument' => true, # still only starts if Resque is detected
       }.freeze
 
       def value(key)
