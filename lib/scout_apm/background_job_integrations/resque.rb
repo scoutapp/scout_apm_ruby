@@ -29,6 +29,8 @@ module ScoutApm
             if ScoutApm::Agent.instance.context.config.value('start_resque_server_instrument')
               ScoutApm::Agent.instance.start
               ScoutApm::Agent.instance.context.start_remote_server!(bind, port)
+            else
+              logger.info("Not starting remote server due to 'start_resque_server_instrument' setting")
             end
           rescue Errno::EADDRINUSE
             ScoutApm::Agent.instance.context.logger.warn "Error while Installing Resque Instruments, Port #{port} already in use. Set via the `remote_agent_port` configuration option"
