@@ -59,9 +59,11 @@ module ScoutApm
     #
     # This does not attempt to start twice
     def start(opts={})
+      logger.info "Agent Start called"
       return unless context.config.value('monitor')
 
       if context.started?
+        logger.info "Context started"
         start_background_worker unless background_worker_running?
         return
       end
@@ -146,6 +148,7 @@ module ScoutApm
     # => true if thread & worker got started
     # => false if it wasn't started (either due to already running, or other preconditions)
     def start_background_worker(quiet=false)
+      logger.info "Start_background_worker called"
       if !context.config.value('monitor')
         logger.debug "Not starting background worker as monitoring isn't enabled." unless quiet
         return false

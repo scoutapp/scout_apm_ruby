@@ -51,6 +51,7 @@ module ScoutApm
 
     def initialize(agent_context, store)
       @agent_context = agent_context
+      logger.info "New TrackedRequest"
       @store = store #this is passed in so we can use a real store (normal operation) or fake store (instant mode only)
       @layers = []
       @call_set = Hash.new { |h, k| h[k] = CallSet.new }
@@ -68,6 +69,7 @@ module ScoutApm
     end
 
     def start_layer(layer)
+      logger.info "Start Layer"
       # If we're already stopping, don't do additional layers
       return if stopping?
 
@@ -84,6 +86,7 @@ module ScoutApm
     end
 
     def stop_layer
+      logger.info "Stop Layer"
       # If we're already stopping, don't do additional layers
       return if stopping?
 
@@ -260,6 +263,7 @@ module ScoutApm
     # Convert this request to the appropriate structure, then report it into
     # the peristent Store object
     def record!
+      logger.info "Recording TrackedRequest"
       recorded!
 
       return if ignoring_request?
@@ -312,6 +316,7 @@ module ScoutApm
       end
 
       if web? || job?
+        logger.info "Is web or job == true"
         ensure_background_worker
       end
     end
@@ -336,6 +341,7 @@ module ScoutApm
     # Ensure the background worker thread is up & running - a fallback if other
     # detection doesn't achieve this at boot.
     def ensure_background_worker
+      logger.info "Ensuring background worker is running"
       agent = ScoutApm::Agent.instance
       agent.start
     rescue => e
