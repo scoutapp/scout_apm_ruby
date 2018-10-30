@@ -81,6 +81,13 @@ module ScoutApm
       }
     end
 
+    def track_trace!(trace)
+      return if trace.nil?
+      @mutex.synchronize {
+        current_period.merge_traces!(Array(trace))
+      }
+    end
+
     # Take each completed reporting_period, and write it to the layaway passed
     #
     # force - a boolean argument that forces this function to write
@@ -189,12 +196,13 @@ module ScoutApm
 
   # One period of Storage. Typically 1 minute
   class StoreReportingPeriod
-
     # A ScoredItemSet holding the "best" traces for the period
     attr_reader :request_traces
 
     # A ScoredItemSet holding the "best" traces for the period
     attr_reader :job_traces
+
+    attr_reader :traces
 
     # An Array of HistogramsReport
     attr_reader :histograms
@@ -212,6 +220,7 @@ module ScoutApm
 
       @request_traces = ScoredItemSet.new(context.config.value('max_traces'))
       @job_traces = ScoredItemSet.new(context.config.value('max_traces'))
+      @traces = ScoredItemSet.new(context.config.value('max_traces'))
 
       @histograms = []
 
@@ -228,6 +237,7 @@ module ScoutApm
         merge_slow_transactions!(other.slow_transactions_payload).
         merge_jobs!(other.jobs).
         merge_slow_jobs!(other.slow_jobs_payload).
+        merge_traces!(other.traces).
         merge_histograms!(other.histograms).
         merge_db_query_metrics!(other.db_query_metric_set)
       self
@@ -278,6 +288,14 @@ module ScoutApm
     def merge_slow_jobs!(new_jobs)
       Array(new_jobs).each do |job|
         job_traces << job
+      end
+
+      self
+    end
+
+    def merge_traces!(new_traces)
+      Array(new_traces).each do |trace|
+        traces << trace
       end
 
       self
