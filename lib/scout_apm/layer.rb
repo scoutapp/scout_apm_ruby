@@ -46,7 +46,6 @@ module ScoutApm
     # If no annotations are ever set, this will return nil
     attr_reader :annotations
 
-<<<<<<< HEAD
     # ScoutProf - trace_index is an index into the Stack structure in the C
     # code, used to store captured traces.
     attr_reader :trace_index
@@ -60,9 +59,8 @@ module ScoutApm
     # focuses on Controller layers, and requires a native extension and a
     # reasonably recent Ruby.
     attr_reader :traces
-=======
+
     attr_reader :allocations_start, :allocations_stop
->>>>>>> detailed-traces
 
     BACKTRACE_CALLER_LIMIT = 50 # maximum number of lines to send thru for backtrace analysis
 
