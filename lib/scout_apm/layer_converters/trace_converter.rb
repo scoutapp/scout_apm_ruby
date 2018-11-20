@@ -141,7 +141,9 @@ module ScoutApm
           tags)
 
         layer.children.each do |child|
-          result += create_spans(child, span_id)
+          unless over_span_limit?(result)
+            result += create_spans(child, span_id)
+          end
         end
 
         return result
@@ -165,6 +167,34 @@ module ScoutApm
             "function" => match[3],
           }
         end
+      end
+
+      ################################################################################
+      # Limit Handling
+      ################################################################################
+
+      # To prevent huge traces from being generated, we should stop collecting
+      # spans as we go beyond some reasonably large count.
+
+      MAX_SPANS = 500
+
+      def over_span_limit?(spans)
+        if spans.size > MAX_SPANS
+          log_over_span_limit
+          @limited = true
+        else
+          false
+        end
+      end
+
+      def log_over_span_limit
+        unless limited?
+          context.logger.debug "Not recording additional spans for #{name}. Over the span limit."
+        end
+      end
+
+      def limited?
+        !! @limited
       end
     end
   end
