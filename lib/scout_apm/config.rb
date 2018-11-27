@@ -162,6 +162,7 @@ module ScoutApm
       'database_metric_report_limit' => IntegerCoercion.new,
       'instrument_http_url_length' => IntegerCoercion.new,
       'start_resque_server_instrument' => BooleanCoercion.new,
+      'compress_payload' => BooleanCoercion.new,
     }
 
 
