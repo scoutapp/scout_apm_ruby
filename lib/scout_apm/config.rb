@@ -10,6 +10,7 @@ require 'scout_apm/environment'
 # customer-focused documentation.
 #
 # application_root - override the detected directory of the application
+# collect_remote_ip - automatically capture user's IP into a Trace's Context
 # compress_payload - true/false to enable gzipping of payload
 # data_file        - override the default temporary storage location. Must be a location in a writable directory
 # dev_trace        - true or false. Enables always-on tracing in development environmen only
@@ -40,6 +41,7 @@ module ScoutApm
     KNOWN_CONFIG_OPTIONS = [
         'application_root',
         'async_recording',
+        'collect_remote_ip',
         'compress_payload',
         'config_file',
         'data_file',
