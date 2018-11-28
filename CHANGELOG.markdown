@@ -2,6 +2,13 @@
 
 * ScoutProf BETA
 
+# 2.4.21
+
+* App & Background Integrations only install when needed (#228)
+* New Setting `collect_remote_ip`, to optionally disable automated capture of
+  end-user IP Address. No change to default behavior.
+* Allow setting `compress_payload` option from ENV var (#234)
+
 # 2.4.20
 
 * `start_resque_server_instrument` option to allow disabling the WEBrick server
