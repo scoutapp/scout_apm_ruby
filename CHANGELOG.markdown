@@ -2,6 +2,15 @@
 
 * ScoutProf BETA
 
+# 2.4.20
+
+* `start_resque_server_instrument` option to allow disabling the WEBrick server
+   component in custom installation scenarios
+* Allow setting `revision_sha` setting in YAML
+
+# 2.4.19
+
+* Fix disabled_instruments (#220)
 
 # 2.4.18
 
