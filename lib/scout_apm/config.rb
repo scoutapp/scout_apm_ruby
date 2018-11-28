@@ -153,18 +153,19 @@ module ScoutApm
 
 
     SETTING_COERCIONS = {
-      "async_recording"        => BooleanCoercion.new,
-      "detailed_middleware"    => BooleanCoercion.new,
-      "dev_trace"              => BooleanCoercion.new,
-      "enable_background_jobs" => BooleanCoercion.new,
-      "ignore"                 => JsonCoercion.new,
-      "max_traces"             => IntegerCoercion.new,
-      "monitor"                => BooleanCoercion.new,
+      'async_recording' => BooleanCoercion.new,
+      'detailed_middleware' => BooleanCoercion.new,
+      'dev_trace' => BooleanCoercion.new,
+      'enable_background_jobs' => BooleanCoercion.new,
+      'ignore' => JsonCoercion.new,
+      'max_traces' => IntegerCoercion.new,
+      'monitor' => BooleanCoercion.new,
+      'collect_remote_ip' => BooleanCoercion.new,
+      'compress_payload' => BooleanCoercion.new,
       'database_metric_limit'  => IntegerCoercion.new,
       'database_metric_report_limit' => IntegerCoercion.new,
       'instrument_http_url_length' => IntegerCoercion.new,
       'start_resque_server_instrument' => BooleanCoercion.new,
-      'collect_remote_ip' => BooleanCoercion.new,
     }
 
 
