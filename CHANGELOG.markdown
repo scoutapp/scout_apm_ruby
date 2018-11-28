@@ -2,6 +2,7 @@
 
 * ScoutProf BETA
 
+
 # 2.4.18
 
 * Add Shoryuken Support (#215)
