@@ -10,6 +10,7 @@ require 'scout_apm/environment'
 # customer-focused documentation.
 #
 # application_root - override the detected directory of the application
+# collect_remote_ip - automatically capture user's IP into a Trace's Context
 # compress_payload - true/false to enable gzipping of payload
 # data_file        - override the default temporary storage location. Must be a location in a writable directory
 # dev_trace        - true or false. Enables always-on tracing in development environmen only
@@ -40,6 +41,7 @@ module ScoutApm
     KNOWN_CONFIG_OPTIONS = [
         'application_root',
         'async_recording',
+        'collect_remote_ip',
         'compress_payload',
         'config_file',
         'data_file',
@@ -151,13 +153,15 @@ module ScoutApm
 
 
     SETTING_COERCIONS = {
-      "async_recording"        => BooleanCoercion.new,
-      "detailed_middleware"    => BooleanCoercion.new,
-      "dev_trace"              => BooleanCoercion.new,
-      "enable_background_jobs" => BooleanCoercion.new,
-      "ignore"                 => JsonCoercion.new,
-      "max_traces"             => IntegerCoercion.new,
-      "monitor"                => BooleanCoercion.new,
+      'async_recording' => BooleanCoercion.new,
+      'detailed_middleware' => BooleanCoercion.new,
+      'dev_trace' => BooleanCoercion.new,
+      'enable_background_jobs' => BooleanCoercion.new,
+      'ignore' => JsonCoercion.new,
+      'max_traces' => IntegerCoercion.new,
+      'monitor' => BooleanCoercion.new,
+      'collect_remote_ip' => BooleanCoercion.new,
+      'compress_payload' => BooleanCoercion.new,
       'database_metric_limit'  => IntegerCoercion.new,
       'database_metric_report_limit' => IntegerCoercion.new,
       'instrument_http_url_length' => IntegerCoercion.new,
@@ -268,6 +272,7 @@ module ScoutApm
         'database_metric_report_limit' => 1000,
         'instrument_http_url_length' => 300,
         'start_resque_server_instrument' => true, # still only starts if Resque is detected
+        'collect_remote_ip' => true,
       }.freeze
 
       def value(key)

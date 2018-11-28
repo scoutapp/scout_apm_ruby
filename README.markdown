@@ -55,6 +55,12 @@ gem 'scout_apm'
 SCOUT_DEV_TRACE=true rails server
 ```
 
+## How to test gem locally
+
+* Point your gemfile at your local checkout: `gem 'scout_apm', path: '/path/to/scout_apm_ruby`
+* Compile native code: `cd /path/to/scout_apm_ruby && bundle exec rake compile`
+
+
 ## Docs
 
 For the complete list of supported frameworks, Rubies, configuration options
