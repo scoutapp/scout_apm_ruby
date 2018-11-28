@@ -54,7 +54,9 @@ module ScoutApm
       def perform_action_with_scout_instruments(*args, &block)
         req = ScoutApm::RequestManager.lookup
         req.annotate_request(:uri => request.path) # for security by-default, we don't use request.fullpath which could reveal filtered params.
-        req.context.add_user(:ip => request.remote_ip)
+        if ScoutApm::Agent.instance.context.config.value('collect_remote_ip')
+          req.context.add_user(:ip => request.remote_ip)
+        end
         req.set_headers(request.headers)
         req.start_layer( ScoutApm::Layer.new("Controller", "#{controller_path}/#{action_name}") )
 
