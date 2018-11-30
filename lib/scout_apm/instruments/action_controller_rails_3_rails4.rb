@@ -60,10 +60,11 @@ module ScoutApm
           def process_action(*args)
             req = ScoutApm::RequestManager.lookup
             current_layer = req.current_layer
+            agent_context = ScoutApm::Agent.instance.context
 
             # Check if this this request is to be reported instantly
             if instant_key = request.cookies['scoutapminstant']
-              ScoutApm::Agent.instance.context.logger.info "Instant trace request with key=#{instant_key} for path=#{path}"
+              agent_context.logger.info "Instant trace request with key=#{instant_key} for path=#{path}"
               req.instant_key = instant_key
             end
 
@@ -74,7 +75,9 @@ module ScoutApm
               req.annotate_request(:uri => ScoutApm::Instruments::ActionControllerRails3Rails4.scout_transaction_uri(request))
 
               # IP Spoofing Protection can throw an exception, just move on w/o remote ip
-              req.context.add_user(:ip => request.remote_ip) rescue nil
+              if agent_context.config.value('collect_remote_ip')
+                req.context.add_user(:ip => request.remote_ip) rescue nil
+              end
               req.set_headers(request.headers)
 
               resolved_name = scout_action_name(*args)

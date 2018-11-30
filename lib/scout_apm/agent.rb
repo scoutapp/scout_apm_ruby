@@ -37,10 +37,13 @@ module ScoutApm
 
       logger.info "Scout Agent [#{ScoutApm::VERSION}] Initialized"
 
-      instrument_manager.install! if should_load_instruments? || force
-
-      install_background_job_integrations
-      install_app_server_integration
+      if should_load_instruments? || force
+        instrument_manager.install!
+        install_background_job_integrations
+        install_app_server_integration
+      else
+        logger.info "Not Loading Instruments"
+      end
 
       logger.info "Scout Agent [#{ScoutApm::VERSION}] Installed"
 
