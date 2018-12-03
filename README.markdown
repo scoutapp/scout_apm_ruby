@@ -12,8 +12,8 @@ The Scout agent is engineered to do some wonderful things:
 
 * A unique focus on identifying those hard-to-investigate outliers like memory bloat, N+1s, and user-specific problems. [See an example workflow](http://scoutapp.com/newrelic-alternative).
 * [Low-overhead](http://blog.scoutapp.com/articles/2016/02/07/overhead-benchmarks-new-relic-vs-scout)
-* View your performance metrics during development with [DevTrace](http://help.apm.scoutapp.com/#devtrace) and in production via [server_timing](https://github.com/scoutapp/ruby_server_timing).
-* Production-Safe profiling of custom code via [ScoutProf](http://help.apm.scoutapp.com/#scoutprof) (BETA).
+* View your performance metrics during development with [DevTrace](https://help.apm.scoutapp.com/#devtrace) and in production via [server_timing](https://github.com/scoutapp/ruby_server_timing).
+* Production-Safe profiling of custom code via [ScoutProf](https://help.apm.scoutapp.com/#scoutprof) (BETA).
 
 ## Getting Started
 
@@ -64,7 +64,7 @@ SCOUT_DEV_TRACE=true rails server
 ## Docs
 
 For the complete list of supported frameworks, Rubies, configuration options
-and more, see our [help site](http://help.apm.scoutapp.com/).
+and more, see our [help site](https://help.apm.scoutapp.com/).
 
 ## Help
 
