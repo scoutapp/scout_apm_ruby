@@ -115,7 +115,7 @@ class DetailedTrace
   end
 
   def score
-    @score
+    @total_score
   end
 
 end
