@@ -101,6 +101,23 @@ class DetailedTrace
       spans: spans.as_json,
     }
   end
+
+  ########################
+  # Scorable interface
+  #
+  # Needed so we can merge ScoredItemSet instances
+  def call
+    self
+  end
+
+  def name
+    code
+  end
+
+  def score
+    @score
+  end
+
 end
 
 ##########
