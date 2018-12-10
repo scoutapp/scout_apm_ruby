@@ -14,7 +14,7 @@ module ScoutApm
                         :db_metrics => {
                           :query => DbQuerySerializerToJson.new(db_query_metrics).as_json,
                         },
-                        :span_traces => traces.as_json,
+                        :span_traces => traces.map{ |t| t.as_json },
           })
         end
 

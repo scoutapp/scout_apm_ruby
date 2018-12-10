@@ -15,6 +15,10 @@ module ScoutApm
         # Let the store know we're here, and if it wants our data, it will call
         # back into #call
         @store.track_slow_job!(self)
+
+        # Store the detailed trace at the same time, with the same points
+        LayerConverters::TraceConverter.new(@context, @request, @layer_finder, @store).record!(:job, @points)
+
         nil # not returning anything in the layer results ... not used
       end
 
