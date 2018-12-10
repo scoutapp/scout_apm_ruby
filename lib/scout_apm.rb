@@ -16,6 +16,7 @@ require 'thread'
 require 'time'
 require 'yaml'
 require 'rbconfig'
+require 'securerandom'
 
 #####################################
 # Gem Requires

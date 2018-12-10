@@ -81,10 +81,16 @@ module ScoutApm
       }
     end
 
-    def track_trace!(trace)
+    # the arg `type` can be unwound later when we unwind the SlowJobConverter stuff.
+    # Unsure if we want to keep the distinction between web & job traces, vs. merging them.
+    def track_trace!(trace, type)
       return if trace.nil?
       @mutex.synchronize {
-        current_period.merge_traces!(Array(trace))
+        if type == :web
+          current_period.merge_web_traces!(Array(trace))
+        elsif type == :job
+          current_period.merge_job_traces!(Array(trace))
+        end
       }
     end
 
@@ -202,7 +208,8 @@ module ScoutApm
     # A ScoredItemSet holding the "best" traces for the period
     attr_reader :job_traces
 
-    attr_reader :traces
+    attr_reader :web_detail_traces
+    attr_reader :job_detail_traces
 
     # An Array of HistogramsReport
     attr_reader :histograms
@@ -220,7 +227,9 @@ module ScoutApm
 
       @request_traces = ScoredItemSet.new(context.config.value('max_traces'))
       @job_traces = ScoredItemSet.new(context.config.value('max_traces'))
-      @traces = ScoredItemSet.new(context.config.value('max_traces'))
+
+      @web_detail_traces = ScoredItemSet.new(context.config.value('max_traces'))
+      @job_detail_traces = ScoredItemSet.new(context.config.value('max_traces'))
 
       @histograms = []
 
@@ -237,7 +246,8 @@ module ScoutApm
         merge_slow_transactions!(other.slow_transactions_payload).
         merge_jobs!(other.jobs).
         merge_slow_jobs!(other.slow_jobs_payload).
-        merge_traces!(other.traces).
+        merge_web_traces!(other.web_traces).
+        merge_job_traces!(other.job_traces).
         merge_histograms!(other.histograms).
         merge_db_query_metrics!(other.db_query_metric_set)
       self
@@ -293,9 +303,17 @@ module ScoutApm
       self
     end
 
-    def merge_traces!(new_traces)
+    def merge_web_traces!(new_traces)
       Array(new_traces).each do |trace|
-        traces << trace
+        web_detail_traces << trace
+      end
+
+      self
+    end
+
+    def merge_job_traces!(new_traces)
+      Array(new_traces).each do |trace|
+        job_detail_traces << trace
       end
 
       self

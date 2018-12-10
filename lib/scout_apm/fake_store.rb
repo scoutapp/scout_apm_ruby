@@ -17,6 +17,9 @@ module ScoutApm
     def track_one!(type, name, value, options={})
     end
 
+    def track_trace!(trace, type)
+    end
+
     def track_histograms!(histograms, options={})
     end
 

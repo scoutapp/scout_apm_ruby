@@ -11,5 +11,32 @@ module ScoutApm
         s
       end
     end
+
+    # Represents a random ID that we can use to track a certain request. The
+    # `req` prefix is only for ease of reading logs - it should not be
+    # interpreted to convey any sort of meaning.
+    class RequestId
+      def initialize
+        @random = SecureRandom.hex(16)
+      end
+
+      def to_s
+        "req-#{@random}"
+      end
+    end
+
+    # Represents a random ID that we can use to track a certain span. The
+    # `span` prefix is only for ease of reading logs - it should not be
+    # interpreted to convey any sort of meaning.
+    class SpanId
+      def initialize
+        @random = SecureRandom.hex(16)
+      end
+
+      def to_s
+        "span-#{@random}"
+      end
+    end
+
   end
 end

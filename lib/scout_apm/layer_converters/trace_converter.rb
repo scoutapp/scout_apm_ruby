@@ -1,42 +1,19 @@
 module ScoutApm
   module LayerConverters
-
-    # Represents a random ID that we can use to track a certain request. The
-    # `req` prefix is only for ease of reading logs - it should not be
-    # interpreted to convey any sort of meaning.
-    class RequestId
-      def initialize
-        @random = SecureRandom.hex(16)
-      end
-
-      def to_s
-        "req-#{@random}"
-      end
-    end
-
-    # Represents a random ID that we can use to track a certain span. The
-    # `span` prefix is only for ease of reading logs - it should not be
-    # interpreted to convey any sort of meaning.
-    class SpanId
-      def initialize
-        @random = SecureRandom.hex(16)
-      end
-
-      def to_s
-        "span-#{@random}"
-      end
-    end
-
     class TraceConverter < ConverterBase
       ###################
       #  Converter API  #
       ###################
-      def record!
-        @points = context.slow_request_policy.score(request)
+
+
+      # Temporarily take arguments, to match up with SlowJobConverter calling into this.
+      def record!(type = :web, points = nil)
+        @points = points || context.slow_request_policy.score(request)
 
         # Let the store know we're here, and if it wants our data, it will call
         # back into #call
-        @store.track_trace!(self)
+        @store.track_trace!(self, type)
+
         nil # not returning anything in the layer results ... not used
       end
 
@@ -57,7 +34,7 @@ module ScoutApm
         # record the change in memory usage
         mem_delta = ScoutApm::Instruments::Process::ProcessMemory.new(context).rss_to_mb(@request.capture_mem_delta!)
 
-        request_id = RequestId.new
+        request_id = request.request_id
         revision = context.environment.git_revision.sha
         start_instant = request.root_layer.start_time
         stop_instant = request.root_layer.stop_time
@@ -108,7 +85,7 @@ module ScoutApm
       # Returns an array of span objects. Uses recursion to get all children
       # wired up w/ correct parent_ids
       def create_spans(layer, parent_id = nil)
-        span_id = SpanId.new.to_s
+        span_id = ScoutApm::Utils::SpanId.new.to_s
 
         start_instant = layer.start_time
         stop_instant = layer.stop_time
