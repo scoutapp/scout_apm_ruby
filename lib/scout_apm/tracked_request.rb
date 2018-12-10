@@ -42,6 +42,9 @@ module ScoutApm
     # the name is determined from the name of the Controller or Job layer.
     attr_accessor :name_override
 
+    # A unique, but otherwise meaningless String to identify this request. UUID
+    attr_reader :request_id
+
     # When we see these layers, it means a real request is going through the
     # system. We toggle a flag to turn on some slightly more expensive
     # instrumentation (backtrace collection and the like) that would be too
@@ -64,6 +67,7 @@ module ScoutApm
       @mem_start = mem_usage
       @recorder = agent_context.recorder
       @real_request = false
+      @request_id = ScoutApm::Utils::RequestId.new.to_s
       ignore_request! if @recorder.nil?
     end
 
@@ -274,6 +278,8 @@ module ScoutApm
       apply_name_override
 
       @agent_context.transaction_time_consumed.add(unique_name, root_layer.total_call_time)
+
+      context.add(:request_id => request_id)
 
       # Make a constant, then call converters.dup.each so it isn't inline?
       converters = {
