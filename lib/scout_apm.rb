@@ -15,6 +15,7 @@ require 'socket'
 require 'thread'
 require 'time'
 require 'yaml'
+require 'securerandom'
 
 #####################################
 # Gem Requires
