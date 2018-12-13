@@ -71,8 +71,7 @@ module ScoutApm
           code,
 
           spans,
-          tags,
-
+          tags
 
           # total_score = 0,
           # percentile_score = 0,

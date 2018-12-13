@@ -77,28 +77,28 @@ class DetailedTrace
 
   def as_json(*)
     {
-      version: VERSION,
-      identity: {
-        request_id: request_id,
-        revision: revision,
-        host: host,
-        start_instant: start_instant.iso8601(6),
-        stop_instant: stop_instant.iso8601(6),
-        type: type,
-        naming: {
-          path: path,
-          code: code,
+      :version => VERSION,
+      :identity => {
+        :request_id => request_id,
+        :revision => revision,
+        :host => host,
+        :start_instant => start_instant.iso8601(6),
+        :stop_instant => stop_instant.iso8601(6),
+        :type => type,
+        :naming => {
+          :path => path,
+          :code => code,
         },
-        score: {
-          total: total_score,
-          percentile: percentile_score,
-          age: age_score,
-          memory_delta: memory_delta_score,
-          allocations: memory_allocations_score,
+        :score => {
+          :total => total_score,
+          :percentile => percentile_score,
+          :age => age_score,
+          :memory_delta => memory_delta_score,
+          :allocations => memory_allocations_score,
         }
       },
-      tags: tags.as_json,
-      spans: spans.as_json,
+      :tags => tags.as_json,
+      :spans => spans.as_json,
     }
   end
 
@@ -174,15 +174,15 @@ class DetailedTraceSpan
 
   def as_json(*)
     {
-      type: @span_type,
-      identity: {
-        id: span_id,
-        parent_id: parent_id,
-        start_instant: start_instant.iso8601(6),
-        stop_instant: stop_instant.iso8601(6),
-        operation: operation,
+      :type => @span_type,
+      :identity => {
+        :id => span_id,
+        :parent_id => parent_id,
+        :start_instant => start_instant.iso8601(6),
+        :stop_instant => stop_instant.iso8601(6),
+        :operation => operation,
       },
-      tags: @tags.as_json,
+      :tags => @tags.as_json,
     }
   end
 end
