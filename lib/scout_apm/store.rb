@@ -246,8 +246,8 @@ module ScoutApm
         merge_slow_transactions!(other.slow_transactions_payload).
         merge_jobs!(other.jobs).
         merge_slow_jobs!(other.slow_jobs_payload).
-        merge_web_traces!(other.web_traces).
-        merge_job_traces!(other.job_traces).
+        merge_web_traces!(other.web_detail_traces).
+        merge_job_traces!(other.job_detail_traces).
         merge_histograms!(other.histograms).
         merge_db_query_metrics!(other.db_query_metric_set)
       self
