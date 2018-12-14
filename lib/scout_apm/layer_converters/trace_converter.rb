@@ -34,7 +34,7 @@ module ScoutApm
         # record the change in memory usage
         mem_delta = ScoutApm::Instruments::Process::ProcessMemory.new(context).rss_to_mb(@request.capture_mem_delta!)
 
-        request_id = request.request_id
+        transaction_id = request.transaction_id
         revision = context.environment.git_revision.sha
         start_instant = request.root_layer.start_time
         stop_instant = request.root_layer.stop_time
@@ -60,7 +60,7 @@ module ScoutApm
         spans = create_spans(request.root_layer)
 
         DetailedTrace.new(
-          request_id,
+          transaction_id,
           revision,
           host,
           start_instant,

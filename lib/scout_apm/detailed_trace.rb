@@ -4,7 +4,7 @@
 # {
 # "version": 1,
 # "identity": {
-#   "request_id": "....",
+#   "transaction_id": "req-....",
 #   "revision": "abcdef",
 #   "start_instant": "01-01-01T00:00:00.0000Z",
 #   "stop_instant": "01-01-01T00:00:01.0000Z",
@@ -34,7 +34,7 @@ class DetailedTrace
   attr_reader :spans
   attr_reader :tags
 
-  attr_reader :request_id
+  attr_reader :transaction_id
   attr_reader :revision
   attr_reader :start_instant
   attr_reader :stop_instant
@@ -53,11 +53,11 @@ class DetailedTrace
 
   VERSION = 1
 
-  def initialize(request_id, revision, host, start_instant, stop_instant, type, path, code, spans, tags)
+  def initialize(transaction_id, revision, host, start_instant, stop_instant, type, path, code, spans, tags)
     @spans = spans
     @tags = DetailedTraceTags(tags)
 
-    @request_id = request_id
+    @transaction_id = transaction_id
     @revision = revision
     @host = host
     @start_instant = start_instant
@@ -79,7 +79,7 @@ class DetailedTrace
     {
       :version => VERSION,
       :identity => {
-        :request_id => request_id,
+        :transaction_id => transaction_id,
         :revision => revision,
         :host => host,
         :start_instant => start_instant.iso8601(6),
