@@ -43,7 +43,7 @@ module ScoutApm
     attr_accessor :name_override
 
     # A unique, but otherwise meaningless String to identify this request. UUID
-    attr_reader :request_id
+    attr_reader :transaction_id
 
     # When we see these layers, it means a real request is going through the
     # system. We toggle a flag to turn on some slightly more expensive
@@ -67,7 +67,7 @@ module ScoutApm
       @mem_start = mem_usage
       @recorder = agent_context.recorder
       @real_request = false
-      @request_id = ScoutApm::Utils::RequestId.new.to_s
+      @transaction_id = ScoutApm::Utils::TransactionId.new.to_s
       ignore_request! if @recorder.nil?
     end
 
@@ -306,7 +306,7 @@ module ScoutApm
 
       @agent_context.transaction_time_consumed.add(unique_name, root_layer.total_call_time)
 
-      context.add(:request_id => request_id)
+      context.add(:transaction_id => transaction_id)
 
       # Make a constant, then call converters.dup.each so it isn't inline?
       converters = {
