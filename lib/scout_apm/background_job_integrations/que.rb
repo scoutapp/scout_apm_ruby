@@ -102,7 +102,7 @@ module ScoutApm
                       end
 
             req = ScoutApm::RequestManager.lookup
-            req.annotate_request(queue_latency: latency)
+            req.annotate_request(:queue_latency => latency)
 
             begin
               req.start_layer(ScoutApm::Layer.new('Queue', queue))
