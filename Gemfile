@@ -10,3 +10,7 @@ if RUBY_VERSION <= "1.8.7"
   gem "pry", "~> 0.9.12"
   gem "rake", "~> 10.5"
 end
+
+group :development do
+  gem "parser"
+end
