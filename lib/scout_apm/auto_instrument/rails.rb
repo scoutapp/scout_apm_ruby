@@ -68,3 +68,6 @@ module ScoutApm
     end
   end
 end
+
+# Force any lazy loading to occur here, before we patch iseq_load. Otherwise you might end up in an infinite loop when rewriting code.
+ScoutApm::AutoInstrument::Rails.rewrite('(preload)', '')
