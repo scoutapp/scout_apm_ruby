@@ -1,2 +1,2 @@
 
-require_relative 'auto_instrument/instruction_sequence'
+require 'scout_apm/auto_instrument/instruction_sequence'

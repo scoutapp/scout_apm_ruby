@@ -1,5 +1,5 @@
 
-require_relative 'rails'
+require 'scout_apm/auto_instrument/rails'
 
 module ScoutApm
   module AutoInstrument
