@@ -28,6 +28,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency "rake-compiler"
   s.add_development_dependency "addressable"
   s.add_development_dependency "activesupport"
+  s.add_development_dependency "parser"
 
   if RUBY_VERSION >= "1.9.3"
     s.add_development_dependency "rubocop"
