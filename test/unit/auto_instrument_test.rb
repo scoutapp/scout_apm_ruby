@@ -19,6 +19,8 @@ class AutoInstrumentTest < Minitest::Test
   end
 
   def test_rails_controller_rewrite
+    skip if RUBY_VERSION < "2.3"
+
     assert_equal instrumented_source("controller"), ::ScoutApm::AutoInstrument::Rails.rewrite(source_path("controller"))
   end
 end
