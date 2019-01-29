@@ -4,7 +4,7 @@ require 'scout_apm/auto_instrument/rails'
 module ScoutApm
   module AutoInstrument
     module InstructionSequence
-      CONTROLLER_PATH_PATTERN = /\/apm\/app\/controllers\/.*_controller.rb$/
+      CONTROLLER_PATH_PATTERN = /\/app\/controllers\/.*_controller.rb$/
 
       def load_iseq(path)
         if path =~ CONTROLLER_PATH_PATTERN
