@@ -1,7 +1,4 @@
 
-# In order for this to work, you must add `gem 'parser'` to your Gemfile.
-require 'parser/current'
-
 module ScoutApm
   module AutoInstrument
     module Rails
@@ -38,7 +35,7 @@ module ScoutApm
         #   column = node.location.column || 'column?'
         #   method_name = node.children[0].children[1] || '*unknown*'
         #
-        #   wrap(node.location.expression, "::ScoutApm::Instruments::AutoInstruments.dynamic_layer('#{method_name}:l#{line}:c#{column}'){", "}")
+        #   wrap(node.location.expression, "::ScoutApm::AutoInstrument('#{method_name}:l#{line}:c#{column}'){", "}")
         # end
 
         def on_send(node)
@@ -48,7 +45,7 @@ module ScoutApm
           column = node.location.column || 'column?'
           method_name = node.children[1] || '*unknown*'
 
-          wrap(node.location.expression, "::ScoutApm::Instruments::AutoInstruments.dynamic_layer('#{method_name}:l#{line}:c#{column}'){", "}")
+          wrap(node.location.expression, ":::ScoutApm::AutoInstrument('#{method_name}:l#{line}:c#{column}'){", "}")
         end
 
         def process(node)
