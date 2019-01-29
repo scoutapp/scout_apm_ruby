@@ -9,10 +9,9 @@ module ScoutApm
       def load_iseq(path)
         if path =~ CONTROLLER_PATH_PATTERN
           new_code = Rails.rewrite(path)
-
-          return compile(new_code, path, filepath)
+          return compile(new_code, File.basename(path), path)
         else
-          return super
+          return compile_file(path)
         end
       end
     end
