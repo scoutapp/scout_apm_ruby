@@ -16,7 +16,13 @@ module ScoutApm
         end
       end
     end
-
-    RubyVM::InstructionSequence.prepend(InstructionSequence)
+    
+    # This should work (https://bugs.ruby-lang.org/issues/15572), but it doesn't.
+    # RubyVM::InstructionSequence.extend(InstructionSequence)
+    
+    # So we do this instead:
+    class << ::RubyVM::InstructionSequence
+      prepend InstructionSequence
+    end
   end
 end
