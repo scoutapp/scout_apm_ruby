@@ -90,7 +90,6 @@ require 'scout_apm/instruments/middleware_detailed' # Disabled by default, see t
 require 'scout_apm/instruments/rails_router'
 require 'scout_apm/instruments/grape'
 require 'scout_apm/instruments/sinatra'
-require 'scout_apm/instruments/auto_instruments'
 require 'allocations'
 
 require 'scout_apm/instruments/process/process_cpu'
