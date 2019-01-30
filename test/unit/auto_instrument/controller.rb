@@ -30,4 +30,14 @@ class ClientsController < ApplicationController
       end
     end
   end
+
+  def data
+    @clients = Client.all
+
+    formatter = proc do |row|
+      row.to_json
+    end
+
+    respond_with @clients.each(&formatter).join("\n"), content_type: 'application/json; boundary=NL'
+  end
 end
