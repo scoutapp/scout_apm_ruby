@@ -1,10 +1,8 @@
 require 'test_helper'
 
-class AutoInstrumentTest < Minitest::Test
-  def setup
-    require 'scout_apm/auto_instrument'
-  end
+require 'scout_apm/auto_instrument'
 
+class AutoInstrumentTest < Minitest::Test
   def source_path(name)
     File.expand_path("auto_instrument/#{name}.rb", __dir__)
   end
