@@ -24,7 +24,7 @@ module ScoutApm
 
           # Keeps track of the parent - child relationship between nodes:
           @nesting = []
-          
+
           # The stack of method nodes (type :def):
           @method = []
         end
