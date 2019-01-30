@@ -36,20 +36,20 @@ module ScoutApm
           parent = @nesting[@nesting.size - up - 1] and parent.type == type
         end
 
-        # def on_block(node)
-        #   line = node.location.line || 'line?'
-        #   column = node.location.column || 'column?'
-        #   method_name = node.children[0].children[1] || '*unknown*'
-        #
-        #   wrap(node.location.expression, "::ScoutApm::AutoInstrument('#{method_name}:l#{line}:c#{column}'){", "}")
-        # end
+        def on_block(node)
+          line = node.location.line || 'line?'
+          column = node.location.column || 'column?'
+          method_name = node.children[0].children[1] || '*unknown*'
+        
+          wrap(node.location.expression, "::ScoutApm::AutoInstrument('#{method_name}:l#{line}:c#{column}'){", "}")
+        end
 
         # Handle the method call AST node. If this method doesn't call `super`, no futher rewriting is applied to children.
         def on_send(node)
           # We aren't interested in top level function calls:
           return if @method.empty?
 
-          # This ignores both initial block method invocation `x{}`, and subsequent nested invocations `x{y}`:
+          # This ignores both initial block method invocation `*x*{}`, and subsequent nested invocations `x{*y*}`:
           return if parent_type?(:block)
 
           # Extract useful metadata for instrumentation:
