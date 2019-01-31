@@ -38,6 +38,6 @@ class ClientsController < ApplicationController
       row.to_json
     end
 
-    respond_with @clients.each(&formatter).join("\n"), content_type: 'application/json; boundary=NL'
+    respond_with @clients.each(&formatter).join("\n"), :content_type => 'application/json; boundary=NL'
   end
 end
