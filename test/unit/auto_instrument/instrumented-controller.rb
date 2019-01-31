@@ -38,6 +38,6 @@ class ClientsController < ApplicationController
       row.to_json
     end}
 
-    ::ScoutApm::AutoInstrument('respond_with:l41:c4'){respond_with @clients.each(&formatter).join("\n"), content_type: 'application/json; boundary=NL'}
+    ::ScoutApm::AutoInstrument('respond_with:l41:c4'){respond_with @clients.each(&formatter).join("\n"), :content_type => 'application/json; boundary=NL'}
   end
 end
