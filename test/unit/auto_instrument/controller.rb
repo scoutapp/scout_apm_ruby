@@ -3,6 +3,9 @@ class ClientsController < ApplicationController
   before_action :check_authorization
 
   def index
+    x = {}
+    x[:something] ||= 'foo'
+
     if params[:status] == "activated"
       @clients = Client.activated
     else
