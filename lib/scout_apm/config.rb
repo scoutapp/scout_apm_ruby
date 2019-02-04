@@ -158,6 +158,7 @@ module ScoutApm
     SETTING_COERCIONS = {
       'async_recording' => BooleanCoercion.new,
       'detailed_middleware' => BooleanCoercion.new,
+      'debug_scores' => BooleanCoercion.new,
       'dev_trace' => BooleanCoercion.new,
       'enable_background_jobs' => BooleanCoercion.new,
       'ignore' => JsonCoercion.new,
