@@ -44,6 +44,14 @@ module ScoutApm
           wrap(node.location.expression, "::ScoutApm::AutoInstrument('#{method_name}:l#{line}:c#{column}'){", "}")
         end
 
+        def on_or_asgn(node)
+          process(node.children[1])
+        end
+
+        def on_and_asgn(node)
+          process(node.children[1])
+        end
+
         # Handle the method call AST node. If this method doesn't call `super`, no futher rewriting is applied to children.
         def on_send(node)
           # We aren't interested in top level function calls:
@@ -60,6 +68,16 @@ module ScoutApm
           # Wrap the expression with instrumentation:
           wrap(node.location.expression, "::ScoutApm::AutoInstrument('#{method_name}:l#{line}:c#{column}'){", "}")
         end
+
+        # def on_class(node)
+        #   class_name = node.children[1]
+        # 
+        #   Kernel.const_get(class_name).ancestors.include? ActionController::Controller
+        # 
+        #   if class_name =~ /.../
+        #     super # continue processing
+        #   end
+        # end
 
         # Invoked for every AST node as it is processed top to bottom.
         def process(node)

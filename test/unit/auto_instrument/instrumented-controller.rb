@@ -40,4 +40,10 @@ class ClientsController < ApplicationController
 
     ::ScoutApm::AutoInstrument('respond_with:l41:c4'){respond_with @clients.each(&formatter).join("\n"), :content_type => 'application/json; boundary=NL'}
   end
+  
+  def things
+    x = {}
+    x[:this] ||= 'foo'
+    x[:that] &&= ::ScoutApm::AutoInstrument('size:l47:c17'){'foo'.size}
+  end
 end
