@@ -3,9 +3,6 @@ class ClientsController < ApplicationController
   before_action :check_authorization
 
   def index
-    x = {}
-    x[:something] ||= 'foo'
-
     if params[:status] == "activated"
       @clients = Client.activated
     else
@@ -42,5 +39,11 @@ class ClientsController < ApplicationController
     end
 
     respond_with @clients.each(&formatter).join("\n"), :content_type => 'application/json; boundary=NL'
+  end
+  
+  def things
+    x = {}
+    x[:this] ||= 'foo'
+    x[:that] &&= 'foo'.size
   end
 end
