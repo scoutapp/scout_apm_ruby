@@ -3,6 +3,9 @@ class ClientsController < ApplicationController
   before_action :check_authorization
 
   def index
+    x = {}
+    x[:something] ||= 'foo'
+
     if ::ScoutApm::AutoInstrument('==:l6:c7'){params[:status] == "activated"}
       @clients = ::ScoutApm::AutoInstrument('activated:l7:c17'){Client.activated}
     else
