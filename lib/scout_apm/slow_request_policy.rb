@@ -31,11 +31,18 @@ module ScoutApm
     # The AgentContext we're running in
     attr_reader :context
 
+
     def initialize(context)
       @context = context
 
       zero_time = Time.now
       @last_seen = Hash.new { |h, k| h[k] = zero_time }
+
+      # Debugging of scores - will log up to MAX, at the set sampling rate
+      @debug_scores = context.config.value('debug_scores') 
+      @debug_scores_max = context.config.value('debug_scores_max')
+      @debug_scores_sample_percent = context.config.value('debug_scores_sample_percent') # whole number, 10 here is 10%
+      @debug_scores_printed = 0
     end
 
     def stored!(request)
@@ -66,7 +73,28 @@ module ScoutApm
 
       percent_of_total_time = context.transaction_time_consumed.percent_of_total(unique_name)
 
-      return speed_points(total_time) + percentile_points(percentile) + age_points(age) + percent_time_points(percent_of_total_time)
+      speed_p = speed_points(total_time)
+      percentile_p = percentile_points(percentile)
+      age_p = age_points(age)
+      percent_p = percent_time_points(percent_of_total_time)
+      total_p = speed_p + percentile_p + age_p + percent_p
+
+      if @debug_scores &&
+          @debug_scores_printed < @debug_scores_max &&
+          rand(100) < @debug_scores_sample_percent
+        @debug_scores_printed += 1
+        context.logger.info({
+          :endpoint => unique_name,
+          :percent_time_consumed => percent_of_total_time,
+          :total => total_p,
+          :speed => speed_p, 
+          :percentile => percentile_p,
+          :age => age_p,
+          :percent_score => percent_p,
+        })
+      end
+
+      total_p
     end
 
     private
