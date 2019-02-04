@@ -40,4 +40,10 @@ class ClientsController < ApplicationController
 
     respond_with @clients.each(&formatter).join("\n"), :content_type => 'application/json; boundary=NL'
   end
+  
+  def things
+    x = {}
+    x[:this] ||= 'foo'
+    x[:that] &&= 'foo'.size
+  end
 end
