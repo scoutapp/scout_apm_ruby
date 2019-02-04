@@ -3,9 +3,6 @@ class ClientsController < ApplicationController
   before_action :check_authorization
 
   def index
-    x = {}
-    x[:something] ||= 'foo'
-
     if ::ScoutApm::AutoInstrument('==:l6:c7'){params[:status] == "activated"}
       @clients = ::ScoutApm::AutoInstrument('activated:l7:c17'){Client.activated}
     else
@@ -42,5 +39,11 @@ class ClientsController < ApplicationController
     end}
 
     ::ScoutApm::AutoInstrument('respond_with:l41:c4'){respond_with @clients.each(&formatter).join("\n"), :content_type => 'application/json; boundary=NL'}
+  end
+  
+  def things
+    x = {}
+    x[:this] ||= 'foo'
+    x[:that] &&= ::ScoutApm::AutoInstrument('size:l47:c17'){'foo'.size}
   end
 end
