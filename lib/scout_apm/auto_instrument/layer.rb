@@ -8,10 +8,7 @@ module ScoutApm
       request.start_layer(layer)
       started_layer = true
 
-      puts "================ STARTED AUTO INSTRUMENT LAYER #{name} ============="
-      puts layer.to_s
       result = yield
-      puts "================ FINISHED AUTO INSTRUMENT LAYER #{name} ============="
     rescue
       request.error!
       raise
