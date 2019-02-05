@@ -4,18 +4,21 @@ require 'scout_apm/auto_instrument/rails'
 module ScoutApm
   module AutoInstrument
     module InstructionSequence
-      CONTROLLER_PATH_PATTERN = /\/app\/controllers\/.*_controller.rb$/
-
+      
       def load_iseq(path)
-        if path =~ CONTROLLER_PATH_PATTERN
-          new_code = Rails.rewrite(path)
-          return compile(new_code, File.basename(path), path)
-        else
-          return compile_file(path)
+        if Rails.controller_path?(path)
+          begin
+            new_code = Rails.rewrite(path)
+            return self.compile(new_code, File.basename(path), path)
+          rescue SyntaxError => error
+            warn "Failed to apply auto-instrumentation to #{path}: #{error}"
+           end
         end
+        
+        return self.compile_file(path)
       end
     end
-
+    
     # This should work (https://bugs.ruby-lang.org/issues/15572), but it doesn't.
     # RubyVM::InstructionSequence.extend(InstructionSequence)
 
