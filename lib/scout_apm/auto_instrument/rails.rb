@@ -2,6 +2,24 @@
 module ScoutApm
   module AutoInstrument
     module Rails
+      # It's possible that this code is invoked before Rails is loaded.
+      def self.controller_root
+        @controller_root ||= if defined? ::Rails
+          File.join(::Rails.root, 'app', 'controllers')
+        end
+      end
+
+      # A general pattern to match Rails controller files:
+      CONTROLLER_FILE = /.*_controller.rb$/
+
+      # Whether the given path is likely to be a Rails controller.
+      # If `::Rails.root` is not defined, this will always return false.
+      def self.controller_path? path
+        if root = self.controller_root
+          path.start_with?(root) and path =~ CONTROLLER_FILE
+        end
+      end
+
       def self.rewrite(path, code = nil)
         code ||= File.read(path)
 
