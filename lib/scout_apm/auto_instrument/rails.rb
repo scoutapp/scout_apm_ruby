@@ -5,7 +5,11 @@ module ScoutApm
       # It's possible that this code is invoked before Rails is loaded.
       def self.controller_root
         @controller_root ||= if defined? ::Rails
-          File.join(::Rails.root, 'app', 'controllers')
+          if defined? ::Rails.root
+            if !::Rails.root.nil?
+              File.join(::Rails.root, 'app', 'controllers')
+            end
+          end
         end
       end
 
