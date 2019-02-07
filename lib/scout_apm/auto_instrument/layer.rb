@@ -9,9 +9,6 @@ module ScoutApm
       started_layer = true
 
       result = yield
-    rescue
-      request.error!
-      raise
     ensure
       request.stop_layer if started_layer
     end
