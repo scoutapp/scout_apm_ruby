@@ -51,8 +51,13 @@ module ScoutApm
           @method = []
         end
 
-        def instrument(method_name, line, column)
-          ["::ScoutApm::AutoInstrument(\"\#{self.class}\\\##{method_name}:L#{line}:C#{column}\"){", "}"]
+        def instrument(source, line, column)
+          # Don't log huge chunks of code... just the first line:
+          if lines = source.lines and lines.count > 1
+            source = lines.first.chomp + "..."
+          end
+          
+          ["::ScoutApm::AutoInstrument(\"\#{self.class}\\\##{@method.last.children[0]}:#{line}\", #{source.dump}){", "}"]
         end
 
         # Look up 1 or more nodes to check if the parent exists and matches the given type.
@@ -66,8 +71,8 @@ module ScoutApm
           line = node.location.line || 'line?'
           column = node.location.column || 'column?'
           method_name = node.children[0].children[1] || '*unknown*'
-        
-          wrap(node.location.expression, *instrument(method_name, line, column))
+
+          wrap(node.location.expression, *instrument(node.location.expression.source, line, column))
         end
 
         def on_or_asgn(node)
@@ -92,7 +97,7 @@ module ScoutApm
           method_name = node.children[1] || '*unknown*'
 
           # Wrap the expression with instrumentation:
-          wrap(node.location.expression, *instrument(method_name, line, column))
+          wrap(node.location.expression, *instrument(node.location.expression.source, line, column))
         end
 
         # def on_class(node)

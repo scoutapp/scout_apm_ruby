@@ -14,8 +14,18 @@ class AutoInstrumentTest < Minitest::Test
   def instrumented_source(name)
     File.read(instrumented_path(name))
   end
-
+  
+  # Use this to automatically update the test fixtures.
+  def update_instrumented_source(name)
+    File.write(
+      instrumented_path(name),
+      ::ScoutApm::AutoInstrument::Rails.rewrite(source_path("controller"))
+    )
+  end
+  
   def test_rails_controller_rewrite
     assert_equal instrumented_source("controller"), ::ScoutApm::AutoInstrument::Rails.rewrite(source_path("controller"))
+    
+    # update_instrumented_source("controller")
   end
 end if defined? ScoutApm::AutoInstrument
