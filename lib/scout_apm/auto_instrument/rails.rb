@@ -52,7 +52,7 @@ module ScoutApm
         end
 
         def instrument(method_name, line, column)
-          ["::ScoutApm::AutoInstrument('#{method_name}:L#{line}:C#{column}'){", "}"]
+          ["::ScoutApm::AutoInstrument(\"\#{self.class}\\\##{method_name}:L#{line}:C#{column}\"){", "}"]
         end
 
         # Look up 1 or more nodes to check if the parent exists and matches the given type.
