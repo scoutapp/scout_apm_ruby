@@ -13,13 +13,14 @@ module ScoutApm
     attr_reader :prof
     attr_reader :mem_delta
     attr_reader :allocations
+    attr_reader :span_trace
     attr_accessor :hostname # hack - we need to reset these server side.
     attr_accessor :seconds_since_startup # hack - we need to reset these server side.
     attr_accessor :git_sha # hack - we need to reset these server side.
 
     attr_reader :truncated_metrics # True/False that says if we had to truncate the metrics of this trace
 
-    def initialize(agent_context, uri, metric_name, total_call_time, metrics, allocation_metrics, context, time, raw_stackprof, mem_delta, allocations, score, truncated_metrics)
+    def initialize(agent_context, uri, metric_name, total_call_time, metrics, allocation_metrics, context, time, raw_stackprof, mem_delta, allocations, score, truncated_metrics, span_trace)
       @uri = uri
       @metric_name = metric_name
       @total_call_time = total_call_time
@@ -35,6 +36,7 @@ module ScoutApm
       @score = score
       @git_sha = agent_context.environment.git_revision.sha
       @truncated_metrics = truncated_metrics
+      @span_trace = span_trace
 
       agent_context.logger.debug { "Slow Request [#{uri}] - Call Time: #{total_call_time} Mem Delta: #{mem_delta} Score: #{score}"}
     end

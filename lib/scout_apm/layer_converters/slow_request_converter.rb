@@ -12,9 +12,6 @@ module ScoutApm
         # back into #call
         @store.track_slow_transaction!(self)
 
-        # Store the detailed trace at the same time, with the same points
-        LayerConverters::TraceConverter.new(@context, @request, @layer_finder, @store).record!(:web, @points)
-
         nil # not returning anything in the layer results ... not used
       end
 
@@ -55,7 +52,8 @@ module ScoutApm
                             mem_delta,
                             root_layer.total_allocations,
                             @points,
-                            limited?)
+                            limited?,
+                            span_trace)
       end
 
       # Full metrics from this request. These get stored permanently in a SlowTransaction.
@@ -84,6 +82,17 @@ module ScoutApm
         allocation_metric_hash = attach_backtraces(allocation_metric_hash)
 
         [metric_hash, allocation_metric_hash]
+      end
+
+      ###########################################################
+      #  Also create a new style trace. This is not a good      #
+      #  spot for this long term, but fixes an issue for now.   #
+      ###########################################################
+      
+      def span_trace
+        ScoutApm::LayerConverters::TraceConverter.
+          new(@context, @request, @layer_finder, @store).
+          call
       end
     end
   end

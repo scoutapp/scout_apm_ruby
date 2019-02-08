@@ -23,7 +23,9 @@ module ScoutApm
     attr_reader :git_sha
     attr_reader :truncated_metrics
 
-    def initialize(agent_context, queue_name, job_name, time, total_time, exclusive_time, context, metrics, allocation_metrics, mem_delta, allocations, score, truncated_metrics)
+    attr_reader :span_trace
+
+    def initialize(agent_context, queue_name, job_name, time, total_time, exclusive_time, context, metrics, allocation_metrics, mem_delta, allocations, score, truncated_metrics, span_trace)
       @queue_name = queue_name
       @job_name = job_name
       @time = time
@@ -39,6 +41,8 @@ module ScoutApm
       @git_sha = agent_context.environment.git_revision.sha
       @score = score
       @truncated_metrics = truncated_metrics
+
+      @span_trace = span_trace
 
       agent_context.logger.debug { "Slow Job [#{metric_name}] - Call Time: #{total_call_time} Mem Delta: #{mem_delta}"}
     end
