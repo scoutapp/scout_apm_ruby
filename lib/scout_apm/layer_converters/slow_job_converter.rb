@@ -16,9 +16,6 @@ module ScoutApm
         # back into #call
         @store.track_slow_job!(self)
 
-        # Store the detailed trace at the same time, with the same points
-        LayerConverters::TraceConverter.new(@context, @request, @layer_finder, @store).record!(:job, @points)
-
         nil # not returning anything in the layer results ... not used
       end
 
@@ -58,7 +55,8 @@ module ScoutApm
           mem_delta,
           job_layer.total_allocations,
           score,
-          limited?
+          limited?,
+          span_trace
         )
       end
 
@@ -91,6 +89,12 @@ module ScoutApm
       def skip_layer?(layer); super(layer) || layer == queue_layer; end
       def queue_layer; layer_finder.queue; end
       def job_layer; layer_finder.job; end
+
+      def span_trace
+        ScoutApm::LayerConverters::TraceConverter.
+          new(@context, @request, @layer_finder, @store).
+          call
+      end
     end
   end
 end

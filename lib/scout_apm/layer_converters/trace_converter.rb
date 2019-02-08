@@ -6,13 +6,12 @@ module ScoutApm
       ###################
 
 
-      # Temporarily take arguments, to match up with SlowJobConverter calling into this.
-      def record!(type = :web, points = nil)
-        @points = points || context.slow_request_policy.score(request)
+      def record!
+        @points = context.slow_request_policy.score(request)
 
         # Let the store know we're here, and if it wants our data, it will call
         # back into #call
-        @store.track_trace!(self, type)
+        @store.track_trace!(self)
 
         nil # not returning anything in the layer results ... not used
       end

@@ -83,9 +83,7 @@ module ScoutApm
       slow_jobs = reporting_period.slow_jobs_payload
       histograms = reporting_period.histograms
       db_query_metrics = reporting_period.db_query_metrics_payload
-      web_detail_traces = reporting_period.web_detail_traces
-      job_detail_traces = reporting_period.job_detail_traces
-      traces = Array(web_detail_traces) + Array(job_detail_traces)
+      traces = slow_transactions.map(&:span_trace) + slow_jobs.map(&:span_trace)
 
       log_deliver(metrics, slow_transactions, metadata, slow_jobs, histograms)
 

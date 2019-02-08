@@ -81,14 +81,6 @@ module ScoutApm
       }
     end
 
-    # the arg `type` can be unwound later when we unwind the SlowJobConverter stuff.
-    def track_trace!(trace, type)
-      return if trace.nil?
-      @mutex.synchronize {
-        current_period.merge_detail_traces!(Array(trace))
-      }
-    end
-
     # Take each completed reporting_period, and write it to the layaway passed
     #
     # force - a boolean argument that forces this function to write
@@ -203,8 +195,11 @@ module ScoutApm
     # A ScoredItemSet holding the "best" traces for the period
     attr_reader :job_traces
 
+<<<<<<< HEAD
     attr_reader :detail_traces
 
+=======
+>>>>>>> detailed-traces
     # An Array of HistogramsReport
     attr_reader :histograms
 
@@ -222,8 +217,11 @@ module ScoutApm
       @request_traces = ScoredItemSet.new(context.config.value('max_traces'))
       @job_traces = ScoredItemSet.new(context.config.value('max_traces'))
 
+<<<<<<< HEAD
       @detail_traces = []
 
+=======
+>>>>>>> detailed-traces
       @histograms = []
 
       @metric_set = MetricSet.new
@@ -239,7 +237,10 @@ module ScoutApm
         merge_slow_transactions!(other.slow_transactions_payload).
         merge_jobs!(other.jobs).
         merge_slow_jobs!(other.slow_jobs_payload).
+<<<<<<< HEAD
         merge_detail_traces!(other.detail_traces).
+=======
+>>>>>>> detailed-traces
         merge_histograms!(other.histograms).
         merge_db_query_metrics!(other.db_query_metric_set)
       self
@@ -295,6 +296,7 @@ module ScoutApm
       self
     end
 
+<<<<<<< HEAD
     def merge_detail_traces!(new_traces)
       Array(new_traces).each do |trace|
         detail_traces << trace
@@ -303,6 +305,8 @@ module ScoutApm
       self
     end
 
+=======
+>>>>>>> detailed-traces
     def merge_histograms!(new_histograms)
       new_histograms = Array(new_histograms)
       @histograms = (histograms + new_histograms).
