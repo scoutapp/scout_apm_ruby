@@ -89,7 +89,6 @@ module ScoutApm
 
       payload = ScoutApm::Serializers::PayloadSerializer.serialize(metadata, metrics, slow_transactions, jobs, slow_jobs, histograms, db_query_metrics, traces)
       logger.debug("Sending payload w/ Headers: #{headers.inspect}")
-      logger.debug(payload)
 
       reporter.report(payload, headers)
     rescue => e
