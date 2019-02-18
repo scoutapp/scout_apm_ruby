@@ -134,7 +134,9 @@ module ScoutApm
       # },
       # ]
       def backtrace_parser(lines)
-        lines.map do |line|
+        bt = ScoutApm::Utils::BacktraceParser.new(lines).call
+
+        bt.map do |line|
           match = line.match(/(.*):(\d+):in `(.*)'/)
           {
             "file" => match[1],
@@ -142,6 +144,7 @@ module ScoutApm
             "function" => match[3],
           }
         end
+
       end
 
       ################################################################################
