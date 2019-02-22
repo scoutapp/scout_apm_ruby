@@ -11,8 +11,7 @@ module ScoutApm
 
       # Whether the given path is likely to be a Rails controller and not provided by a Gem.
       def self.controller_path? path
-          CONTROLLER_FILE.match(path) && !GEM_FILE.match(path)
-        end
+        CONTROLLER_FILE.match(path) && !GEM_FILE.match(path)
       end
 
       def self.rewrite(path, code = nil)
