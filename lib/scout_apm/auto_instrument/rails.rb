@@ -2,26 +2,16 @@
 module ScoutApm
   module AutoInstrument
     module Rails
-      # It's possible that this code is invoked before Rails is loaded.
-      def self.controller_root
-        @controller_root ||= if defined? ::Rails
-          if defined? ::Rails.root
-            if !::Rails.root.nil?
-              File.join(::Rails.root, 'app', 'controllers')
-            end
-          end
-        end
-      end
-
       # A general pattern to match Rails controller files:
-      CONTROLLER_FILE = /.*_controller.rb$/
+      CONTROLLER_FILE = /\/app\/controllers\/.*_controller.rb$/.freeze
 
-      # Whether the given path is likely to be a Rails controller.
-      # If `::Rails.root` is not defined, this will always return false.
+      # Some gems (Devise) provide controllers that match CONTROLLER_FILE pattern.
+      # Try a simple match to see if it's a Gemfile
+      GEM_FILE = /\/gems?\//.freeze
+
+      # Whether the given path is likely to be a Rails controller and not provided by a Gem.
       def self.controller_path? path
-        if root = self.controller_root
-          path.start_with?(root) and path =~ CONTROLLER_FILE
-        end
+        CONTROLLER_FILE.match(path) && !GEM_FILE.match(path)
       end
 
       def self.rewrite(path, code = nil)
