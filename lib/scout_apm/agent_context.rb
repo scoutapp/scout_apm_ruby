@@ -205,7 +205,7 @@ module ScoutApm
       if !@config.any_keys_found?
         logger.info("No configuration file loaded, and no configuration found in ENV. " +
                     "For assistance configuring Scout, visit " +
-                    "http://help.apm.scoutapp.com/#configuration-options")
+                    "https://help.apm.scoutapp.com/#ruby-configuration-options")
       end
     end
   end
