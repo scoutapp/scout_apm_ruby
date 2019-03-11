@@ -1,3 +1,8 @@
+# 2.4.22
+
+* Support Rails 6.0 View Instruments (#251) 
+* Update documentation URLs (#236)
+
 # 2.4.21
 
 * App & Background Integrations only install when needed (#228)
