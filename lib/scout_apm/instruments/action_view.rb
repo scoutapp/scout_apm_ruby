@@ -24,13 +24,18 @@ module ScoutApm
         @installed
       end
 
+      def prependable?
+        return true if context.environment.supports_module_prepend?
+        false
+      end
+
       def install
         return unless defined?(::ActionView) && defined?(::ActionView::PartialRenderer)
 
-        if defined?(::Rails) && defined?(::Rails::VERSION) && defined?(::Rails::VERSION::MAJOR) && ::Rails::VERSION::MAJOR < 6
-          install_using_tracer
-        else
+        if prependable?
           install_using_prepend
+        else
+          install_using_tracer
         end
         @installed = true
       end
