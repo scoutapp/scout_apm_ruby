@@ -46,8 +46,10 @@ module ScoutApm
           if lines = source.lines and lines.count > 1
             source = lines.first.chomp + "..."
           end
-          
-          ["::ScoutApm::AutoInstrument(\"\#{self.class}\\\##{@method.last.children[0]}:#{line}\", #{source.dump}){", "}"]
+
+          method_name = @method.last.children[0]
+
+          ["::ScoutApm::AutoInstrument(\"\#{self.class}\\\##{method_name}:#{line}\", #{source.dump}){", "}"]
         end
 
         # Look up 1 or more nodes to check if the parent exists and matches the given type.
@@ -58,6 +60,9 @@ module ScoutApm
         end
 
         def on_block(node)
+          # If we are not in a method, don't do any instrumentation:
+          return if @method.empty?
+
           line = node.location.line || 'line?'
           column = node.location.column || 'column?'
           method_name = node.children[0].children[1] || '*unknown*'
