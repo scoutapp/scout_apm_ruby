@@ -1,3 +1,7 @@
+# 2.4.23
+
+* Extend #251 to use prepend on all view instruments (#255)
+
 # 2.4.22
 
 * Support Rails 6.0 View Instruments (#251) 
