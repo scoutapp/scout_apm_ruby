@@ -3,11 +3,12 @@
 #
 # The prepend version was added for Rails 6 support - ActiveRecord prepends on
 # top of PartialRenderer#collection_with_template, which can (and does) cause
-# infinite loops with our alias_method approach
+# infinite loops with our alias_method approach.
+#
+# Even though Rails 6 forced us to use a prepend version, it is now used for
+# all Rubies that support it.
 module ScoutApm
   module Instruments
-    # Instrumentation for Rails 3, 4, 5 is the same, using tracer.
-    # Rails 6 switches to using Module#prepend
     class ActionView
       attr_reader :context
 
@@ -25,8 +26,7 @@ module ScoutApm
       end
 
       def prependable?
-        return true if context.environment.supports_module_prepend?
-        false
+        context.environment.supports_module_prepend?
       end
 
       def install
@@ -79,6 +79,7 @@ module ScoutApm
           req = ScoutApm::RequestManager.lookup
 
           template_name = @template.virtual_path rescue "Unknown Partial"
+          template_name ||= "Unknown Partial"
           layer_name = template_name + "/Rendering"
 
           layer = ScoutApm::Layer.new("View", layer_name)
@@ -96,6 +97,7 @@ module ScoutApm
           req = ScoutApm::RequestManager.lookup
 
           template_name = @template.virtual_path rescue "Unknown Collection"
+          template_name ||= "Unknown Collection"
           layer_name = template_name + "/Rendering"
 
           layer = ScoutApm::Layer.new("View", layer_name)
@@ -115,6 +117,7 @@ module ScoutApm
           req = ScoutApm::RequestManager.lookup
 
           template_name = args[0].virtual_path rescue "Unknown"
+          template_name ||= "Unknown"
           layer_name = template_name + "/Rendering"
 
           layer = ScoutApm::Layer.new("View", layer_name)
