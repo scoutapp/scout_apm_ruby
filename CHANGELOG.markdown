@@ -1,3 +1,7 @@
+# 2.4.24
+
+* Fix for prepending view instruments in the case of templates that lack a `virtual_path` (#257).
+
 # 2.4.23
 
 * Extend #251 to use prepend on all view instruments (#255)
