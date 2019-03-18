@@ -1,4 +1,7 @@
 
+require 'scout_apm/auto_instrument/layer'
+require 'scout_apm/auto_instrument/parser'
+
 module ScoutApm
   module AutoInstrument
     module Rails
