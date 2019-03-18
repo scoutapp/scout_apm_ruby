@@ -9,8 +9,8 @@ module ScoutApm
           begin
             new_code = Rails.rewrite(path)
             return self.compile(new_code, File.basename(path), path)
-          rescue SyntaxError => error
-            warn "Failed to apply auto-instrumentation to #{path}: #{error}"
+          rescue
+            warn "Failed to apply auto-instrumentation to #{path}: #{$!}"
            end
         end
         
