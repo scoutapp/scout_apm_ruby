@@ -20,11 +20,11 @@ module ScoutApm
       def self.rewrite(path, code = nil)
         code ||= File.read(path)
 
-        ast = Parser::CurrentRuby.parse(code)
+        ast = ::Parser::CurrentRuby.parse(code)
 
         # pp ast
 
-        buffer = Parser::Source::Buffer.new(path)
+        buffer = ::Parser::Source::Buffer.new(path)
         buffer.source = code
 
         rewriter = Rewriter.new
