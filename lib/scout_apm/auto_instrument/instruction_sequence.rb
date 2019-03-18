@@ -4,7 +4,6 @@ require 'scout_apm/auto_instrument/rails'
 module ScoutApm
   module AutoInstrument
     module InstructionSequence
-      
       def load_iseq(path)
         if Rails.controller_path?(path)
           begin
@@ -18,7 +17,7 @@ module ScoutApm
         return self.compile_file(path)
       end
     end
-    
+
     # This should work (https://bugs.ruby-lang.org/issues/15572), but it doesn't.
     # RubyVM::InstructionSequence.extend(InstructionSequence)
 
