@@ -35,6 +35,9 @@ Your config file should look like:
       key: YOUR_APPLICATION_KEY
       monitor: true
 
+    test:
+      monitor: false
+
     production:
       <<: *defaults
 
