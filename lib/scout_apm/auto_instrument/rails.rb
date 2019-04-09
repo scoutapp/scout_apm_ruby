@@ -6,7 +6,7 @@ module ScoutApm
   module AutoInstrument
     module Rails
       # A general pattern to match Rails controller files:
-      CONTROLLER_FILE = /\/app\/controllers\/.*_controller.rb$/.freeze
+      CONTROLLER_FILE = /\/app\/controllers\/*\/.*_controller.rb$/.freeze
 
       # Some gems (Devise) provide controllers that match CONTROLLER_FILE pattern.
       # Try a simple match to see if it's a Gemfile
