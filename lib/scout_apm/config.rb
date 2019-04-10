@@ -6,7 +6,7 @@ require 'scout_apm/environment'
 # Valid Config Options:
 #
 # This list is complete, but some are old and unused, or for developers of
-# scout_apm itself. See the documentation at https://help.apm.scoutapp.com for
+# scout_apm itself. See the documentation at https://docs.scoutapm.com for
 # customer-focused documentation.
 #
 # application_root - override the detected directory of the application
