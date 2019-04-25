@@ -29,6 +29,18 @@ module ScoutApm
         ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :postgres }
         assert_equal %q|SELECT "users".* FROM "users" INNER JOIN "blogs" ON "blogs"."user_id" = "users"."id" WHERE (blogs.title = ?)|, ss.to_s
 
+        # Strip strings only after where statements
+        raw_sql = %q|SELECT DISTINCT ON (flagged_traces.metric_name) flagged_traces.metric_name, "flagged_traces"."trace_id", "flagged_traces"."trace_type", "flagged_traces"."trace_occurred_at", flagged_traces.details ->> 'uri' as uri, (flagged_traces.details ->> 'n_sum_millis')::float as potential_savings, (flagged_traces.details ->> 'n_count')::float as num_queries FROM "flagged_traces" WHERE "flagged_traces"."app_id" = 5 AND "flagged_traces"."trace_type" = 'Request' AND ("flagged_traces"."trace_occurred_at" BETWEEN '2019-04-17 12:28:00.000000' AND '2019-04-18 12:28:00.000000') AND "flagged_traces"."flag_type" = 'nplusone' ORDER BY "flagged_traces"."metric_name" ASC, potential_savings DESC|
+        sanitized_sql = SqlSanitizer.new(raw_sql).tap { |it| it.database_engine = :postgres}
+        expected_sql = %q|SELECT DISTINCT ON (flagged_traces.metric_name) flagged_traces.metric_name, "flagged_traces"."trace_id", "flagged_traces"."trace_type", "flagged_traces"."trace_occurred_at", flagged_traces.details ->> 'uri' as uri, (flagged_traces.details ->> 'n_sum_millis')::float as potential_savings, (flagged_traces.details ->> 'n_count')::float as num_queries FROM "flagged_traces" WHERE "flagged_traces"."app_id" = ? AND "flagged_traces"."trace_type" = ? AND ("flagged_traces"."trace_occurred_at" BETWEEN ? AND ?) AND "flagged_traces"."flag_type" = ? ORDER BY "flagged_traces"."metric_name" ASC, potential_savings DESC|
+        assert_equal expected_sql, sanitized_sql.to_s
+
+        #Strip strings in subqueries
+        raw_sql = %q|"SELECT 'orgs'.* FROM "orgs" WHERE 'orgs'."created_by_user_id" IN (SELECT 'users'.'id' FROM "users" WHERE (id > AVG(id)) AND "type" = 'USER' AND "created_at" BETWEEN '2019-04-17 12:28:00.000000' AND '2019-04-18 12:28:00.000000')"|
+        sanitized_sql = SqlSanitizer.new(raw_sql).tap { |it| it.database_engine = :postgres}
+        expected_sql = %q|"SELECT 'orgs'.* FROM "orgs" WHERE ?."created_by_user_id" IN (SELECT 'users'.'id' FROM "users" WHERE (id > AVG(id)) AND "type" = ? AND "created_at" BETWEEN ? AND ?)"|
+        assert_equal expected_sql, sanitized_sql.to_s
+
         # Strip integers
         sql = %q|SELECT "blogs".* FROM "blogs" WHERE (view_count > 10)|
         ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :postgres }
