@@ -13,7 +13,11 @@ module ScoutApm
       end
 
       def present?
-        defined?(::Que) && File.basename($PROGRAM_NAME).start_with?('que')
+        if defined?(::Que) && File.basename($PROGRAM_NAME).start_with?('que')
+          # 0.x releases used "Version" constant.
+          # 1.x releases used "VERSION" constant.
+          return defined?(::Que::Version)
+        end
       end
 
       def forking?
