@@ -155,7 +155,7 @@ module ScoutApm
       # To prevent huge traces from being generated, we should stop collecting
       # spans as we go beyond some reasonably large count.
 
-      MAX_SPANS = 500
+      MAX_SPANS = 2500
 
       def over_span_limit?(spans)
         if spans.size > MAX_SPANS
