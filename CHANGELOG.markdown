@@ -1,3 +1,27 @@
+# 4.0.0
+
+* Added timeline traces and an associated `timeline_traces: true` config option.
+
+# 2.4.24
+
+* Fix for prepending view instruments in the case of templates that lack a `virtual_path` (#257).
+
+# 2.4.23
+
+* Extend #251 to use prepend on all view instruments (#255)
+
+# 2.4.22
+
+* Support Rails 6.0 View Instruments (#251) 
+* Update documentation URLs (#236)
+
+# 2.4.21
+
+* App & Background Integrations only install when needed (#228)
+* New Setting `collect_remote_ip`, to optionally disable automated capture of
+  end-user IP Address. No change to default behavior.
+* Allow setting `compress_payload` option from ENV var (#234)
+
 # 2.4.20
 
 * `start_resque_server_instrument` option to allow disabling the WEBrick server

@@ -12,8 +12,8 @@ The Scout agent is engineered to do some wonderful things:
 
 * A unique focus on identifying those hard-to-investigate outliers like memory bloat, N+1s, and user-specific problems. [See an example workflow](http://scoutapp.com/newrelic-alternative).
 * [Low-overhead](http://blog.scoutapp.com/articles/2016/02/07/overhead-benchmarks-new-relic-vs-scout)
-* View your performance metrics during development with [DevTrace](http://help.apm.scoutapp.com/#devtrace) and in production via [server_timing](https://github.com/scoutapp/ruby_server_timing).
-* Production-Safe profiling of custom code via [ScoutProf](http://help.apm.scoutapp.com/#scoutprof) (BETA).
+* View your performance metrics during development with [DevTrace](https://docs.scoutapm.com/#devtrace) and in production via [server_timing](https://github.com/scoutapp/ruby_server_timing).
+* Production-Safe profiling of custom code via [ScoutProf](https://docs.scoutapm.com/#scoutprof) (BETA).
 
 ## Getting Started
 
@@ -25,7 +25,7 @@ Update your Gemfile
 
     bundle install
 
-Signup for a [Scout](https://apm.scoutapp.com) account and put the provided
+Signup for a [Scout](https://scoutapm.com) account and put the provided
 config file at `RAILS_ROOT/config/scout_apm.yml`.
 
 Your config file should look like:
@@ -34,6 +34,9 @@ Your config file should look like:
       name: YOUR_APPLICATION_NAME
       key: YOUR_APPLICATION_KEY
       monitor: true
+
+    test:
+      monitor: false
 
     production:
       <<: *defaults
@@ -55,10 +58,16 @@ gem 'scout_apm'
 SCOUT_DEV_TRACE=true rails server
 ```
 
+## How to test gem locally
+
+* Point your gemfile at your local checkout: `gem 'scout_apm', path: '/path/to/scout_apm_ruby`
+* Compile native code: `cd /path/to/scout_apm_ruby && bundle exec rake compile`
+
+
 ## Docs
 
 For the complete list of supported frameworks, Rubies, configuration options
-and more, see our [help site](http://help.apm.scoutapp.com/).
+and more, see our [help site](https://docs.scoutapm.com/).
 
 ## Help
 

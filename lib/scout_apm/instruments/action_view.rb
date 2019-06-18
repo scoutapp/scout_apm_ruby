@@ -1,6 +1,14 @@
+# Note, this instrument has the same logic in both Tracer and Module Prepend
+# versions. If you update, be sure you update in both spots.
+#
+# The prepend version was added for Rails 6 support - ActiveRecord prepends on
+# top of PartialRenderer#collection_with_template, which can (and does) cause
+# infinite loops with our alias_method approach.
+#
+# Even though Rails 6 forced us to use a prepend version, it is now used for
+# all Rubies that support it.
 module ScoutApm
   module Instruments
-    # instrumentation for Rails 3 and Rails 4 is the same.
     class ActionView
       attr_reader :context
 
@@ -17,37 +25,112 @@ module ScoutApm
         @installed
       end
 
+      def prependable?
+        context.environment.supports_module_prepend?
+      end
+
       def install
-        if defined?(::ActionView) && defined?(::ActionView::PartialRenderer)
-          @installed = true
+        return unless defined?(::ActionView) && defined?(::ActionView::PartialRenderer)
 
-          logger.info "Instrumenting ActionView::PartialRenderer"
-          ::ActionView::PartialRenderer.class_eval do
-            include ScoutApm::Tracer
+        if prependable?
+          install_using_prepend
+        else
+          install_using_tracer
+        end
+        @installed = true
+      end
 
-            instrument_method :render_partial,
-              :type => "View",
-              :name => '#{@template.virtual_path rescue "Unknown Partial"}/Rendering',
-              :scope => true
+      def install_using_tracer
+        logger.info "Instrumenting ActionView::PartialRenderer"
+        ::ActionView::PartialRenderer.class_eval do
+          include ScoutApm::Tracer
 
-            instrument_method :collection_with_template,
-              :type => "View",
-              :name => '#{@template.virtual_path rescue "Unknown Collection"}/Rendering',
-              :scope => true
+          instrument_method :render_partial,
+            :type => "View",
+            :name => '#{@template.virtual_path rescue "Unknown Partial"}/Rendering',
+            :scope => true
+
+          instrument_method :collection_with_template,
+            :type => "View",
+            :name => '#{@template.virtual_path rescue "Unknown Collection"}/Rendering',
+            :scope => true
+        end
+
+        logger.info "Instrumenting ActionView::TemplateRenderer"
+        ::ActionView::TemplateRenderer.class_eval do
+          include ScoutApm::Tracer
+          instrument_method :render_template,
+            :type => "View",
+            :name => '#{args[0].virtual_path rescue "Unknown"}/Rendering',
+            :scope => true
+        end
+      end
+
+      def install_using_prepend
+        logger.info "Instrumenting ActionView::PartialRenderer"
+        ::ActionView::PartialRenderer.prepend(ActionViewPartialRendererInstruments)
+
+        logger.info "Instrumenting ActionView::TemplateRenderer"
+        ::ActionView::TemplateRenderer.prepend(ActionViewTemplateRendererInstruments)
+      end
+
+      module ActionViewPartialRendererInstruments
+        def render_partial(*args)
+          req = ScoutApm::RequestManager.lookup
+
+          template_name = @template.virtual_path rescue "Unknown Partial"
+          template_name ||= "Unknown Partial"
+          layer_name = template_name + "/Rendering"
+
+          layer = ScoutApm::Layer.new("View", layer_name)
+          layer.subscopable!
+
+          begin
+            req.start_layer(layer)
+            super(*args)
+          ensure
+            req.stop_layer
           end
+        end
 
-          logger.info "Instrumenting ActionView::TemplateRenderer"
-          ::ActionView::TemplateRenderer.class_eval do
-            include ScoutApm::Tracer
-            instrument_method :render_template,
-              :type => "View",
-              :name => '#{args[0].virtual_path rescue "Unknown"}/Rendering',
-              :scope => true
+        def collection_with_template(*args)
+          req = ScoutApm::RequestManager.lookup
+
+          template_name = @template.virtual_path rescue "Unknown Collection"
+          template_name ||= "Unknown Collection"
+          layer_name = template_name + "/Rendering"
+
+          layer = ScoutApm::Layer.new("View", layer_name)
+          layer.subscopable!
+
+          begin
+            req.start_layer(layer)
+            super(*args)
+          ensure
+            req.stop_layer
+          end
+        end
+      end
+
+      module ActionViewTemplateRendererInstruments
+        def render_template(*args)
+          req = ScoutApm::RequestManager.lookup
+
+          template_name = args[0].virtual_path rescue "Unknown"
+          template_name ||= "Unknown"
+          layer_name = template_name + "/Rendering"
+
+          layer = ScoutApm::Layer.new("View", layer_name)
+          layer.subscopable!
+
+          begin
+            req.start_layer(layer)
+            super(*args)
+          ensure
+            req.stop_layer
           end
         end
       end
     end
   end
 end
-
-
