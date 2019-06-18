@@ -23,9 +23,10 @@ module ScoutApm
       def score; @points; end
 
       # Unconditionally attempts to convert this into a DetailedTrace object.
-      # Can return nil if the request didn't have any scope_layer.
+      # Can return nil if the request didn't have any scope_layer or if `timeline_traces` aren't enabled.
       def call
         return nil unless scope_layer
+        return nil unless context.config.value('timeline_traces')
 
         # Since this request is being stored, update the needed counters
         context.slow_request_policy.stored!(request)
