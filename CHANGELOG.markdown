@@ -1,6 +1,7 @@
-# 4.0.0
+# 2.5.0
 
 * Added timeline traces and an associated `timeline_traces: true` config option.
+* Increased timeline traces span limit to 2,500 from 500.
 
 # 2.4.24
 
