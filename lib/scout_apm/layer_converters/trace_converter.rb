@@ -117,7 +117,9 @@ module ScoutApm
           tags)
 
         layer.children.each do |child|
-          unless over_span_limit?(result)
+          # Don't create spans from limited layers. These don't have start/stop times and our processing can't
+          # handle these yet.
+          unless over_span_limit?(result) or child.is_a?(LimitedLayer)
             result += create_spans(child, span_id)
           end
         end
@@ -152,10 +154,8 @@ module ScoutApm
       # Limit Handling
       ################################################################################
 
-      # To prevent huge traces from being generated, we should stop collecting
+      # To prevent huge traces from being generated, we stop collecting
       # spans as we go beyond some reasonably large count.
-      # Until the root cause of https://github.com/scoutapp/scout_apm_ruby/issues/267 is addressed,
-      # keep `MAX_SPANS` less than `DEFAULT_UNIQUE_CUTOFF`.
       MAX_SPANS = 1500
 
       def over_span_limit?(spans)
