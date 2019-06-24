@@ -154,8 +154,9 @@ module ScoutApm
 
       # To prevent huge traces from being generated, we should stop collecting
       # spans as we go beyond some reasonably large count.
-
-      MAX_SPANS = 2500
+      # Until the root cause of https://github.com/scoutapp/scout_apm_ruby/issues/267 is addressed,
+      # keep `MAX_SPANS` less than `DEFAULT_UNIQUE_CUTOFF`.
+      MAX_SPANS = 1500
 
       def over_span_limit?(spans)
         if spans.size > MAX_SPANS

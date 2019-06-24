@@ -1,3 +1,7 @@
+# 2.5.1
+
+* Decrease timeline trace span limit to 1,500 as an attempted workaround for [this bug](https://github.com/scoutapp/scout_apm_ruby/issues/267).
+
 # 2.5.0
 
 * Added timeline traces and an associated `timeline_traces: true` config option.
