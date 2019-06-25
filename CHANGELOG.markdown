@@ -1,6 +1,10 @@
+# Master
+
+* Don't process limited layers in detailed traces (#268)
+
 # 2.5.1
 
-* Decrease timeline trace span limit to 1,500 as an attempted workaround for [this bug](https://github.com/scoutapp/scout_apm_ruby/issues/267).
+* Decrease timeline trace span limit to 1,500 to address [this bug](https://github.com/scoutapp/scout_apm_ruby/issues/267).
 
 # 2.5.0
 
