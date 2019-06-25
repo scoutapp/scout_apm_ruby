@@ -119,7 +119,7 @@ module ScoutApm
         layer.children.each do |child|
           # Don't create spans from limited layers. These don't have start/stop times and our processing can't
           # handle these yet.
-          unless over_span_limit?(result) or child.is_a?(LimitedLayer)
+          unless over_span_limit?(result) || child.is_a?(LimitedLayer)
             result += create_spans(child, span_id)
           end
         end
