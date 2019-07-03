@@ -9,6 +9,14 @@ module ScoutApm
         extension.module_eval(&block)
         klass.prepend(extension)
       end
+    elsif Module.private_methods.include?(:prepend)
+      def self.apply klass, &block
+        ScoutApm::Agent.instance.context.logger.info "Instrumenting #{klass.inspect}"
+        
+        extension = Module.new
+        extension.module_eval(&block)
+        klass.send(:prepend, extension)
+      end
     else
       def self.apply klass, &block
         ScoutApm::Agent.instance.context.logger.info "Instrumenting #{klass.inspect}"
