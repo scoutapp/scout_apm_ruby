@@ -12,6 +12,16 @@ class ExtensionTest < Minitest::Test
     def log(arg)
       @sequence << arg
     end
+
+    def thing
+      "thing"
+    end
+  end
+
+  class Derived < Base
+    def thing
+      super + "!"
+    end
   end
 
   ScoutApm::Extension.apply(Base) do
@@ -22,11 +32,23 @@ class ExtensionTest < Minitest::Test
     end
   end
 
-  def test_module_apply
+  ScoutApm::Extension.apply(Derived) do
+    def thing
+      super.upcase
+    end
+  end
+
+  def test_base
     base = Base.new
 
     base.log(:super)
 
     assert_equal [:before, :super, :after], base.sequence
+  end
+
+  def test_derived
+    derived = Derived.new
+
+    assert_equal "THING!", derived.thing
   end
 end
