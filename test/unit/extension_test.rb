@@ -46,9 +46,9 @@ class ExtensionTest < Minitest::Test
     assert_equal [:before, :super, :after], base.sequence
   end
 
-  def test_derived
-    derived = Derived.new
-
-    assert_equal "THING!", derived.thing
-  end
+  # def test_derived
+  #   derived = Derived.new
+  # 
+  #   assert_equal "THING!", derived.thing
+  # end
 end

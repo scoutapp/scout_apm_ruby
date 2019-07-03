@@ -3,7 +3,7 @@ module ScoutApm
   module Extension
     if Module.respond_to?(:prepend)
       def self.apply klass, &block
-        # ScoutApm::Agent.instance.context.logger.info "Instrumenting #{klass.inspect}"
+        ScoutApm::Agent.instance.context.logger.info "Instrumenting #{klass.inspect}"
         
         extension = Module.new
         extension.module_eval(&block)
@@ -11,7 +11,7 @@ module ScoutApm
       end
     else
       def self.apply klass, &block
-        # ScoutApm::Agent.instance.context.logger.info "Instrumenting #{klass.inspect}"
+        ScoutApm::Agent.instance.context.logger.info "Instrumenting #{klass.inspect}"
 
         wrapper = Module.new
         wrapper.module_eval(&block)
@@ -21,7 +21,6 @@ module ScoutApm
 
         wrapper.instance_methods.each do |name|
           original_method = klass.instance_method(name)
-          klass.send(:undef_method, name)
 
           extension.send(:define_method, name) do |*args, &block|
             original_method.bind(self).call(*args, &block)
