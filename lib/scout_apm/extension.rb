@@ -9,7 +9,7 @@ module ScoutApm
       end
     else
       def extensions_module_for(klass)
-        klass.include(Module.new)
+        klass.send(:include, Module.new)
       end
       
       def apply(klass)
@@ -21,11 +21,11 @@ module ScoutApm
           
           parent = extensions_module_for(klass)
           
-          parent.define_method(name) do |*args, &block|
+          parent.send(:define_method, name) do |*args, &block|
             original_method.bind(self).call(*args, &block)
           end
           
-          klass.define_method(name, wrapper_method)
+          klass.send(:define_method, name, wrapper_method)
           
           return klass
         end
