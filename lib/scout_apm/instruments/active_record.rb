@@ -1,3 +1,4 @@
+require 'scout_apm/extension'
 require 'scout_apm/utils/sql_sanitizer'
 
 module ScoutApm
@@ -83,9 +84,10 @@ module ScoutApm
         # Install #log tracing
         if Utils::KlassHelper.defined?("ActiveRecord::ConnectionAdapters::AbstractAdapter")
           ::ActiveRecord::ConnectionAdapters::AbstractAdapter.module_eval do
-            include ::ScoutApm::Instruments::ActiveRecordInstruments
             include ::ScoutApm::Tracer
           end
+
+          ActiveRecordInstruments.apply(::ActiveRecord::ConnectionAdapters::AbstractAdapter)
         end
 
         if Utils::KlassHelper.defined?("ActiveRecord::Base")
@@ -168,17 +170,9 @@ module ScoutApm
     #
     ################################################################################
     module ActiveRecordInstruments
-      def self.included(instrumented_class)
-        ScoutApm::Agent.instance.context.logger.info "Instrumenting #{instrumented_class.inspect}"
-        instrumented_class.class_eval do
-          unless instrumented_class.method_defined?(:log_without_scout_instruments)
-            alias_method :log_without_scout_instruments, :log
-            alias_method :log, :log_with_scout_instruments
-          end
-        end
-      end
-
-      def log_with_scout_instruments(*args, &block)
+      extend Extension
+      
+      def log(*args, &block)
         # Extract data from the arguments
         sql, name = args
         metric_name = Utils::ActiveRecordMetricName.new(sql, name)
@@ -209,7 +203,7 @@ module ScoutApm
           end
           current_layer.desc.merge(desc)
 
-          log_without_scout_instruments(*args, &block)
+          super(*args, &block)
 
         # OR: Start a new layer, we didn't pick up instrumentation earlier in the stack.
         else
@@ -217,7 +211,7 @@ module ScoutApm
           layer.desc = desc
           req.start_layer(layer)
           begin
-            log_without_scout_instruments(*args, &block)
+            super(*args, &block)
           ensure
             req.stop_layer
           end
