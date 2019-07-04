@@ -2,6 +2,12 @@ require 'test_helper'
 require 'sqlite3'
 require 'active_record'
 
+begin
+  require 'octoshark'
+rescue LoadError
+  # Ignore
+end
+
 class ActiveRecordTest < Minitest::Test
   def database_path
     File.expand_path('test.sqlite3', DATA_FILE_DIR)
