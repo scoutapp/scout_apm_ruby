@@ -1,25 +1,21 @@
 language: ruby
-
-rvm:
-  - "1.8.7"
-  - "1.9.3"
-  - "2.0"
-  - "2.2"
-  - "2.4"
-  - "2.5"
-
 cache: bundler
 
-before_install:
-  # Don't gem update, since it tries to install RubyGems requiring 2.3+.
-  # - gem update --system
-
-  # Lock down the version. Newer versions only support Ruby 2.3+, but we need
-  # to test back further.
-  - gem install bundler -v '1.17.3'
-
-jobs:
+matrix:
   include:
-    - script: bundle exec rake test
-    - script: bundle exec rubocop
-      rvm: "2.5"
+    - rvm: "1.8.7"
+      gemfile: gems/minimum.gemfile
+    - rvm: "1.9.3"
+      gemfile: gems/minimum.gemfile
+    - rvm: 2.0
+    - rvm: 2.1
+    - rvm: 2.2
+    - rvm: 2.3
+    - rvm: 2.4
+    - rvm: 2.5
+    - rvm: 2.6
+    - rvm: 2.6
+      name: rubocop yo
+      script: bundle exec rubocop
+    - rvm: 2.6
+      gemfile: gems/minimum.gemfile
