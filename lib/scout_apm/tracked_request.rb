@@ -212,8 +212,8 @@ module ScoutApm
     def stop_request
       @stopping = true
 
-      if recorder
-        recorder.record!(self)
+      if @recorder
+        @recorder.record!(self)
       end
     end
 
