@@ -21,6 +21,8 @@ Gem::Specification.new do |s|
   s.extensions << 'ext/allocations/extconf.rb'
   s.extensions << 'ext/rusage/extconf.rb'
 
+  s.required_ruby_version = '~> 2.1'
+
   s.add_development_dependency "minitest"
   s.add_development_dependency "mocha"
   s.add_development_dependency "pry"
@@ -35,10 +37,8 @@ Gem::Specification.new do |s|
   s.add_development_dependency "activerecord"
   s.add_development_dependency "sqlite3"
 
-  if RUBY_VERSION >= "1.9.3"
-    s.add_development_dependency "rubocop"
-    s.add_development_dependency "guard"
-    s.add_development_dependency "guard-minitest"
-    s.add_development_dependency "m"
-  end
+  s.add_development_dependency "rubocop"
+  s.add_development_dependency "guard"
+  s.add_development_dependency "guard-minitest"
+  s.add_development_dependency "m"
 end

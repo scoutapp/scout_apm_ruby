@@ -4,12 +4,6 @@ cache: bundler
 
 matrix:
   include:
-    - rvm: "1.8.7"
-      gemfile: gems/rails3.gemfile
-    - rvm: "1.9.3"
-      gemfile: gems/rails3.gemfile
-    - rvm: 2.0
-      gemfile: gems/rails3.gemfile
     - rvm: 2.1
       gemfile: gems/rails3.gemfile
     - rvm: 2.2
