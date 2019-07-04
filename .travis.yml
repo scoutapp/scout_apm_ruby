@@ -8,7 +8,9 @@ matrix:
     - rvm: "1.9.3"
       gemfile: gems/minimum.gemfile
     - rvm: 2.0
+      gemfile: gems/minimum.gemfile
     - rvm: 2.1
+      gemfile: gems/minimum.gemfile
     - rvm: 2.2
     - rvm: 2.3
     - rvm: 2.4
