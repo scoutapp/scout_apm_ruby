@@ -6,7 +6,7 @@ require 'scout_apm/environment'
 # Valid Config Options:
 #
 # This list is complete, but some are old and unused, or for developers of
-# scout_apm itself. See the documentation at https://help.apm.scoutapp.com for
+# scout_apm itself. See the documentation at https://docs.scoutapm.com for
 # customer-focused documentation.
 #
 # application_root - override the detected directory of the application
@@ -32,6 +32,7 @@ require 'scout_apm/environment'
 # remote_agent_host - Internal: What host to bind to, and also send messages to for remote. Default: 127.0.0.1.
 # remote_agent_port - What port to bind the remote webserver to
 # start_resque_server_instrument - Used in special situations with certain Resque installs
+# timeline_traces - true/false to enable sending of of the timeline trace format.
 #
 # Any of these config settings can be set with an environment variable prefixed
 # by SCOUT_ and uppercasing the key: SCOUT_LOG_LEVEL for instance.
@@ -74,6 +75,7 @@ module ScoutApm
         'start_resque_server_instrument',
         'uri_reporting',
         'instrument_http_url_length',
+        'timeline_traces'
     ]
 
     ################################################################################
@@ -166,6 +168,7 @@ module ScoutApm
       'database_metric_report_limit' => IntegerCoercion.new,
       'instrument_http_url_length' => IntegerCoercion.new,
       'start_resque_server_instrument' => BooleanCoercion.new,
+      'timeline_traces' => BooleanCoercion.new
     }
 
 
@@ -273,6 +276,7 @@ module ScoutApm
         'instrument_http_url_length' => 300,
         'start_resque_server_instrument' => true, # still only starts if Resque is detected
         'collect_remote_ip' => true,
+        'timeline_traces' => true
       }.freeze
 
       def value(key)

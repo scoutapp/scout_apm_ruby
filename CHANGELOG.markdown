@@ -1,3 +1,16 @@
+# Master
+
+* Don't process limited layers in detailed traces (#268)
+
+# 2.5.1
+
+* Decrease timeline trace span limit to 1,500 to address [this bug](https://github.com/scoutapp/scout_apm_ruby/issues/267).
+
+# 2.5.0
+
+* Added timeline traces and an associated `timeline_traces: true` config option.
+* Increased timeline traces span limit to 2,500 from 500.
+
 # 2.4.24
 
 * Fix for prepending view instruments in the case of templates that lack a `virtual_path` (#257).

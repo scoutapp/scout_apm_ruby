@@ -189,7 +189,6 @@ module ScoutApm
 
   # One period of Storage. Typically 1 minute
   class StoreReportingPeriod
-
     # A ScoredItemSet holding the "best" traces for the period
     attr_reader :request_traces
 

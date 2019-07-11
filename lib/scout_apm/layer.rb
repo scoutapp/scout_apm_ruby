@@ -46,6 +46,8 @@ module ScoutApm
     # If no annotations are ever set, this will return nil
     attr_reader :annotations
 
+    attr_reader :allocations_start, :allocations_stop
+
     BACKTRACE_CALLER_LIMIT = 50 # maximum number of lines to send thru for backtrace analysis
 
     def initialize(type, name, start_time = Time.now)

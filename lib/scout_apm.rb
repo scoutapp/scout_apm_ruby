@@ -15,6 +15,7 @@ require 'socket'
 require 'thread'
 require 'time'
 require 'yaml'
+require 'securerandom'
 
 #####################################
 # Gem Requires
@@ -44,6 +45,7 @@ require 'scout_apm/layer_converters/database_converter'
 require 'scout_apm/layer_converters/slow_request_converter'
 require 'scout_apm/layer_converters/request_queue_time_converter'
 require 'scout_apm/layer_converters/allocation_metric_converter'
+require 'scout_apm/layer_converters/trace_converter'
 require 'scout_apm/layer_converters/histograms'
 require 'scout_apm/layer_converters/find_layer_by_type'
 
@@ -136,6 +138,7 @@ require 'scout_apm/metric_stats'
 require 'scout_apm/db_query_metric_stats'
 require 'scout_apm/slow_transaction'
 require 'scout_apm/slow_job_record'
+require 'scout_apm/detailed_trace'
 require 'scout_apm/scored_item_set'
 require 'scout_apm/slow_request_policy'
 require 'scout_apm/slow_job_policy'

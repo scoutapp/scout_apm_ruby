@@ -8,7 +8,7 @@ class PayloadSerializerTest < Minitest::Test
       :unique_id => "unique_idz",
       :agent_version => 123
     }
-    payload = ScoutApm::Serializers::PayloadSerializerToJson.serialize(metadata, {}, {}, [], [], [], {})
+    payload = ScoutApm::Serializers::PayloadSerializerToJson.serialize(metadata, {}, {}, [], [], [], {}, [])
 
     # symbol keys turn to strings
     formatted_metadata = {
@@ -49,7 +49,7 @@ class PayloadSerializerTest < Minitest::Test
         stats.total_exclusive_time = 0.078132088
       }
     }
-    payload = ScoutApm::Serializers::PayloadSerializerToJson.serialize({}, metrics, {}, [], [], [], {})
+    payload = ScoutApm::Serializers::PayloadSerializerToJson.serialize({}, metrics, {}, [], [], [], {}, [])
     formatted_metrics = [
       {
         "key" => {
@@ -94,7 +94,7 @@ class PayloadSerializerTest < Minitest::Test
       :quotie => "here are some \"quotes\"",
       :payload_version => 2,
     }
-    payload = ScoutApm::Serializers::PayloadSerializerToJson.serialize(metadata, {}, {}, [], [], [], {})
+    payload = ScoutApm::Serializers::PayloadSerializerToJson.serialize(metadata, {}, {}, [], [], [], {}, [])
 
     # symbol keys turn to strings
     formatted_metadata = {
