@@ -44,7 +44,7 @@ module ScoutApm
 
         periodic_callbacks.each do |callback|
           begin
-            callback.call(reporting_period, metadata)
+            callback.call(agent_context, reporting_period, metadata)
           rescue => e
             logger.warn "Error running reporting callback extension=#{callback}"
             logger.info e.message
