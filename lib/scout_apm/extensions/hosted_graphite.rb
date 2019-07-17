@@ -7,24 +7,22 @@ module ScoutApm
 
       def initialize
         @socket = UDPSocket.new
+        @agent_context = ScoutApm::Agent.instance.context
       end
 
-      def call(agent_context, reporting_period, metadata)
-        @agent_context = agent_context
-
+      def call(reporting_period, metadata)
         reporting_period.metrics_payload.each do |meta, stat|
-          @metric_name = meta.metric_name
 
-          case metric_type
+          case metric_type(meta.metric_name)
           when 'web'
-            send("web.total_call_time", stat.total_call_time)
-            send("web.throughput", stat.call_count)
+            send("web.total_call_time", tags(meta.metric_name), stat.total_call_time)
+            send("web.throughput", tags(meta.metric_name), stat.call_count)
           end
         end
       end
 
       private
-      def send(metric_path, value)
+      def send(metric_path, tags, value)
         message = "#{prefix}#{metric_path}#{tags} #{value}"
         logger.debug "Sending #{message} to carbon.hostedgraphite.com"
         @socket.send "#{message}\n", 0, "carbon.hostedgraphite.com", 2003
@@ -35,15 +33,15 @@ module ScoutApm
       end
 
       def hostname
-        @agent_context.environment.hostname.gsub(/\./, '_')
+        sanitize_for_graphite(@agent_context.environment.hostname)
       end
 
       def app_name
-        @agent_context.config.value('name').gsub(/\./, '_')
+        sanitize_for_graphite(@agent_context.config.value('name'))
       end
 
-      def metric_type
-        case @metric_name
+      def metric_type(metric_name)
+        case metric_name
         when 'Memory/Physical'
           'memory'
         when 'CPU/Utilization'
@@ -53,17 +51,21 @@ module ScoutApm
         end
       end
 
-      def tags
+      def tags(metric_name)
         ";hostname=#{hostname}" +
-        case metric_type
+        case metric_type(metric_name)
         when 'web'
-          ";endpoint=#{endpoint}"
+          ";endpoint=#{endpoint(metric_name)}"
         end
       end
 
       # tag can't include slash
-      def endpoint
-        @metric_name.gsub(/\//, '_')
+      def endpoint(metric_name)
+        sanitize_for_graphite(metric_name)
+      end
+
+      def sanitize_for_graphite(string)
+        string.gsub(/\.|\//, '_')
       end
 
       def logger
