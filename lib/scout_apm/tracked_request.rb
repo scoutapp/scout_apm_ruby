@@ -110,6 +110,9 @@ module ScoutApm
       layer.record_stop_time!
       layer.record_allocations!
 
+      # Must follow layer.record_stop_time! as the total_call_time is used to determine if the layer is significant.
+      return if layer_insignificant?(layer)
+
       @layers[-1].add_child(layer) if @layers.any?
 
       # This must be called before checking if a backtrace should be collected as the call count influences our capture logic.
@@ -167,6 +170,16 @@ module ScoutApm
 
       # Don't capture otherwise
       false
+    end
+
+    def layer_insignificant?(layer)
+      if layer.type == 'AutoInstrument' # TODO - make a constant?
+        if layer.total_call_time < 5/1_000.0 # TODO make a constant?
+          context.logger.debug("IGNORE LAYER name=#{layer.name} total_call_time=#{layer.total_call_time}")
+          return true
+        end
+      end
+      return false
     end
 
     # Maintains a lookup Hash of call counts by layer name. Used to determine if we should capture a backtrace.
