@@ -105,6 +105,9 @@ module ScoutApm
         if layer.backtrace
           tags[:backtrace] = backtrace_parser(layer.backtrace) rescue nil
         end
+        if layer.code
+          tags[:code] = layer.code
+        end
 
         # Collect up self, and all children into result array
         result = []

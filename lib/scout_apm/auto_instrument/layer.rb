@@ -5,7 +5,7 @@ module ScoutApm
 
     begin
       layer = ScoutApm::Layer.new('AutoInstrument', name)
-      layer.desc = description
+      layer.code = description
 
       request.start_layer(layer)
       started_layer = true
