@@ -28,10 +28,10 @@ class AutoInstrumentTest < Minitest::Test
     
     # update_instrumented_source("controller")
   end
-  
+
   def test_rescue_from_controller_rewrite
     assert_equal instrumented_source("rescue_from"), ::ScoutApm::AutoInstrument::Rails.rewrite(source_path("rescue_from"))
-    
+
     # update_instrumented_source("rescue_from")
   end
 end if defined? ScoutApm::AutoInstrument

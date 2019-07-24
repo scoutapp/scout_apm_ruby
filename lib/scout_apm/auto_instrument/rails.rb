@@ -42,6 +42,9 @@ module ScoutApm
 
           # The stack of method nodes (type :def):
           @method = []
+
+          # The stack of class nodes:
+          @scope = []
         end
 
         def instrument(source, line, column)
@@ -51,8 +54,9 @@ module ScoutApm
           end
 
           method_name = @method.last.children[0]
+          class_name = @scope.last.children[1]
 
-          ["::ScoutApm::AutoInstrument(\"\#{self.class}\\\##{method_name}:#{line}\", #{source.dump}){", "}"]
+          return ["::ScoutApm::AutoInstrument(\"#{class_name}\\\##{method_name}:#{line}\", #{source.dump}){", "}"]
         end
 
         # Look up 1 or more nodes to check if the parent exists and matches the given type.
@@ -100,9 +104,9 @@ module ScoutApm
 
         # def on_class(node)
         #   class_name = node.children[1]
-        # 
+        #
         #   Kernel.const_get(class_name).ancestors.include? ActionController::Controller
-        # 
+        #
         #   if class_name =~ /.../
         #     super # continue processing
         #   end
@@ -118,6 +122,10 @@ module ScoutApm
             @method.push(node)
             super
             @method.pop
+          elsif node and node.type == :class
+            @scope.push(node.children[0])
+            super
+            @scope.pop
           else
             super
           end
