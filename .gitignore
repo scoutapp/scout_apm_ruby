@@ -18,3 +18,5 @@ coverage/*
 lib/*.bundle
 lib/*.so
 log/scout_apm.log
+tag
+tags

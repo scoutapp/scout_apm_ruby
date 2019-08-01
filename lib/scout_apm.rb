@@ -54,6 +54,7 @@ require 'scout_apm/server_integrations/puma'
 require 'scout_apm/server_integrations/rainbows'
 require 'scout_apm/server_integrations/thin'
 require 'scout_apm/server_integrations/unicorn'
+require 'scout_apm/server_integrations/reel'
 require 'scout_apm/server_integrations/webrick'
 require 'scout_apm/server_integrations/null'
 
@@ -66,6 +67,7 @@ require 'scout_apm/background_job_integrations/sneakers'
 require 'scout_apm/framework_integrations/rails_2'
 require 'scout_apm/framework_integrations/rails_3_or_4'
 require 'scout_apm/framework_integrations/sinatra'
+require 'scout_apm/framework_integrations/webmachine'
 require 'scout_apm/framework_integrations/ruby'
 
 require 'scout_apm/platform_integrations/heroku'
@@ -89,6 +91,7 @@ require 'scout_apm/instruments/middleware_summary'
 require 'scout_apm/instruments/middleware_detailed' # Disabled by default, see the file for more details
 require 'scout_apm/instruments/rails_router'
 require 'scout_apm/instruments/grape'
+require 'scout_apm/instruments/webmachine/reel'
 require 'scout_apm/instruments/sinatra'
 require 'allocations'
 
