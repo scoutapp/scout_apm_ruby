@@ -1,9 +1,8 @@
 require 'test_helper'
 
-require 'scout_apm/auto_instrument'
-
 class AutoInstrumentTest < Minitest::Test
   def setup
+    require 'scout_apm/auto_instrument'
   end
 
   def source_path(name)
@@ -21,4 +20,4 @@ class AutoInstrumentTest < Minitest::Test
   def test_rails_controller_rewrite
     assert_equal instrumented_source("controller"), ::ScoutApm::AutoInstrument::Rails.rewrite(source_path("controller"))
   end
-end
+end if RUBY_VERSION >= "2.3.1"
