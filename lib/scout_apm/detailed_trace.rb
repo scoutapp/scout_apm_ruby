@@ -98,7 +98,7 @@ class DetailedTrace
         }
       },
       :tags => tags.as_json,
-      :spans => spans.as_json,
+      :spans => spans.map{|span| span.as_json},
     }
   end
 
