@@ -1,6 +1,8 @@
-# Master
+# 2.5.2
 
 * Don't process limited layers in detailed traces (#268)
+* Fix OctoShark (and other gems which patch ActiveRecord) interaction (#217)
+* Legacy [Rails 2.3 fix for as_json](https://github.com/scoutapp/scout_apm_ruby/pull/276)
 
 # 2.5.1
 
