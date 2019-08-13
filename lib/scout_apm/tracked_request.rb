@@ -153,6 +153,10 @@ module ScoutApm
     def capture_backtrace?(layer)
       return if ignoring_request?
 
+      # A backtrace has already been recorded. This happens with autoinstruments as
+      # the partial backtrace is set when creating the layer.
+      return false if layer.backtrace
+
       # Never capture backtraces for this kind of layer. The backtrace will
       # always be 100% framework code.
       return false if BACKTRACE_BLACKLIST.include?(layer.type)
