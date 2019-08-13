@@ -48,8 +48,6 @@ module ScoutApm
 
     attr_reader :allocations_start, :allocations_stop
 
-    attr_accessor :code
-
     BACKTRACE_CALLER_LIMIT = 50 # maximum number of lines to send thru for backtrace analysis
 
     def initialize(type, name, start_time = Time.now)
