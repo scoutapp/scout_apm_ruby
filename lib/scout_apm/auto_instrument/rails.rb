@@ -75,8 +75,8 @@ module ScoutApm
           return if @method.empty?
 
           line = node.location.line || 'line?'
-          column = node.location.column || 'column?'
-          method_name = node.children[0].children[1] || '*unknown*'
+          column = node.location.column || 'column?' # not used
+          method_name = node.children[0].children[1] || '*unknown*' # not used
           file_name = @source_rewriter.source_buffer.name
 
           wrap(node.location.expression, *instrument(node.location.expression.source, file_name, line))
@@ -100,8 +100,8 @@ module ScoutApm
 
           # Extract useful metadata for instrumentation:
           line = node.location.line || 'line?'
-          column = node.location.column || 'column?' # Not used
-          method_name = node.children[1] || '*unknown*'
+          column = node.location.column || 'column?' # not used
+          method_name = node.children[1] || '*unknown*' # not used
           file_name = @source_rewriter.source_buffer.name
 
           # Wrap the expression with instrumentation:
