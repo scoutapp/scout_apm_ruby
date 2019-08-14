@@ -36,7 +36,7 @@ module ScoutApm
 
     # If this layer took longer than a fixed amount of time, store the
     # backtrace of where it occurred.
-    attr_reader :backtrace
+    attr_accessor :backtrace
 
     # As we go through a part of a request, instrumentation can store additional data
     # Known Keys:

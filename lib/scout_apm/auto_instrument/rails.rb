@@ -47,7 +47,7 @@ module ScoutApm
           @scope = []
         end
 
-        def instrument(source, line, column)
+        def instrument(source, file_name, line)
           # Don't log huge chunks of code... just the first line:
           if lines = source.lines and lines.count > 1
             source = lines.first.chomp + "..."
@@ -55,8 +55,12 @@ module ScoutApm
 
           method_name = @method.last.children[0]
           class_name = @scope.last.children[1]
+          bt = ["#{file_name}:#{line}:in `#{method_name}'"]
 
-          return ["::ScoutApm::AutoInstrument(\"#{class_name}\\\##{method_name}:#{line}\", #{source.dump}){", "}"]
+          return [
+            "::ScoutApm::AutoInstrument("+ source.dump + ",#{bt}" + "){",
+            "}"
+          ]
         end
 
         # Look up 1 or more nodes to check if the parent exists and matches the given type.
@@ -71,10 +75,11 @@ module ScoutApm
           return if @method.empty?
 
           line = node.location.line || 'line?'
-          column = node.location.column || 'column?'
-          method_name = node.children[0].children[1] || '*unknown*'
+          column = node.location.column || 'column?' # not used
+          method_name = node.children[0].children[1] || '*unknown*' # not used
+          file_name = @source_rewriter.source_buffer.name
 
-          wrap(node.location.expression, *instrument(node.location.expression.source, line, column))
+          wrap(node.location.expression, *instrument(node.location.expression.source, file_name, line))
         end
 
         def on_or_asgn(node)
@@ -95,11 +100,12 @@ module ScoutApm
 
           # Extract useful metadata for instrumentation:
           line = node.location.line || 'line?'
-          column = node.location.column || 'column?'
-          method_name = node.children[1] || '*unknown*'
+          column = node.location.column || 'column?' # not used
+          method_name = node.children[1] || '*unknown*' # not used
+          file_name = @source_rewriter.source_buffer.name
 
           # Wrap the expression with instrumentation:
-          wrap(node.location.expression, *instrument(node.location.expression.source, line, column))
+          wrap(node.location.expression, *instrument(node.location.expression.source, file_name, line))
         end
 
         # def on_class(node)

@@ -1,11 +1,11 @@
 
 module ScoutApm
-  def self.AutoInstrument(name, description = nil)
+  def self.AutoInstrument(name, backtrace = nil)
     request = ScoutApm::RequestManager.lookup
 
     begin
       layer = ScoutApm::Layer.new('AutoInstrument', name)
-      layer.desc = description
+      layer.backtrace = backtrace
 
       request.start_layer(layer)
       started_layer = true
