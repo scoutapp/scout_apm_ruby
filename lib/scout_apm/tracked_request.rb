@@ -52,6 +52,10 @@ module ScoutApm
     # see that on Sidekiq.
     REQUEST_TYPES = ["Controller", "Job"]
 
+    # Layers of type 'AutoInstrument' are not recorded if their total_call_time doesn't exceed this threshold.
+    # AutoInstrument layers are frequently of short duration. This throws out this deadweight that is unlikely to be optimized.
+    AUTO_INSTRUMENT_TIMING_THRESHOLD = 5/1_000.0 # units = seconds
+
     def initialize(agent_context, store)
       @agent_context = agent_context
       @store = store #this is passed in so we can use a real store (normal operation) or fake store (instant mode only)
@@ -177,8 +181,8 @@ module ScoutApm
     end
 
     def layer_insignificant?(layer)
-      if layer.type == 'AutoInstrument' # TODO - make a constant?
-        if layer.total_call_time < 5/1_000.0 # TODO make a constant?
+      if layer.type == 'AutoInstrument'
+        if layer.total_call_time < AUTO_INSTRUMENT_TIMING_THRESHOLD
           context.logger.debug("IGNORE LAYER name=#{layer.name} total_call_time=#{layer.total_call_time}")
           return true
         end
