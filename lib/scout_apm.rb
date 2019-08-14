@@ -186,6 +186,8 @@ if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR
   module ScoutApm
     class Railtie < Rails::Railtie
       initializer 'scout_apm.start' do |app|
+        require 'scout_apm/auto_instrument'
+
         # attempt to start on first-request if not otherwise started, which is
         # a good catch-all for Webrick, and Passenger and similar, where we
         # can't detect the running app server until actual requests come in.
