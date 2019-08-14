@@ -52,6 +52,10 @@ module ScoutApm
     # see that on Sidekiq.
     REQUEST_TYPES = ["Controller", "Job"]
 
+    # Layers of type 'AutoInstrument' are not recorded if their total_call_time doesn't exceed this threshold.
+    # AutoInstrument layers are frequently of short duration. This throws out this deadweight that is unlikely to be optimized.
+    AUTO_INSTRUMENT_TIMING_THRESHOLD = 5/1_000.0 # units = seconds
+
     def initialize(agent_context, store)
       @agent_context = agent_context
       @store = store #this is passed in so we can use a real store (normal operation) or fake store (instant mode only)
@@ -110,6 +114,9 @@ module ScoutApm
       layer.record_stop_time!
       layer.record_allocations!
 
+      # Must follow layer.record_stop_time! as the total_call_time is used to determine if the layer is significant.
+      return if layer_insignificant?(layer)
+
       @layers[-1].add_child(layer) if @layers.any?
 
       # This must be called before checking if a backtrace should be collected as the call count influences our capture logic.
@@ -150,6 +157,10 @@ module ScoutApm
     def capture_backtrace?(layer)
       return if ignoring_request?
 
+      # A backtrace has already been recorded. This happens with autoinstruments as
+      # the partial backtrace is set when creating the layer.
+      return false if layer.backtrace
+
       # Never capture backtraces for this kind of layer. The backtrace will
       # always be 100% framework code.
       return false if BACKTRACE_BLACKLIST.include?(layer.type)
@@ -167,6 +178,16 @@ module ScoutApm
 
       # Don't capture otherwise
       false
+    end
+
+    def layer_insignificant?(layer)
+      if layer.type == 'AutoInstrument'
+        if layer.total_call_time < AUTO_INSTRUMENT_TIMING_THRESHOLD
+          context.logger.debug("IGNORE LAYER name=#{layer.name} total_call_time=#{layer.total_call_time}")
+          return true
+        end
+      end
+      return false
     end
 
     # Maintains a lookup Hash of call counts by layer name. Used to determine if we should capture a backtrace.
