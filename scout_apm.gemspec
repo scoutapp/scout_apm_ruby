@@ -30,6 +30,12 @@ Gem::Specification.new do |s|
   s.add_development_dependency "activesupport"
   s.add_development_dependency "parser"
 
+  # These are general development dependencies which are used in instrumentation
+  # tests. Specific versions are pulled in using specific gemfiles, e.g. 
+  # `gems/rails3.gemfile`.
+  s.add_development_dependency "activerecord"
+  s.add_development_dependency "sqlite3"
+
   if RUBY_VERSION >= "1.9.3"
     s.add_development_dependency "rubocop"
     s.add_development_dependency "guard"

@@ -82,9 +82,14 @@ module ScoutApm
 
         # Install #log tracing
         if Utils::KlassHelper.defined?("ActiveRecord::ConnectionAdapters::AbstractAdapter")
-          ::ActiveRecord::ConnectionAdapters::AbstractAdapter.module_eval do
-            include ::ScoutApm::Instruments::ActiveRecordInstruments
-            include ::ScoutApm::Tracer
+          if Module.respond_to?(:prepend)
+            ::ActiveRecord::ConnectionAdapters::AbstractAdapter.prepend(ActiveRecordInstruments)
+            ::ActiveRecord::ConnectionAdapters::AbstractAdapter.include(Tracer)
+          else
+            ::ActiveRecord::ConnectionAdapters::AbstractAdapter.module_eval do
+              include ::ScoutApm::Instruments::ActiveRecordAliasMethodInstruments
+              include ::ScoutApm::Tracer
+            end
           end
         end
 
@@ -167,7 +172,9 @@ module ScoutApm
     # to the real SQL, and an AR generated "name" for the Query
     #
     ################################################################################
-    module ActiveRecordInstruments
+    #
+    # Note, if you change this instrumentation, you also need to change ActiveRecordInstruments.
+    module ActiveRecordAliasMethodInstruments
       def self.included(instrumented_class)
         ScoutApm::Agent.instance.context.logger.info "Instrumenting #{instrumented_class.inspect}"
         instrumented_class.class_eval do
@@ -218,6 +225,58 @@ module ScoutApm
           req.start_layer(layer)
           begin
             log_without_scout_instruments(*args, &block)
+          ensure
+            req.stop_layer
+          end
+        end
+      end
+    end
+
+    module ActiveRecordInstruments
+      def self.prepended(instrumented_class)
+        ScoutApm::Agent.instance.context.logger.info "Instrumenting #{instrumented_class.inspect}"
+      end
+
+      def log(*args, &block)
+        # Extract data from the arguments
+        sql, name = args
+        metric_name = Utils::ActiveRecordMetricName.new(sql, name)
+        desc = SqlList.new(sql)
+
+        # Get current ScoutApm context
+        req = ScoutApm::RequestManager.lookup
+        current_layer = req.current_layer
+
+        # If we call #log, we have a real query to run, and we've already
+        # gotten through the cache gatekeeper. Since we want to only trace real
+        # queries, and not repeated identical queries that just hit cache, we
+        # mark layer as ignorable initially in #find_by_sql, then only when we
+        # know it's a real database call do we mark it back as usable.
+        #
+        # This flag is later used in SlowRequestConverter to skip adding ignorable layers
+        current_layer.annotate_layer(:ignorable => false) if current_layer
+
+        # Either: update the current layer and yield, don't start a new one.
+        if current_layer && current_layer.type == "ActiveRecord"
+          # TODO: Get rid of call .to_s, need to find this without forcing a previous run of the name logic
+          if current_layer.name.to_s == Utils::ActiveRecordMetricName::DEFAULT_METRIC
+            current_layer.name = metric_name
+          end
+
+          if current_layer.desc.nil?
+            current_layer.desc = SqlList.new
+          end
+          current_layer.desc.merge(desc)
+
+          super(*args, &block)
+
+        # OR: Start a new layer, we didn't pick up instrumentation earlier in the stack.
+        else
+          layer = ScoutApm::Layer.new("ActiveRecord", metric_name)
+          layer.desc = desc
+          req.start_layer(layer)
+          begin
+            super(*args, &block)
           ensure
             req.stop_layer
           end

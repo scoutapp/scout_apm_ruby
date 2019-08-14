@@ -100,7 +100,7 @@ class Minitest::Test
   end
 
   def agent_context
-    ScoutApm::AgentContext.new
+    ScoutApm::Agent.instance.context
   end
 
   DATA_FILE_DIR = File.dirname(__FILE__) + '/tmp'
