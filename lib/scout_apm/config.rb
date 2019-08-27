@@ -33,6 +33,7 @@ require 'scout_apm/environment'
 # remote_agent_port - What port to bind the remote webserver to
 # start_resque_server_instrument - Used in special situations with certain Resque installs
 # timeline_traces - true/false to enable sending of of the timeline trace format.
+# auto_instrument - true/false whether to install autoinstruments. Only installed if on a supported Ruby version.
 #
 # Any of these config settings can be set with an environment variable prefixed
 # by SCOUT_ and uppercasing the key: SCOUT_LOG_LEVEL for instance.
@@ -75,7 +76,8 @@ module ScoutApm
         'start_resque_server_instrument',
         'uri_reporting',
         'instrument_http_url_length',
-        'timeline_traces'
+        'timeline_traces',
+        'auto_instrument'
     ]
 
     ################################################################################
@@ -168,7 +170,8 @@ module ScoutApm
       'database_metric_report_limit' => IntegerCoercion.new,
       'instrument_http_url_length' => IntegerCoercion.new,
       'start_resque_server_instrument' => BooleanCoercion.new,
-      'timeline_traces' => BooleanCoercion.new
+      'timeline_traces' => BooleanCoercion.new,
+      'auto_instrument' => BooleanCoercion.new
     }
 
 
@@ -276,7 +279,8 @@ module ScoutApm
         'instrument_http_url_length' => 300,
         'start_resque_server_instrument' => true, # still only starts if Resque is detected
         'collect_remote_ip' => true,
-        'timeline_traces' => true
+        'timeline_traces' => true,
+        'auto_instrument' => false
       }.freeze
 
       def value(key)

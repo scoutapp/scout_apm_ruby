@@ -186,8 +186,6 @@ if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR
   module ScoutApm
     class Railtie < Rails::Railtie
       initializer 'scout_apm.start' do |app|
-        require 'scout_apm/auto_instrument'
-
         # attempt to start on first-request if not otherwise started, which is
         # a good catch-all for Webrick, and Passenger and similar, where we
         # can't detect the running app server until actual requests come in.
@@ -195,6 +193,13 @@ if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR
 
         # Attempt to start right away, this will work best for preloading apps, Unicorn & Puma & similar
         ScoutApm::Agent.instance.install
+
+        if ScoutApm::Agent.instance.context.config.value("auto_instrument")
+          ScoutApm::Agent.instance.context.logger.debug("AutoInstruments is enabled.")
+          require 'scout_apm/auto_instrument'
+        else
+          ScoutApm::Agent.instance.context.logger.debug("AutoInstruments is disabled.")
+        end
 
         # Install the middleware every time in development mode.
         # The middleware is a noop if dev_trace is not enabled in config
