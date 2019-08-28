@@ -280,7 +280,7 @@ module ScoutApm
         'start_resque_server_instrument' => true, # still only starts if Resque is detected
         'collect_remote_ip' => true,
         'timeline_traces' => true,
-        'auto_instrument' => false
+        'auto_instrument' => true
       }.freeze
 
       def value(key)
