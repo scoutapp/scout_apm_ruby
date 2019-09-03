@@ -30,16 +30,16 @@ class AutoInstrumentTest < Minitest::Test
     )
   end
 
-  def test_rails_controller_rewrite
+  def test_controller_rewrite
     assert_equal instrumented_source("controller"),
-    normalize_backtrace(::ScoutApm::AutoInstrument::Rails.rewrite(source_path("controller")))
+      normalize_backtrace(::ScoutApm::AutoInstrument::Rails.rewrite(source_path("controller")))
 
     # update_instrumented_source("controller")
   end
 
-  def test_rescue_from_controller_rewrite
+  def test_rescue_from_rewrite
     assert_equal instrumented_source("rescue_from"),
-    normalize_backtrace(::ScoutApm::AutoInstrument::Rails.rewrite(source_path("rescue_from")))
+      normalize_backtrace(::ScoutApm::AutoInstrument::Rails.rewrite(source_path("rescue_from")))
 
     # update_instrumented_source("rescue_from")
   end
