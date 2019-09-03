@@ -45,6 +45,8 @@ module ScoutApm
 
           # The stack of class nodes:
           @scope = []
+
+          @cache = Cache.new
         end
 
         def instrument(source, file_name, line)
@@ -94,6 +96,10 @@ module ScoutApm
         def on_send(node)
           # We aren't interested in top level function calls:
           return if @method.empty?
+
+          if @cache.local_assignments?(node)
+            return super
+          end
 
           # This ignores both initial block method invocation `*x*{}`, and subsequent nested invocations `x{*y*}`:
           return if parent_type?(:block)
