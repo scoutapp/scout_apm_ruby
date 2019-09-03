@@ -8,7 +8,7 @@ class AutoInstrumentTest < Minitest::Test
   end
 
   def instrumented_path(name)
-    File.expand_path("auto_instrument/instrumented-#{name}.rb", __dir__)
+    File.expand_path("auto_instrument/#{name}-instrumented.rb", __dir__)
   end
 
   def instrumented_source(name)
