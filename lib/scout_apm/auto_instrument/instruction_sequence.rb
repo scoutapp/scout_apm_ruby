@@ -11,7 +11,7 @@ module ScoutApm
             return self.compile(new_code, File.basename(path), path)
           rescue
             warn "Failed to apply auto-instrumentation to #{path}: #{$!}"
-           end
+          end
         end
         
         return self.compile_file(path)
