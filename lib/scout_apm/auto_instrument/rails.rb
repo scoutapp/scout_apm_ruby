@@ -84,6 +84,11 @@ module ScoutApm
           wrap(node.location.expression, *instrument(node.location.expression.source, file_name, line))
         end
 
+        def on_mlhs(node)
+          # Ignore / don't instrument multiple assignment (LHS).
+          return
+        end
+
         def on_or_asgn(node)
           process(node.children[1])
         end
