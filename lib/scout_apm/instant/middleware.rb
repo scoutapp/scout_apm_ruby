@@ -128,7 +128,7 @@ module ScoutApm
       end
 
       def adjust_ajax_header
-        rack_headers['X-scoutapminstant'] = payload
+        rack_headers['X-scoutapminstant'] = (compress_payload? ? compressed_payload : payload)
       end
 
       def adjust_html_response
@@ -180,7 +180,11 @@ module ScoutApm
             page = ScoutApm::Instant::Page.new(rack_body.body)
 
             # This monkey-patches XMLHttpRequest. It could possibly be part of the main scout_instant.js too. Putting it here so it runs as soon as possible.
-            page.add_to_head(ScoutApm::Instant::Util.read_asset("xmlhttp_instrumentation.html"))
+            if compress_payload?
+              page.add_to_head(ScoutApm::Instant::Util.read_asset("xmlhttp_instrumentation_with_compression.html"))
+            else
+              page.add_to_head(ScoutApm::Instant::Util.read_asset("xmlhttp_instrumentation.html"))
+            end
 
             # Add a link to CSS, then JS
             page.add_to_head("<link href='#{apm_host}/instant/scout_instant.css?cachebust=#{Time.now.to_i}' media='all' rel='stylesheet' />")
@@ -247,6 +251,14 @@ module ScoutApm
               merge!(:metadata => metadata)
             ScoutApm::Serializers::PayloadSerializerToJson.jsonify_hash(hash)
           end
+      end
+
+      def compress_payload?
+        ScoutApm::Agent.instance.context.config.value("compress_payload") || true 
+      end
+
+      def compressed_payload
+        Base64.strict_encode64(Zlib::Deflate.deflate(payload))
       end
 
     end
