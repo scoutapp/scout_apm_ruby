@@ -11,6 +11,9 @@ module ScoutApm
 
       attr_reader :call_stack
 
+      # call_stack - an +Array+ of calls, typically generated via the +caller+ method. 
+      # Example single line: 
+      # "/Users/dlite/.rvm/rubies/ruby-2.4.5/lib/ruby/2.4.0/irb/workspace.rb:87:in `eval'"
       def initialize(call_stack, root=ScoutApm::Agent.instance.context.environment.root)
         @call_stack = call_stack
         # We can't use a constant as it'd be too early to fetch environment info

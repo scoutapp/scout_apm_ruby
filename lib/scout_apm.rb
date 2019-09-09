@@ -196,6 +196,13 @@ if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR
         # Attempt to start right away, this will work best for preloading apps, Unicorn & Puma & similar
         ScoutApm::Agent.instance.install
 
+        if ScoutApm::Agent.instance.context.config.value("auto_instruments")
+          ScoutApm::Agent.instance.context.logger.debug("AutoInstruments is enabled.")
+          require 'scout_apm/auto_instrument'
+        else
+          ScoutApm::Agent.instance.context.logger.debug("AutoInstruments is disabled.")
+        end
+
         # Install the middleware every time in development mode.
         # The middleware is a noop if dev_trace is not enabled in config
         if Rails.env.development?

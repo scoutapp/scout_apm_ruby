@@ -28,6 +28,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency "rake-compiler"
   s.add_development_dependency "addressable"
   s.add_development_dependency "activesupport"
+  s.add_runtime_dependency "parser"
 
   # These are general development dependencies which are used in instrumentation
   # tests. Specific versions are pulled in using specific gemfiles, e.g. 

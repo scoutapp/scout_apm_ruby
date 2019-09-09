@@ -1,3 +1,7 @@
+# 2.6.0
+
+* Autoinstruments (#247). Disabled by default. Set `auto_instruments: true` to enable.
+
 # 2.5.3
 
 * Add Que support (#265)
@@ -27,7 +31,7 @@
 
 # 2.4.22
 
-* Support Rails 6.0 View Instruments (#251) 
+* Support Rails 6.0 View Instruments (#251)
 * Update documentation URLs (#236)
 
 # 2.4.21
@@ -675,7 +679,7 @@ Big set of features getting merged in for this release.
 
 # 0.1.3
 
-* Adds capacity calculation via "Instance/Capacity" metric. 
+* Adds capacity calculation via "Instance/Capacity" metric.
 * Tweaks tracing to still count a transaction if it results in a 500 error and includes it in accumulated time.
 * Adds per-transaction error tracking (ex: Errors/Controller/widgets/index)
 
