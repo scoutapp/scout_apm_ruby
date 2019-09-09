@@ -1,3 +1,7 @@
+# 2.5.3
+
+* Add Que support (#265)
+
 # 2.5.2
 
 * Don't process limited layers in detailed traces (#268)
