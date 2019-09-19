@@ -94,7 +94,7 @@ module ScoutApm
 
       def preconditions_met?
         if dev_trace_disabled?
-          logger.debug("DevTrace: isn't activated via config. Try: SCOUT_DEV_TRACE=true rails server")
+          # logger.debug("DevTrace: isn't activated via config. Try: SCOUT_DEV_TRACE=true rails server")
           return false
         end
 

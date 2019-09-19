@@ -38,6 +38,9 @@ module ScoutApm
     # backtrace of where it occurred.
     attr_accessor :backtrace
 
+    # The file name associated with the layer. Used for autoinstruments overhead logging.
+    attr_accessor :file_name
+
     # As we go through a part of a request, instrumentation can store additional data
     # Known Keys:
     #   :record_count - The number of rows returned by an AR query (From notification instantiation.active_record)

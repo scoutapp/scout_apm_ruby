@@ -103,6 +103,13 @@ module ScoutApm
       @slow_job_policy ||= ScoutApm::SlowJobPolicy.new(self)
     end
 
+    # Maintains a Histogram of insignificant/significant autoinstrument layers.
+    # significant = 1
+    # insignificant = 0
+    def auto_instruments_layer_histograms
+      @auto_instruments_layer_histograms ||= ScoutApm::RequestHistograms.new
+    end
+
     # Histogram of the cumulative requests since the start of the process
     def request_histograms
       @request_histograms ||= ScoutApm::RequestHistograms.new

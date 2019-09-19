@@ -180,14 +180,17 @@ module ScoutApm
       false
     end
 
+    # Returns +true+ if the total call time of AutoInstrument layers exceeds +AUTO_INSTRUMENT_TIMING_THRESHOLD+ and
+    # records a Histogram of insignificant / significant layers by file name.
     def layer_insignificant?(layer)
+      result = false
       if layer.type == 'AutoInstrument'
         if layer.total_call_time < AUTO_INSTRUMENT_TIMING_THRESHOLD
-          context.logger.debug("IGNORE LAYER name=#{layer.name} total_call_time=#{layer.total_call_time}")
-          return true
+          result = true
         end
+        @agent_context.auto_instruments_layer_histograms.add(layer.file_name, (result ? 0 : 1))
       end
-      return false
+      result
     end
 
     # Maintains a lookup Hash of call counts by layer name. Used to determine if we should capture a backtrace.
@@ -232,6 +235,11 @@ module ScoutApm
     # * Send the request off to be stored
     def stop_request
       @stopping = true
+
+      if layer_finder.scope
+        # context.logger.debug("AutoInstrument Ignored Layers [#{layer_finder.scope.name}] : #{@ignored_layers.sort_by{ |k, v| v }.reverse.to_h}")
+        # context.logger.debug("AutoInstrument Kept Layers [#{layer_finder.scope.name}] : #{@kept_layers.sort_by{ |k, v| v }.reverse.to_h}")
+      end
 
       if @recorder
         @recorder.record!(self)
@@ -329,7 +337,7 @@ module ScoutApm
         memo
       end
       walker.walk
-      converter_results = converter_instances.inject({}) do |memo, (slug,i)| 
+      converter_results = converter_instances.inject({}) do |memo, (slug,i)|
         memo[slug] = i.record!
         memo
       end
