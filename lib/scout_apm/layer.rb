@@ -38,7 +38,7 @@ module ScoutApm
     # backtrace of where it occurred.
     attr_accessor :backtrace
 
-    # The file name associated with the layer. Used for autoinstruments overhead logging.
+    # The file name associated with the layer. Only used for autoinstruments overhead logging.
     attr_accessor :file_name
 
     # As we go through a part of a request, instrumentation can store additional data

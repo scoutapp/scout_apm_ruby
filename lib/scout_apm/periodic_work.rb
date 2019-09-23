@@ -27,7 +27,7 @@ module ScoutApm
           {total: total=v.map(&:last).inject(:+), significant: (v.last.last/total.to_f).round(2)}
         ]
       }.to_h
-      context.logger.debug("AutoInstrument Layer Histograms: #{hists_summary.pretty_inspect}")
+      context.logger.debug("AutoInstrument Significant Layer Histograms: #{hists_summary.pretty_inspect}")
     end
 
     # XXX: Move logic into a RequestHistogramsByTime class that can keep the timeout logic in it
