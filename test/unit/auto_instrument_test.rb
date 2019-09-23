@@ -19,35 +19,33 @@ class AutoInstrumentTest < Minitest::Test
   # test controller.rb file, which will be different on different environments.
   # This normalizes backtraces across environments.
   def normalize_backtrace(string)
-    string.gsub(/\[".+auto_instrument\/.+?:.+?"\]/,'["BACKTRACE"]')
+    string
+      .gsub(/\[".+auto_instrument\/.+?:.+?"\]/,'["BACKTRACE"]')
+      .gsub(/'.+auto_instrument\/.+'/,"'FILE_NAME'")
   end
 
   # Use this to automatically update the test fixtures.
   def update_instrumented_source(name)
-    File.write(
-      instrumented_path(name),
-      normalize_backtrace(::ScoutApm::AutoInstrument::Rails.rewrite(source_path(name)))
-    )
+    source = ::ScoutApm::AutoInstrument::Rails.rewrite(source_path(name))
+    source = normalize_backtrace(source)
+    File.write(instrumented_path(name),source)
   end
 
   def test_controller_rewrite
+    # update_instrumented_source("controller")
     assert_equal instrumented_source("controller"),
       normalize_backtrace(::ScoutApm::AutoInstrument::Rails.rewrite(source_path("controller")))
-
-    # update_instrumented_source("controller")
   end
 
   def test_rescue_from_rewrite
+    # update_instrumented_source("rescue_from")
     assert_equal instrumented_source("rescue_from"),
       normalize_backtrace(::ScoutApm::AutoInstrument::Rails.rewrite(source_path("rescue_from")))
-
-    # update_instrumented_source("rescue_from")
   end
 
   def test_assignments_rewrite
+    # update_instrumented_source("assignments")
     assert_equal instrumented_source("assignments"),
       normalize_backtrace(::ScoutApm::AutoInstrument::Rails.rewrite(source_path("assignments")))
-
-    # update_instrumented_source("assignments")
   end
 end if defined? ScoutApm::AutoInstrument
