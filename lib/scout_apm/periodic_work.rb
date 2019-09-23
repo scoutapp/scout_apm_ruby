@@ -24,7 +24,7 @@ module ScoutApm
       hists_summary = hists.map { |k,v|
         [
           k,
-          {total: total=v.map(&:last).inject(:+), significant: (v.last.last/total.to_f).round(2)}
+          {:total => total=v.map(&:last).inject(:+), :significant => (v.last.last/total.to_f).round(2)}
         ]
       }.to_h
       context.logger.debug("AutoInstrument Significant Layer Histograms: #{hists_summary.pretty_inspect}")
