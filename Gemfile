@@ -9,7 +9,4 @@ if RUBY_VERSION <= "1.8.7"
   gem "i18n", "~> 0.6.11"
   gem "pry", "~> 0.9.12"
   gem "rake", "~> 10.5"
-elsif RUBY_VERSION < "2.5.0"
-  gem "activesupport", "~> 5"
-  gem "activerecord", "~> 5"
 end
