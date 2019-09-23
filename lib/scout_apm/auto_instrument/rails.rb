@@ -17,6 +17,19 @@ module ScoutApm
         CONTROLLER_FILE.match(path) && !GEM_FILE.match(path)
       end
 
+      # Autoinstruments increases overhead when applied to many code expressions that perform little work.
+      # You can exclude files from autoinstruments via the `auto_instruments_ignore` option.
+      def self.ignore?(path)
+        res = false
+        ScoutApm::Agent.instance.context.config.value('auto_instruments_ignore').each do |ignored_file_name|
+          if path.include?(ignored_file_name)
+            res = true
+            break
+          end
+        end
+        res
+      end
+
       def self.rewrite(path, code = nil)
         code ||= File.read(path)
 
@@ -60,7 +73,7 @@ module ScoutApm
           bt = ["#{file_name}:#{line}:in `#{method_name}'"]
 
           return [
-            "::ScoutApm::AutoInstrument("+ source.dump + ",#{bt}" + "){",
+            "::ScoutApm::AutoInstrument("+ source.dump + ",#{bt}" + ",'#{file_name}'" + "){",
             "}"
           ]
         end

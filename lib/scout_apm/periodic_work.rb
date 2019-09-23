@@ -12,9 +12,23 @@ module ScoutApm
       ScoutApm::Debug.instance.call_periodic_hooks
       @reporting.process_metrics
       clean_old_percentiles
+      log_layer_histograms
     end
 
     private
+
+    def log_layer_histograms
+      # Ex key/value -
+      # "/Users/dlite/projects/scout/apm/app/controllers/application_controller.rb"=>[[0.0, 689], [1.0, 16]]
+      hists = context.auto_instruments_layer_histograms.as_json
+      hists_summary = hists.map { |k,v|
+        [
+          k,
+          {:total => total=v.map(&:last).inject(:+), :significant => (v.last.last/total.to_f).round(2)}
+        ]
+      }.to_h
+      context.logger.debug("AutoInstrument Significant Layer Histograms: #{hists_summary.pretty_inspect}")
+    end
 
     # XXX: Move logic into a RequestHistogramsByTime class that can keep the timeout logic in it
     def clean_old_percentiles

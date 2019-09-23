@@ -5,15 +5,17 @@ module ScoutApm
   module AutoInstrument
     module InstructionSequence
       def load_iseq(path)
-        if Rails.controller_path?(path)
+        if Rails.controller_path?(path) & !Rails.ignore?(path)
           begin
             new_code = Rails.rewrite(path)
             return self.compile(new_code, File.basename(path), path)
           rescue
             warn "Failed to apply auto-instrumentation to #{path}: #{$!}"
           end
+        elsif Rails.ignore?(path)
+          warn "AutoInstruments are ignored for path=#{path}."
         end
-        
+
         return self.compile_file(path)
       end
     end

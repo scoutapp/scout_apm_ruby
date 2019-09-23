@@ -22,6 +22,10 @@ module ScoutApm
       @histograms.keys.each { |n| yield n }
     end
 
+    def as_json
+      @histograms.as_json
+    end
+
     def add(item, value)
       @histograms[item].add(value)
     end
