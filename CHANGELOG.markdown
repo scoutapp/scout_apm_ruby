@@ -1,3 +1,8 @@
+# 2.6.1
+
+* Logging total autoinstrumented spans and the ratio of significant to total spans (#283).
+* Added `autoinstruments_ignore` option (also #283).
+
 # 2.6.0
 
 * Autoinstruments (#247). Disabled by default. Set `auto_instruments: true` to enable.
