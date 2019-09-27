@@ -73,7 +73,7 @@ module ScoutApm
           bt = ["#{file_name}:#{line}:in `#{method_name}'"]
 
           return [
-            "::ScoutApm::AutoInstrument("+ source.dump + ",#{bt}" + ",'#{file_name}'" + "){",
+            "::ScoutApm::AutoInstrument("+ source.dump + ",#{bt}){",
             "}"
           ]
         end

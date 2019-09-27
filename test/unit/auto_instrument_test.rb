@@ -21,7 +21,6 @@ class AutoInstrumentTest < Minitest::Test
   def normalize_backtrace(string)
     string
       .gsub(/\[".+auto_instrument\/.+?:.+?"\]/,'["BACKTRACE"]')
-      .gsub(/'.+auto_instrument\/.+'/,"'FILE_NAME'")
   end
 
   # Use this to automatically update the test fixtures.
@@ -33,18 +32,21 @@ class AutoInstrumentTest < Minitest::Test
 
   def test_controller_rewrite
     # update_instrumented_source("controller")
+
     assert_equal instrumented_source("controller"),
       normalize_backtrace(::ScoutApm::AutoInstrument::Rails.rewrite(source_path("controller")))
   end
 
   def test_rescue_from_rewrite
     # update_instrumented_source("rescue_from")
+
     assert_equal instrumented_source("rescue_from"),
       normalize_backtrace(::ScoutApm::AutoInstrument::Rails.rewrite(source_path("rescue_from")))
   end
 
   def test_assignments_rewrite
     # update_instrumented_source("assignments")
+
     assert_equal instrumented_source("assignments"),
       normalize_backtrace(::ScoutApm::AutoInstrument::Rails.rewrite(source_path("assignments")))
   end

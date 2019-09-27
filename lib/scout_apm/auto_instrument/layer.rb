@@ -1,7 +1,9 @@
 
 module ScoutApm
-  def self.AutoInstrument(name, backtrace, file_name)
+  def self.AutoInstrument(name, backtrace)
     request = ScoutApm::RequestManager.lookup
+
+    file_name, _ = backtrace.first.split(":", 2)
 
     begin
       layer = ScoutApm::Layer.new('AutoInstrument', name)
