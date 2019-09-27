@@ -21,8 +21,7 @@ class AutoInstrumentTest < Minitest::Test
   # test controller.rb file, which will be different on different environments.
   # This normalizes backtraces across environments.
   def normalize_backtrace(string)
-    string
-      .gsub(ROOT, "ROOT")
+    string.gsub(ROOT, "ROOT")
   end
 
   # Use this to automatically update the test fixtures.
