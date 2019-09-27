@@ -1,5 +1,10 @@
 
 class Assignments
+  def test_op_asgn
+    foo.bar += User.size
+    foo.bar -= User.size
+  end
+
   def nested_assignment
     @email ||= if (email = session["email"]).present?
         User.where(email: email).first

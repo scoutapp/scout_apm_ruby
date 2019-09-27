@@ -102,6 +102,10 @@ module ScoutApm
           return
         end
 
+        def on_op_asgn(node)
+          process(node.children[2])
+        end
+
         def on_or_asgn(node)
           process(node.children[1])
         end
