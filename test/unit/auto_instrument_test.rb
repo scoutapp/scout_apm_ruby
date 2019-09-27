@@ -3,6 +3,8 @@ require 'test_helper'
 require 'scout_apm/auto_instrument'
 
 class AutoInstrumentTest < Minitest::Test
+  ROOT = File.expand_path("../../", __dir__)
+  
   def source_path(name)
     File.expand_path("auto_instrument/#{name}.rb", __dir__)
   end
@@ -20,7 +22,7 @@ class AutoInstrumentTest < Minitest::Test
   # This normalizes backtraces across environments.
   def normalize_backtrace(string)
     string
-      .gsub(/\[".+auto_instrument\/.+?:.+?"\]/,'["BACKTRACE"]')
+      .gsub(ROOT, "ROOT")
   end
 
   # Use this to automatically update the test fixtures.
