@@ -9,4 +9,5 @@ if RUBY_VERSION <= "1.8.7"
   gem "i18n", "~> 0.6.11"
   gem "pry", "~> 0.9.12"
   gem "rake", "~> 10.5"
+  gem "minitest", "~> 5.11.3"
 end
