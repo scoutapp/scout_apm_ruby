@@ -19,3 +19,10 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+
+## OPEN SOURCE COMPONENTS	
+
+This product includes `rusage`, which inherits the Artistic License 2.0 from proc/wait3.	
+See http://www.rubydoc.info/gems/rusage/0.2.0.	
+
+    Copyright Daniel J. Berger and Ben Sandofsky.	
