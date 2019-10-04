@@ -1,3 +1,9 @@
+# 2.6.2
+
+* Fix Autoinstruments logging when running without ActiveSupport (#290)
+* Fix edge-case Autoinstruments syntax error (#287)
+* Fix invalid syntax for running on Ruby 1.8.7
+
 # 2.6.1
 
 * Logging total autoinstrumented spans and the ratio of significant to total spans (#283).
