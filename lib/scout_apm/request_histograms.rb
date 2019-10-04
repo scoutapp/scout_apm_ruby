@@ -23,7 +23,11 @@ module ScoutApm
     end
 
     def as_json
-      @histograms.as_json
+      Hash[
+        @histograms.map{ |key, histogram|
+          [key, histogram.as_json]
+        }
+      ]
     end
 
     def add(item, value)

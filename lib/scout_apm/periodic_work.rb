@@ -12,19 +12,24 @@ module ScoutApm
       ScoutApm::Debug.instance.call_periodic_hooks
       @reporting.process_metrics
       clean_old_percentiles
-      log_layer_histograms
+
+      if context.config.value('auto_instruments')
+        log_autoinstrument_significant_counts rescue nil
+      end
     end
 
     private
 
-    def log_layer_histograms
+    def log_autoinstrument_significant_counts
       # Ex key/value -
       # "/Users/dlite/projects/scout/apm/app/controllers/application_controller.rb"=>[[0.0, 689], [1.0, 16]]
       hists = context.auto_instruments_layer_histograms.as_json
-      hists_summary = hists.map { |k,v|
+      hists_summary = hists.map { |file, buckets|
+        total = buckets.map(&:last).inject(0) { |sum, count| sum + count }
+        significant = (buckets.last.last / total.to_f).round(2)
         [
-          k,
-          {:total => total=v.map(&:last).inject(:+), :significant => (v.last.last/total.to_f).round(2)}
+          file,
+          {:total => total, :significant => significant}
         ]
       }.to_h
       context.logger.debug("AutoInstrument Significant Layer Histograms: #{hists_summary.pretty_inspect}")
