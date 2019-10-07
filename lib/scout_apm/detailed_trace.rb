@@ -200,8 +200,11 @@ class DetailedTraceTags
     @tags = hash
   end
 
+  # This should be a hash of string => [ string | hash | array ], none of which
+  # needs any fancy json handling. This may change in the future and this is
+  # a reasonable stub if fancy-pants objects want to be added as values
   def as_json(*)
-    @tags.as_json
+    @tags
   end
 end
 
