@@ -37,8 +37,8 @@ module ScoutApm
           ### See moped instrument for Moped driven deploys
 
           ### 5.x Mongoid
-          if (mongoid_v5? || mongoid_v6?) && defined?(::Mongoid::Contextual::Mongo)
-            logger.info "Instrumenting Mongoid 5.x/6.x"
+          if (mongoid_v5? || mongoid_v6? || mongoid_v7?) && defined?(::Mongoid::Contextual::Mongo)
+            logger.info "Instrumenting Mongoid 5.x/6.x/7.x"
             # All the public methods from Mongoid::Contextual::Mongo.
             # TODO: Geo and MapReduce support (?). They are in other Contextual::* classes
             methods = [
@@ -54,8 +54,6 @@ module ScoutApm
               if ::Mongoid::Contextual::Mongo.method_defined?(method)
                 with_scout_instruments = %Q[
                 def #{method}_with_scout_instruments(*args, &block)
-
-
                   req = ScoutApm::RequestManager.lookup
                   *db, collection = view.collection.namespace.split(".")
 
@@ -112,6 +110,13 @@ module ScoutApm
         end
       end
 
+      def mongoid_v7?
+        if defined?(::Mongoid::VERSION)
+          ::Mongoid::VERSION =~ /\A7/
+        else
+          false
+        end
+      end
 
       # Example of what a filter looks like: => {"founded"=>{"$gte"=>"1980-1-1"}, "name"=>{"$in"=>["Tool", "Deftones", "Melvins"]}}
       # Approach: find every leaf-node, clear it. inspect the whole thing when done.
