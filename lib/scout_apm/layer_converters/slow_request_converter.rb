@@ -70,7 +70,6 @@ module ScoutApm
         allocation_metric_hash = Hash.new
 
         walker.on do |layer|
-          next if skip_layer?(layer)
           store_specific_metric(layer, metric_hash, allocation_metric_hash)
           store_aggregate_metric(layer, metric_hash, allocation_metric_hash)
         end
