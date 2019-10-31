@@ -29,12 +29,17 @@ module ScoutApm
     end
 
     def data
-      { :server_time        => to_s_safe(Time.now),
+      { 
+        :language           => 'ruby',
+        :language_version   => RUBY_VERSION,
+        :ruby_version       => RUBY_VERSION, # Deprecated.
+
         :framework          => to_s_safe(environment.framework_integration.human_name),
         :framework_version  => to_s_safe(environment.framework_integration.version),
+
+        :server_time        => to_s_safe(Time.now),
         :environment        => to_s_safe(environment.framework_integration.env),
         :app_server         => to_s_safe(environment.app_server),
-        :ruby_version       => RUBY_VERSION,
         :hostname           => to_s_safe(environment.hostname),
         :database_engine    => to_s_safe(environment.database_engine),      # Detected
         :database_adapter   => to_s_safe(environment.raw_database_adapter), # Raw
