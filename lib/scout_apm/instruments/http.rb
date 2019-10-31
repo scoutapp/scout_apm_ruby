@@ -20,7 +20,7 @@ module ScoutApm
         if defined?(::HTTP) && defined?(::HTTP::Client)
           @installed = true
 
-          logger.info "Instrumenting HTTP"
+          logger.info "Instrumenting HTTP::Client"
 
           ::HTTP::Client.class_eval do
             include ScoutApm::Tracer
