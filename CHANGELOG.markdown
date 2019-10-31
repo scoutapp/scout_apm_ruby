@@ -1,3 +1,9 @@
+# 2.6.3
+
+* Standardize Metadata with other language agents (#302)
+* Add Mongoid 7.x support (#295)
+* Add HTTP::Client support (#260)
+
 # 2.6.2
 
 * Fix Autoinstruments logging when running without ActiveSupport (#290)
