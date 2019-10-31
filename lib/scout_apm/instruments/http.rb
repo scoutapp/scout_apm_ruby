@@ -34,6 +34,8 @@ module ScoutApm
             def request_scout_description(verb, uri)
               max_length = ScoutApm::Agent.instance.context.config.value('instrument_http_url_length')
               (String(uri).split('?').first)[0..(max_length - 1)]
+            rescue
+              ""
             end
 
             alias request_without_scout_instruments request
