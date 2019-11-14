@@ -1,3 +1,7 @@
+# 2.6.4
+
+* Add defensive check against a nil @address in Net/HTTP instruments (#306)
+
 # 2.6.3
 
 * Standardize Metadata with other language agents (#302)
