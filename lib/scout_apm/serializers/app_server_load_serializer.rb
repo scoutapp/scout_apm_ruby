@@ -5,6 +5,10 @@ module ScoutApm
     class AppServerLoadSerializer
       def self.serialize(data)
         Marshal.dump(data)
+      rescue
+        ScoutApm::Agent.instance.logger.info("Failed Marshalling AppServerLoad")
+
+        ScoutApm::Agent.instance.logger.info(ScoutApm::Utils::MarshalLogging.new(data).dive) rescue nil
       end
 
       def self.deserialize(data)

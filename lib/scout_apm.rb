@@ -112,6 +112,7 @@ require 'scout_apm/utils/time'
 require 'scout_apm/utils/unique_id'
 require 'scout_apm/utils/numbers'
 require 'scout_apm/utils/gzip_helper'
+require 'scout_apm/utils/marshal_logging'
 
 require 'scout_apm/config'
 require 'scout_apm/environment'
