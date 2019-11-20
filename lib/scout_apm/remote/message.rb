@@ -19,8 +19,8 @@ module ScoutApm
         Marshal.dump(self)
       rescue
         ScoutApm::Agent.instance.logger.info("Failed Marshalling Remote::Message")
-
         ScoutApm::Agent.instance.logger.info(ScoutApm::Utils::MarshalLogging.new(self).dive) rescue nil
+        raise
       end
     end
   end
