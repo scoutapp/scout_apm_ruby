@@ -71,6 +71,15 @@ class LayerChildrenSetTest < Minitest::Test
     limited_layers.each { |ml| assert_equal 5, ml.count }
   end
 
+  def test_works_with_marshal
+    s = SET.new(5)
+    10.times do
+      s << make_layer("LayerType", "LayerName")
+    end
+
+    Marshal.dump(s)
+  end
+
   #############
   #  Helpers  #
   #############
