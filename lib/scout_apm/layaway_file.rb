@@ -30,6 +30,10 @@ module ScoutApm
 
     def serialize(data)
       Marshal.dump(data)
+    rescue
+      ScoutApm::Agent.instance.logger.info("Failed Marshalling LayawayFile")
+      ScoutApm::Agent.instance.logger.info(ScoutApm::Utils::MarshalLogging.new(data).dive) rescue nil
+      raise
     end
 
     def deserialize(data)
