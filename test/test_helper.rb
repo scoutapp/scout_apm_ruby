@@ -1,6 +1,6 @@
 # Load & Start simplecov before loading scout_apm
-require 'simplecov'
-SimpleCov.start
+# require 'simplecov'
+# SimpleCov.start
 
 require 'minitest/autorun'
 require 'minitest/unit'
