@@ -26,6 +26,7 @@
 # 2.5.3
 
 * Add Que support (#265)
+* Add Memcached support (#279)
 
 # 2.5.2
 
