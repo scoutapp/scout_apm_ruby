@@ -1,3 +1,12 @@
+# 2.6.5
+
+* Add a tag to any requests that reach maximum number of spans (#316)
+* Update testing library Mocha (#315)
+* Fix case sensitivity mismatch in Job renaming (#314)
+* Add support for Sneakers 2.5 (#313)
+* Fix edge case with Resque instrumentation (#312)
+* Fix missing source code when used with BugSnag (#308)
+
 # 2.6.4
 
 * Add defensive check against a nil @address in Net/HTTP instruments (#306)
