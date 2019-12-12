@@ -58,6 +58,9 @@ module ScoutApm
         code = "" # User#index for instance
 
         spans = create_spans(request.root_layer)
+        if limited?
+          tags[:"scout.reached_span_cap"] = true
+        end
 
         DetailedTrace.new(
           transaction_id,
