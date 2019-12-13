@@ -89,6 +89,24 @@ module ScoutApm
         assert_equal %q|INSERT INTO `users` VALUES (?, ?)|, ss.to_s
       end
 
+      def test_sqlserver_integers
+        sql = "EXEC sp_executesql N'SELECT  [users].* FROM [users] WHERE (age > 50)  ORDER BY [users].[id] ASC OFFSET 0 ROWS FETCH NEXT @0 ROWS ONLY', N'@0 int', @0 = 10"
+        ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :sqlserver }
+        assert_equal %q|SELECT  [users].* FROM [users] WHERE (age > ?)  ORDER BY [users].[id] ASC OFFSET ? ROWS FETCH NEXT @0 ROWS ONLY|, ss.to_s
+      end
+
+      def test_sqlserver_strings
+        sql = "EXEC sp_executesql N'SELECT  [users].* FROM [users] WHERE [users].[email] = @0  ORDER BY [users].[id] ASC OFFSET 0 ROWS FETCH NEXT @1 ROWS ONLY', N'@0 nvarchar(4000), @1 int', @0 = N'foo', @1 = 10"
+        ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :sqlserver }
+        assert_equal %q|SELECT  [users].* FROM [users] WHERE [users].[email] = @0  ORDER BY [users].[id] ASC OFFSET ? ROWS FETCH NEXT @1 ROWS ONLY|, ss.to_s
+      end
+
+      def test_sqlserver_in_clause
+        sql = "EXEC sp_executesql N'SELECT  [users].* FROM [users] WHERE (id IN (1,2,3))  ORDER BY [users].[id] ASC OFFSET 0 ROWS FETCH NEXT @0 ROWS ONLY', N'@0 int', @0 = 10"
+        ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :sqlserver }
+        assert_equal %q|SELECT  [users].* FROM [users] WHERE (id IN (?))  ORDER BY [users].[id] ASC OFFSET ? ROWS FETCH NEXT @0 ROWS ONLY|, ss.to_s
+      end
+
       def test_scrubs_invalid_encoding
         skip "Ruby 1.8.7 has no concept of encoding" if RUBY_VERSION.start_with?("1.8.")
 
