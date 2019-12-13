@@ -40,8 +40,6 @@ module ScoutApm
 
       private
 
-      # "EXEC sp_executesql N'SELECT  [users].* FROM [users] WHERE (age > 50)  ORDER BY [users].[id] ASC OFFSET 0 ROWS FETCH NEXT @0 ROWS ONLY', N'@0 int', @0 = 10"
-
       def to_s_sqlserver
         sql.gsub!(SQLSERVER_EXECUTESQL, '\1')
         sql.gsub!(SQLSERVER_REMOVE_INTEGERS, '?')

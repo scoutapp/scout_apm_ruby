@@ -21,6 +21,10 @@ module ScoutApm
       SQLITE_REMOVE_STRINGS = /'(?:[^']|'')*'/.freeze
       SQLITE_REMOVE_INTEGERS = /\b\d+\b/.freeze
 
+      # This is not officially supported, but will do its best.
+      SQLSERVER_EXECUTESQL = /EXEC sp_executesql N'(.*?)'.*/
+      SQLSERVER_REMOVE_INTEGERS = /\b\d+\b/.freeze
+      SQLSERVER_IN_CLAUSE = /IN\s+\(\?[^\)]*\)/.freeze
     end
   end
 end
