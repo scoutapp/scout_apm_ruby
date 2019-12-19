@@ -1,3 +1,8 @@
+# 2.6.6
+
+* Add basic support for parsing Microsoft SQLServer queries (#317)
+* Refine Postgresql Sanitization with subqueries and JSON operations (#262)
+
 # 2.6.5
 
 * Add a tag to any requests that reach maximum number of spans (#316)
