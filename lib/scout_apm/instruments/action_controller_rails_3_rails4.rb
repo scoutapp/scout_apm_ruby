@@ -22,10 +22,10 @@ module ScoutApm
         # before and after filter timing. Instrumenting Base includes those
         # filters, at the expense of missing out on controllers that don't use
         # the full Rails stack.
-        if defined?(::ActionController)
+        ActiveSupport.on_load(:action_controller) do
           @installed = true
 
-          if defined?(::ActionController::Base)
+          ActiveSupport.on_load(:action_controller_base) do
             logger.info "Instrumenting ActionController::Base"
             ::ActionController::Base.class_eval do
               # include ScoutApm::Tracer
@@ -33,14 +33,14 @@ module ScoutApm
             end
           end
 
-          if defined?(::ActionController::Metal)
+          ActiveSupport.on_load(:action_controller_metal) do
             logger.info "Instrumenting ActionController::Metal"
             ::ActionController::Metal.class_eval do
               include ScoutApm::Instruments::ActionControllerMetalInstruments
             end
           end
 
-          if defined?(::ActionController::API)
+          ActiveSupport.on_load(:action_controller_api) do
             logger.info "Instrumenting ActionController::Api"
             ::ActionController::API.class_eval do
               include ScoutApm::Instruments::ActionControllerAPIInstruments
