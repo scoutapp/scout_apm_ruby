@@ -26,7 +26,7 @@ module ScoutApm
       # The time in queue of the transaction in ms. If not present, +nil+ is returned as this is unknown.
       def queue_time_ms
         # Controller logic
-        if converter_results[:queue_time] && converter_results[:queue].any?
+        if converter_results[:queue_time] && converter_results[:queue_time].any?
           converter_results[:queue_time].values.first.total_call_time*1000 # ms
         # Job logic
         elsif converter_results[:job]
