@@ -1,3 +1,7 @@
+# 2.6.7
+
+* Remove accidental call to `as_json`
+
 # 2.6.6
 
 * Add basic support for parsing Microsoft SQLServer queries (#317)
