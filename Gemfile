@@ -2,7 +2,6 @@ source "https://rubygems.org"
 
 # Specify your gem's dependencies in scout_apm.gemspec
 gemspec
-gem "rake", ">= 12.3.3"
 
 # Pin development dependencies more conservatively for Ruby 1.8.7
 if RUBY_VERSION <= "1.8.7"
@@ -11,4 +10,6 @@ if RUBY_VERSION <= "1.8.7"
   gem "pry", "~> 0.9.12"
   gem "rake", "~> 10.5"
   gem "minitest", "~> 5.11.3"
+else
+  gem "rake", ">= 12.3.3"
 end
