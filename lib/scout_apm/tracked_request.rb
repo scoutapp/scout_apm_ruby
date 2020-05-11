@@ -54,11 +54,11 @@ module ScoutApm
 
     # Layers of type 'AutoInstrument' are not recorded if their total_call_time doesn't exceed this threshold.
     # AutoInstrument layers are frequently of short duration. This throws out this deadweight that is unlikely to be optimized.
-    AUTO_INSTRUMENT_TIMING_THRESHOLD = 5/1_000.0 # units = seconds
+    AUTO_INSTRUMENT_TIMING_THRESHOLD = 5 / 1_000.0 # units = seconds
 
     def initialize(agent_context, store)
       @agent_context = agent_context
-      @store = store #this is passed in so we can use a real store (normal operation) or fake store (instant mode only)
+      @store = store # this is passed in so we can use a real store (normal operation) or fake store (instant mode only)
       @layers = []
       @call_set = Hash.new { |h, k| h[k] = CallSet.new }
       @annotations = {}
@@ -126,7 +126,6 @@ module ScoutApm
         layer.capture_backtrace!
       end
 
-
       if finalized?
         stop_request
       end
@@ -184,7 +183,7 @@ module ScoutApm
     # records a Histogram of insignificant / significant layers by file name.
     def layer_insignificant?(layer)
       result = false # default is significant
-      if layer.type == 'AutoInstrument'
+      if layer.type == "AutoInstrument"
         if layer.total_call_time < AUTO_INSTRUMENT_TIMING_THRESHOLD
           result = true # not significant
         end
@@ -228,7 +227,7 @@ module ScoutApm
     #
     # * Capture the first layer as the root_layer
     def start_request(layer)
-      @root_layer = layer unless @root_layer # capture root layer
+      @root_layer ||= layer # capture root layer
     end
 
     # Run at the end of the whole request
@@ -237,9 +236,7 @@ module ScoutApm
     def stop_request
       @stopping = true
 
-      if @recorder
-        @recorder.record!(self)
-      end
+      @recorder&.record!(self)
     end
 
     def stopping?
@@ -290,6 +287,7 @@ module ScoutApm
     # the peristent Store object
     def record!
       recorded!
+      ScoutApm::Agent.instance.logger.info("Context in top of parent TrackedRequest#record! is: #{context.to_hash}")
 
       return if ignoring_request?
 
@@ -304,20 +302,20 @@ module ScoutApm
 
       @agent_context.transaction_time_consumed.add(unique_name, root_layer.total_call_time)
 
-      context.add(:transaction_id => transaction_id)
+      context.add(transaction_id: transaction_id)
 
       # Make a constant, then call converters.dup.each so it isn't inline?
       converters = {
-        :histograms => LayerConverters::Histograms,
-        :metrics => LayerConverters::MetricConverter,
-        :errors => LayerConverters::ErrorConverter,
-        :allocation_metrics => LayerConverters::AllocationMetricConverter,
-        :queue_time => LayerConverters::RequestQueueTimeConverter,
-        :job => LayerConverters::JobConverter,
-        :db => LayerConverters::DatabaseConverter,
+        histograms: LayerConverters::Histograms,
+        metrics: LayerConverters::MetricConverter,
+        errors: LayerConverters::ErrorConverter,
+        allocation_metrics: LayerConverters::AllocationMetricConverter,
+        queue_time: LayerConverters::RequestQueueTimeConverter,
+        job: LayerConverters::JobConverter,
+        db: LayerConverters::DatabaseConverter,
 
-        :slow_job => LayerConverters::SlowJobConverter,
-        :slow_req => LayerConverters::SlowRequestConverter,
+        slow_job: LayerConverters::SlowJobConverter,
+        slow_req: LayerConverters::SlowRequestConverter
 
         # This is now integrated into the slow_job and slow_req converters, so that
         # we get the exact same set of traces either way. We can call it
@@ -325,24 +323,22 @@ module ScoutApm
         # :traces => LayerConverters::TraceConverter,
       }
 
-      walker = LayerConverters::DepthFirstWalker.new(self.root_layer)
-      converter_instances = converters.inject({}) do |memo, (slug, klass)|
+      walker = LayerConverters::DepthFirstWalker.new(root_layer)
+      converter_instances = converters.each_with_object({}) { |(slug, klass), memo|
         instance = klass.new(@agent_context, self, layer_finder, @store)
         instance.register_hooks(walker)
         memo[slug] = instance
-        memo
-      end
+      }
       walker.walk
-      converter_results = converter_instances.inject({}) do |memo, (slug,i)|
+      converter_results = converter_instances.each_with_object({}) { |(slug, i), memo|
         memo[slug] = i.record!
-        memo
-      end
+      }
 
-      @agent_context.extensions.run_transaction_callbacks(converter_results,context,layer_finder.scope)
+      @agent_context.extensions.run_transaction_callbacks(converter_results, context, layer_finder.scope)
 
       # If there's an instant_key, it means we need to report this right away
       if web? && instant?
-        converter = converters.find{|c| c.class == LayerConverters::SlowRequestConverter}
+        converter = converters.find { |c| c.class == LayerConverters::SlowRequestConverter }
         trace = converter.call
         ScoutApm::InstantReporting.new(trace, instant_key).call
       end
@@ -364,7 +360,6 @@ module ScoutApm
       layer_finder.controller != nil
     end
 
-
     def layer_finder
       @layer_finder ||= LayerConverters::FindLayerByType.new(self)
     end
@@ -377,7 +372,6 @@ module ScoutApm
     rescue => e
       true
     end
-
 
     # Only call this after the request is complete
     def unique_name

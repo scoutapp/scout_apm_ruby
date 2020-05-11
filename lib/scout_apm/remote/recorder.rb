@@ -21,29 +21,34 @@ module ScoutApm
       end
 
       def record!(request)
-        begin
-          t1 = Time.now
-          # Mark this request as recorded, so the next lookup on this thread, it
-          # can be recreated
-          request.recorded!
+        t1 = Time.now
+        # Mark this request as recorded, so the next lookup on this thread, it
+        # can be recreated
+        request.recorded!
 
-          # Only send requests that we actually want. Incidental http &
-          # background thread stuff can just be dropped
-          unless request.job? || request.web?
-            return
-          end
-
-          request.prepare_to_dump!
-          message = ScoutApm::Remote::Message.new('record', 'record!', request)
-          encoded = message.encode
-          logger.debug "Remote Agent: Posting a message of length: #{encoded.length}"
-          post(encoded)
-          t2 = Time.now
-
-          logger.debug("Remote Recording took: #{t2.to_f - t1.to_f} seconds")
-        rescue => e
-          logger.debug "Remote: Error while sending to collector: #{e.inspect}, #{e.backtrace.join("\n")}"
+        # Only send requests that we actually want. Incidental http &
+        # background thread stuff can just be dropped
+        unless request.job? || request.web?
+          return
         end
+
+        ScoutApm::Agent.instance.context.logger.info("Context before prepare_to_dump!: #{request.context.to_hash}")
+
+        request.prepare_to_dump!
+
+        ScoutApm::Agent.instance.context.logger.info("Context after prepare_to_dump!: #{request.context.to_hash}")
+
+        message = ScoutApm::Remote::Message.new("record", "record!", request)
+        # ScoutApm::Agent.instance.context.logger.info("Message: #{message.inspect}")
+
+        encoded = message.encode
+        logger.debug "Remote Agent: Posting a message of length: #{encoded.length}"
+        post(encoded)
+        t2 = Time.now
+
+        logger.debug("Remote Recording took: #{t2.to_f - t1.to_f} seconds")
+      rescue => e
+        logger.debug "Remote: Error while sending to collector: #{e.inspect}, #{e.backtrace.join("\n")}"
       end
 
       def post(encoded_message)

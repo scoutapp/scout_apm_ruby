@@ -10,7 +10,7 @@ module ScoutApm
       # Keys of routes should be strings
       def initialize(recorder, logger)
         @routes = {
-          'record' => recorder
+          "record" => recorder
         }
 
         @logger = logger
@@ -29,6 +29,7 @@ module ScoutApm
       # Returns whatever the recipient object returns
       def handle(msg)
         message = Remote::Message.decode(msg)
+        ScoutApm::Agent.instance.context.logger.info("Router got context: #{message.args[0].context.to_hash.inspect}")
         assert_type(message)
         call_route(message)
       end
@@ -36,8 +37,8 @@ module ScoutApm
       private
 
       def assert_type(message)
-        if ! routes.keys.include?(message.type.to_s)
-          raise "Unknown type: #{message.type.to_s}"
+        unless routes.keys.include?(message.type.to_s)
+          raise "Unknown type: #{message.type}"
         end
       end
 

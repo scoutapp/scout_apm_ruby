@@ -24,6 +24,7 @@ module ScoutApm
     end
 
     def record!(request)
+      ScoutApm::Agent.instance.logger.info("Sync Recorder has context #{request.context.to_hash.inspect}")
       request.record!
     end
   end
