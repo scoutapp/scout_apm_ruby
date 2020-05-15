@@ -29,7 +29,7 @@ module ScoutApm
       # Returns whatever the recipient object returns
       def handle(msg)
         message = Remote::Message.decode(msg)
-        ScoutApm::Agent.instance.context.logger.info("Router got context: #{message.args[0].context.to_hash.inspect}")
+        logger.info("[Remote Server] Router got context: #{message.args[0].context.to_hash.inspect}")
         assert_type(message)
         call_route(message)
       end

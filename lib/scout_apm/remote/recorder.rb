@@ -32,14 +32,13 @@ module ScoutApm
           return
         end
 
-        ScoutApm::Agent.instance.context.logger.info("Context before prepare_to_dump!: #{request.context.to_hash}")
+        logger.info("[Remote Client] Context before prepare_to_dump!: #{request.context.to_hash.inspect}")
 
         request.prepare_to_dump!
 
-        ScoutApm::Agent.instance.context.logger.info("Context after prepare_to_dump!: #{request.context.to_hash}")
+        logger.info("[Remote Client] Context after prepare_to_dump!: #{request.context.to_hash.inspect}")
 
         message = ScoutApm::Remote::Message.new("record", "record!", request)
-        # ScoutApm::Agent.instance.context.logger.info("Message: #{message.inspect}")
 
         encoded = message.encode
         logger.debug "Remote Agent: Posting a message of length: #{encoded.length}"

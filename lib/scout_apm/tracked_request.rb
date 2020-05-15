@@ -287,13 +287,16 @@ module ScoutApm
     # the peristent Store object
     def record!
       recorded!
-      ScoutApm::Agent.instance.logger.info("Context in top of parent TrackedRequest#record! is: #{context.to_hash}")
 
       return if ignoring_request?
 
       # If we didn't have store, but we're trying to record anyway, go
       # figure that out. (this happens in Remote Agent scenarios)
       restore_from_dump! if @agent_context.nil?
+
+      if job?
+        logger.info("[Remote Server] Context in top TrackedRequest#record! is: #{context.to_hash.inspect}")
+      end
 
       # Bail out early if the user asked us to ignore this uri
       return if @agent_context.ignored_uris.ignore?(annotations[:uri])
