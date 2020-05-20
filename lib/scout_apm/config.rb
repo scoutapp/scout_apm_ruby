@@ -85,8 +85,7 @@ module ScoutApm
         'errors_enabled',
         'errors_ignored_exceptions',
         'errors_filtered_params',
-        'errors_notification_url',
-        'errors_deployment_url'
+        'errors_host',
     ]
 
     ################################################################################
@@ -182,6 +181,9 @@ module ScoutApm
       'timeline_traces' => BooleanCoercion.new,
       'auto_instruments' => BooleanCoercion.new,
       'auto_instruments_ignore' => JsonCoercion.new,
+      'errors_enabled' => BooleanCoercion.new,
+      'errors_ignored_exceptions' => JsonCoercion.new,
+      'errors_filtered_params' => JsonCoercion.new,
     }
 
 
