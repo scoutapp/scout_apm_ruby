@@ -52,6 +52,8 @@ module ScoutApm
         URI.parse("#{host}/apps/deploy.scout?key=#{key}&name=#{encoded_app_name}")
       when :instant_trace
         URI.parse("#{host}/apps/instant_trace.scout?key=#{key}&name=#{encoded_app_name}&instant_key=#{instant_key}")
+      when :errors
+        URI.parse("#{host}/error_service/notifier/api/v1/problems?key=#{key}&name=#{encoded_app_name}")
       end.tap { |u| logger.debug("Posting to #{u}") }
     end
 
@@ -142,6 +144,8 @@ module ScoutApm
     def determine_hosts
       if [:deploy_hook, :instant_trace].include?(type)
         config.value('direct_host')
+      elsif [:errors].include?(type)
+        config.value('errors_host')
       else
         config.value('host')
       end

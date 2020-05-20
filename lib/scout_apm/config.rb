@@ -293,10 +293,10 @@ module ScoutApm
         'auto_instruments' => false,
         'auto_instruments_ignore' => []
 
-        'errors_enabled' => true,
+        'errors_enabled' => false,
         'errors_ignored_exceptions' => %w(ActiveRecord::RecordNotFound ActionController::RoutingError),
         'errors_filtered_params' => %w(password s3-key),
-        'errors_notification_url' => 'scoutapm.com/notifier/api/v1/problems',
+        'errors_host' => 'scoutapm.com',
       }.freeze
 
       def value(key)
