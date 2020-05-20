@@ -1,6 +1,6 @@
 module ScoutApm
   module ErrorService
-    class Rack
+    class Middleware
       def initialize(app)
         @app = app
       end
