@@ -10,16 +10,18 @@ module ScoutApm
     end
   end
 
-  if Sidekiq::VERSION < "3"
-    # old behavior
-    Sidekiq.configure_server do |config|
-      config.server_middleware do |chain|
-        chain.add ScoutApm::ErrorService::SidekiqException
+  if defined?(::Sidekiq)
+    if ::Sidekiq::VERSION < "3"
+      # old behavior
+      ::Sidekiq.configure_server do |config|
+        config.server_middleware do |chain|
+          chain.add ScoutApm::ErrorService::SidekiqException
+        end
       end
-    end
-  else
-    Sidekiq.configure_server do |config|
-      config.error_handlers << proc { |ex, context| ScoutApm::ErrorService.notify(ex, context.merge(custom_controller: context["class"])) }
+    else
+      ::Sidekiq.configure_server do |config|
+        config.error_handlers << proc { |ex, context| ScoutApm::ErrorService.notify(ex, context.merge(custom_controller: context["class"])) }
+      end
     end
   end
 end

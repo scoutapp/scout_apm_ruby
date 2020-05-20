@@ -74,7 +74,7 @@ module ScoutApm
 
         # Replaces parameter values with a string / set in config file
         def filter_params(params)
-          return params unless Config.filtered_params
+          return params unless filtered_params_config
 
           params.each do |k, v|
             if filter_key?(k)
@@ -89,7 +89,7 @@ module ScoutApm
 
         # Check, if a key should be filtered
         def filter_key?(key)
-          Config.filtered_params.any? do |filter|
+          filtered_params_config.any? do |filter|
             key.to_s == filter.to_s # key.to_s.include?(filter.to_s)
           end
         end
@@ -134,6 +134,11 @@ module ScoutApm
           end
 
           new_hash
+        end
+
+        # Accessor for the filtered params config value. Will be removed as we refactor and clean up this code.
+        def filtered_params_config
+          ScoutApm::Agent.instance.context.config.value("errors_filtered_params")
         end
       end
     end

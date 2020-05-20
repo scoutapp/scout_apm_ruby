@@ -36,6 +36,7 @@ module ScoutApm
         logger.debug("Original Size: #{original_payload_size} Compressed Size: #{compress_payload_size}")
       end
 
+      logger.info("Posting payload to #{hosts.inspect}")
       post_payload(hosts, payload, headers)
     end
 
