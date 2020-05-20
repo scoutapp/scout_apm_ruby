@@ -293,7 +293,7 @@ module ScoutApm
         'collect_remote_ip' => true,
         'timeline_traces' => true,
         'auto_instruments' => false,
-        'auto_instruments_ignore' => []
+        'auto_instruments_ignore' => [],
 
         'errors_enabled' => false,
         'errors_ignored_exceptions' => %w(ActiveRecord::RecordNotFound ActionController::RoutingError),
