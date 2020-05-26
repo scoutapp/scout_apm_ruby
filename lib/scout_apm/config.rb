@@ -295,7 +295,7 @@ module ScoutApm
         'auto_instruments' => false,
         'auto_instruments_ignore' => [],
 
-        'errors_enabled' => false,
+        'errors_enabled' => true,
         'errors_ignored_exceptions' => %w(ActiveRecord::RecordNotFound ActionController::RoutingError),
         'errors_filtered_params' => %w(password s3-key),
         'errors_host' => 'scoutapm.com',
