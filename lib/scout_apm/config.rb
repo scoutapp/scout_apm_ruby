@@ -298,7 +298,7 @@ module ScoutApm
         'errors_enabled' => false,
         'errors_ignored_exceptions' => %w(ActiveRecord::RecordNotFound ActionController::RoutingError),
         'errors_filtered_params' => %w(password s3-key),
-        'errors_host' => 'scoutapm.com',
+        'errors_host' => 'https://scoutapm.com',
       }.freeze
 
       def value(key)
