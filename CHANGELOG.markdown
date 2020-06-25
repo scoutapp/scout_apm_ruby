@@ -1,3 +1,12 @@
+# 2.6.8
+
+* Lock rake version for 1.8.7 to older version (#329)
+* Delete unneeded .DS_Store file that snuck in (#334)
+* Fix typo in "queue_time_ms"
+* Fix Rails 6 deprecation warning at boot time (#337)
+* Fix partial naming on Rails 6.0 (#339)
+* Support Sidekiq 6.1 instrumentation (#340)
+
 # 2.6.7
 
 * Remove accidental call to `as_json`
