@@ -74,8 +74,7 @@ module ScoutApm
       # before_action callbacks
       def self.build_instrument_module
         Module.new do
-          # Given an +ActionDispatch::Request+, formats the uri based on config settings.
-          # XXX: Don't lookup context like this - find a way to pass it through
+          # Determine the URI of this request to capture. Overridable by users in their controller.
           def scout_transaction_uri(config=ScoutApm::Agent.instance.context.config)
             case config.value("uri_reporting")
             when 'path'
@@ -100,7 +99,6 @@ module ScoutApm
               # Don't start a new layer if ActionController::API or ActionController::Base handled it already.
               super
             else
-              # This is overridable by the user on a per-controller basis
               begin
                 uri = scout_transaction_uri
                 req.annotate_request(:uri => uri)
