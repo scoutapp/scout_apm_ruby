@@ -191,6 +191,7 @@ require 'scout_apm/error_service/data'
 require 'scout_apm/error_service/middleware'
 require 'scout_apm/error_service/notifier'
 require 'scout_apm/error_service/sidekiq'
+require 'scout_apm/error_service/ignored_exceptions'
 
 if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR) && Rails::VERSION::MAJOR >= 3 && defined?(Rails::Railtie)
   module ScoutApm
