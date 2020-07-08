@@ -142,6 +142,14 @@ module ScoutApm
       config.value('dev_trace') && environment.env == "development"
     end
 
+    ###################
+    #  Error Service  #
+    ###################
+
+    def ignored_exceptions
+      @ignored_exceptions ||= ScoutApm::ErrorService::IgnoredExceptions.new(config.value('errors_ignored_exceptions'))
+    end
+
     #############
     #  Setters  #
     #############
