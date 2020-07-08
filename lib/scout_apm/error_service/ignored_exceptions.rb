@@ -6,7 +6,8 @@ module ScoutApm
       attr_reader :ignored_exceptions
       attr_reader :blocks
 
-      def initialize(from_config)
+      def initialize(context, from_config)
+        @context = context
         @ignored_exceptions = Array(from_config).map{ |e| normalize_as_klass(e) }
         @blocks = []
       end
