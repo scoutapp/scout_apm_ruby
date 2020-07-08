@@ -4,7 +4,14 @@ module ScoutApm
       def call(worker, msg, queue)
         yield
       rescue => exception
-        ScoutApm::ErrorService.notify(exception, {custom_params: msg, custom_controller: msg["class"]})
+        ScoutApm::ErrorService.notify(
+          exception,
+          {
+            :custom_params => msg,
+            :custom_controller => msg["class"]
+          }
+        )
+
         raise exception
       end
     end
@@ -20,7 +27,7 @@ module ScoutApm
       end
     else
       ::Sidekiq.configure_server do |config|
-        config.error_handlers << proc { |ex, context| ScoutApm::ErrorService.notify(ex, context.merge(custom_controller: context["class"])) }
+        config.error_handlers << proc { |ex, context| ScoutApm::ErrorService.notify(ex, context.merge(:custom_controller => context["class"])) }
       end
     end
   end
