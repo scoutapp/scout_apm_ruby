@@ -11,16 +11,15 @@ module ScoutApm
         rescue Exception => exception
           puts "[Scout Error Service] Caught Exception: #{exception.class.name}"
 
-          if ScoutApm::Agent.instance.context.ignored_exceptions.ignore?(exception)
-            # Bail out early, and reraise if the error is not interesting.
+          context = ScoutApm::Agent.instance.context
+
+          # Bail out early, and reraise if the error is not interesting.
+          if context.ignored_exceptions.ignore?(exception)
             raise
           end
 
-          # Extract the data needed
-          data = ScoutApm::ErrorService::Data.rack_data(exception, env)
-
-          # Send it for reporting
-          ScoutApm::ErrorService::Notifier.notify(data)
+          # Capture the error for further processing and shipping
+          context.errors_buffer.capture(exception, env)
 
           # Finally re-raise
           raise

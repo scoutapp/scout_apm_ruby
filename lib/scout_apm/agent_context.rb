@@ -146,6 +146,10 @@ module ScoutApm
     #  Error Service  #
     ###################
 
+    def error_buffer
+      @error_buffer ||= ScoutApm::ErrorService::ErrorBuffer.new(self)
+    end
+
     def ignored_exceptions
       @ignored_exceptions ||= ScoutApm::ErrorService::IgnoredExceptions.new(self, config.value('errors_ignored_exceptions'))
     end
