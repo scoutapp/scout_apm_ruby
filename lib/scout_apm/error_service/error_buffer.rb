@@ -4,31 +4,34 @@ module ScoutApm
     class ErrorBuffer
       include Enumerable
 
+      attr_reader :context
+
       def initialize(agent_context)
         @context = agent_context
         @error_records = []
+        @mutex = Monitor.new
       end
 
       def capture(exception, env)
-        @error_records << ErrorRecord.new(exception, env)
+        @mutex.synchronize {
+          @error_records << ErrorRecord.new(context, exception, env)
+        }
       end
 
+      def get_and_reset_error_records
+        @mutex.synchronize {
+          ret = @error_records
+          @error_records = []
+          ret
+        }
+      end
+
+      # Enables enumerable - for count and each and similar methods
       def each
         @error_records.each do |error_record|
           yield error_record
         end
       end
-
-      def ship
-        @error_records.each do |error_record|
-          data = ScoutApm::ErrorService::Data.rack_data(error_record.exception, error_record.env)
-          ScoutApm::ErrorService::Notifier.notify(data)
-        end
-      end
-
-      private
-
-      ErrorRecord = Struct.new(:exception, :env)
     end
   end
 end

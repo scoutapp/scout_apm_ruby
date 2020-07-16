@@ -1,22 +1,24 @@
 module ScoutApm
   module ErrorService
     class Notifier
-      class << self
-        def notify(data)
-          @data = data
-          serialized_data = {:problem => data}.to_json
+      attr_reader :context
+      attr_reader :reporter
 
-          Thread.new do
-            reporter = ScoutApm::Reporter.new(ScoutApm::Agent.instance.context, :errors)
-            reporter.report(serialized_data, headers)
-          end
-        end
+      def initialize(context)
+        @context = context
+        @reporter = ScoutApm::Reporter.new(context, :errors)
+      end
 
-        private
+      def ship
+        error_records = context.error_buffer.get_and_reset_error_records
+        payload = ScoutApm::ErrorService::Payload.new(error_records).serialize
+        reporter.report(payload.to_json, extra_headers)
+      end
 
-        def headers
-          {}
-        end
+      private
+
+      def extra_headers
+        {}
       end
     end
   end

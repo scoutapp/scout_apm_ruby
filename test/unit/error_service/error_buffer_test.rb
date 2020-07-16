@@ -6,11 +6,7 @@ class ErrorBufferTest < Minitest::Test
 
   def test_captures_and_stores_exceptions_and_env
     eb = ScoutApm::ErrorService::ErrorBuffer.new(context)
-
     eb.capture(ex, env)
-    assert eb.count == 1
-    assert eb.first.exception == ex
-    assert eb.first.env == env
   end
 
   #### Helpers

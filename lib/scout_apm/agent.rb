@@ -198,5 +198,17 @@ module ScoutApm
         @background_worker               &&
         @background_worker.running?
     end
+
+    # seconds to batch error reports
+    ERROR_SEND_FREQUENCY = 5
+    def start_error_service_background_worker
+      periodic_work = ScoutApm::ErrorService::PeriodicWork.new(context)
+      @error_background_worker = ScoutApm::BackgroundWorker.new(context, ERROR_SEND_FREQUENCY)
+      @error_periodic_work_thread = Thread.new do
+        @error_background_worker.start { 
+          periodic_work.run
+        }
+      end
+    end
   end
 end

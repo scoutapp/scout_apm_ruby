@@ -5,18 +5,20 @@ require "uri"
 module ScoutApm
   module ErrorService
     API_VERSION = "1"
-    NOTIFIER_NAME = "scout_apm_ruby"
 
     HEADERS = {
       "Content-type" => "application/json",
       "Accept" => "application/json"
     }
 
-    # Used by SidekiqException or for manual calls
-    def self.notify(exception, params = {})
+    # Public API to force a given exception to be captured.
+    # Still obeys the ignore list
+    # Used internally by SidekiqException
+    def self.capture(exception, params = {})
       return if disabled?
-      data = Data.rack_data(exception, params)
-      Notifier.notify(data)
+      return if ScoutApm::Agent.instance.context.ignored_exceptions.ignore?(exception)
+
+      context.errors_buffer.capture(exception, env)
     end
 
     def self.enabled?

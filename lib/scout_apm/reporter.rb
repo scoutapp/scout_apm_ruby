@@ -23,6 +23,7 @@ module ScoutApm
       context.logger
     end
 
+    # The fully serialized string payload to be sent
     def report(payload, headers = {})
       hosts = determine_hosts
 
