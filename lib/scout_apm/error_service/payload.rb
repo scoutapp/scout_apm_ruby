@@ -23,7 +23,7 @@ module ScoutApm
 
         {
           :notifier => "scout_apm_ruby",
-          :app_environment => context.environment.env,
+          :environment => context.environment.env,
           :root => context.environment.root,
           :problems => serialized_errors,
         }
