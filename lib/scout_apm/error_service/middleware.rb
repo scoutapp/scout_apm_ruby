@@ -14,12 +14,12 @@ module ScoutApm
           context = ScoutApm::Agent.instance.context
 
           # Bail out early, and reraise if the error is not interesting.
-          if context.ignored_exceptions.ignore?(exception)
+          if context.ignored_exceptions.ignored?(exception)
             raise
           end
 
           # Capture the error for further processing and shipping
-          context.errors_buffer.capture(exception, env)
+          context.error_buffer.capture(exception, env)
 
           # Finally re-raise
           raise

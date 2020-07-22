@@ -11,8 +11,10 @@ module ScoutApm
 
       def ship
         error_records = context.error_buffer.get_and_reset_error_records
-        payload = ScoutApm::ErrorService::Payload.new(error_records).serialize
-        reporter.report(payload.to_json, extra_headers)
+        if error_records.any?
+          payload = ScoutApm::ErrorService::Payload.new(context, error_records).serialize
+          reporter.report(payload.to_json, extra_headers)
+        end
       end
 
       private

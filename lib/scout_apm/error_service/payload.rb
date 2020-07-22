@@ -1,6 +1,9 @@
 module ScoutApm
   module ErrorService
     class Payload
+      attr_reader :context
+      attr_reader :errors
+
       def initialize(context, errors)
         @context = context
         @errors = errors
@@ -8,19 +11,21 @@ module ScoutApm
 
       # TODO: Don't use to_json since it isn't supported in Ruby 1.8.7
       def serialize
-        as_json.to_json
+        payload = as_json.to_json
+        context.logger.info(payload)
+        payload
       end
 
       def as_json
-        serialized_errors = @errors.map do |error_record|
+        serialized_errors = errors.map do |error_record|
           serialize_error_record(error_record)
         end
 
         {
-          :problems => serialized_errors,
           :notifier => "scout_apm_ruby",
           :app_environment => context.environment.env,
           :root => context.environment.root,
+          :problems => serialized_errors,
         }
       end
 

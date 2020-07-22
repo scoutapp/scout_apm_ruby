@@ -37,6 +37,8 @@ module ScoutApm
         # For background workers like sidekiq
         # TODO: extract data creation for background jobs
         components[:controller] ||= env[:custom_controller]
+
+        components
       end
 
       # TODO: Can I use the same thing we use in traces?

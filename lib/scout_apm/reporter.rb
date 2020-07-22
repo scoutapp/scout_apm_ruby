@@ -94,7 +94,7 @@ module ScoutApm
       logger.debug "got response: #{response.inspect}"
       case response
       when Net::HTTPSuccess, Net::HTTPNotModified
-        logger.debug "/#{type} OK"
+        logger.debug "#{type} OK"
       when Net::HTTPBadRequest
         logger.warn "/#{type} FAILED: The Account Key [#{config.value('key')}] is invalid."
       when Net::HTTPUnprocessableEntity
