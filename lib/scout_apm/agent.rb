@@ -66,6 +66,7 @@ module ScoutApm
 
       if context.started?
         start_background_worker unless background_worker_running?
+        start_error_service_background_worker unless error_service_background_worker_running?
         return
       end
 
@@ -81,6 +82,7 @@ module ScoutApm
       @app_server_load ||= AppServerLoad.new(context).run
 
       start_background_worker
+      start_error_service_background_worker
     end
 
     def instrument_manager
@@ -197,6 +199,26 @@ module ScoutApm
         @background_worker_thread.alive? &&
         @background_worker               &&
         @background_worker.running?
+    end
+
+    # seconds to batch error reports
+    ERROR_SEND_FREQUENCY = 5
+    def start_error_service_background_worker
+      periodic_work = ScoutApm::ErrorService::PeriodicWork.new(context)
+
+      @error_service_background_worker = ScoutApm::BackgroundWorker.new(context, ERROR_SEND_FREQUENCY)
+      @error_service_background_worker_thread = Thread.new do
+        @error_service_background_worker.start { 
+          periodic_work.run
+        }
+      end
+    end
+
+    def error_service_background_worker_running?
+      @error_service_background_worker_thread          &&
+        @error_service_background_worker_thread.alive? &&
+        @error_service_background_worker               &&
+        @error_service_background_worker.running?
     end
   end
 end
