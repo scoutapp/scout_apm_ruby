@@ -23,6 +23,7 @@ module ScoutApm
       context.logger
     end
 
+    # The fully serialized string payload to be sent
     def report(payload, headers = {})
       hosts = determine_hosts
 
@@ -36,6 +37,7 @@ module ScoutApm
         logger.debug("Original Size: #{original_payload_size} Compressed Size: #{compress_payload_size}")
       end
 
+      logger.info("Posting payload to #{hosts.inspect}")
       post_payload(hosts, payload, headers)
     end
 
@@ -52,6 +54,8 @@ module ScoutApm
         URI.parse("#{host}/apps/deploy.scout?key=#{key}&name=#{encoded_app_name}")
       when :instant_trace
         URI.parse("#{host}/apps/instant_trace.scout?key=#{key}&name=#{encoded_app_name}&instant_key=#{instant_key}")
+      when :errors
+        URI.parse("#{host}/error_service/notifier/api/v1/problems?key=#{key}&name=#{encoded_app_name}")
       end.tap { |u| logger.debug("Posting to #{u}") }
     end
 
@@ -90,7 +94,7 @@ module ScoutApm
       logger.debug "got response: #{response.inspect}"
       case response
       when Net::HTTPSuccess, Net::HTTPNotModified
-        logger.debug "/#{type} OK"
+        logger.debug "#{type} OK"
       when Net::HTTPBadRequest
         logger.warn "/#{type} FAILED: The Account Key [#{config.value('key')}] is invalid."
       when Net::HTTPUnprocessableEntity
@@ -142,6 +146,8 @@ module ScoutApm
     def determine_hosts
       if [:deploy_hook, :instant_trace].include?(type)
         config.value('direct_host')
+      elsif [:errors].include?(type)
+        config.value('errors_host')
       else
         config.value('host')
       end

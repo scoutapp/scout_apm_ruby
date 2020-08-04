@@ -186,6 +186,16 @@ require 'scout_apm/tasks/support'
 require 'scout_apm/extensions/config'
 require 'scout_apm/extensions/transaction_callback_payload'
 
+require 'scout_apm/error_service'
+require 'scout_apm/error_service/middleware'
+require 'scout_apm/error_service/notifier'
+require 'scout_apm/error_service/sidekiq'
+require 'scout_apm/error_service/ignored_exceptions'
+require 'scout_apm/error_service/error_buffer'
+require 'scout_apm/error_service/error_record'
+require 'scout_apm/error_service/periodic_work'
+require 'scout_apm/error_service/payload'
+
 if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR) && Rails::VERSION::MAJOR >= 3 && defined?(Rails::Railtie)
   module ScoutApm
     class Railtie < Rails::Railtie
@@ -203,6 +213,10 @@ if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR
           require 'scout_apm/auto_instrument'
         else
           ScoutApm::Agent.instance.context.logger.debug("AutoInstruments is disabled.")
+        end
+
+        if ScoutApm::Agent.instance.context.config.value("errors_enabled")
+          app.config.middleware.insert_after ActionDispatch::DebugExceptions, ScoutApm::ErrorService::Middleware
         end
 
         # Install the middleware every time in development mode.

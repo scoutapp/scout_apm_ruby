@@ -26,7 +26,7 @@ module ScoutApm
       ScoutApm::Agent.instance.start
       @started = ScoutApm::Agent.instance.context.started? && ScoutApm::Agent.instance.background_worker_running?
     rescue => e
-      ScoutApm::Agent.instance.context.logger("Failed to start via Middleware: #{e.message}\n\t#{e.backtrace.join("\n\t")}")
+      ScoutApm::Agent.instance.context.logger.info("Failed to start via Middleware: #{e.message}\n\t#{e.backtrace.join("\n\t")}")
     end
   end
 end

@@ -79,7 +79,13 @@ module ScoutApm
         'instrument_http_url_length',
         'timeline_traces',
         'auto_instruments',
-        'auto_instruments_ignore'
+        'auto_instruments_ignore',
+
+        # Error Service Related Configuration
+        'errors_enabled',
+        'errors_ignored_exceptions',
+        'errors_filtered_params',
+        'errors_host',
     ]
 
     ################################################################################
@@ -175,6 +181,9 @@ module ScoutApm
       'timeline_traces' => BooleanCoercion.new,
       'auto_instruments' => BooleanCoercion.new,
       'auto_instruments_ignore' => JsonCoercion.new,
+      'errors_enabled' => BooleanCoercion.new,
+      'errors_ignored_exceptions' => JsonCoercion.new,
+      'errors_filtered_params' => JsonCoercion.new,
     }
 
 
@@ -284,7 +293,12 @@ module ScoutApm
         'collect_remote_ip' => true,
         'timeline_traces' => true,
         'auto_instruments' => false,
-        'auto_instruments_ignore' => []
+        'auto_instruments_ignore' => [],
+
+        'errors_enabled' => false,
+        'errors_ignored_exceptions' => %w(ActiveRecord::RecordNotFound ActionController::RoutingError),
+        'errors_filtered_params' => %w(password s3-key),
+        'errors_host' => 'https://scoutapm.com',
       }.freeze
 
       def value(key)
