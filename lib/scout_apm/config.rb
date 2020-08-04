@@ -75,6 +75,7 @@ module ScoutApm
         'revision_sha',
         'scm_subdirectory',
         'start_resque_server_instrument',
+        'ssl_cert_file',
         'uri_reporting',
         'instrument_http_url_length',
         'timeline_traces',
@@ -284,7 +285,8 @@ module ScoutApm
         'collect_remote_ip' => true,
         'timeline_traces' => true,
         'auto_instruments' => false,
-        'auto_instruments_ignore' => []
+        'auto_instruments_ignore' => [],
+        'ssl_cert_file' => File.join( File.dirname(__FILE__), *%w[.. .. data cacert.pem] )
       }.freeze
 
       def value(key)
