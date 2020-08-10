@@ -217,6 +217,7 @@ if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR
 
         if ScoutApm::Agent.instance.context.config.value("errors_enabled")
           app.config.middleware.insert_after ActionDispatch::DebugExceptions, ScoutApm::ErrorService::Middleware
+          ScoutApm::ErrorService::Sidekiq.new.install
         end
 
         # Install the middleware every time in development mode.
