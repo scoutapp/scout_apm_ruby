@@ -51,6 +51,7 @@ module ScoutApm
         sql.gsub!(PSQL_PLACEHOLDER, '?')
         sql.gsub!(PSQL_VAR_INTERPOLATION, '')
         sql.gsub!(PSQL_AFTER_WHERE) {|c| c.gsub(PSQL_REMOVE_STRINGS, '?')}
+        sql.gsub!(PSQL_AFTER_SET) {|c| c.gsub(PSQL_REMOVE_STRINGS, '?')}
         sql.gsub!(PSQL_REMOVE_INTEGERS, '?')
         sql.gsub!(PSQL_IN_CLAUSE, 'IN (?)')
         sql.gsub!(MULTIPLE_SPACES, ' ')
