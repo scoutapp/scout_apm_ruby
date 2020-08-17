@@ -74,6 +74,16 @@ module ScoutApm
       # before_action callbacks
       def self.build_instrument_module
         Module.new do
+          # Determine the URI of this request to capture. Overridable by users in their controller.
+          def scout_transaction_uri(config=ScoutApm::Agent.instance.context.config)
+            case config.value("uri_reporting")
+            when 'path'
+              request.path # strips off the query string for more security
+            else # default handles filtered params
+              request.filtered_path
+            end
+          end
+
           def process_action(*args)
             req = ScoutApm::RequestManager.lookup
             current_layer = req.current_layer
@@ -89,7 +99,11 @@ module ScoutApm
               # Don't start a new layer if ActionController::API or ActionController::Base handled it already.
               super
             else
-              req.annotate_request(:uri => ScoutApm::Instruments::ActionControllerRails3Rails4.scout_transaction_uri(request))
+              begin
+                uri = scout_transaction_uri
+                req.annotate_request(:uri => uri)
+              rescue
+              end
 
               # IP Spoofing Protection can throw an exception, just move on w/o remote ip
               if agent_context.config.value('collect_remote_ip')
@@ -112,16 +126,6 @@ module ScoutApm
         end
       end
 
-      # Given an +ActionDispatch::Request+, formats the uri based on config settings.
-      # XXX: Don't lookup context like this - find a way to pass it through
-      def self.scout_transaction_uri(request, config=ScoutApm::Agent.instance.context.config)
-        case config.value("uri_reporting")
-        when 'path'
-          request.path # strips off the query string for more security
-        else # default handles filtered params
-          request.filtered_path
-        end
-      end
     end
 
     module ActionControllerMetalInstruments
