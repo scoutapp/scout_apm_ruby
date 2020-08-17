@@ -1,3 +1,9 @@
+# 2.6.9
+
+* Add `ssl_cert_file` config option (#352)
+* Improve sanitization of Postgres UPDATE SQL (#351)
+* Allow custom URL sanitization (#341)
+
 # 2.6.8
 
 * Lock rake version for 1.8.7 to older version (#329)
