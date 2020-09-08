@@ -15,14 +15,14 @@ module ScoutApm
           payload = ScoutApm::ErrorService::Payload.new(context, error_records)
           reporter.report(
             payload.serialize,
-            default_headers.merge("X-Error-Count" => error_records.length)
+            default_headers.merge("X-Error-Count" => error_records.length.to_s)
           )
         end
       end
 
       private
 
-      def extra_headers
+      def default_headers
         {
           "Content-Type" => "application/json",
           "Accept" => "application/json"
