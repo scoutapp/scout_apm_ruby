@@ -323,14 +323,14 @@ module ScoutApm
         end
       end
 
-      def find_by_sql_with_scout_instruments(*args, &block)
+      def find_by_sql_with_scout_instruments(*args, **kwargs, &block)
         req = ScoutApm::RequestManager.lookup
         layer = ScoutApm::Layer.new("ActiveRecord", Utils::ActiveRecordMetricName::DEFAULT_METRIC)
         layer.annotate_layer(:ignorable => true)
         req.start_layer(layer)
         req.ignore_children!
         begin
-          find_by_sql_without_scout_instruments(*args, &block)
+          find_by_sql_without_scout_instruments(*args, **kwargs, &block)
         ensure
           req.acknowledge_children!
           req.stop_layer
