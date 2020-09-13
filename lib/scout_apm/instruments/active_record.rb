@@ -408,7 +408,7 @@ module ScoutApm
     end
 
     module ActiveRecordUpdateInstruments
-      def save(*args, &block)
+      def save(*args, **options, &block)
         model = self.class.name
         operation = self.persisted? ? "Update" : "Create"
 
@@ -418,14 +418,14 @@ module ScoutApm
         req.start_layer(layer)
         req.ignore_children!
         begin
-          super(*args, &block)
+          super(*args, **options, &block)
         ensure
           req.acknowledge_children!
           req.stop_layer
         end
       end
 
-      def save!(*args, &block)
+      def save!(*args, **options, &block)
         model = self.class.name
         operation = self.persisted? ? "Update" : "Create"
 
@@ -434,7 +434,7 @@ module ScoutApm
         req.start_layer(layer)
         req.ignore_children!
         begin
-          super(*args, &block)
+          super(*args, **options, &block)
         ensure
           req.acknowledge_children!
           req.stop_layer
