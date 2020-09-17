@@ -2,7 +2,6 @@ require 'openssl'
 
 module ScoutApm
   class Reporter
-    CA_FILE     = File.join( File.dirname(__FILE__), *%w[.. .. data cacert.pem] )
     VERIFY_MODE = OpenSSL::SSL::VERIFY_PEER | OpenSSL::SSL::VERIFY_FAIL_IF_NO_PEER_CERT
 
     attr_reader :type
@@ -127,7 +126,7 @@ module ScoutApm
                               proxy_uri.password).new(url.host, url.port)
       if url.is_a?(URI::HTTPS)
         http.use_ssl = true
-        http.ca_file = CA_FILE
+        http.ca_file = config.value("ssl_cert_file")
         http.verify_mode = VERIFY_MODE
       end
       http

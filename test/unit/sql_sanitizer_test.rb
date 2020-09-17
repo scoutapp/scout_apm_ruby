@@ -139,6 +139,13 @@ module ScoutApm
         assert_equal %q|SELECT `blogs`.* FROM `blogs` WHERE (title = ?)|, ss.to_s
       end
 
+      def test_set_columns
+        sql = %q|UPDATE "mytable" SET "myfield" = 'fieldcontent', "countofthings" = 10 WHERE "user_id" = 10|
+
+        ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :postgres }
+        assert_equal %q|UPDATE "mytable" SET "myfield" = ?, "countofthings" = ? WHERE "user_id" = ?|, ss.to_s
+      end
+
       def assert_faster_than(target_seconds)
         t1 = ::Time.now
         yield
