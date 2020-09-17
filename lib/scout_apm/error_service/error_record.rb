@@ -11,9 +11,16 @@ module ScoutApm
       attr_reader :environment
       attr_reader :trace
       attr_reader :request_components
+      attr_reader :context
 
-      def initialize(context, exception, env)
-        @context = context
+      def initialize(agent_context, exception, env, context=nil)
+        @agent_context = agent_context
+
+        @context = if context
+          context.to_hash
+        else
+          {}
+        end
 
         @exception_class = exception.class.name
         @message = exception.message
@@ -146,7 +153,7 @@ module ScoutApm
       # Accessor for the filtered params config value. Will be removed as we refactor and clean up this code.
       # TODO: Flip this over to use a new class like filtered exceptions?
       def filtered_params_config
-        ScoutApm::Agent.instance.context.config.value("errors_filtered_params")
+        @agent_context.config.value("errors_filtered_params")
       end
     end
   end
