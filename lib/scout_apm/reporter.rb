@@ -54,7 +54,7 @@ module ScoutApm
       when :instant_trace
         URI.parse("#{host}/apps/instant_trace.scout?key=#{key}&name=#{encoded_app_name}&instant_key=#{instant_key}")
       when :errors
-        URI.parse("#{host}/error_service/notifier/api/v1/problems?key=#{key}&name=#{encoded_app_name}")
+        URI.parse("#{host}/apps/error?key=#{key}&name=#{encoded_app_name}")
       end.tap { |u| logger.debug("Posting to #{u}") }
     end
 

@@ -4,17 +4,19 @@ module ScoutApm
     class ErrorBuffer
       include Enumerable
 
-      attr_reader :context
+      attr_reader :agent_context
 
       def initialize(agent_context)
-        @context = agent_context
+        @agent_context = agent_context
         @error_records = []
         @mutex = Monitor.new
       end
 
       def capture(exception, env)
+        context = ScoutApm::Context.current
+
         @mutex.synchronize {
-          @error_records << ErrorRecord.new(context, exception, env)
+          @error_records << ErrorRecord.new(agent_context, exception, env, context)
         }
       end
 

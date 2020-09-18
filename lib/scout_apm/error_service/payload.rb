@@ -39,6 +39,7 @@ module ScoutApm
           :environment => error_record.environment,
           :trace => error_record.trace,
           :request_components => error_record.request_components,
+          :context => error_record.context,
         }
       end
     end
