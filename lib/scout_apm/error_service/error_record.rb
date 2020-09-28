@@ -22,9 +22,9 @@ module ScoutApm
           {}
         end
 
-        @exception_class = exception.class.name
-        @message = exception.message
-        @request_uri = rack_request_url(env)
+        @exception_class = LengthLimit.new(exception.class.name).to_s
+        @message = LengthLimit.new(exception.message, 100).to_s
+        @request_uri = LengthLimit.new(rack_request_url(env), 200).to_s
         @request_params = clean_params(env["action_dispatch.request.parameters"])
         @request_session = clean_params(session_data(env))
         @environment = clean_params(strip_env(env))
@@ -114,10 +114,10 @@ module ScoutApm
             begin
               new_hash[key] = normalize_data(value.to_hash)
             rescue
-              new_hash[key] = value.to_s
+              new_hash[key] = LengthLimit.new(value.to_s).to_s
             end
           else
-            new_hash[key] = value.to_s
+            new_hash[key] = LengthLimit.new(value.to_s).to_s
           end
         end
 
@@ -154,6 +154,20 @@ module ScoutApm
       # TODO: Flip this over to use a new class like filtered exceptions?
       def filtered_params_config
         @agent_context.config.value("errors_filtered_params")
+      end
+
+      class LengthLimit
+        attr_reader :text
+        attr_reader :char_limit
+
+        def initialize(text, char_limit=100)
+          @text = text
+          @char_limit = char_limit
+        end
+
+        def to_s
+          text[0..char_limit]
+        end
       end
     end
   end
