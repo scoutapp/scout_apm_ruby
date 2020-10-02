@@ -74,8 +74,9 @@ module ScoutApm
       # TODO: This name is too vague
       def clean_params(params)
         return if params.nil?
-        params = normalize_data(params)
-        params = filter_params(params)
+
+        normalized = normalize_data(params)
+        filter_params(normalized)
       end
 
       # TODO: When was backtrace_cleaner introduced?
@@ -145,15 +146,26 @@ module ScoutApm
 
       # Check, if a key should be filtered
       def filter_key?(key)
-        filtered_params_config.any? do |filter|
+        params_to_filter.any? do |filter|
           key.to_s == filter.to_s # key.to_s.include?(filter.to_s)
         end
+      end
+
+      def params_to_filter
+        @params_to_filter ||= filtered_params_config + rails_filtered_params
       end
 
       # Accessor for the filtered params config value. Will be removed as we refactor and clean up this code.
       # TODO: Flip this over to use a new class like filtered exceptions?
       def filtered_params_config
         @agent_context.config.value("errors_filtered_params")
+      end
+
+      def rails_filtered_params
+        return [] unless defined?(Rails)
+        Rails.configuration.filter_parameters
+      rescue 
+        []
       end
 
       class LengthLimit
