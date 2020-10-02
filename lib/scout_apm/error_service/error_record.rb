@@ -88,10 +88,30 @@ module ScoutApm
         end
       end
 
-      # Deletes params from env / set in config file
-      # TODO: Make sure this is fast enough - I don't think we want to duplicate the entirity of env? (which reject does)
-      KEYS_TO_REMOVE = ["rack.request.form_hash", "rack.request.form_vars", "async.callback"]
+      # Deletes params from env
+      KEYS_TO_REMOVE = [
+        "rack.request.form_hash",
+        "rack.request.form_vars",
+        "async.callback",
+
+        "action_dispatch.secret_key_base",
+        "action_dispatch.http_auth_salt",
+        "action_dispatch.signed_cookie_salt",
+        "action_dispatch.encrypted_cookie_salt",
+        "action_dispatch.encrypted_signed_cookie_salt",
+        "action_dispatch.authenticated_encrypted_cookie_salt",
+
+        "QUERY_STRING",
+        "REQUEST_URI",
+        "REQUEST_PATH",
+        "ORIGINAL_FULLPATH",
+        "action_dispatch.request.query_parameters",
+        "action_dispatch.request.parameters",
+        "rack.request.query_string",
+        "rack.request.query_hash",
+      ]
       def strip_env(env)
+        binding.pry
         env.reject { |k, v| KEYS_TO_REMOVE.include?(k) }
       end
 
