@@ -36,8 +36,17 @@ module ScoutApm
               raise
             end
 
+            job_class =
+              begin
+                job_class = job_info[:job]["class"]
+                job_class = job_info[:job]["args"][0]["job_class"] if job_class == "ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper"
+                job_class
+              rescue
+                "UnknownJob"
+              end
+
             # Capture the error for further processing and shipping
-            context.error_buffer.capture(exception, job_info.merge(custom_controller: job_info["class"]))
+            context.error_buffer.capture(exception, job_info.merge(custom_controller: job_class)
           }
         end
       end
