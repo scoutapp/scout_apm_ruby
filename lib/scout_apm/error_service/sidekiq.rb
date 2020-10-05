@@ -46,7 +46,7 @@ module ScoutApm
               end
 
             # Capture the error for further processing and shipping
-            context.error_buffer.capture(exception, job_info.merge(custom_controller: job_class)
+            context.error_buffer.capture(exception, job_info.merge(custom_controller: job_class))
           }
         end
       end
