@@ -296,7 +296,7 @@ module ScoutApm
         'auto_instruments' => false,
         'auto_instruments_ignore' => [],
         'ssl_cert_file' => File.join( File.dirname(__FILE__), *%w[.. .. data cacert.pem] ),
-        'errors_enabled' => false,
+        'errors_enabled' => true,
         'errors_ignored_exceptions' => %w(ActiveRecord::RecordNotFound ActionController::RoutingError),
         'errors_filtered_params' => %w(password s3-key),
         'errors_host' => 'https://errors.scoutapm.com',
