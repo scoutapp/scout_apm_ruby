@@ -108,4 +108,28 @@ class PayloadSerializerTest < Minitest::Test
     json = { "foo" => "\bbar\nbaz\r" }
     assert_equal json, JSON.parse(ScoutApm::Serializers::PayloadSerializerToJson.jsonify_hash(json))
   end
+
+  def test_escapes_escaped_quotes
+    json = {"foo" => %q|`additional_details` = '{\"amount\":1}'|}
+    result = ScoutApm::Serializers::PayloadSerializerToJson.jsonify_hash(json)
+    assert_equal json, JSON.parse(result)
+  end
+
+  def test_escapes_various_special_characters
+    json = {"foo" => [
+      %Q|\fbar|,
+      %Q|\rbar|,
+      %Q|\nbar|,
+      %Q|\tbar|,
+      %Q|"bar|,
+      %Q|'bar|,
+      %Q|{bar|,
+      %Q|}bar|,
+      %Q|\\bar|,
+      %Q|\\\nbar|,
+    ]}
+
+    result = ScoutApm::Serializers::PayloadSerializerToJson.jsonify_hash(json)
+    assert_equal json, JSON.parse(result)
+  end
 end

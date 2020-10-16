@@ -46,17 +46,19 @@ module ScoutApm
         end
 
         ESCAPE_MAPPINGS = {
+          '\\' => '\\\\\\\\',
           "\b" => '\\b',
           "\t" => '\\t',
           "\n" => '\\n',
           "\f" => '\\f',
           "\r" => '\\r',
           '"'  => '\\"',
-          '\\' => '\\\\',
         }
 
         def escape(string)
-          ESCAPE_MAPPINGS.inject(string.to_s) {|s, (bad, good)| s.gsub(bad, good) }
+          ESCAPE_MAPPINGS.inject(string.to_s) {|s, (bad, good)| 
+            s.gsub(bad, good)
+          }
         end
 
         def format_by_type(formatee)
