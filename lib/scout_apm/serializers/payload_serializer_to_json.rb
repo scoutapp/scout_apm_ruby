@@ -45,6 +45,7 @@ module ScoutApm
           "{#{str_parts.join(",")}}"
         end
 
+        # Stackoverflow answer on gsub matches and backslashes - https://stackoverflow.com/a/4149087/2705125
         ESCAPE_MAPPINGS = {
           '\\' => '\\\\\\\\',
           "\b" => '\\b',
