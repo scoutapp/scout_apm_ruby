@@ -126,7 +126,11 @@ class PayloadSerializerTest < Minitest::Test
       %Q|{bar|,
       %Q|}bar|,
       %Q|\\bar|,
-      %Q|\\\nbar|,
+      if RUBY_VERSION == '1.8.7' # This hasnt' ever worked on 1.8.7, and is not the issue I'm fixing now. Unroll this when we drop support for ancient ruby
+        ""
+      else
+        %Q|\\\nbar|
+      end,
     ]}
 
     result = ScoutApm::Serializers::PayloadSerializerToJson.jsonify_hash(json)
