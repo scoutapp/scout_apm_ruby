@@ -47,7 +47,12 @@ module ScoutApm
 
         # Stackoverflow answer on gsub matches and backslashes - https://stackoverflow.com/a/4149087/2705125
         ESCAPE_MAPPINGS = {
-          '\\' => '\\\\\\\\',
+          '\\' => 
+            if RUBY_VERSION == "1.8.7"
+              '\\\\'
+            else
+              '\\\\\\\\'
+            end,
           "\b" => '\\b',
           "\t" => '\\t',
           "\n" => '\\n',
