@@ -1,3 +1,7 @@
+# 2.6.10
+
+* Fix an edge case in JSON serialization (#360)
+
 # 2.6.9
 
 * Add `ssl_cert_file` config option (#352)
