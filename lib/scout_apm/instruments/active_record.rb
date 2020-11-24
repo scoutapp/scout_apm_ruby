@@ -308,14 +308,14 @@ module ScoutApm
         end
       end
 
-      def find_by_sql_with_scout_instruments(*args, &block)
+      def find_by_sql_with_scout_instruments(*args, **kwargs, &block)
         req = ScoutApm::RequestManager.lookup
         layer = ScoutApm::Layer.new("ActiveRecord", Utils::ActiveRecordMetricName::DEFAULT_METRIC)
         layer.annotate_layer(:ignorable => true)
         req.start_layer(layer)
         req.ignore_children!
         begin
-          find_by_sql_without_scout_instruments(*args, &block)
+          find_by_sql_without_scout_instruments(*args, **kwargs, &block)
         ensure
           req.acknowledge_children!
           req.stop_layer
@@ -393,7 +393,7 @@ module ScoutApm
     end
 
     module ActiveRecordUpdateInstruments
-      def save(*args, &block)
+      def save(*args, **options, &block)
         model = self.class.name
         operation = self.persisted? ? "Update" : "Create"
 
@@ -403,14 +403,14 @@ module ScoutApm
         req.start_layer(layer)
         req.ignore_children!
         begin
-          super(*args, &block)
+          super(*args, **options, &block)
         ensure
           req.acknowledge_children!
           req.stop_layer
         end
       end
 
-      def save!(*args, &block)
+      def save!(*args, **options, &block)
         model = self.class.name
         operation = self.persisted? ? "Update" : "Create"
 
@@ -419,7 +419,7 @@ module ScoutApm
         req.start_layer(layer)
         req.ignore_children!
         begin
-          super(*args, &block)
+          super(*args, **options, &block)
         ensure
           req.acknowledge_children!
           req.stop_layer
