@@ -12,4 +12,18 @@ class AgentContextTest < Minitest::Test
     context = ScoutApm::AgentContext.new
     assert ScoutApm::ErrorService::ErrorBuffer, context.error_buffer.class
   end
+
+
+  class TestPolicy
+    def call(req); 1; end
+    def stored!(req); end
+  end
+
+  def test_customize_slow_request_policy
+    context = ScoutApm::AgentContext.new
+    assert 4, context.slow_request_policy.policies
+
+    context.slow_request_policy.add(TestPolicy.new)
+    assert 5, context.slow_request_policy.policies
+  end
 end
