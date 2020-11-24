@@ -45,18 +45,36 @@ module ScoutApm
           "{#{str_parts.join(",")}}"
         end
 
-        ESCAPE_MAPPINGS = {
-          "\b" => '\\b',
-          "\t" => '\\t',
-          "\n" => '\\n',
-          "\f" => '\\f',
-          "\r" => '\\r',
-          '"'  => '\\"',
-          '\\' => '\\\\',
-        }
+        # Ruby 1.8.7 seems to be fundamentally different in how gsub or regexes
+        # work. This is a hack and will be removed as soon as we can drop
+        # support
+        if RUBY_VERSION == "1.8.7"
+          ESCAPE_MAPPINGS = {
+            "\b" => '\\b',
+            "\t" => '\\t',
+            "\n" => '\\n',
+            "\f" => '\\f',
+            "\r" => '\\r',
+            '"'  => '\\"',
+            '\\' => '\\\\',
+          }
+        else
+          ESCAPE_MAPPINGS = {
+            # Stackoverflow answer on gsub matches and backslashes - https://stackoverflow.com/a/4149087/2705125
+            '\\' => '\\\\\\\\',
+            "\b" => '\\b',
+            "\t" => '\\t',
+            "\n" => '\\n',
+            "\f" => '\\f',
+            "\r" => '\\r',
+            '"'  => '\\"',
+          }
+        end
 
         def escape(string)
-          ESCAPE_MAPPINGS.inject(string.to_s) {|s, (bad, good)| s.gsub(bad, good) }
+          ESCAPE_MAPPINGS.inject(string.to_s) {|s, (bad, good)| 
+            s.gsub(bad, good)
+          }
         end
 
         def format_by_type(formatee)

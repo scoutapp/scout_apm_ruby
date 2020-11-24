@@ -75,13 +75,18 @@ module ScoutApm
       end
 
       module ActionViewPartialRendererInstruments
+        # In Rails 6, the signature changed to pass the view & template args directly, as opposed to through the instance var
+        # New signature is: def render_partial(view, template)
         def render_partial(*args)
           req = ScoutApm::RequestManager.lookup
 
-          template_name = @template.virtual_path rescue "Unknown Partial"
-          template_name ||= "Unknown Partial"
-          layer_name = template_name + "/Rendering"
+          maybe_template = args[1]
 
+          template_name = @template.virtual_path rescue nil        # Works on Rails 3.2 -> end of Rails 5 series
+          template_name ||= maybe_template.virtual_path rescue nil # Works on Rails 6 -> 6.0.3
+          template_name ||= "Unknown Partial"
+
+          layer_name = template_name + "/Rendering"
           layer = ScoutApm::Layer.new("View", layer_name)
           layer.subscopable!
 

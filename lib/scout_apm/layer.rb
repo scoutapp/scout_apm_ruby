@@ -36,7 +36,10 @@ module ScoutApm
 
     # If this layer took longer than a fixed amount of time, store the
     # backtrace of where it occurred.
-    attr_reader :backtrace
+    attr_accessor :backtrace
+
+    # The file name associated with the layer. Only used for autoinstruments overhead logging.
+    attr_accessor :file_name
 
     # As we go through a part of a request, instrumentation can store additional data
     # Known Keys:

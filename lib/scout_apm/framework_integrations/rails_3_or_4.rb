@@ -48,6 +48,7 @@ module ScoutApm
           when "sqlite"     then :sqlite
           when "mysql"      then :mysql
           when "mysql2"     then :mysql
+          when "sqlserver"  then :sqlserver
           else default
           end
         else

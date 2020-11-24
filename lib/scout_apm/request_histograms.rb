@@ -22,6 +22,14 @@ module ScoutApm
       @histograms.keys.each { |n| yield n }
     end
 
+    def as_json
+      Hash[
+        @histograms.map{ |key, histogram|
+          [key, histogram.as_json]
+        }
+      ]
+    end
+
     def add(item, value)
       @histograms[item].add(value)
     end

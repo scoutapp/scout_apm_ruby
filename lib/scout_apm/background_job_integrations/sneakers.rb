@@ -1,14 +1,22 @@
 module ScoutApm
   module BackgroundJobIntegrations
     class Sneakers
-      attr_reader :logger
-
       def name
         :sneakers
       end
 
       def present?
-        defined?(::Sneakers)
+        defined?(::Sneakers) && supported_version?
+      end
+      
+      # Only support Sneakers 2.7 and up
+      def supported_version?
+        result = Gem::Version.new(::Sneakers::VERSION) > Gem::Version.new("2.7.0")
+        ScoutApm::Agent.instance.logger.info("Skipping Sneakers instrumentation. Only versions 2.7+ are supported. See docs or contact support@scoutapm.com for instrumentation of older versions.")
+        result
+      rescue
+        ScoutApm::Agent.instance.logger.info("Failed comparing Sneakers Version. Skipping")
+        false
       end
 
       def forking?
@@ -69,14 +77,6 @@ module ScoutApm
           alias_method :process_work_without_scout, :process_work
           alias_method :process_work, :process_work_with_scout
         end
-
-        # msg = {
-        #   "job_class":"DummyWorker",
-        #   "job_id":"ea23ba1c-3022-4e05-870b-c3bcb1c4f328",
-        #   "queue_name":"default",
-        #   "arguments":["fjdkl"],
-        #   "locale":"en"
-        # }
       end
 
       ACTIVE_JOB_KLASS = 'ActiveJob::QueueAdapters::SneakersAdapter::JobWrapper'.freeze

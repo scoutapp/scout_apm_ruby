@@ -33,6 +33,8 @@ require 'scout_apm/environment'
 # remote_agent_port - What port to bind the remote webserver to
 # start_resque_server_instrument - Used in special situations with certain Resque installs
 # timeline_traces - true/false to enable sending of of the timeline trace format.
+# auto_instruments - true/false whether to install autoinstruments. Only installed if on a supported Ruby version.
+# auto_instruments_ignore - An array of file names to exclude from autoinstruments (Ex: ['application_controller']).
 #
 # Any of these config settings can be set with an environment variable prefixed
 # by SCOUT_ and uppercasing the key: SCOUT_LOG_LEVEL for instance.
@@ -73,9 +75,18 @@ module ScoutApm
         'revision_sha',
         'scm_subdirectory',
         'start_resque_server_instrument',
+        'ssl_cert_file',
         'uri_reporting',
         'instrument_http_url_length',
-        'timeline_traces'
+        'timeline_traces',
+        'auto_instruments',
+        'auto_instruments_ignore',
+
+        # Error Service Related Configuration
+        'errors_enabled',
+        'errors_ignored_exceptions',
+        'errors_filtered_params',
+        'errors_host',
     ]
 
     ################################################################################
@@ -168,7 +179,12 @@ module ScoutApm
       'database_metric_report_limit' => IntegerCoercion.new,
       'instrument_http_url_length' => IntegerCoercion.new,
       'start_resque_server_instrument' => BooleanCoercion.new,
-      'timeline_traces' => BooleanCoercion.new
+      'timeline_traces' => BooleanCoercion.new,
+      'auto_instruments' => BooleanCoercion.new,
+      'auto_instruments_ignore' => JsonCoercion.new,
+      'errors_enabled' => BooleanCoercion.new,
+      'errors_ignored_exceptions' => JsonCoercion.new,
+      'errors_filtered_params' => JsonCoercion.new,
     }
 
 
@@ -276,7 +292,14 @@ module ScoutApm
         'instrument_http_url_length' => 300,
         'start_resque_server_instrument' => true, # still only starts if Resque is detected
         'collect_remote_ip' => true,
-        'timeline_traces' => true
+        'timeline_traces' => true,
+        'auto_instruments' => false,
+        'auto_instruments_ignore' => [],
+        'ssl_cert_file' => File.join( File.dirname(__FILE__), *%w[.. .. data cacert.pem] ),
+        'errors_enabled' => false,
+        'errors_ignored_exceptions' => %w(ActiveRecord::RecordNotFound ActionController::RoutingError),
+        'errors_filtered_params' => %w(password s3-key),
+        'errors_host' => 'https://errors.scoutapm.com',
       }.freeze
 
       def value(key)

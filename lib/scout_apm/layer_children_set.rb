@@ -46,9 +46,15 @@ module ScoutApm
       set = child_set(metric_type)
 
       if set.size >= unique_cutoff
-        # find limited_layer
-        @limited_layers || init_limited_layers
-        @limited_layers[metric_type].absorb(child)
+        # find or create limited_layer
+        @limited_layers ||= Hash.new 
+        layer = if @limited_layers.has_key?(metric_type)
+                  @limited_layers[metric_type]
+                else
+                  @limited_layers[metric_type] = LimitedLayer.new(metric_type)
+                end
+
+        layer.absorb(child)
       else
         # we have space just add it
         set << child
@@ -75,11 +81,6 @@ module ScoutApm
 
     def size
       @children.size
-    end
-
-    # hold off initializing this until we know we need it
-    def init_limited_layers
-      @limited_layers ||= Hash.new { |hash, key| hash[key] = LimitedLayer.new(key) }
     end
   end
 end

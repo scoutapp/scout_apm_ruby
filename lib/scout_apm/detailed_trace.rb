@@ -200,8 +200,9 @@ class DetailedTraceTags
     @tags = hash
   end
 
+  # @tags is already a hash, so no conversion needed
   def as_json(*)
-    @tags.as_json
+    @tags
   end
 end
 

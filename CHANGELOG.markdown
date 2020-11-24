@@ -1,3 +1,70 @@
+# 2.6.10
+
+* Fix an edge case in JSON serialization (#360)
+
+# 2.6.9
+
+* Add `ssl_cert_file` config option (#352)
+* Improve sanitization of Postgres UPDATE SQL (#351)
+* Allow custom URL sanitization (#341)
+
+# 2.6.8
+
+* Lock rake version for 1.8.7 to older version (#329)
+* Delete unneeded .DS_Store file that snuck in (#334)
+* Fix typo in "queue_time_ms"
+* Fix Rails 6 deprecation warning at boot time (#337)
+* Fix partial naming on Rails 6.0 (#339)
+* Support Sidekiq 6.1 instrumentation (#340)
+
+# 2.6.7
+
+* Remove accidental call to `as_json`
+
+# 2.6.6
+
+* Add basic support for parsing Microsoft SQLServer queries (#317)
+* Refine Postgresql Sanitization with subqueries and JSON operations (#262)
+
+# 2.6.5
+
+* Add a tag to any requests that reach maximum number of spans (#316)
+* Update testing library Mocha (#315)
+* Fix case sensitivity mismatch in Job renaming (#314)
+* Add support for Sneakers 2.5 (#313)
+* Fix edge case with Resque instrumentation (#312)
+* Fix missing source code when used with BugSnag (#308)
+
+# 2.6.4
+
+* Add defensive check against a nil @address in Net/HTTP instruments (#306)
+
+# 2.6.3
+
+* Standardize Metadata with other language agents (#302)
+* Add Mongoid 7.x support (#295)
+* Add HTTP::Client support (#260)
+
+# 2.6.2
+
+* Fix Autoinstruments logging when running without ActiveSupport (#290)
+* Fix edge-case Autoinstruments syntax error (#287)
+* Fix invalid syntax for running on Ruby 1.8.7
+
+# 2.6.1
+
+* Logging total autoinstrumented spans and the ratio of significant to total spans (#283).
+* Added `autoinstruments_ignore` option (also #283).
+
+# 2.6.0
+
+* Autoinstruments (#247). Disabled by default. Set `auto_instruments: true` to enable.
+
+# 2.5.3
+
+* Add Que support (#265)
+* Add Memcached support (#279)
+
 # 2.5.2
 
 * Don't process limited layers in detailed traces (#268)
@@ -23,7 +90,7 @@
 
 # 2.4.22
 
-* Support Rails 6.0 View Instruments (#251) 
+* Support Rails 6.0 View Instruments (#251)
 * Update documentation URLs (#236)
 
 # 2.4.21
@@ -671,7 +738,7 @@ Big set of features getting merged in for this release.
 
 # 0.1.3
 
-* Adds capacity calculation via "Instance/Capacity" metric. 
+* Adds capacity calculation via "Instance/Capacity" metric.
 * Tweaks tracing to still count a transaction if it results in a 500 error and includes it in accumulated time.
 * Adds per-transaction error tracking (ex: Errors/Controller/widgets/index)
 

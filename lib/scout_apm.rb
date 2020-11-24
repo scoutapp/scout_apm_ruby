@@ -62,6 +62,8 @@ require 'scout_apm/background_job_integrations/delayed_job'
 require 'scout_apm/background_job_integrations/resque'
 require 'scout_apm/background_job_integrations/shoryuken'
 require 'scout_apm/background_job_integrations/sneakers'
+require 'scout_apm/background_job_integrations/que'
+require 'scout_apm/background_job_integrations/legacy_sneakers'
 
 require 'scout_apm/framework_integrations/rails_2'
 require 'scout_apm/framework_integrations/rails_3_or_4'
@@ -111,6 +113,7 @@ require 'scout_apm/utils/time'
 require 'scout_apm/utils/unique_id'
 require 'scout_apm/utils/numbers'
 require 'scout_apm/utils/gzip_helper'
+require 'scout_apm/utils/marshal_logging'
 
 require 'scout_apm/config'
 require 'scout_apm/environment'
@@ -183,6 +186,16 @@ require 'scout_apm/tasks/support'
 require 'scout_apm/extensions/config'
 require 'scout_apm/extensions/transaction_callback_payload'
 
+require 'scout_apm/error_service'
+require 'scout_apm/error_service/middleware'
+require 'scout_apm/error_service/notifier'
+require 'scout_apm/error_service/sidekiq'
+require 'scout_apm/error_service/ignored_exceptions'
+require 'scout_apm/error_service/error_buffer'
+require 'scout_apm/error_service/error_record'
+require 'scout_apm/error_service/periodic_work'
+require 'scout_apm/error_service/payload'
+
 if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR) && Rails::VERSION::MAJOR >= 3 && defined?(Rails::Railtie)
   module ScoutApm
     class Railtie < Rails::Railtie
@@ -194,6 +207,18 @@ if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR
 
         # Attempt to start right away, this will work best for preloading apps, Unicorn & Puma & similar
         ScoutApm::Agent.instance.install
+
+        if ScoutApm::Agent.instance.context.config.value("auto_instruments")
+          ScoutApm::Agent.instance.context.logger.debug("AutoInstruments is enabled.")
+          require 'scout_apm/auto_instrument'
+        else
+          ScoutApm::Agent.instance.context.logger.debug("AutoInstruments is disabled.")
+        end
+
+        if ScoutApm::Agent.instance.context.config.value("errors_enabled")
+          app.config.middleware.insert_after ActionDispatch::DebugExceptions, ScoutApm::ErrorService::Middleware
+          ScoutApm::ErrorService::Sidekiq.new.install
+        end
 
         # Install the middleware every time in development mode.
         # The middleware is a noop if dev_trace is not enabled in config

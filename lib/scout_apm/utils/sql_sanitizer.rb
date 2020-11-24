@@ -34,15 +34,24 @@ module ScoutApm
         when :postgres then to_s_postgres
         when :mysql    then to_s_mysql
         when :sqlite   then to_s_sqlite
+        when :sqlserver then to_s_sqlserver
         end
       end
 
       private
 
+      def to_s_sqlserver
+        sql.gsub!(SQLSERVER_EXECUTESQL, '\1')
+        sql.gsub!(SQLSERVER_REMOVE_INTEGERS, '?')
+        sql.gsub!(SQLSERVER_IN_CLAUSE, 'IN (?)')
+        sql
+      end
+
       def to_s_postgres
         sql.gsub!(PSQL_PLACEHOLDER, '?')
         sql.gsub!(PSQL_VAR_INTERPOLATION, '')
-        sql.gsub!(PSQL_REMOVE_STRINGS, '?')
+        sql.gsub!(PSQL_AFTER_WHERE) {|c| c.gsub(PSQL_REMOVE_STRINGS, '?')}
+        sql.gsub!(PSQL_AFTER_SET) {|c| c.gsub(PSQL_REMOVE_STRINGS, '?')}
         sql.gsub!(PSQL_REMOVE_INTEGERS, '?')
         sql.gsub!(PSQL_IN_CLAUSE, 'IN (?)')
         sql.gsub!(MULTIPLE_SPACES, ' ')

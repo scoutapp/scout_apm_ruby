@@ -32,8 +32,10 @@ module ScoutApm
 
     # Modifies self and returns self, after merging in `other`.
     def combine!(other)
-      same_job = queue_name == other.queue_name && job_name == other.job_name
-      raise "Mismatched Merge of Background Job" unless same_job
+      if !self.eql?(other)
+        ScoutApm::Agent.instance.logger.debug("Mismatched Merge of Background Job: (Queue #{queue_name} == #{other.queue_name}) (Name #{job_name} == #{other.job_name}) (Hash #{hash} == #{other.hash})")
+        return self
+      end
 
       @errors += other.errors
       @metric_set = metric_set.combine!(other.metric_set)
