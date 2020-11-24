@@ -96,11 +96,11 @@ module ScoutApm
     end
 
     def slow_request_policy
-      @slow_request_policy ||= ScoutApm::SlowRequestPolicy.new(self)
+      @slow_request_policy ||= ScoutApm::SlowRequestPolicy.new(self).tap{|p| p.add_default_policies }
     end
 
     def slow_job_policy
-      @slow_job_policy ||= ScoutApm::SlowJobPolicy.new(self)
+      @slow_job_policy ||= ScoutApm::SlowRequestPolicy.new(self).tap{|p| p.add_default_policies }
     end
 
     # Maintains a Histogram of insignificant/significant autoinstrument layers.
