@@ -36,10 +36,8 @@ Gem::Specification.new do |s|
   s.add_development_dependency "activerecord"
   s.add_development_dependency "sqlite3"
 
-  if RUBY_VERSION >= "1.9.3"
-    s.add_development_dependency "rubocop"
-    s.add_development_dependency "guard"
-    s.add_development_dependency "guard-minitest"
-    s.add_development_dependency "m"
-  end
+  s.add_development_dependency "rubocop"
+  s.add_development_dependency "guard"
+  s.add_development_dependency "guard-minitest"
+  s.add_development_dependency "m"
 end

@@ -1,3 +1,10 @@
+# 4.0.0
+
+* Require Ruby >= 2.1 (#270)
+* ErrorService reporting. Enable with `errors_enabled` config setting. (#347)
+* Modular SlowRequestPolicy (#364)
+* Fix deprecation warnings (#354)
+
 # 2.6.10
 
 * Fix an edge case in JSON serialization (#360)
