@@ -18,3 +18,4 @@ matrix:
       script: bundle exec rubocop
     - rvm: 2.6
       gemfile: gems/rails3.gemfile
+    - rvm: 3.0
