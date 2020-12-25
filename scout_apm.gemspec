@@ -21,7 +21,7 @@ Gem::Specification.new do |s|
   s.extensions << 'ext/allocations/extconf.rb'
   s.extensions << 'ext/rusage/extconf.rb'
 
-  s.required_ruby_version = '~> 2.1'
+  s.required_ruby_version = '>= 2.1'
 
   s.add_development_dependency "minitest"
   s.add_development_dependency "mocha"
@@ -33,7 +33,7 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency "parser"
 
   # These are general development dependencies which are used in instrumentation
-  # tests. Specific versions are pulled in using specific gemfiles, e.g. 
+  # tests. Specific versions are pulled in using specific gemfiles, e.g.
   # `gems/rails3.gemfile`.
   s.add_development_dependency "activerecord"
   s.add_development_dependency "sqlite3"
