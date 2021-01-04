@@ -146,7 +146,7 @@ module ScoutApm
         assert_equal %q|UPDATE "mytable" SET "myfield" = ?, "countofthings" = ? WHERE "user_id" = ?|, ss.to_s
       end
 
-      def test_multiline_sql
+      def test_postgres_multiline_sql
         sql = %q|
         SELECT "html_form_payloads".*
         FROM "html_form_payloads"
@@ -162,6 +162,19 @@ module ScoutApm
 
         ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :postgres }
         assert_equal %q|SELECT "html_form_payloads".* FROM "html_form_payloads" INNER JOIN "leads" ON "leads"."payload_id" = "html_form_payloads"."id" AND "leads"."payload_type" = ? WHERE html_form_payloads.id < ? AND "form_type" = ? AND (params::varchar = ?) AND (leads.url = ?) ORDER BY "html_form_payloads"."id" ASC LIMIT ?|, ss.to_s
+      end
+
+      def test_mysql_multiline
+        sql = %q|
+        SELECT `blogs`.*
+        FROM `blogs`
+        WHERE (title = 'abc')
+        |
+
+        ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :mysql }
+        assert_equal %q|SELECT `blogs`.*
+        FROM `blogs`
+        WHERE (title = ?)|, ss.to_s
       end
 
       def assert_faster_than(target_seconds)
