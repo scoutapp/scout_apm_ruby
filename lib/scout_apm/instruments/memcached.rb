@@ -25,11 +25,11 @@ module ScoutApm
           ::Dalli::Client.class_eval do
             include ScoutApm::Tracer
 
-            def perform_with_scout_instruments(*args, &block)
+            def perform_with_scout_instruments(*args, **kwargs, &block)
               command = args.first rescue "Unknown"
 
               self.class.instrument("Memcached", command) do
-                perform_without_scout_instruments(*args, &block)
+                perform_without_scout_instruments(*args, **kwargs, &block)
               end
             end
 

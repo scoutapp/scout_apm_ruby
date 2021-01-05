@@ -25,11 +25,11 @@ module ScoutApm
           ::Redis::Client.class_eval do
             include ScoutApm::Tracer
 
-            def call_with_scout_instruments(*args, &block)
+            def call_with_scout_instruments(*args, **kwargs, &block)
               command = args.first.first rescue "Unknown"
 
               self.class.instrument("Redis", command) do
-                call_without_scout_instruments(*args, &block)
+                call_without_scout_instruments(*args, **kwargs, &block)
               end
             end
 
