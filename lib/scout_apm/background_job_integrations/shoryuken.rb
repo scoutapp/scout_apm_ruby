@@ -40,10 +40,10 @@ module ScoutApm
         require 'shoryuken/processor' # sidekiq v4 has not loaded this file by this point
 
         ::Shoryuken::Processor.class_eval do
-          def initialize_with_scout(*args)
+          def initialize_with_scout(*args, **kwargs)
             agent = ::ScoutApm::Agent.instance
             agent.start
-            initialize_without_scout(*args)
+            initialize_without_scout(*args, **kwargs)
           end
 
           alias_method :initialize_without_scout, :initialize

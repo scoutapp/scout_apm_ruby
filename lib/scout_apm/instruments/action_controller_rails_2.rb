@@ -51,7 +51,7 @@ module ScoutApm
       # In addition to instrumenting actions, this also sets the scope to the controller action name. The scope is later
       # applied to metrics recorded during this transaction. This lets us associate ActiveRecord calls with
       # specific controller actions.
-      def perform_action_with_scout_instruments(*args, &block)
+      def perform_action_with_scout_instruments(*args, **kwargs, &block)
         req = ScoutApm::RequestManager.lookup
         req.annotate_request(:uri => request.path) # for security by-default, we don't use request.fullpath which could reveal filtered params.
         if ScoutApm::Agent.instance.context.config.value('collect_remote_ip')
@@ -61,7 +61,7 @@ module ScoutApm
         req.start_layer( ScoutApm::Layer.new("Controller", "#{controller_path}/#{action_name}") )
 
         begin
-          perform_action_without_scout_instruments(*args, &block)
+          perform_action_without_scout_instruments(*args, **kwargs, &block)
         rescue
           req.error!
           raise
