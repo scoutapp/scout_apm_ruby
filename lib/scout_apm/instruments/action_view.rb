@@ -77,7 +77,7 @@ module ScoutApm
       module ActionViewPartialRendererInstruments
         # In Rails 6, the signature changed to pass the view & template args directly, as opposed to through the instance var
         # New signature is: def render_partial(view, template)
-        def render_partial(*args)
+        def render_partial(*args, **kwargs)
           req = ScoutApm::RequestManager.lookup
 
           maybe_template = args[1]
@@ -92,13 +92,13 @@ module ScoutApm
 
           begin
             req.start_layer(layer)
-            super(*args)
+            super(*args, **kwargs)
           ensure
             req.stop_layer
           end
         end
 
-        def collection_with_template(*args)
+        def collection_with_template(*args, **kwargs)
           req = ScoutApm::RequestManager.lookup
 
           template_name = @template.virtual_path rescue "Unknown Collection"
@@ -110,7 +110,7 @@ module ScoutApm
 
           begin
             req.start_layer(layer)
-            super(*args)
+            super(*args, **kwargs)
           ensure
             req.stop_layer
           end
@@ -118,7 +118,7 @@ module ScoutApm
       end
 
       module ActionViewTemplateRendererInstruments
-        def render_template(*args)
+        def render_template(*args, **kwargs)
           req = ScoutApm::RequestManager.lookup
 
           template_name = args[0].virtual_path rescue "Unknown"
@@ -130,7 +130,7 @@ module ScoutApm
 
           begin
             req.start_layer(layer)
-            super(*args)
+            super(*args, **kwargs)
           ensure
             req.stop_layer
           end
