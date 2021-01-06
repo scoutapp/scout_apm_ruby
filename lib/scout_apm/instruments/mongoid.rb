@@ -53,7 +53,7 @@ module ScoutApm
             methods.each do |method|
               if ::Mongoid::Contextual::Mongo.method_defined?(method)
                 with_scout_instruments = %Q[
-                def #{method}_with_scout_instruments(*args, **kwargs, &block)
+                def #{method}_with_scout_instruments(*args, &block)
                   req = ScoutApm::RequestManager.lookup
                   *db, collection = view.collection.namespace.split(".")
 
@@ -77,7 +77,7 @@ module ScoutApm
 
                   req.start_layer( layer )
                   begin
-                    #{method}_without_scout_instruments(*args, **kwargs, &block)
+                    #{method}_without_scout_instruments(*args, &block)
                   ensure
                     req.stop_layer
                   end

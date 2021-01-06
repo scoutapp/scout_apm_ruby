@@ -28,11 +28,11 @@ module ScoutApm
           ::Elasticsearch::Transport::Client.class_eval do
             include ScoutApm::Tracer
 
-            def perform_request_with_scout_instruments(*args, **kwargs, &block)
+            def perform_request_with_scout_instruments(*args, &block)
               name = _sanitize_name(args[1])
 
               self.class.instrument("Elasticsearch", name, :ignore_children => true) do
-                perform_request_without_scout_instruments(*args, **kwargs, &block)
+                perform_request_without_scout_instruments(*args, &block)
               end
             end
 

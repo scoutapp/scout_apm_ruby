@@ -21,12 +21,12 @@ module ScoutApm
           @installed = true
 
           ActionDispatch::Routing::RouteSet.class_eval do
-            def call_with_scout_instruments(*args, **kwargs)
+            def call_with_scout_instruments(*args)
               req = ScoutApm::RequestManager.lookup
               req.start_layer(ScoutApm::Layer.new("Router", "Rails"))
 
               begin
-                call_without_scout_instruments(*args, **kwargs)
+                call_without_scout_instruments(*args)
               ensure
                 req.stop_layer
               end

@@ -25,7 +25,7 @@ module ScoutApm
           ::HTTPClient.class_eval do
             include ScoutApm::Tracer
 
-            def request_with_scout_instruments(*args, **kwargs, &block)
+            def request_with_scout_instruments(*args, &block)
 
               method = args[0].to_s
               url = args[1]
@@ -34,7 +34,7 @@ module ScoutApm
               url = url && url.to_s[0..(max_length - 1)]
 
               self.class.instrument("HTTP", method, :desc => url) do
-                request_without_scout_instruments(*args, **kwargs, &block)
+                request_without_scout_instruments(*args, &block)
               end
             end
 

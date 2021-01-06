@@ -33,7 +33,7 @@ module ScoutApm
     end
 
     module GrapeEndpointInstruments
-      def run_with_scout_instruments(*args, **kwargs)
+      def run_with_scout_instruments(*args)
         request = ::Grape::Request.new(env || args.first)
         req = ScoutApm::RequestManager.lookup
 
@@ -59,7 +59,7 @@ module ScoutApm
 
         req.start_layer( ScoutApm::Layer.new("Controller", name) )
         begin
-          run_without_scout_instruments(*args, **kwargs)
+          run_without_scout_instruments(*args)
         rescue
           req.error!
           raise
@@ -70,3 +70,4 @@ module ScoutApm
     end
   end
 end
+

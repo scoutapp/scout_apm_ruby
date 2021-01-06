@@ -170,7 +170,7 @@ module ScoutApm
         ScoutApm::Agent.instance.context.logger.info "Instrumenting #{instrumented_class.inspect}"
       end
 
-      def log(*args, **kwargs, &block)
+      def log(*args, &block)
         # Extract data from the arguments
         sql, name = args
         metric_name = Utils::ActiveRecordMetricName.new(sql, name)
@@ -201,7 +201,7 @@ module ScoutApm
           end
           current_layer.desc.merge(desc)
 
-          super(*args, **kwargs, &block)
+          super(*args, &block)
 
         # OR: Start a new layer, we didn't pick up instrumentation earlier in the stack.
         else
@@ -209,7 +209,7 @@ module ScoutApm
           layer.desc = desc
           req.start_layer(layer)
           begin
-            super(*args, **kwargs, &block)
+            super(*args, &block)
           ensure
             req.stop_layer
           end
@@ -222,7 +222,7 @@ module ScoutApm
         ScoutApm::Agent.instance.context.logger.info "Instrumenting #{instrumented_class.inspect}"
       end
 
-      def log(*args, **kwargs, &block)
+      def log(*args, &block)
         # Extract data from the arguments
         sql, name = args
         metric_name = Utils::ActiveRecordMetricName.new(sql, name)
@@ -253,7 +253,7 @@ module ScoutApm
           end
           current_layer.desc.merge(desc)
 
-          super(*args, **kwargs, &block)
+          super(*args, &block)
 
         # OR: Start a new layer, we didn't pick up instrumentation earlier in the stack.
         else
@@ -261,7 +261,7 @@ module ScoutApm
           layer.desc = desc
           req.start_layer(layer)
           begin
-            super(*args, **kwargs, &block)
+            super(*args, &block)
           ensure
             req.stop_layer
           end
@@ -334,7 +334,7 @@ module ScoutApm
         end
       end
 
-      def find_with_associations_with_scout_instruments(*args, **kwargs, &block)
+      def find_with_associations_with_scout_instruments(*args, &block)
         req = ScoutApm::RequestManager.lookup
         layer = ScoutApm::Layer.new("ActiveRecord", Utils::ActiveRecordMetricName::DEFAULT_METRIC)
         layer.annotate_layer(:ignorable => true)
@@ -342,7 +342,7 @@ module ScoutApm
         req.start_layer(layer)
         req.ignore_children!
         begin
-          find_with_associations_without_scout_instruments(*args, **kwargs, &block)
+          find_with_associations_without_scout_instruments(*args, &block)
         ensure
           req.acknowledge_children!
           req.stop_layer
@@ -365,7 +365,7 @@ module ScoutApm
         end
       end
 
-      def exec_queries(*args, **kwargs, &block)
+      def exec_queries(*args, &block)
         req = ScoutApm::RequestManager.lookup
         layer = ScoutApm::Layer.new("ActiveRecord", Utils::ActiveRecordMetricName::DEFAULT_METRIC)
         layer.annotate_layer(:ignorable => true)
@@ -374,9 +374,9 @@ module ScoutApm
         req.ignore_children!
         begin
           if ScoutApm::Environment.instance.supports_module_prepend?
-            super(*args, **kwargs, &block)
+            super(*args, &block)
           else
-            exec_queries_without_scout_instruments(*args, **kwargs, &block)
+            exec_queries_without_scout_instruments(*args, &block)
           end
         ensure
           req.acknowledge_children!
@@ -393,7 +393,7 @@ module ScoutApm
     end
 
     module ActiveRecordUpdateInstruments
-      def save(*args, **kwargs, &block)
+      def save(*args, **options, &block)
         model = self.class.name
         operation = self.persisted? ? "Update" : "Create"
 
@@ -403,14 +403,14 @@ module ScoutApm
         req.start_layer(layer)
         req.ignore_children!
         begin
-          super(*args, **kwargs, &block)
+          super(*args, **options, &block)
         ensure
           req.acknowledge_children!
           req.stop_layer
         end
       end
 
-      def save!(*args, **kwargs, &block)
+      def save!(*args, **options, &block)
         model = self.class.name
         operation = self.persisted? ? "Update" : "Create"
 
@@ -419,7 +419,7 @@ module ScoutApm
         req.start_layer(layer)
         req.ignore_children!
         begin
-          super(*args, **kwargs, &block)
+          super(*args, **options, &block)
         ensure
           req.acknowledge_children!
           req.stop_layer
@@ -441,7 +441,7 @@ module ScoutApm
         end
       end
 
-      def update_all_with_scout_instruments(*args, **kwargs, &block)
+      def update_all_with_scout_instruments(*args, &block)
         model = self.name
 
         req = ScoutApm::RequestManager.lookup
@@ -449,14 +449,14 @@ module ScoutApm
         req.start_layer(layer)
         req.ignore_children!
         begin
-          update_all_without_scout_instruments(*args, **kwargs, &block)
+          update_all_without_scout_instruments(*args, &block)
         ensure
           req.acknowledge_children!
           req.stop_layer
         end
       end
 
-      def delete_all_with_scout_instruments(*args, **kwargs, &block)
+      def delete_all_with_scout_instruments(*args, &block)
         model = self.name
 
         req = ScoutApm::RequestManager.lookup
@@ -464,14 +464,14 @@ module ScoutApm
         req.start_layer(layer)
         req.ignore_children!
         begin
-          delete_all_without_scout_instruments(*args, **kwargs, &block)
+          delete_all_without_scout_instruments(*args, &block)
         ensure
           req.acknowledge_children!
           req.stop_layer
         end
       end
 
-      def destroy_all_with_scout_instruments(*args, **kwargs, &block)
+      def destroy_all_with_scout_instruments(*args, &block)
         model = self.name
 
         req = ScoutApm::RequestManager.lookup
@@ -479,7 +479,7 @@ module ScoutApm
         req.start_layer(layer)
         req.ignore_children!
         begin
-          destroy_all_without_scout_instruments(*args, **kwargs, &block)
+          destroy_all_without_scout_instruments(*args, &block)
         ensure
           req.acknowledge_children!
           req.stop_layer
