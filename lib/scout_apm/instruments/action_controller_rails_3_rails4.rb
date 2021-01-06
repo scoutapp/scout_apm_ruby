@@ -84,7 +84,7 @@ module ScoutApm
             end
           end
 
-          def process_action(*args, **kwargs)
+          def process_action(*args)
             req = ScoutApm::RequestManager.lookup
             current_layer = req.current_layer
             agent_context = ScoutApm::Agent.instance.context
@@ -111,7 +111,7 @@ module ScoutApm
               end
               req.set_headers(request.headers)
 
-              resolved_name = scout_action_name(*args, **kwargs)
+              resolved_name = scout_action_name(*args)
               req.start_layer( ScoutApm::Layer.new("Controller", "#{controller_path}/#{resolved_name}") )
               begin
                 super
@@ -131,7 +131,7 @@ module ScoutApm
     module ActionControllerMetalInstruments
       include ScoutApm::Instruments::ActionControllerRails3Rails4.build_instrument_module
 
-      def scout_action_name(*args, **kwargs)
+      def scout_action_name(*args)
         action_name = args[0]
       end
     end
@@ -143,7 +143,7 @@ module ScoutApm
     module ActionControllerBaseInstruments
       include ScoutApm::Instruments::ActionControllerRails3Rails4.build_instrument_module
 
-      def scout_action_name(*args, **kwargs)
+      def scout_action_name(*args)
         action_name
       end
     end
@@ -151,7 +151,7 @@ module ScoutApm
     module ActionControllerAPIInstruments
       include ScoutApm::Instruments::ActionControllerRails3Rails4.build_instrument_module
 
-      def scout_action_name(*args, **kwargs)
+      def scout_action_name(*args)
         action_name
       end
     end

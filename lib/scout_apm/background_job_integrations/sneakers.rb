@@ -29,16 +29,16 @@ module ScoutApm
 
       def install_worker_override
         ::Sneakers::Worker.module_eval do
-          def initialize_with_scout(*args, **kwargs)
+          def initialize_with_scout(*args)
             agent = ::ScoutApm::Agent.instance
             agent.start
-            initialize_without_scout(*args, **kwargs)
+            initialize_without_scout(*args)
           end
 
           alias_method :initialize_without_scout, :initialize
           alias_method :initialize, :initialize_with_scout
 
-          def process_work_with_scout(*args, **kwargs)
+          def process_work_with_scout(*args)
             delivery_info, _metadata, msg, _handler = args
 
             queue = delivery_info[:routing_key] || UNKNOWN_QUEUE_PLACEHOLDER
@@ -64,7 +64,7 @@ module ScoutApm
               req.start_layer(ScoutApm::Layer.new('Job', job_class))
               started_job = true
 
-              process_work_without_scout(*args, **kwargs)
+              process_work_without_scout(*args)
             rescue Exception => e
               req.error!
               raise
