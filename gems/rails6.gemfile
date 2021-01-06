@@ -1,4 +1,4 @@
 eval_gemfile("../Gemfile")
 
-gem "rails", "~> 6.0.0rc1"
+gem "rails", "~> 6.0"
 gem "sqlite3", "~> 1.4"
