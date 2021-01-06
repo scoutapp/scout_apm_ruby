@@ -38,10 +38,10 @@ module ScoutApm
 
       def install_worker
         ::Que::Worker.class_eval do
-          def initialize_with_scout(*args, **kwargs)
+          def initialize_with_scout(*args)
             agent = ::ScoutApm::Agent.instance
             agent.start
-            initialize_without_scout(*args, **kwargs)
+            initialize_without_scout(*args)
           end
 
           alias_method :initialize_without_scout, :initialize
@@ -85,7 +85,7 @@ module ScoutApm
           #   There are changes here to make Que more compatible with ActiveJob
           #   and this probably needs to be revisited.
 
-          def _run_with_scout(*args, **kwargs)
+          def _run_with_scout(*args)
             # default queue unless specifed is a blank string
             queue = attrs['queue'] || UNKNOWN_QUEUE_PLACEHOLDER
 
@@ -114,7 +114,7 @@ module ScoutApm
               req.start_layer(ScoutApm::Layer.new('Job', job_class))
               started_job = true
 
-              _run_without_scout(*args, **kwargs)
+              _run_without_scout(*args)
             rescue Exception => e
               req.error!
               raise

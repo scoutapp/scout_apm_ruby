@@ -1,7 +1,7 @@
 module ScoutApm
   module Instruments
     module Resque
-      def around_perform_with_scout_instruments(*args, **kwargs)
+      def around_perform_with_scout_instruments(*args)
         job_name = self.to_s
         queue = find_queue
 

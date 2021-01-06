@@ -40,10 +40,10 @@ module ScoutApm
         require 'sidekiq/processor' # sidekiq v4 has not loaded this file by this point
 
         ::Sidekiq::Processor.class_eval do
-          def initialize_with_scout(*args, **kwargs)
+          def initialize_with_scout(*args)
             agent = ::ScoutApm::Agent.instance
             agent.start
-            initialize_without_scout(*args, **kwargs)
+            initialize_without_scout(*args)
           end
 
           alias_method :initialize_without_scout, :initialize
