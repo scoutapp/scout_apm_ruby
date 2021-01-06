@@ -91,7 +91,7 @@ module ScoutApm
 
       def _instrumented_method_string(instrumented_name, uninstrumented_name, type, name, options={})
         method_str = <<-EOF
-        def #{instrumented_name}(*args, **kwargs, &block)
+        def #{instrumented_name}(*args, &block)
           name = begin
                    "#{name}"
                  rescue => e
@@ -103,7 +103,7 @@ module ScoutApm
                                name,
                                {:scope => #{options[:scope] || false}}
                              ) do
-            #{uninstrumented_name}(*args, **kwargs, &block)
+            #{uninstrumented_name}(*args, &block)
           end
         end
         EOF
