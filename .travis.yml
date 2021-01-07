@@ -2,6 +2,9 @@ language: ruby
 dist: trusty
 cache: bundler
 
+before_install:
+    command curl -sSL https://rvm.io/mpapis.asc | gpg --import
+
 matrix:
   include:
     - rvm: 2.1
