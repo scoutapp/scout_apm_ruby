@@ -1,9 +1,6 @@
 language: ruby
-dist: trusty
+dist: xenial
 cache: bundler
-
-before_install:
-    command curl -sSL https://rvm.io/mpapis.asc | gpg --import
 
 matrix:
   include:
