@@ -19,6 +19,7 @@ jobs:
             gemfile: gems/octoshark.gemfile
           - ruby: 2.6
             gemfile: gems/rails3.gemfile
+            bundler: 1.17.3
           - ruby: 2.7
           - ruby: 3.0
 
@@ -36,5 +37,6 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+          bundler: ${{matrix.bundler}}
           ruby-version: ${{ matrix.ruby }}
       - run: bundle exec rake
