@@ -7,9 +7,27 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ruby: [2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, '3.0']
-    #env: # $BUNDLE_GEMFILE must be set at the job level, so it is set for all steps
-    #  BUNDLE_GEMFILE: gemfiles/${{ matrix.gemfile }}.gemfile
+        include:
+          - ruby: 2.1
+            gemfile: gems/rails3.gemfile
+          - ruby: 2.2
+          - ruby: 2.3
+          - ruby: 2.4
+          - ruby: 2.5
+          - ruby: 2.6
+          - ruby: 2.6
+            gemfile: gems/octoshark.gemfile
+          - ruby: 2.6
+            gemfile: gems/rails3.gemfile
+          - ruby: 2.7
+          - ruby: 3.0
+
+          #- ruby: 2.6
+          #  name: rubocop yo
+          #  script: bundle exec rubocop
+
+    env: # $BUNDLE_GEMFILE must be set at the job level, so it is set for all steps
+      BUNDLE_GEMFILE: ${{ matrix.gemfile }}
 
     runs-on: ubuntu-latest
 
@@ -20,4 +38,21 @@ jobs:
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
           ruby-version: ${{ matrix.ruby }}
       - run: bundle exec rake
+
+  include:
+    - rvm: 2.1
+      gemfile: gems/rails3.gemfile
+    - rvm: 2.2
+    - rvm: 2.3
+    - rvm: 2.4
+    - rvm: 2.5
+    - rvm: 2.6
+    - rvm: 2.6
+      gemfile: gems/octoshark.gemfile
+    - rvm: 2.6
+      name: rubocop yo
+      script: bundle exec rubocop
+    - rvm: 2.6
+      gemfile: gems/rails3.gemfile
+
 
