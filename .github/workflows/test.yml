@@ -3,6 +3,17 @@ name: Tests
 on: [push, pull_request]
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+          ruby-version: 2.6
+      - run: bundle exec rubocop
+
   test:
     strategy:
       fail-fast: false
@@ -23,11 +34,7 @@ jobs:
           - ruby: 2.7
           - ruby: 3.0
 
-          #- ruby: 2.6
-          #  name: rubocop yo
-          #  script: bundle exec rubocop
-
-    env: # $BUNDLE_GEMFILE must be set at the job level, so it is set for all steps
+    env:
       BUNDLE_GEMFILE: ${{ matrix.gemfile }}
 
     runs-on: ubuntu-latest
@@ -36,7 +43,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: ruby/setup-ruby@v1
         with:
-          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+          bundler-cache: true
           bundler: ${{matrix.bundler}}
           ruby-version: ${{ matrix.ruby }}
       - run: bundle exec rake
