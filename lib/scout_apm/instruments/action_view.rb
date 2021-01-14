@@ -92,7 +92,11 @@ module ScoutApm
 
           begin
             req.start_layer(layer)
-            super(*args, **kwargs)
+            if ScoutApm::Agent.instance.context.environment.supports_kwarg_delegation?
+              super(*args, **kwargs)
+            else
+              super(*args)
+            end
           ensure
             req.stop_layer
           end
@@ -110,7 +114,11 @@ module ScoutApm
 
           begin
             req.start_layer(layer)
-            super(*args, **kwargs)
+            if ScoutApm::Agent.instance.context.environment.supports_kwarg_delegation?
+              super(*args, **kwargs)
+            else
+              super(*args)
+            end
           ensure
             req.stop_layer
           end
@@ -130,7 +138,11 @@ module ScoutApm
 
           begin
             req.start_layer(layer)
-            super(*args, **kwargs)
+            if ScoutApm::Agent.instance.context.environment.supports_kwarg_delegation?
+              super(*args, **kwargs)
+            else
+              super(*args)
+            end
           ensure
             req.stop_layer
           end

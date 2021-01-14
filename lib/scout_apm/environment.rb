@@ -187,9 +187,19 @@ module ScoutApm
       @ruby_3 = defined?(RUBY_VERSION) && RUBY_VERSION.match(/^3/)
     end
 
+    def ruby_minor
+      return @ruby_minor if defined?(@ruby_minor)
+      @ruby_minor = defined?(RUBY_VERSION) && RUBY_VERSION.split(".")[1].to_i
+    end
+
     # Returns true if this Ruby version supports Module#prepend.
     def supports_module_prepend?
       ruby_2? || ruby_3?
+    end
+
+    # Returns true if this Ruby version supports Module#prepend.
+    def supports_kwarg_delegation?
+      ruby_3? || (ruby_2? && ruby_minor >= 7)
     end
 
     # Returns a string representation of the OS (ex: darwin, linux)
