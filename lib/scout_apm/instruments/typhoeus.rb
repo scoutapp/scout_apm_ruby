@@ -26,7 +26,7 @@ module ScoutApm
             include ScoutApm::Tracer
 
             def request_with_scout_instruments(*args, &block)
-              self.class.instrument("HTTP", "request", :ignore_children => true, :desc => request_scout_description(args.first)) do
+              self.class.instrument("TyphoeusHTTP", "request", :ignore_children => true, :desc => request_scout_description(args.first)) do
                 request_without_scout_instruments(*args, &block)
               end
             end
