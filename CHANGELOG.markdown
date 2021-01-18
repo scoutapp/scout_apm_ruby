@@ -1,3 +1,9 @@
+# 4.0.1
+
+* Add support for Ruby 3.0 (#374)
+* Use Github Actions for CI (#370)
+* Fix edge case in sanitization of Postgres SQL (#368)
+
 # 4.0.0
 
 * Require Ruby >= 2.1 (#270)
