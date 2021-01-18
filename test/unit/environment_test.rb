@@ -44,8 +44,8 @@ class EnvironmentTest < Minitest::Test
   end
 
   def clean_fake_rails
-    Kernel.const_unset("Rails") if defined?(Kernel::Rails)
-    Kernel.const_unset("ActionController") if defined?(Kernel::ActionController)
+    Kernel.send(:remove_const, "Rails") if defined?(Kernel::Rails)
+    Kernel.send(:remove_const, "ActionController") if defined?(Kernel::ActionController)
   end
 
   def fake_sinatra

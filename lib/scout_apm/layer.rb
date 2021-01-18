@@ -116,7 +116,7 @@ module ScoutApm
     # In Ruby 2.0+, we can pass the range directly to the caller to reduce the memory footprint.
     def caller_array
       # omits the first several callers which are in the ScoutAPM stack.
-      if ScoutApm::Agent.instance.context.environment.ruby_2?
+      if ScoutApm::Agent.instance.context.environment.ruby_2? || ScoutApm::Agent.instance.context.environment.ruby_3? 
         caller(3...BACKTRACE_CALLER_LIMIT)
       else
         caller[3...BACKTRACE_CALLER_LIMIT]
