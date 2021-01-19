@@ -1,3 +1,7 @@
+# 4.0.2
+
+* Add Typhoeus instrumentation (#376)
+
 # 4.0.1
 
 * Add support for Ruby 3.0 (#374)
