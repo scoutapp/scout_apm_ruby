@@ -31,7 +31,8 @@ module ScoutApm
         def run(*args, &block)
           req = ScoutApm::RequestManager.lookup
           req.start_layer(ScoutApm::Layer.new("HTTP", "Hydra"))
-          req.current_layer.desc = scout_desc
+          current_layer = req.current_layer
+          current_layer.desc = scout_desc if current_layer
 
           begin
             super(*args, &block)
@@ -51,8 +52,8 @@ module ScoutApm
         def run(*args, &block)
           req = ScoutApm::RequestManager.lookup
           req.start_layer(ScoutApm::Layer.new("HTTP", scout_request_verb))
-          req.current_layer.desc = scout_desc(scout_request_verb, scout_request_url)
-
+          current_layer = req.current_layer
+          current_layer.desc = scout_desc(scout_request_verb, scout_request_url) if current_layer
 
           begin
             super(*args, &block)
