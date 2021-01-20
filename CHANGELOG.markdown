@@ -1,3 +1,8 @@
+# 4.0.3
+
+* Handle edge case with nil Typhoeus current-layer (#380)
+* Fix args passing to render_partial (#379)
+
 # 4.0.2
 
 * Add Typhoeus instrumentation (#376)
