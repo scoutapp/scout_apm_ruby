@@ -197,7 +197,7 @@ module ScoutApm
       ruby_2? || ruby_3?
     end
 
-    # Returns true if this Ruby version supports Module#prepend.
+    # Returns true if this Ruby version makes positional and keyword arguments incompatible
     def supports_kwarg_delegation?
       ruby_3? || (ruby_2? && ruby_minor >= 7)
     end
