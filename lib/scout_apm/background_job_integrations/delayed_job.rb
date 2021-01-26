@@ -11,7 +11,7 @@ module ScoutApm
       end
 
       def present?
-        defined?(::Delayed::Job)
+        defined?(::Delayed::Worker)
       end
 
       def forking?
