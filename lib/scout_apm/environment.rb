@@ -30,6 +30,7 @@ module ScoutApm
       ScoutApm::BackgroundJobIntegrations::Sneakers.new,
       ScoutApm::BackgroundJobIntegrations::DelayedJob.new,
       ScoutApm::BackgroundJobIntegrations::Que.new,
+      ScoutApm::BackgroundJobIntegrations::Faktory.new,
     ]
 
     FRAMEWORK_INTEGRATIONS = [

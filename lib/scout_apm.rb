@@ -58,6 +58,7 @@ require 'scout_apm/server_integrations/webrick'
 require 'scout_apm/server_integrations/null'
 
 require 'scout_apm/background_job_integrations/sidekiq'
+require 'scout_apm/background_job_integrations/faktory'
 require 'scout_apm/background_job_integrations/delayed_job'
 require 'scout_apm/background_job_integrations/resque'
 require 'scout_apm/background_job_integrations/shoryuken'
