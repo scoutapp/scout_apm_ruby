@@ -91,7 +91,7 @@ module ScoutApm
 
       def _instrumented_method_string(instrumented_name, uninstrumented_name, type, name, options={})
         method_str = <<-EOF
-        def #{instrumented_name}(*args, &block)
+        def #{instrumented_name}(*args#{", **kwargs" if ScoutApm::Agent.instance.context.environment.supports_kwarg_delegation?}, &block)
           name = begin
                    "#{name}"
                  rescue => e
@@ -103,7 +103,7 @@ module ScoutApm
                                name,
                                {:scope => #{options[:scope] || false}}
                              ) do
-            #{uninstrumented_name}(*args, &block)
+            #{uninstrumented_name}(*args#{", **kwargs" if ScoutApm::Agent.instance.context.environment.supports_kwarg_delegation?}, &block)
           end
         end
         EOF
