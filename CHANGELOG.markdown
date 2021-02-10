@@ -1,3 +1,9 @@
+# 4.0.4
+
+* Add Faktory Support (#385)
+* Remove Regexp hack for 1.8.7 (no longer supported) (#384)
+* More robust DelayedJob detection (#382)
+* Fix kwargs handling in Tracing module (#381)
 # 4.0.3
 
 * Handle edge case with nil Typhoeus current-layer (#380)
