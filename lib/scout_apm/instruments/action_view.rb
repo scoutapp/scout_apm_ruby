@@ -134,7 +134,7 @@ module ScoutApm
 
           maybe_template = args[1]
 
-          template_name = @template.virtual_path rescue nil # Works on Rails 3.2 -> end of Rails 5 series
+          template_name = args[0].virtual_path rescue nil # Works on Rails 3.2 -> end of Rails 5 series
           template_name ||= maybe_template.virtual_path rescue nil # Works on Rails 6 -> 6.1.3
           template_name ||= "Unknown"
           layer_name = template_name + "/Rendering"
