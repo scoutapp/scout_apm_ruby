@@ -83,7 +83,7 @@ module ScoutApm
           maybe_template = args[1]
 
           template_name = @template.virtual_path rescue nil        # Works on Rails 3.2 -> end of Rails 5 series
-          template_name ||= maybe_template.virtual_path rescue nil # Works on Rails 6 -> 6.0.3
+          template_name ||= maybe_template.virtual_path rescue nil # Works on Rails 6 -> 6.0.3.5
           template_name ||= "Unknown Partial"
 
           layer_name = template_name + "/Rendering"
@@ -105,7 +105,10 @@ module ScoutApm
         def collection_with_template(*args, **kwargs)
           req = ScoutApm::RequestManager.lookup
 
-          template_name = @template.virtual_path rescue "Unknown Collection"
+          maybe_template = args[1]
+
+          template_name = @template.virtual_path rescue nil # Works on Rails 3.2 -> end of Rails 5 series
+          template_name ||= maybe_template.virtual_path rescue nil # Works on Rails 6 -> 6.0.3.5
           template_name ||= "Unknown Collection"
           layer_name = template_name + "/Rendering"
 
@@ -129,7 +132,10 @@ module ScoutApm
         def render_template(*args, **kwargs)
           req = ScoutApm::RequestManager.lookup
 
-          template_name = args[0].virtual_path rescue "Unknown"
+          maybe_template = args[1]
+
+          template_name = @template.virtual_path rescue nil # Works on Rails 3.2 -> end of Rails 5 series
+          template_name ||= maybe_template.virtual_path rescue nil # Works on Rails 6 -> 6.1.3
           template_name ||= "Unknown"
           layer_name = template_name + "/Rendering"
 
