@@ -315,7 +315,11 @@ module ScoutApm
         req.start_layer(layer)
         req.ignore_children!
         begin
-          find_by_sql_without_scout_instruments(*args, **kwargs, &block)
+          if ScoutApm::Agent.instance.context.environment.supports_kwarg_delegation?
+            find_by_sql_without_scout_instruments(*args, **kwargs, &block)
+          else
+            find_by_sql_without_scout_instruments(*args, &block)
+          end
         ensure
           req.acknowledge_children!
           req.stop_layer

@@ -1,3 +1,24 @@
+# 4.0.4
+
+* Add Faktory Support (#385)
+* Remove Regexp hack for 1.8.7 (no longer supported) (#384)
+* More robust DelayedJob detection (#382)
+* Fix kwargs handling in Tracing module (#381)
+# 4.0.3
+
+* Handle edge case with nil Typhoeus current-layer (#380)
+* Fix args passing to render_partial (#379)
+
+# 4.0.2
+
+* Add Typhoeus instrumentation (#376)
+
+# 4.0.1
+
+* Add support for Ruby 3.0 (#374)
+* Use Github Actions for CI (#370)
+* Fix edge case in sanitization of Postgres SQL (#368)
+
 # 4.0.0
 
 * Require Ruby >= 2.1 (#270)

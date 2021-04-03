@@ -16,8 +16,20 @@ module ScoutApm
         @server = nil
       end
 
-      def start
+      def require_webrick
         require 'webrick'
+        true
+      rescue LoadError
+        @logger.warn(
+          %q|Could not require Webrick. Ruby 3.0 stopped bundling it
+             automatically, but it is required to instrument Resque. Please add
+             Webrick to your Gemfile.|
+        )
+        false
+      end
+
+      def start
+        return false unless require_webrick
 
         @server = WEBrick::HTTPServer.new(
           :BindAddress => bind,

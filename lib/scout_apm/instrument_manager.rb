@@ -30,6 +30,7 @@ module ScoutApm
       install_instrument(ScoutApm::Instruments::Moped)
       install_instrument(ScoutApm::Instruments::Mongoid)
       install_instrument(ScoutApm::Instruments::NetHttp)
+      install_instrument(ScoutApm::Instruments::Typhoeus)
       install_instrument(ScoutApm::Instruments::HttpClient)
       install_instrument(ScoutApm::Instruments::Memcached)
       install_instrument(ScoutApm::Instruments::Redis)
