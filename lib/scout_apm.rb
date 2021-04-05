@@ -217,10 +217,10 @@ if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR
         ScoutApm::Agent.instance.install
 
         if ScoutApm::Agent.instance.context.config.value("auto_instruments")
-          ScoutApm::Agent.instance.context.logger.debug("AutoInstruments is enabled.")
+          ScoutApm::Agent.instance.context.logger.warn("AutoInstruments is enabled.")
           require 'scout_apm/auto_instrument'
         else
-          ScoutApm::Agent.instance.context.logger.debug("AutoInstruments is disabled.")
+          ScoutApm::Agent.instance.context.logger.warn("AutoInstruments is disabled.")
         end
 
         if ScoutApm::Agent.instance.context.config.value("errors_enabled")

@@ -14,6 +14,8 @@ module ScoutApm
           end
         elsif Rails.ignore?(path)
           warn "AutoInstruments are ignored for path=#{path}."
+        else
+          warn "AutoInstruments -- Rails.controller_path?(path), #{Rails.controller_path?(path)}, path: #{path}"
         end
 
         return self.compile_file(path)
