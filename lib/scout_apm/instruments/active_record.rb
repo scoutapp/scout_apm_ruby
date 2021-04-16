@@ -251,7 +251,13 @@ module ScoutApm
           if current_layer.desc.nil?
             current_layer.desc = SqlList.new
           end
-          current_layer.desc.merge(desc)
+
+          begin
+            current_layer.desc.merge(desc)
+          rescue StandardError
+            logger.warn "ActiveRecord instrumentation exception: #{$!.message}"
+            logger.warn "ActiveRecord instrumentation exception: current layer is: #{current_layer.inspect}"
+          end
 
           super(*args, &block)
 
