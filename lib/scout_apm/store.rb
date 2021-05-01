@@ -206,6 +206,8 @@ module ScoutApm
 
     attr_reader :db_query_metric_set
 
+    attr_reader :external_service_metric_set
+
     def initialize(timestamp, context)
       @timestamp = timestamp
 
@@ -216,6 +218,7 @@ module ScoutApm
 
       @metric_set = MetricSet.new
       @db_query_metric_set = DbQueryMetricSet.new(context)
+      @external_service_metric_set = ExternalServiceMetricSet.new(context)
 
       @jobs = Hash.new
     end

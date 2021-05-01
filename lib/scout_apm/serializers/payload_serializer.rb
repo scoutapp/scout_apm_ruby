@@ -2,9 +2,9 @@
 module ScoutApm
   module Serializers
     class PayloadSerializer
-      def self.serialize(metadata, metrics, slow_transactions, jobs, slow_jobs, histograms, db_query_metrics, traces)
+      def self.serialize(metadata, metrics, slow_transactions, jobs, slow_jobs, histograms, db_query_metrics, external_service_metrics, traces)
         if ScoutApm::Agent.instance.context.config.value("report_format") == 'json'
-          ScoutApm::Serializers::PayloadSerializerToJson.serialize(metadata, metrics, slow_transactions, jobs, slow_jobs, histograms, db_query_metrics, traces)
+          ScoutApm::Serializers::PayloadSerializerToJson.serialize(metadata, metrics, slow_transactions, jobs, slow_jobs, histograms, db_query_metrics, external_service_metrics, traces)
         else
           metadata = metadata.dup
           metadata.default = nil
@@ -22,7 +22,8 @@ module ScoutApm
                        # payloads. At this point, the marshal code branch is
                        # very rarely used anyway.
                        :histograms        => HistogramsSerializerToJson.new(histograms).as_json,
-                       :db_query_metrics  => db_query_metrics)
+                       :db_query_metrics  => db_query_metrics,
+                       :external_service_metrics  => external_service_metrics)
         end
       end
 
