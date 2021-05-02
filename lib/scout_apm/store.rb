@@ -52,6 +52,13 @@ module ScoutApm
       }
     end
 
+    def track_external_service_metrics!(external_service_metric_set, options={})
+      @mutex.synchronize {
+        period = find_period(options[:timestamp])
+        period.merge_external_service_metrics!(external_service_metric_set)
+      }
+    end
+
     def track_one!(type, name, value, options={})
       meta = MetricMeta.new("#{type}/#{name}")
       stat = MetricStats.new(false)
@@ -231,7 +238,8 @@ module ScoutApm
         merge_jobs!(other.jobs).
         merge_slow_jobs!(other.slow_jobs_payload).
         merge_histograms!(other.histograms).
-        merge_db_query_metrics!(other.db_query_metric_set)
+        merge_db_query_metrics!(other.db_query_metric_set).
+        merge_external_service_metrics!(other.external_service_metric_set)
       self
     end
 
@@ -254,6 +262,11 @@ module ScoutApm
 
     def merge_db_query_metrics!(other_metric_set)
       db_query_metric_set.combine!(other_metric_set)
+      self
+    end
+
+    def merge_external_service_metrics!(other_metric_set)
+      external_service_metric_set.combine!(other_metric_set)
       self
     end
 
@@ -317,6 +330,10 @@ module ScoutApm
 
     def db_query_metrics_payload
       db_query_metric_set.metrics_to_report
+    end
+
+    def external_service_metrics_payload
+      external_service_metric_set.metrics_to_report
     end
 
     #################################
