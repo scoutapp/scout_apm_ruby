@@ -5,7 +5,7 @@ require 'scout_apm/external_service_metric_stats'
 module ScoutApm
 class ExternalServiceMetricStatsTest < Minitest::Test
   def test_as_json_empty_stats
-    stat = build("example.com", "GET", "Controller/public/index", 1, 10, 20)
+    stat = build("example.com", "GET", "Controller/public/index", 1, 10)
 
     assert_equal({
       :domain_name => "example.com",
