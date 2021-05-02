@@ -93,7 +93,7 @@ class ExternalServiceMetricStatsTest < Minitest::Test
             operation="GET",
             scope="Controller/public/index",
             call_count=DEFAULTS[:call_count],
-            call_time=DEFAULTS[:call_time]
+            call_time=DEFAULTS[:call_time])
     ExternalServiceMetricStats.new(domain_name, operation, scope, call_count, call_time)
   end
 
