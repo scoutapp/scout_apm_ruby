@@ -294,7 +294,7 @@ module ScoutApm
         'database_metric_limit'  => 5000, # The hard limit on db metrics
         'database_metric_report_limit' => 1000,
         'external_service_metric_limit'  => 5000, # The hard limit on external service metrics
-        'external_service_report_limit' => 1000,
+        'external_service_metric_report_limit' => 1000,
         'instrument_http_url_length' => 300,
         'start_resque_server_instrument' => true, # still only starts if Resque is detected
         'collect_remote_ip' => true,

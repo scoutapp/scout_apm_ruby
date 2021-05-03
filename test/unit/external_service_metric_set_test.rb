@@ -24,8 +24,8 @@ class ExternalServiceMetricSetTest < Minitest::Test
 
   def test_report_limit
     config = make_fake_config(
-      'external_service_limit' => 50, # much larger max, uninterested in hitting it.
-      'external_service_report_limit' => 2
+      'external_service_metric_limit' => 50, # much larger max, uninterested in hitting it.
+      'external_service_metric_report_limit' => 2
     )
     context = ScoutApm::AgentContext.new().tap{|c| c.config = config }
     set = ExternalServiceMetricSet.new(context)
@@ -42,8 +42,8 @@ class ExternalServiceMetricSetTest < Minitest::Test
 
   def test_combine
     config = make_fake_config(
-      'external_service_limit' => 5, # The hard limit on db metrics
-      'external_service_report_limit' => 2
+      'external_service_metric_limit' => 5, # The hard limit on db metrics
+      'external_service_metric_report_limit' => 2
     )
     context = ScoutApm::AgentContext.new().tap{|c| c.config = config }
     set1 = ExternalServiceMetricSet.new(context)
