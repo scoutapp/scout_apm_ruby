@@ -5,6 +5,10 @@
 #       show
 #       render :update
 #     end
+
+# This doesn't cache the negative result when searching for a controller / job,
+# so that we can ask again later after more of the request has occurred and
+# correctly find it.
 module ScoutApm
   module LayerConverters
     class FindLayerByType
