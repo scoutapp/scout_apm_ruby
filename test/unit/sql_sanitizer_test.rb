@@ -66,6 +66,21 @@ module ScoutApm
         end
       end
 
+      def test_postgres_inner_join_subquery
+        sql = %q{SELECT x AS y
+         FROM t1 
+         INNER JOIN (
+           SELECT id,
+           (ts_rank((to_tsvector('simple', coalesce("pg_search_documents"."content"::text, ''))), (to_tsquery('simple', 'xyz' || 'omg' || 'secret')), ?)) AS rank
+           FROM t2
+           WHERE name = 'literal') sub ON sub.id = t1.id WHERE age > 10}
+
+        expected = %q{SELECT x AS y FROM t1 INNER JOIN ( SELECT id, (ts_rank((to_tsvector(?, coalesce("pg_search_documents"."content"::text, ?))), (to_tsquery(?, ? || ? || ?)), ?)) AS rank FROM t2 WHERE name = ?) sub ON sub.id = t1.id WHERE age > ?}
+        ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :postgres }
+
+        assert_equal expected, ss.to_s
+      end
+
       def test_mysql_where
         sql = %q|SELECT `users`.* FROM `users` WHERE `users`.`name` = ?  [["name", "chris"]]|
         ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :mysql }
