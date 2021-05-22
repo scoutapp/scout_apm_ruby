@@ -12,7 +12,7 @@ class TestRemoteServer < Minitest::Test
     skip unless server.require_webrick
 
     server.start
-    sleep 1.11 # Let the server finish starting. The assert should instead allow a time
+    sleep 0.05 # Let the server finish starting. The assert should instead allow a time
     assert server.running?
   end
 end
