@@ -95,8 +95,11 @@ module ScoutApm
               req.instant_key = instant_key
             end
 
-            if current_layer && current_layer.type == "Controller"
-              # Don't start a new layer if ActionController::API or ActionController::Base handled it already.
+            # Don't start a new layer if ActionController::API or
+            # ActionController::Base handled it already. Needs to account for
+            # any layers started during a around_action (most likely
+            # AutoInstrument, but could be another custom instrument)
+            if current_layer && (current_layer.type == "Controller" || current_layer.type == "AutoInstrument" || req.web?)
               super
             else
               begin
