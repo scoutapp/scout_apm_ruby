@@ -1,6 +1,9 @@
 # 4.1.0
 
 * Fix deprecation warning in Rails 6.1+ (#365)
+* Don't delay starting agent when possible (#397)
+* Fix template naming issue in Rails 6+ (#399)
+* Avoid double-counting issue with AutoInstruments (#405)
 
 # 4.0.4
 
