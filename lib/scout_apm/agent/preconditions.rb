@@ -27,10 +27,10 @@ module ScoutApm
         PRECONDITION_DETECTED_SERVER = {
           :message => proc {|environ| "Deferring agent start. Standing by for first request" },
           :check => proc { |context|
-            app_server_missing = !context.environment.app_server_integration(true).found?
-            background_job_missing = context.environment.background_job_integrations.length == 0
+            app_server_found = context.environment.app_server_integration(true).found?
+            background_job_integration_found = context.environment.background_job_integrations.length > 0
 
-            !app_server_missing && !background_job_missing
+            app_server_found || background_job_integration_found
           },
           :severity => :info,
         },
