@@ -1,5 +1,6 @@
 # 4.1.0
 
+* Preload Celluloid in Shoryuken instrumentation (#331)
 * Fix deprecation warning in Rails 6.1+ (#365)
 * Set Typheous's desc more directly (#392)
 * Delegate to ActiveRecord #log more intelligently (#394)
