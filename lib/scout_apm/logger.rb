@@ -76,7 +76,7 @@ module ScoutApm
       klass = @opts.fetch(:logger_class, ::Logger)
       case klass
       when String
-        result = KlassHelper.lookup(klass)
+        result = Utils::KlassHelper.lookup(klass)
         if result == :missing_class
           ::Logger
         else
