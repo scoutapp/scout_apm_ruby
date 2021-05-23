@@ -37,6 +37,8 @@ module ScoutApm
       end
 
       def install_processor
+        # celluloid has not loaded by this point and older versions of `shorykuen/processor` assume that it did
+        require 'celluloid' if defined?(::Shoryuken::VERSION) && ::Shoryuken::VERSION < '3'
         require 'shoryuken/processor' # sidekiq v4 has not loaded this file by this point
 
         ::Shoryuken::Processor.class_eval do
