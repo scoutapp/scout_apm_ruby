@@ -2,6 +2,7 @@
 
 * Fix deprecation warning in Rails 6.1+ (#365)
 * Set Typheous's desc more directly (#392)
+* Delegate to ActiveRecord #log more intelligently (#394)
 * Don't delay starting agent when possible (#397)
 * Fix template naming issue in Rails 6+ (#399)
 * Avoid double-counting issue with AutoInstruments (#405)
