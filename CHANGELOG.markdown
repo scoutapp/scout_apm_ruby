@@ -6,6 +6,7 @@
 * Don't delay starting agent when possible (#397)
 * Fix template naming issue in Rails 6+ (#399)
 * Avoid double-counting issue with AutoInstruments (#405)
+* Renaming test files for Remote::{Server|Route|Message} to be included in test run (#409)
 
 # 4.0.4
 
