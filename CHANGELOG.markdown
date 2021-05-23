@@ -8,6 +8,7 @@
 * Fix template naming issue in Rails 6+ (#399)
 * Avoid double-counting issue with AutoInstruments (#405)
 * Renaming test files for Remote::{Server|Route|Message} to be included in test run (#409)
+* Fix reference to KlassHelper missing the Utils module qualifier (#410)
 
 # 4.0.4
 
