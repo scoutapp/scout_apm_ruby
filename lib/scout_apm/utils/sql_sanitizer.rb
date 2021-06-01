@@ -13,6 +13,7 @@ module ScoutApm
       PSQL_REMOVE_INTEGERS = /(?<!LIMIT )\b\d+\b/.freeze
       PSQL_PLACEHOLDER = /\$\d+/.freeze
       PSQL_IN_CLAUSE = /IN\s+\(\?[^\)]*\)/.freeze
+      PSQL_AFTER_FROM = /(?:FROM\s+).*?(?:WHERE|\z)/im.freeze # Should be everything between a FROM and a WHERE
       PSQL_AFTER_WHERE = /(?:WHERE\s+).*?(?:SELECT|\z)/im.freeze
       PSQL_AFTER_SET = /(?:SET\s+).*?(?:WHERE|\z)/im.freeze
 
@@ -69,6 +70,7 @@ module ScoutApm
       def to_s_postgres
         sql.gsub!(PSQL_PLACEHOLDER, '?')
         sql.gsub!(PSQL_VAR_INTERPOLATION, '')
+        sql.gsub!(PSQL_AFTER_FROM) {|c| c.gsub(PSQL_REMOVE_STRINGS, '?')}
         sql.gsub!(PSQL_AFTER_WHERE) {|c| c.gsub(PSQL_REMOVE_STRINGS, '?')}
         sql.gsub!(PSQL_AFTER_SET) {|c| c.gsub(PSQL_REMOVE_STRINGS, '?')}
         sql.gsub!(PSQL_REMOVE_INTEGERS, '?')
