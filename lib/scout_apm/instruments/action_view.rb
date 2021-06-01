@@ -129,7 +129,9 @@ module ScoutApm
       end
 
       module ActionViewTemplateRendererInstruments
-        def render_template(*args, **kwargs)
+        # Don't forward kwargs here, since Rails 3, 4, 5, 6 don't use them, and
+        # it causes annoyances in the instrumentation
+        def render_template(*args)
           req = ScoutApm::RequestManager.lookup
 
           maybe_template = args[1]
@@ -144,7 +146,7 @@ module ScoutApm
 
           begin
             req.start_layer(layer)
-            super(*args, **kwargs)
+            super(*args)
           ensure
             req.stop_layer
           end
