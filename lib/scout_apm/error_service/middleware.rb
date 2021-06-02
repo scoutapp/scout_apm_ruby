@@ -9,9 +9,9 @@ module ScoutApm
         begin
           response = @app.call(env)
         rescue Exception => exception
-          puts "[Scout Error Service] Caught Exception: #{exception.class.name}"
-
           context = ScoutApm::Agent.instance.context
+
+          context.logger.debug "[Scout Error Service] Caught Exception: #{exception.class.name}"
 
           # Bail out early, and reraise if the error is not interesting.
           if context.ignored_exceptions.ignored?(exception)
