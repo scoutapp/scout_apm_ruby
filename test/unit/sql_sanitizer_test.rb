@@ -38,9 +38,9 @@ module ScoutApm
       end
 
       def test_postgres_strips_subquery_strings
-        raw_sql = %q|"SELECT 'orgs'.* FROM "orgs" WHERE  "orgs"."name" = 'Scout' AND "orgs"."created_by_user_id" IN (SELECT 'users'.'id' FROM "users" WHERE (id > AVG(id)) AND "type" = 'USER' AND "created_at" BETWEEN '2019-04-17 12:28:00.000000' AND '2019-04-18 12:28:00.000000')"|
+        raw_sql = %q|"SELECT "orgs".* FROM "orgs" WHERE  "orgs"."name" = 'Scout' AND "orgs"."created_by_user_id" IN (SELECT "users"."id" FROM "users" WHERE (id > AVG(id)) AND "type" = 'USER' AND "created_at" BETWEEN '2019-04-17 12:28:00.000000' AND '2019-04-18 12:28:00.000000')"|
         sanitized_sql = SqlSanitizer.new(raw_sql).tap { |it| it.database_engine = :postgres}
-        expected_sql = %q|"SELECT 'orgs'.* FROM "orgs" WHERE "orgs"."name" = ? AND "orgs"."created_by_user_id" IN (SELECT 'users'.'id' FROM "users" WHERE (id > AVG(id)) AND "type" = ? AND "created_at" BETWEEN ? AND ?)"|
+        expected_sql = %q|"SELECT "orgs".* FROM "orgs" WHERE "orgs"."name" = ? AND "orgs"."created_by_user_id" IN (SELECT "users"."id" FROM "users" WHERE (id > AVG(id)) AND "type" = ? AND "created_at" BETWEEN ? AND ?)"|
         assert_equal expected_sql, sanitized_sql.to_s
       end
 
