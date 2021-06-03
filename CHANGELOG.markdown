@@ -8,6 +8,10 @@
 * Fix template naming issue in Rails 6+ (#399)
 * Avoid double-counting issue with AutoInstruments (#405)
 * Renaming test files for Remote::{Server|Route|Message} to be included in test run (#409)
+* More robust naming of Sidekiq jobs (#412)
+* Allow render_template instruments to work with older Rails (#413)
+* Fix function to manually capture exceptions (#415)
+* Enhance SQL Sanitization (#417)
 
 # 4.0.4
 
