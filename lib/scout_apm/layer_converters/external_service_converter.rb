@@ -35,7 +35,7 @@ module ScoutApm
       end
 
       def skip_layer?(layer)
-        layer.type != 'Http' ||
+        layer.type != 'HTTP' ||
           layer.limited? ||
           super
       end
@@ -44,13 +44,13 @@ module ScoutApm
 
 
       # If we can't name the domain name, default to:
-      DEFAULT_MODEL = "Other"
+      DEFAULT_DOMAIN = "Other"
 
       # If we can't name the operation, default to:
       DEFAULT_OPERATION = "other"
 
       def domain_name(layer)
-        layer.name.to_s.split("/").first || DEFAULT_MODEL
+        layer.name.to_s.split("/").first || DEFAULT_DOMAIN
       end
 
       def operation_name(layer)
