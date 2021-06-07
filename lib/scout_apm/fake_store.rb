@@ -26,6 +26,9 @@ module ScoutApm
     def track_db_query_metrics!(db_query_metric_set, options={})
     end
 
+    def track_external_service_metrics!(external_service_metric_set, options={})
+    end
+
     def track_slow_transaction!(slow_transaction)
     end
 
