@@ -27,6 +27,9 @@ jobs:
           - ruby: 2.5
           - ruby: 2.6
           - ruby: 2.6
+            gemfile: gems/typhoeus.gemfile
+            env: "SCOUT_TEST_TYPHOEUS=true"
+          - ruby: 2.6
             gemfile: gems/octoshark.gemfile
           - ruby: 2.6
             gemfile: gems/rails3.gemfile
