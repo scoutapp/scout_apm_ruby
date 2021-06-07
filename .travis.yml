@@ -14,6 +14,9 @@ matrix:
     - rvm: 2.7
     - rvm: 3.0
     - rvm: 2.6
+      gemfile: gems/typhoeus.gemfile
+      env: "SCOUT_TEST_TYPHOEUS=true"
+    - rvm: 2.6
       gemfile: gems/octoshark.gemfile
     - rvm: 2.6
       name: rubocop yo

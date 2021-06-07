@@ -30,7 +30,7 @@ module ScoutApm
       module TyphoeusHydraInstrumentation
         def run(*args, &block)
           layer = ScoutApm::Layer.new("HTTP", "Hydra")
-          layer.desc = scout_desc if current_layer
+          layer.desc = scout_desc
 
           req = ScoutApm::RequestManager.lookup
           req.start_layer(layer)
