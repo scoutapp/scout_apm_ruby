@@ -1,3 +1,7 @@
+# 4.1.1
+
+* Fix issue with Typheous Hydra instrument (#418)
+
 # 4.1.0
 
 * Preload Celluloid in Shoryuken instrumentation (#331)
