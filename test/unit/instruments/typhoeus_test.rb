@@ -1,4 +1,4 @@
-if ENV["SCOUT_TEST_TYPHOEUS"]
+if (ENV["SCOUT_TEST_FEATURES"] || "").include?("typhoeus")
   require 'test_helper'
 
   require 'scout_apm/instruments/typhoeus'
