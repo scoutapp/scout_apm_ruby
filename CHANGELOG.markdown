@@ -1,9 +1,29 @@
+# 4.1.1
+
+* Fix issue with Typheous Hydra instrument (#418)
+
+# 4.1.0
+
+* Preload Celluloid in Shoryuken instrumentation (#331)
+* Fix deprecation warning in Rails 6.1+ (#365)
+* Set Typheous's desc more directly (#392)
+* Delegate to ActiveRecord #log more intelligently (#394)
+* Don't delay starting agent when possible (#397)
+* Fix template naming issue in Rails 6+ (#399)
+* Avoid double-counting issue with AutoInstruments (#405)
+* Renaming test files for Remote::{Server|Route|Message} to be included in test run (#409)
+* More robust naming of Sidekiq jobs (#412)
+* Allow render_template instruments to work with older Rails (#413)
+* Fix function to manually capture exceptions (#415)
+* Enhance SQL Sanitization (#417)
+
 # 4.0.4
 
 * Add Faktory Support (#385)
 * Remove Regexp hack for 1.8.7 (no longer supported) (#384)
 * More robust DelayedJob detection (#382)
 * Fix kwargs handling in Tracing module (#381)
+
 # 4.0.3
 
 * Handle edge case with nil Typhoeus current-layer (#380)

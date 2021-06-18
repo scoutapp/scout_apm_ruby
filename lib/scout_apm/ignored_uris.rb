@@ -4,7 +4,9 @@ module ScoutApm
     attr_reader :regex
 
     def initialize(prefixes)
-      regexes = Array(prefixes).map {|prefix| %r{\A#{prefix}} }
+      regexes = Array(prefixes).
+        reject{|prefix| prefix == ""}.
+        map {|prefix| %r{\A#{prefix}} }
       @regex = Regexp.union(*regexes)
     end
 

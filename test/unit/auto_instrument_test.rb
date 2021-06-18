@@ -51,4 +51,12 @@ class AutoInstrumentTest < Minitest::Test
     assert_equal instrumented_source("assignments"),
       normalize_backtrace(::ScoutApm::AutoInstrument::Rails.rewrite(source_path("assignments")))
   end
+
+  def test_hanging_method_rewrite
+    ::ScoutApm::AutoInstrument::Rails.rewrite(source_path("hanging_method"))
+  end
+
+  def test_anonymous_block_value
+    ::ScoutApm::AutoInstrument::Rails.rewrite(source_path("anonymous_block_value"))
+  end
 end if defined? ScoutApm::AutoInstrument

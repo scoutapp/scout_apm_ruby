@@ -69,7 +69,6 @@ module ScoutApm
           end
 
           method_name = @method.last.children[0]
-          class_name = @scope.last.children[1]
           bt = ["#{file_name}:#{line}:in `#{method_name}'"]
 
           return [

@@ -16,7 +16,9 @@ module ScoutApm
     # Used internally by SidekiqException
     def self.capture(exception, params = {})
       return if disabled?
-      return if ScoutApm::Agent.instance.context.ignored_exceptions.ignore?(exception)
+
+      context = ScoutApm::Agent.instance.context
+      return if context.ignored_exceptions.ignore?(exception)
 
       context.errors_buffer.capture(exception, env)
     end

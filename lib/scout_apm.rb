@@ -193,6 +193,7 @@ require 'scout_apm/tasks/support'
 require 'scout_apm/extensions/config'
 require 'scout_apm/extensions/transaction_callback_payload'
 
+require 'scout_apm/error'
 require 'scout_apm/error_service'
 require 'scout_apm/error_service/middleware'
 require 'scout_apm/error_service/notifier'
