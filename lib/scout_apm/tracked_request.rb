@@ -117,7 +117,12 @@ module ScoutApm
       # Must follow layer.record_stop_time! as the total_call_time is used to determine if the layer is significant.
       return if layer_insignificant?(layer)
 
-      @layers[-1].add_child(layer) if @layers.any?
+      # Check that the parent exists before calling a method on it, since some threading can get us into a weird state.
+      # this doesn't fix that state, but prevents exceptions from leaking out.
+      parent = @layers[-1]
+      if parent
+        parent.add_child(layer)
+      end
 
       # This must be called before checking if a backtrace should be collected as the call count influences our capture logic.
       # We call `#update_call_counts in stop layer to ensure the layer has a final desc. Layer#desc is updated during the AR instrumentation flow.
