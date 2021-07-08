@@ -11,6 +11,8 @@ module ScoutApm
       def record!
         return unless request.web?
 
+        return unless context.config.value('record_queue_time')
+
         return unless headers
 
         raw_start = locate_timestamp
