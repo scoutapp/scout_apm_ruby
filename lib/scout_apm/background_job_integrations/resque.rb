@@ -6,6 +6,12 @@ module ScoutApm
       end
 
       def present?
+        ScoutApm::Agent.instance.context.logger.warn("Resque - defined?(::Resque) -> #{defined?(::Resque)}")
+        if defined?(::Resque)
+          ScoutApm::Agent.instance.context.logger.warn("Resque - ::Resque.respond_to?(:before_first_fork) -> #{::Resque.respond_to?(:before_first_fork)}")
+          ScoutApm::Agent.instance.context.logger.warn("Resque - ::Resque.respond_to?(:after_fork) -> #{::Resque.respond_to?(:after_fork)}")
+        end
+
         defined?(::Resque) &&
           ::Resque.respond_to?(:before_first_fork) &&
           ::Resque.respond_to?(:after_fork)
@@ -24,29 +30,32 @@ module ScoutApm
       end
 
       def install_before_fork
+        ScoutApm::Agent.instance.context.logger.warn("Resque - before_first_fork")
         ::Resque.before_first_fork do
           begin
             if ScoutApm::Agent.instance.context.config.value('start_resque_server_instrument')
+              ScoutApm::Agent.instance.context.logger.warn("Resque - start_resque_server_instrument found")
               ScoutApm::Agent.instance.start
               ScoutApm::Agent.instance.context.start_remote_server!(bind, port)
             else
-              logger.info("Not starting remote server due to 'start_resque_server_instrument' setting")
+              ScoutApm::Agent.instance.context.logger.warn("Resque - Not starting remote server due to 'start_resque_server_instrument' setting")
             end
           rescue Errno::EADDRINUSE
-            ScoutApm::Agent.instance.context.logger.warn "Error while Installing Resque Instruments, Port #{port} already in use. Set via the `remote_agent_port` configuration option"
+            ScoutApm::Agent.instance.context.logger.warn "Resque - Error while Installing Resque Instruments, Port #{port} already in use. Set via the `remote_agent_port` configuration option"
           rescue => e
-            ScoutApm::Agent.instance.context.logger.warn "Error while Installing Resque before_first_fork: #{e.inspect}"
+            ScoutApm::Agent.instance.context.logger.warn "Resque - Error while Installing Resque before_first_fork: #{e.inspect}"
           end
         end
       end
 
       def install_after_fork
+        ScoutApm::Agent.instance.context.logger.warn("Resque - install_after_fork")
         ::Resque.after_fork do
           begin
             ScoutApm::Agent.instance.context.become_remote_client!(bind, port)
             inject_job_instrument
           rescue => e
-            ScoutApm::Agent.instance.context.logger.warn "Error while Installing Resque after_fork: #{e.inspect}"
+            ScoutApm::Agent.instance.context.logger.warn "Resque - Error while Installing Resque after_fork: #{e.inspect}"
           end
         end
       end
