@@ -12,7 +12,7 @@ module ScoutApm
       # TODO: Don't use to_json since it isn't supported in Ruby 1.8.7
       def serialize
         payload = as_json.to_json
-        context.logger.info(payload)
+        context.logger.debug(payload)
         payload
       end
 

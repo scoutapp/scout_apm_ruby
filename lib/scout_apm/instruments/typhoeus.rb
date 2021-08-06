@@ -29,10 +29,11 @@ module ScoutApm
 
       module TyphoeusHydraInstrumentation
         def run(*args, &block)
+          layer = ScoutApm::Layer.new("HTTP", "Hydra")
+          layer.desc = scout_desc
+
           req = ScoutApm::RequestManager.lookup
-          req.start_layer(ScoutApm::Layer.new("HTTP", "Hydra"))
-          current_layer = req.current_layer
-          current_layer.desc = scout_desc if current_layer
+          req.start_layer(layer)
 
           begin
             super(*args, &block)
@@ -50,10 +51,11 @@ module ScoutApm
 
       module TyphoeusInstrumentation
         def run(*args, &block)
+          layer = ScoutApm::Layer.new("HTTP", scout_request_verb)
+          layer.desc = scout_desc(scout_request_verb, scout_request_url)
+
           req = ScoutApm::RequestManager.lookup
-          req.start_layer(ScoutApm::Layer.new("HTTP", scout_request_verb))
-          current_layer = req.current_layer
-          current_layer.desc = scout_desc(scout_request_verb, scout_request_url) if current_layer
+          req.start_layer(layer)
 
           begin
             super(*args, &block)

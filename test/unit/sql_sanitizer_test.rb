@@ -38,9 +38,9 @@ module ScoutApm
       end
 
       def test_postgres_strips_subquery_strings
-        raw_sql = %q|"SELECT 'orgs'.* FROM "orgs" WHERE  "orgs"."name" = 'Scout' AND "orgs"."created_by_user_id" IN (SELECT 'users'.'id' FROM "users" WHERE (id > AVG(id)) AND "type" = 'USER' AND "created_at" BETWEEN '2019-04-17 12:28:00.000000' AND '2019-04-18 12:28:00.000000')"|
+        raw_sql = %q|"SELECT "orgs".* FROM "orgs" WHERE  "orgs"."name" = 'Scout' AND "orgs"."created_by_user_id" IN (SELECT "users"."id" FROM "users" WHERE (id > AVG(id)) AND "type" = 'USER' AND "created_at" BETWEEN '2019-04-17 12:28:00.000000' AND '2019-04-18 12:28:00.000000')"|
         sanitized_sql = SqlSanitizer.new(raw_sql).tap { |it| it.database_engine = :postgres}
-        expected_sql = %q|"SELECT 'orgs'.* FROM "orgs" WHERE "orgs"."name" = ? AND "orgs"."created_by_user_id" IN (SELECT 'users'.'id' FROM "users" WHERE (id > AVG(id)) AND "type" = ? AND "created_at" BETWEEN ? AND ?)"|
+        expected_sql = %q|"SELECT "orgs".* FROM "orgs" WHERE "orgs"."name" = ? AND "orgs"."created_by_user_id" IN (SELECT "users"."id" FROM "users" WHERE (id > AVG(id)) AND "type" = ? AND "created_at" BETWEEN ? AND ?)"|
         assert_equal expected_sql, sanitized_sql.to_s
       end
 
@@ -64,6 +64,21 @@ module ScoutApm
         assert_faster_than(0.01) do
           assert_equal %q|SELECT "users".* FROM "users" WHERE "users"."id" IN (?)|, ss.to_s
         end
+      end
+
+      def test_postgres_inner_join_subquery
+        sql = %q{SELECT x AS y
+         FROM t1 
+         INNER JOIN (
+           SELECT id,
+           (ts_rank((to_tsvector('simple', coalesce("pg_search_documents"."content"::text, ''))), (to_tsquery('simple', 'xyz' || 'omg' || 'secret')), ?)) AS rank
+           FROM t2
+           WHERE name = 'literal') sub ON sub.id = t1.id WHERE age > 10}
+
+        expected = %q{SELECT x AS y FROM t1 INNER JOIN ( SELECT id, (ts_rank((to_tsvector(?, coalesce("pg_search_documents"."content"::text, ?))), (to_tsquery(?, ? || ? || ?)), ?)) AS rank FROM t2 WHERE name = ?) sub ON sub.id = t1.id WHERE age > ?}
+        ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :postgres }
+
+        assert_equal expected, ss.to_s
       end
 
       def test_mysql_where
