@@ -50,6 +50,8 @@ module ScoutApm
 
               queue = job.queue || "default"
 
+              queue.sub!(job.id.to_s, "") if queue =~ /#{job.id}/
+
               req = ScoutApm::RequestManager.lookup
 
               begin
