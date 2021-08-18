@@ -215,6 +215,7 @@ module ScoutApm
           end
         end
       end
+      ruby2_keywords :log if respond_to?(:ruby2_keywords, true)
     end
 
     module ActiveRecordInstruments
@@ -267,6 +268,7 @@ module ScoutApm
           end
         end
       end
+      ruby2_keywords :log if respond_to?(:ruby2_keywords, true)
     end
 
     ################################################################################
