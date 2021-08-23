@@ -1,3 +1,7 @@
+# 4.1.2
+
+* Add record_queue_time configuration (PR #422)
+
 # 4.1.1
 
 * Fix issue with Typheous Hydra instrument (#418)
