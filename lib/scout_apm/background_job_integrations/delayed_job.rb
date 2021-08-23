@@ -50,6 +50,13 @@ module ScoutApm
 
               queue = job.queue || "default"
 
+              context = ScoutApm::Agent.instance.context
+              if context.config.value("delayedjob_normalize_queuename")
+                if queue =~ /#{context.config.value("delayedjob_normalize_queuename")}/
+                  queue = Regexp.last_match(1) || queue
+                end
+              end
+
               req = ScoutApm::RequestManager.lookup
 
               begin

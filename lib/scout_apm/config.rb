@@ -36,6 +36,7 @@ require 'scout_apm/environment'
 # timeline_traces - true/false to enable sending of of the timeline trace format.
 # auto_instruments - true/false whether to install autoinstruments. Only installed if on a supported Ruby version.
 # auto_instruments_ignore - An array of file names to exclude from autoinstruments (Ex: ['application_controller']).
+# delayedjob_normalize_queuename - A regex string which when matched will set the queue name to the first grouped match
 #
 # Any of these config settings can be set with an environment variable prefixed
 # by SCOUT_ and uppercasing the key: SCOUT_LOG_LEVEL for instance.
@@ -83,6 +84,7 @@ module ScoutApm
         'timeline_traces',
         'auto_instruments',
         'auto_instruments_ignore',
+        'delayedjob_normalize_queuename',
 
         # Error Service Related Configuration
         'errors_enabled',
