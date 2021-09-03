@@ -69,7 +69,7 @@ module ScoutApm
     private
 
     def build_logger
-      logger_class.new(@log_destination)
+      logger_class.new(@log_destination) rescue logger_class.new
     end
 
     def logger_class
