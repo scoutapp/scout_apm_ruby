@@ -15,9 +15,9 @@ module ScoutApm
           next if skip_layer?(layer)
           stat = ExternalServiceMetricStats.new(
             domain_name(layer),
-            operation_name(layer),
+            operation_name(layer),          # operation name/verb. GET/POST/PUT etc.
             scope_layer.legacy_metric_name, # controller_scope
-            1,                              # count, this is a single query, so 1
+            1,                              # count, this is a single call, so 1
             layer.total_call_time
           )
           @external_service_metric_set << stat
@@ -42,19 +42,23 @@ module ScoutApm
 
       private
 
-
       # If we can't name the domain name, default to:
-      DEFAULT_DOMAIN = "Other"
-
-      # If we can't name the operation, default to:
-      DEFAULT_OPERATION = "other"
+      DEFAULT_DOMAIN = "Unknown"
 
       def domain_name(layer)
-        layer.name.to_s.split("/").first || DEFAULT_DOMAIN
+        domain = ""
+        desc_str = layer.desc.to_s
+        desc_str = 'http://' + desc_str unless desc_str =~ /^http/i
+        domain = URI.parse(desc_str).host
+      rescue
+        # Do nothing
+      ensure
+        domain = DEFAULT_DOMAIN if domain.to_s.blank?
+        domain
       end
 
       def operation_name(layer)
-        layer.name.to_s.split("/")[1] || DEFAULT_OPERATION
+        "all" # Hardcode to "all" until we support breakout by verb
       end
     end
   end
