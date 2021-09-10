@@ -1,3 +1,5 @@
+# frozen_string_literal: false
+
 require 'scout_apm/environment'
 
 # Removes actual values from SQL. Used to both obfuscate the SQL and group
