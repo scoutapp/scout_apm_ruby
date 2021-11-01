@@ -20,6 +20,7 @@ module ScoutApm
       detect_from_config     ||
       detect_from_heroku     ||
       detect_from_capistrano ||
+      detect_from_mina ||
       detect_from_git
     end
 
@@ -40,6 +41,14 @@ module ScoutApm
       version || File.open(File.join(app_root, '..', 'revisions.log')).to_a.last.strip.sub(/.*as release ([0-9]+).*/, '\1')
     rescue
       logger.debug "Unable to detect Git Revision from Capistrano: #{$!.message}"
+      nil
+    end
+
+    # https://github.com/mina-deploy/mina
+    def detect_from_mina 
+      File.read(File.join(app_root, '.mina_git_revision')).strip
+    rescue
+      logger.debug "Unable to detect Git Revision from Mina: #{$!.message}"
       nil
     end
 
