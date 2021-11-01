@@ -315,6 +315,7 @@ module ScoutApm
         :queue_time => LayerConverters::RequestQueueTimeConverter,
         :job => LayerConverters::JobConverter,
         :db => LayerConverters::DatabaseConverter,
+        :external_service => LayerConverters::ExternalServiceConverter,
 
         :slow_job => LayerConverters::SlowJobConverter,
         :slow_req => LayerConverters::SlowRequestConverter,

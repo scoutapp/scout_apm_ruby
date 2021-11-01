@@ -56,6 +56,8 @@ module ScoutApm
         'direct_host',
         'disabled_instruments',
         'enable_background_jobs',
+        'external_service_metric_limit',
+        'external_service_metric_report_limit',
         'host',
         'hostname',
         'ignore',
@@ -179,6 +181,8 @@ module ScoutApm
       'compress_payload' => BooleanCoercion.new,
       'database_metric_limit'  => IntegerCoercion.new,
       'database_metric_report_limit' => IntegerCoercion.new,
+      'external_service_metric_limit'  => IntegerCoercion.new,
+      'external_service_metric_report_limit' => IntegerCoercion.new,
       'instrument_http_url_length' => IntegerCoercion.new,
       'record_queue_time' => BooleanCoercion.new,
       'start_resque_server_instrument' => BooleanCoercion.new,
@@ -292,6 +296,8 @@ module ScoutApm
         'remote_agent_port'      => 7721, # picked at random
         'database_metric_limit'  => 5000, # The hard limit on db metrics
         'database_metric_report_limit' => 1000,
+        'external_service_metric_limit'  => 5000, # The hard limit on external service metrics
+        'external_service_metric_report_limit' => 1000,
         'instrument_http_url_length' => 300,
         'start_resque_server_instrument' => true, # still only starts if Resque is detected
         'collect_remote_ip' => true,
