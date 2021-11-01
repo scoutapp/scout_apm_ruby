@@ -1,3 +1,5 @@
+# frozen_string_literal: false
+
 # XXX: Is this file used?
 module ScoutApm
   module Instruments
