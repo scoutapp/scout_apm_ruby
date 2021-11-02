@@ -1,3 +1,7 @@
+# Unreleased
+
+* Specify correct (MIT) license in Gemspec (#430)
+
 # 5.0.0
 
 * Add External Service metrics reporting (#403)
