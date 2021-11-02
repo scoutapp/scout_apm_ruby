@@ -1,3 +1,12 @@
+# 5.0.0
+
+* Add External Service metrics reporting (#403)
+* Relicense to MIT (#429)
+* Opt out of frozen string literals in select files (#427)
+* Fall back when logger can't write to destination (#423)
+* Avoid exception on race condition (#407)
+* Add Mina deploy tracking support (#327)
+
 # 4.1.2
 
 * Add record_queue_time configuration (PR #422)
