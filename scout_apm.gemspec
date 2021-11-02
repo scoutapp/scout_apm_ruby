@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
   s.homepage    = "https://github.com/scoutapp/scout_apm_ruby"
   s.summary     = "Ruby application performance monitoring"
   s.description = "Monitors Ruby apps and reports detailed metrics on performance to Scout."
-  s.license     = "Proprietary (See LICENSE.md)"
+  s.license     = "MIT"
 
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
