@@ -29,10 +29,13 @@ require 'scout_apm/environment'
 # report_format    - 'json' or 'marshal'. Marshal is legacy and will be removed.
 # scm_subdirectory - if the app root lives in source management in a subdirectory. E.g. #{SCM_ROOT}/src
 # uri_reporting    - 'path' or 'full_path' default is 'full_path', which reports URL params as well as the path.
+# record_queue_time - true/false to enable recording of queuetime.
 # remote_agent_host - Internal: What host to bind to, and also send messages to for remote. Default: 127.0.0.1.
 # remote_agent_port - What port to bind the remote webserver to
 # start_resque_server_instrument - Used in special situations with certain Resque installs
 # timeline_traces - true/false to enable sending of of the timeline trace format.
+# auto_instruments - true/false whether to install autoinstruments. Only installed if on a supported Ruby version.
+# auto_instruments_ignore - An array of file names to exclude from autoinstruments (Ex: ['application_controller']).
 #
 # Any of these config settings can be set with an environment variable prefixed
 # by SCOUT_ and uppercasing the key: SCOUT_LOG_LEVEL for instance.
@@ -53,6 +56,8 @@ module ScoutApm
         'direct_host',
         'disabled_instruments',
         'enable_background_jobs',
+        'external_service_metric_limit',
+        'external_service_metric_report_limit',
         'host',
         'hostname',
         'ignore',
@@ -67,15 +72,25 @@ module ScoutApm
         'name',
         'profile',
         'proxy',
+        'record_queue_time',
         'remote_agent_host',
         'remote_agent_port',
         'report_format',
         'revision_sha',
         'scm_subdirectory',
         'start_resque_server_instrument',
+        'ssl_cert_file',
         'uri_reporting',
         'instrument_http_url_length',
-        'timeline_traces'
+        'timeline_traces',
+        'auto_instruments',
+        'auto_instruments_ignore',
+
+        # Error Service Related Configuration
+        'errors_enabled',
+        'errors_ignored_exceptions',
+        'errors_filtered_params',
+        'errors_host',
     ]
 
     ################################################################################
@@ -166,9 +181,17 @@ module ScoutApm
       'compress_payload' => BooleanCoercion.new,
       'database_metric_limit'  => IntegerCoercion.new,
       'database_metric_report_limit' => IntegerCoercion.new,
+      'external_service_metric_limit'  => IntegerCoercion.new,
+      'external_service_metric_report_limit' => IntegerCoercion.new,
       'instrument_http_url_length' => IntegerCoercion.new,
+      'record_queue_time' => BooleanCoercion.new,
       'start_resque_server_instrument' => BooleanCoercion.new,
-      'timeline_traces' => BooleanCoercion.new
+      'timeline_traces' => BooleanCoercion.new,
+      'auto_instruments' => BooleanCoercion.new,
+      'auto_instruments_ignore' => JsonCoercion.new,
+      'errors_enabled' => BooleanCoercion.new,
+      'errors_ignored_exceptions' => JsonCoercion.new,
+      'errors_filtered_params' => JsonCoercion.new,
     }
 
 
@@ -273,10 +296,20 @@ module ScoutApm
         'remote_agent_port'      => 7721, # picked at random
         'database_metric_limit'  => 5000, # The hard limit on db metrics
         'database_metric_report_limit' => 1000,
+        'external_service_metric_limit'  => 5000, # The hard limit on external service metrics
+        'external_service_metric_report_limit' => 1000,
         'instrument_http_url_length' => 300,
         'start_resque_server_instrument' => true, # still only starts if Resque is detected
         'collect_remote_ip' => true,
-        'timeline_traces' => true
+        'record_queue_time' => true,
+        'timeline_traces' => true,
+        'auto_instruments' => false,
+        'auto_instruments_ignore' => [],
+        'ssl_cert_file' => File.join( File.dirname(__FILE__), *%w[.. .. data cacert.pem] ),
+        'errors_enabled' => false,
+        'errors_ignored_exceptions' => %w(ActiveRecord::RecordNotFound ActionController::RoutingError),
+        'errors_filtered_params' => %w(password s3-key),
+        'errors_host' => 'https://errors.scoutapm.com',
       }.freeze
 
       def value(key)

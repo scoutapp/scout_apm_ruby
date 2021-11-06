@@ -75,28 +75,40 @@ module ScoutApm
       end
 
       module ActionViewPartialRendererInstruments
-        def render_partial(*args)
+        # In Rails 6, the signature changed to pass the view & template args directly, as opposed to through the instance var
+        # New signature is: def render_partial(view, template)
+        def render_partial(*args, **kwargs)
           req = ScoutApm::RequestManager.lookup
 
-          template_name = @template.virtual_path rescue "Unknown Partial"
-          template_name ||= "Unknown Partial"
-          layer_name = template_name + "/Rendering"
+          maybe_template = args[1]
 
+          template_name = @template.virtual_path rescue nil        # Works on Rails 3.2 -> end of Rails 5 series
+          template_name ||= maybe_template.virtual_path rescue nil # Works on Rails 6 -> 6.0.3.5
+          template_name ||= "Unknown Partial"
+
+          layer_name = template_name + "/Rendering"
           layer = ScoutApm::Layer.new("View", layer_name)
           layer.subscopable!
 
           begin
             req.start_layer(layer)
-            super(*args)
+            if ScoutApm::Agent.instance.context.environment.supports_kwarg_delegation?
+              super(*args, **kwargs)
+            else
+              super(*args)
+            end
           ensure
             req.stop_layer
           end
         end
 
-        def collection_with_template(*args)
+        def collection_with_template(*args, **kwargs)
           req = ScoutApm::RequestManager.lookup
 
-          template_name = @template.virtual_path rescue "Unknown Collection"
+          maybe_template = args[1]
+
+          template_name = @template.virtual_path rescue nil # Works on Rails 3.2 -> end of Rails 5 series
+          template_name ||= maybe_template.virtual_path rescue nil # Works on Rails 6 -> 6.0.3.5
           template_name ||= "Unknown Collection"
           layer_name = template_name + "/Rendering"
 
@@ -105,7 +117,11 @@ module ScoutApm
 
           begin
             req.start_layer(layer)
-            super(*args)
+            if ScoutApm::Agent.instance.context.environment.supports_kwarg_delegation?
+              super(*args, **kwargs)
+            else
+              super(*args)
+            end
           ensure
             req.stop_layer
           end
@@ -113,10 +129,15 @@ module ScoutApm
       end
 
       module ActionViewTemplateRendererInstruments
+        # Don't forward kwargs here, since Rails 3, 4, 5, 6 don't use them, and
+        # it causes annoyances in the instrumentation
         def render_template(*args)
           req = ScoutApm::RequestManager.lookup
 
-          template_name = args[0].virtual_path rescue "Unknown"
+          maybe_template = args[1]
+
+          template_name = args[0].virtual_path rescue nil # Works on Rails 3.2 -> end of Rails 5 series
+          template_name ||= maybe_template.virtual_path rescue nil # Works on Rails 6 -> 6.1.3
           template_name ||= "Unknown"
           layer_name = template_name + "/Rendering"
 

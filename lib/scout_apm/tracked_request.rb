@@ -52,6 +52,10 @@ module ScoutApm
     # see that on Sidekiq.
     REQUEST_TYPES = ["Controller", "Job"]
 
+    # Layers of type 'AutoInstrument' are not recorded if their total_call_time doesn't exceed this threshold.
+    # AutoInstrument layers are frequently of short duration. This throws out this deadweight that is unlikely to be optimized.
+    AUTO_INSTRUMENT_TIMING_THRESHOLD = 5/1_000.0 # units = seconds
+
     def initialize(agent_context, store)
       @agent_context = agent_context
       @store = store #this is passed in so we can use a real store (normal operation) or fake store (instant mode only)
@@ -110,7 +114,15 @@ module ScoutApm
       layer.record_stop_time!
       layer.record_allocations!
 
-      @layers[-1].add_child(layer) if @layers.any?
+      # Must follow layer.record_stop_time! as the total_call_time is used to determine if the layer is significant.
+      return if layer_insignificant?(layer)
+
+      # Check that the parent exists before calling a method on it, since some threading can get us into a weird state.
+      # this doesn't fix that state, but prevents exceptions from leaking out.
+      parent = @layers[-1]
+      if parent
+        parent.add_child(layer)
+      end
 
       # This must be called before checking if a backtrace should be collected as the call count influences our capture logic.
       # We call `#update_call_counts in stop layer to ensure the layer has a final desc. Layer#desc is updated during the AR instrumentation flow.
@@ -150,6 +162,10 @@ module ScoutApm
     def capture_backtrace?(layer)
       return if ignoring_request?
 
+      # A backtrace has already been recorded. This happens with autoinstruments as
+      # the partial backtrace is set when creating the layer.
+      return false if layer.backtrace
+
       # Never capture backtraces for this kind of layer. The backtrace will
       # always be 100% framework code.
       return false if BACKTRACE_BLACKLIST.include?(layer.type)
@@ -167,6 +183,20 @@ module ScoutApm
 
       # Don't capture otherwise
       false
+    end
+
+    # Returns +true+ if the total call time of AutoInstrument layers exceeds +AUTO_INSTRUMENT_TIMING_THRESHOLD+ and
+    # records a Histogram of insignificant / significant layers by file name.
+    def layer_insignificant?(layer)
+      result = false # default is significant
+      if layer.type == 'AutoInstrument'
+        if layer.total_call_time < AUTO_INSTRUMENT_TIMING_THRESHOLD
+          result = true # not significant
+        end
+        # 0 = not significant, 1 = significant
+        @agent_context.auto_instruments_layer_histograms.add(layer.file_name, (result ? 0 : 1))
+      end
+      result
     end
 
     # Maintains a lookup Hash of call counts by layer name. Used to determine if we should capture a backtrace.
@@ -290,6 +320,7 @@ module ScoutApm
         :queue_time => LayerConverters::RequestQueueTimeConverter,
         :job => LayerConverters::JobConverter,
         :db => LayerConverters::DatabaseConverter,
+        :external_service => LayerConverters::ExternalServiceConverter,
 
         :slow_job => LayerConverters::SlowJobConverter,
         :slow_req => LayerConverters::SlowRequestConverter,
@@ -308,7 +339,7 @@ module ScoutApm
         memo
       end
       walker.walk
-      converter_results = converter_instances.inject({}) do |memo, (slug,i)| 
+      converter_results = converter_instances.inject({}) do |memo, (slug,i)|
         memo[slug] = i.record!
         memo
       end

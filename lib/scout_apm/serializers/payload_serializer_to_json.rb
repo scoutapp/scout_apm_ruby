@@ -2,7 +2,7 @@ module ScoutApm
   module Serializers
     module PayloadSerializerToJson
       class << self
-        def serialize(metadata, metrics, slow_transactions, jobs, slow_jobs, histograms, db_query_metrics, traces)
+        def serialize(metadata, metrics, slow_transactions, jobs, slow_jobs, histograms, db_query_metrics, external_service_metrics, traces)
           metadata.merge!({:payload_version => 2})
 
           jsonify_hash({:metadata => metadata,
@@ -13,6 +13,9 @@ module ScoutApm
                         :histograms => HistogramsSerializerToJson.new(histograms).as_json,
                         :db_metrics => {
                           :query => DbQuerySerializerToJson.new(db_query_metrics).as_json,
+                        },
+                        :es_metrics => {
+                          :http => ExternalServiceSerializerToJson.new(external_service_metrics).as_json,
                         },
                         :span_traces => traces.map{ |t| t.as_json },
           })
@@ -46,17 +49,21 @@ module ScoutApm
         end
 
         ESCAPE_MAPPINGS = {
+          # Stackoverflow answer on gsub matches and backslashes
+          # https://stackoverflow.com/a/4149087/2705125
+          '\\' => '\\\\\\\\',
           "\b" => '\\b',
           "\t" => '\\t',
           "\n" => '\\n',
           "\f" => '\\f',
           "\r" => '\\r',
           '"'  => '\\"',
-          '\\' => '\\\\',
         }
 
         def escape(string)
-          ESCAPE_MAPPINGS.inject(string.to_s) {|s, (bad, good)| s.gsub(bad, good) }
+          ESCAPE_MAPPINGS.inject(string.to_s) {|s, (bad, good)| 
+            s.gsub(bad, good)
+          }
         end
 
         def format_by_type(formatee)

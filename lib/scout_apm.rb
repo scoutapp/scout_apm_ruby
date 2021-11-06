@@ -42,6 +42,7 @@ require 'scout_apm/layer_converters/job_converter'
 require 'scout_apm/layer_converters/slow_job_converter'
 require 'scout_apm/layer_converters/metric_converter'
 require 'scout_apm/layer_converters/database_converter'
+require 'scout_apm/layer_converters/external_service_converter'
 require 'scout_apm/layer_converters/slow_request_converter'
 require 'scout_apm/layer_converters/request_queue_time_converter'
 require 'scout_apm/layer_converters/allocation_metric_converter'
@@ -58,10 +59,13 @@ require 'scout_apm/server_integrations/webrick'
 require 'scout_apm/server_integrations/null'
 
 require 'scout_apm/background_job_integrations/sidekiq'
+require 'scout_apm/background_job_integrations/faktory'
 require 'scout_apm/background_job_integrations/delayed_job'
 require 'scout_apm/background_job_integrations/resque'
 require 'scout_apm/background_job_integrations/shoryuken'
 require 'scout_apm/background_job_integrations/sneakers'
+require 'scout_apm/background_job_integrations/que'
+require 'scout_apm/background_job_integrations/legacy_sneakers'
 
 require 'scout_apm/framework_integrations/rails_2'
 require 'scout_apm/framework_integrations/rails_3_or_4'
@@ -76,6 +80,7 @@ require 'scout_apm/histogram'
 
 require 'scout_apm/instruments/net_http'
 require 'scout_apm/instruments/http_client'
+require 'scout_apm/instruments/typhoeus'
 require 'scout_apm/instruments/moped'
 require 'scout_apm/instruments/mongoid'
 require 'scout_apm/instruments/memcached'
@@ -111,6 +116,7 @@ require 'scout_apm/utils/time'
 require 'scout_apm/utils/unique_id'
 require 'scout_apm/utils/numbers'
 require 'scout_apm/utils/gzip_helper'
+require 'scout_apm/utils/marshal_logging'
 
 require 'scout_apm/config'
 require 'scout_apm/environment'
@@ -125,6 +131,7 @@ require 'scout_apm/bucket_name_splitter'
 require 'scout_apm/stack_item'
 require 'scout_apm/metric_set'
 require 'scout_apm/db_query_metric_set'
+require 'scout_apm/external_service_metric_set'
 require 'scout_apm/store'
 require 'scout_apm/fake_store'
 require 'scout_apm/tracer'
@@ -137,12 +144,18 @@ require 'scout_apm/synchronous_recorder'
 require 'scout_apm/metric_meta'
 require 'scout_apm/metric_stats'
 require 'scout_apm/db_query_metric_stats'
+require 'scout_apm/external_service_metric_stats'
 require 'scout_apm/slow_transaction'
 require 'scout_apm/slow_job_record'
 require 'scout_apm/detailed_trace'
 require 'scout_apm/scored_item_set'
+
 require 'scout_apm/slow_request_policy'
-require 'scout_apm/slow_job_policy'
+require 'scout_apm/slow_policy/age_policy'
+require 'scout_apm/slow_policy/speed_policy'
+require 'scout_apm/slow_policy/percent_policy'
+require 'scout_apm/slow_policy/percentile_policy'
+
 require 'scout_apm/job_record'
 require 'scout_apm/request_histograms'
 require 'scout_apm/transaction_time_consumed'
@@ -157,6 +170,7 @@ require 'scout_apm/serializers/slow_jobs_serializer_to_json'
 require 'scout_apm/serializers/metrics_to_json_serializer'
 require 'scout_apm/serializers/histograms_serializer_to_json'
 require 'scout_apm/serializers/db_query_serializer_to_json'
+require 'scout_apm/serializers/external_service_serializer_to_json'
 require 'scout_apm/serializers/directive_serializer'
 require 'scout_apm/serializers/app_server_load_serializer'
 
@@ -183,6 +197,17 @@ require 'scout_apm/tasks/support'
 require 'scout_apm/extensions/config'
 require 'scout_apm/extensions/transaction_callback_payload'
 
+require 'scout_apm/error'
+require 'scout_apm/error_service'
+require 'scout_apm/error_service/middleware'
+require 'scout_apm/error_service/notifier'
+require 'scout_apm/error_service/sidekiq'
+require 'scout_apm/error_service/ignored_exceptions'
+require 'scout_apm/error_service/error_buffer'
+require 'scout_apm/error_service/error_record'
+require 'scout_apm/error_service/periodic_work'
+require 'scout_apm/error_service/payload'
+
 if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR) && Rails::VERSION::MAJOR >= 3 && defined?(Rails::Railtie)
   module ScoutApm
     class Railtie < Rails::Railtie
@@ -194,6 +219,18 @@ if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR
 
         # Attempt to start right away, this will work best for preloading apps, Unicorn & Puma & similar
         ScoutApm::Agent.instance.install
+
+        if ScoutApm::Agent.instance.context.config.value("auto_instruments")
+          ScoutApm::Agent.instance.context.logger.debug("AutoInstruments is enabled.")
+          require 'scout_apm/auto_instrument'
+        else
+          ScoutApm::Agent.instance.context.logger.debug("AutoInstruments is disabled.")
+        end
+
+        if ScoutApm::Agent.instance.context.config.value("errors_enabled")
+          app.config.middleware.insert_after ActionDispatch::DebugExceptions, ScoutApm::ErrorService::Middleware
+          ScoutApm::ErrorService::Sidekiq.new.install
+        end
 
         # Install the middleware every time in development mode.
         # The middleware is a noop if dev_trace is not enabled in config

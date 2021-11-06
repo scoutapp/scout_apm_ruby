@@ -1,6 +1,7 @@
 require 'test_helper'
 
 require 'scout_apm/slow_request_policy'
+require 'scout_apm/slow_policy/policy'
 require 'scout_apm/layer'
 
 class FakeRequest
@@ -16,35 +17,62 @@ class FakeRequest
   end
 end
 
+class FixedPolicy < ScoutApm::SlowPolicy::Policy
+  attr_reader :stored
+
+  def initialize(x)
+    @x = x
+  end
+
+  def call(req)
+    @x
+  end
+
+  def stored!(req)
+    @stored = true
+  end
+end
+
 class SlowRequestPolicyTest < Minitest::Test
   def setup
     @context = ScoutApm::AgentContext.new
   end
 
-  def test_stored_records_current_time
+  def test_age_policy_stored_records_current_time
     test_start = Time.now
-    policy = ScoutApm::SlowRequestPolicy.new(@context)
+    policy = ScoutApm::SlowPolicy::AgePolicy.new(@context)
     request = FakeRequest.new("users/index")
 
     policy.stored!(request)
     assert policy.last_seen[request.unique_name] > test_start
   end
 
-  def test_score
+  def test_sums_up_score
     policy = ScoutApm::SlowRequestPolicy.new(@context)
     request = FakeRequest.new("users/index")
 
-    request.set_duration(10) # 10 seconds
-    policy.last_seen[request.unique_name] = Time.now - 120 # 2 minutes since last seen
-    @context.request_histograms.add(request.unique_name, 1)
-    @context.transaction_time_consumed.add(request.unique_name, 1)
+    policy.add(FixedPolicy.new(1))
+    policy.add(FixedPolicy.new(2))
 
-    # Actual value I have in console is 4.01
-    # Score uses Time.now to compare w/ last_seen, and will tick up slowly as
-    # time passes, hence the range below.
-    score = policy.score(request)
+    assert_equal 3, policy.score(request)
+  end
 
-    assert score > 3.95
-    assert score < 4.05
+  def test_calls_store_on_policies
+    policy = ScoutApm::SlowRequestPolicy.new(@context)
+    request = FakeRequest.new("users/index")
+
+    policy.add(fp1 = FixedPolicy.new(1))
+    policy.add(fp2 = FixedPolicy.new(2))
+    policy.stored!(request)
+
+    assert_equal true, fp1.stored
+    assert_equal true, fp2.stored
+  end
+
+  def test_checks_new_policy_api
+    policy = ScoutApm::SlowRequestPolicy.new(@context)
+
+    assert_raises { policy.add(Object.new) }
+    assert_raises { policy.add(->(req){1}) } # only implements call
   end
 end

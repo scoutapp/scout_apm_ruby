@@ -17,46 +17,73 @@ module ScoutApm
         @installed
       end
 
-      def install
-        # We previously instrumented ActionController::Metal, which missed
-        # before and after filter timing. Instrumenting Base includes those
-        # filters, at the expense of missing out on controllers that don't use
-        # the full Rails stack.
-        if defined?(::ActionController)
-          @installed = true
+      def installed!
+        @installed = true
+      end
 
+      def install
+        if !defined?(::ActiveSupport)
+          return
+        end
+
+        # The block below runs with `self` equal to the ActionController::Base or ::API module, not this class we're in now. By saving an instance of ourselves into the `this` variable, we can continue accessing what we need.
+        this = self
+
+        ActiveSupport.on_load(:action_controller) do
+          if this.installed?
+            this.logger.info("Skipping ActionController - Already Ran")
+            next
+          else
+            this.logger.info("Instrumenting ActionController (on_load)")
+            this.installed!
+          end
+
+          # We previously instrumented ActionController::Metal, which missed
+          # before and after filter timing. Instrumenting Base includes those
+          # filters, at the expense of missing out on controllers that don't use
+          # the full Rails stack.
           if defined?(::ActionController::Base)
-            logger.info "Instrumenting ActionController::Base"
+            this.logger.info "Instrumenting ActionController::Base"
             ::ActionController::Base.class_eval do
-              # include ScoutApm::Tracer
               include ScoutApm::Instruments::ActionControllerBaseInstruments
             end
           end
 
           if defined?(::ActionController::Metal)
-            logger.info "Instrumenting ActionController::Metal"
+            this.logger.info "Instrumenting ActionController::Metal"
             ::ActionController::Metal.class_eval do
               include ScoutApm::Instruments::ActionControllerMetalInstruments
             end
           end
 
           if defined?(::ActionController::API)
-            logger.info "Instrumenting ActionController::Api"
+            this.logger.info "Instrumenting ActionController::Api"
             ::ActionController::API.class_eval do
               include ScoutApm::Instruments::ActionControllerAPIInstruments
             end
           end
         end
 
-        # Returns a new anonymous module each time it is called. So
-        # we can insert this multiple times into the ancestors
-        # stack. Otherwise it only exists the first time you include it
-        # (under Metal, instead of under API) and we miss instrumenting
-        # before_action callbacks
+        ScoutApm::Agent.instance.context.logger.info("Instrumenting ActionController (hook installed)")
       end
 
+      # Returns a new anonymous module each time it is called. So
+      # we can insert this multiple times into the ancestors
+      # stack. Otherwise it only exists the first time you include it
+      # (under Metal, instead of under API) and we miss instrumenting
+      # before_action callbacks
       def self.build_instrument_module
         Module.new do
+          # Determine the URI of this request to capture. Overridable by users in their controller.
+          def scout_transaction_uri(config=ScoutApm::Agent.instance.context.config)
+            case config.value("uri_reporting")
+            when 'path'
+              request.path # strips off the query string for more security
+            else # default handles filtered params
+              request.filtered_path
+            end
+          end
+
           def process_action(*args)
             req = ScoutApm::RequestManager.lookup
             current_layer = req.current_layer
@@ -68,11 +95,18 @@ module ScoutApm
               req.instant_key = instant_key
             end
 
-            if current_layer && current_layer.type == "Controller"
-              # Don't start a new layer if ActionController::API or ActionController::Base handled it already.
+            # Don't start a new layer if ActionController::API or
+            # ActionController::Base handled it already. Needs to account for
+            # any layers started during a around_action (most likely
+            # AutoInstrument, but could be another custom instrument)
+            if current_layer && (current_layer.type == "Controller" || current_layer.type == "AutoInstrument" || req.web?)
               super
             else
-              req.annotate_request(:uri => ScoutApm::Instruments::ActionControllerRails3Rails4.scout_transaction_uri(request))
+              begin
+                uri = scout_transaction_uri
+                req.annotate_request(:uri => uri)
+              rescue
+              end
 
               # IP Spoofing Protection can throw an exception, just move on w/o remote ip
               if agent_context.config.value('collect_remote_ip')
@@ -95,16 +129,6 @@ module ScoutApm
         end
       end
 
-      # Given an +ActionDispatch::Request+, formats the uri based on config settings.
-      # XXX: Don't lookup context like this - find a way to pass it through
-      def self.scout_transaction_uri(request, config=ScoutApm::Agent.instance.context.config)
-        case config.value("uri_reporting")
-        when 'path'
-          request.path # strips off the query string for more security
-        else # default handles filtered params
-          request.filtered_path
-        end
-      end
     end
 
     module ActionControllerMetalInstruments

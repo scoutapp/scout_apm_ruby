@@ -48,6 +48,7 @@ module ScoutApm
           when "sqlite"     then :sqlite
           when "mysql"      then :mysql
           when "mysql2"     then :mysql
+          when "sqlserver"  then :sqlserver
           else default
           end
         else
@@ -70,7 +71,11 @@ module ScoutApm
       #
       # We avoid this issue by not calling .respond_to? here, and instead using the less optimal `rescue nil` approach
       def raw_database_adapter
-        adapter = ActiveRecord::Base.connection_config[:adapter].to_s rescue nil
+        adapter = ActiveRecord::Base.connection_db_config.configuration_hash[:adapter] rescue nil
+
+        if adapter.nil?
+          adapter = ActiveRecord::Base.connection_config[:adapter].to_s rescue nil
+        end
 
         if adapter.nil?
           adapter = ActiveRecord::Base.configurations[env]["adapter"]

@@ -83,11 +83,12 @@ module ScoutApm
       slow_jobs = reporting_period.slow_jobs_payload
       histograms = reporting_period.histograms
       db_query_metrics = reporting_period.db_query_metrics_payload
+      external_service_metrics = reporting_period.external_service_metrics_payload
       traces = (slow_transactions.map(&:span_trace) + slow_jobs.map(&:span_trace)).compact
 
       log_deliver(metrics, slow_transactions, metadata, slow_jobs, histograms)
 
-      payload = ScoutApm::Serializers::PayloadSerializer.serialize(metadata, metrics, slow_transactions, jobs, slow_jobs, histograms, db_query_metrics, traces)
+      payload = ScoutApm::Serializers::PayloadSerializer.serialize(metadata, metrics, slow_transactions, jobs, slow_jobs, histograms, db_query_metrics, external_service_metrics, traces)
       logger.debug("Sending payload w/ Headers: #{headers.inspect}")
 
       reporter.report(payload, headers)

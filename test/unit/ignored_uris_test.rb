@@ -13,4 +13,10 @@ class IgnoredUrlsTest < Minitest::Test
     i = ScoutApm::IgnoredUris.new(["/slow", "/health"])
     assert_equal false, i.ignore?("/users/2/health")
   end
+
+  def test_does_not_ignore_empty_string
+    i = ScoutApm::IgnoredUris.new(["", "/admin"])
+    assert_equal false, i.ignore?("/users/2/health")
+    assert_equal true, i.ignore?("/admin/dashboard")
+  end
 end

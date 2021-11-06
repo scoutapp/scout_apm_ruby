@@ -82,15 +82,8 @@ module ScoutApm
 
         # Install #log tracing
         if Utils::KlassHelper.defined?("ActiveRecord::ConnectionAdapters::AbstractAdapter")
-          if Module.respond_to?(:prepend)
-            ::ActiveRecord::ConnectionAdapters::AbstractAdapter.prepend(ActiveRecordInstruments)
-            ::ActiveRecord::ConnectionAdapters::AbstractAdapter.include(Tracer)
-          else
-            ::ActiveRecord::ConnectionAdapters::AbstractAdapter.module_eval do
-              include ::ScoutApm::Instruments::ActiveRecordAliasMethodInstruments
-              include ::ScoutApm::Tracer
-            end
-          end
+          ::ActiveRecord::ConnectionAdapters::AbstractAdapter.prepend(ActiveRecordInstruments)
+          ::ActiveRecord::ConnectionAdapters::AbstractAdapter.include(Tracer)
         end
 
         if Utils::KlassHelper.defined?("ActiveRecord::Base")
@@ -172,20 +165,12 @@ module ScoutApm
     # to the real SQL, and an AR generated "name" for the Query
     #
     ################################################################################
-    #
-    # Note, if you change this instrumentation, you also need to change ActiveRecordInstruments.
-    module ActiveRecordAliasMethodInstruments
-      def self.included(instrumented_class)
+    module ActiveRecordInstruments
+      def self.prepended(instrumented_class)
         ScoutApm::Agent.instance.context.logger.info "Instrumenting #{instrumented_class.inspect}"
-        instrumented_class.class_eval do
-          unless instrumented_class.method_defined?(:log_without_scout_instruments)
-            alias_method :log_without_scout_instruments, :log
-            alias_method :log, :log_with_scout_instruments
-          end
-        end
       end
 
-      def log_with_scout_instruments(*args, &block)
+      def log(*args, &block)
         # Extract data from the arguments
         sql, name = args
         metric_name = Utils::ActiveRecordMetricName.new(sql, name)
@@ -216,7 +201,7 @@ module ScoutApm
           end
           current_layer.desc.merge(desc)
 
-          log_without_scout_instruments(*args, &block)
+          super(*args, &block)
 
         # OR: Start a new layer, we didn't pick up instrumentation earlier in the stack.
         else
@@ -224,12 +209,13 @@ module ScoutApm
           layer.desc = desc
           req.start_layer(layer)
           begin
-            log_without_scout_instruments(*args, &block)
+            super(*args, &block)
           ensure
             req.stop_layer
           end
         end
       end
+      ruby2_keywords :log if respond_to?(:ruby2_keywords, true)
     end
 
     module ActiveRecordInstruments
@@ -282,6 +268,7 @@ module ScoutApm
           end
         end
       end
+      ruby2_keywords :log if respond_to?(:ruby2_keywords, true)
     end
 
     ################################################################################
@@ -323,14 +310,18 @@ module ScoutApm
         end
       end
 
-      def find_by_sql_with_scout_instruments(*args, &block)
+      def find_by_sql_with_scout_instruments(*args, **kwargs, &block)
         req = ScoutApm::RequestManager.lookup
         layer = ScoutApm::Layer.new("ActiveRecord", Utils::ActiveRecordMetricName::DEFAULT_METRIC)
         layer.annotate_layer(:ignorable => true)
         req.start_layer(layer)
         req.ignore_children!
         begin
-          find_by_sql_without_scout_instruments(*args, &block)
+          if ScoutApm::Agent.instance.context.environment.supports_kwarg_delegation?
+            find_by_sql_without_scout_instruments(*args, **kwargs, &block)
+          else
+            find_by_sql_without_scout_instruments(*args, &block)
+          end
         ensure
           req.acknowledge_children!
           req.stop_layer
@@ -408,7 +399,7 @@ module ScoutApm
     end
 
     module ActiveRecordUpdateInstruments
-      def save(*args, &block)
+      def save(*args, **options, &block)
         model = self.class.name
         operation = self.persisted? ? "Update" : "Create"
 
@@ -418,14 +409,14 @@ module ScoutApm
         req.start_layer(layer)
         req.ignore_children!
         begin
-          super(*args, &block)
+          super(*args, **options, &block)
         ensure
           req.acknowledge_children!
           req.stop_layer
         end
       end
 
-      def save!(*args, &block)
+      def save!(*args, **options, &block)
         model = self.class.name
         operation = self.persisted? ? "Update" : "Create"
 
@@ -434,7 +425,7 @@ module ScoutApm
         req.start_layer(layer)
         req.ignore_children!
         begin
-          super(*args, &block)
+          super(*args, **options, &block)
         ensure
           req.acknowledge_children!
           req.stop_layer

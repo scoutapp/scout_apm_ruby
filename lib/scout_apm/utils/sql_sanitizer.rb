@@ -1,3 +1,5 @@
+# frozen_string_literal: false
+
 require 'scout_apm/environment'
 
 # Removes actual values from SQL. Used to both obfuscate the SQL and group
@@ -5,12 +7,34 @@ require 'scout_apm/environment'
 module ScoutApm
   module Utils
     class SqlSanitizer
-      if ScoutApm::Environment.instance.ruby_187?
-        require 'scout_apm/utils/sql_sanitizer_regex_1_8_7'
-      else
-        require 'scout_apm/utils/sql_sanitizer_regex'
-      end
-      include ScoutApm::Utils::SqlRegex
+      MULTIPLE_SPACES    = %r|\s+|.freeze
+      MULTIPLE_QUESTIONS = /\?(,\?)+/.freeze
+
+      PSQL_VAR_INTERPOLATION = %r|\[\[.*\]\]\s*\z|.freeze
+      PSQL_REMOVE_STRINGS = /'(?:[^']|'')*'/.freeze
+      PSQL_REMOVE_INTEGERS = /(?<!LIMIT )\b\d+\b/.freeze
+      PSQL_AFTER_SELECT = /(?:SELECT\s+).*?(?:WHERE|FROM\z)/im.freeze # Should be everything between a FROM and a WHERE
+      PSQL_PLACEHOLDER = /\$\d+/.freeze
+      PSQL_IN_CLAUSE = /IN\s+\(\?[^\)]*\)/.freeze
+      PSQL_AFTER_FROM = /(?:FROM\s+).*?(?:WHERE|\z)/im.freeze # Should be everything between a FROM and a WHERE
+      PSQL_AFTER_JOIN = /(?:JOIN\s+).*?\z/im.freeze
+      PSQL_AFTER_WHERE = /(?:WHERE\s+).*?(?:SELECT|\z)/im.freeze
+      PSQL_AFTER_SET = /(?:SET\s+).*?(?:WHERE|\z)/im.freeze
+
+      MYSQL_VAR_INTERPOLATION = %r|\[\[.*\]\]\s*$|.freeze
+      MYSQL_REMOVE_INTEGERS = /(?<!LIMIT )\b\d+\b/.freeze
+      MYSQL_REMOVE_SINGLE_QUOTE_STRINGS = %r{'(?:\\'|[^']|'')*'}.freeze
+      MYSQL_REMOVE_DOUBLE_QUOTE_STRINGS = %r{"(?:\\"|[^"]|"")*"}.freeze
+      MYSQL_IN_CLAUSE = /IN\s+\(\?[^\)]*\)/.freeze
+
+      SQLITE_VAR_INTERPOLATION = %r|\[\[.*\]\]\s*$|.freeze
+      SQLITE_REMOVE_STRINGS = /'(?:[^']|'')*'/.freeze
+      SQLITE_REMOVE_INTEGERS = /(?<!LIMIT )\b\d+\b/.freeze
+
+      # => "EXEC sp_executesql N'SELECT  [users].* FROM [users] WHERE (age > 50)  ORDER BY [users].[id] ASC OFFSET 0 ROWS FETCH NEXT @0 ROWS ONLY', N'@0 int', @0 = 10"
+      SQLSERVER_EXECUTESQL = /EXEC sp_executesql N'(.*?)'.*/
+      SQLSERVER_REMOVE_INTEGERS = /(?<!LIMIT )\b(?<!@)\d+\b/.freeze
+      SQLSERVER_IN_CLAUSE = /IN\s+\(\?[^\)]*\)/.freeze
 
       attr_accessor :database_engine
 
@@ -34,15 +58,26 @@ module ScoutApm
         when :postgres then to_s_postgres
         when :mysql    then to_s_mysql
         when :sqlite   then to_s_sqlite
+        when :sqlserver then to_s_sqlserver
         end
       end
 
       private
 
+      def to_s_sqlserver
+        sql.gsub!(SQLSERVER_EXECUTESQL, '\1')
+        sql.gsub!(SQLSERVER_REMOVE_INTEGERS, '?')
+        sql.gsub!(SQLSERVER_IN_CLAUSE, 'IN (?)')
+        sql
+      end
+
       def to_s_postgres
         sql.gsub!(PSQL_PLACEHOLDER, '?')
         sql.gsub!(PSQL_VAR_INTERPOLATION, '')
-        sql.gsub!(PSQL_REMOVE_STRINGS, '?')
+        # sql.gsub!(PSQL_REMOVE_STRINGS, '?')
+        sql.gsub!(PSQL_AFTER_WHERE) {|c| c.gsub(PSQL_REMOVE_STRINGS, '?')}
+        sql.gsub!(PSQL_AFTER_JOIN) {|c| c.gsub(PSQL_REMOVE_STRINGS, '?')}
+        sql.gsub!(PSQL_AFTER_SET) {|c| c.gsub(PSQL_REMOVE_STRINGS, '?')}
         sql.gsub!(PSQL_REMOVE_INTEGERS, '?')
         sql.gsub!(PSQL_IN_CLAUSE, 'IN (?)')
         sql.gsub!(MULTIPLE_SPACES, ' ')

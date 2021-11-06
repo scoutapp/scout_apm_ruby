@@ -1,3 +1,5 @@
+# frozen_string_literal: false
+
 module ScoutApm
   module Instant
 
@@ -94,7 +96,8 @@ module ScoutApm
 
       def preconditions_met?
         if dev_trace_disabled?
-          logger.debug("DevTrace: isn't activated via config. Try: SCOUT_DEV_TRACE=true rails server")
+          # The line below is very noise as it is called on every request.
+          # logger.debug("DevTrace: isn't activated via config. Try: SCOUT_DEV_TRACE=true rails server")
           return false
         end
 

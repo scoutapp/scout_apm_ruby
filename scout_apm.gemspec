@@ -10,9 +10,7 @@ Gem::Specification.new do |s|
   s.homepage    = "https://github.com/scoutapp/scout_apm_ruby"
   s.summary     = "Ruby application performance monitoring"
   s.description = "Monitors Ruby apps and reports detailed metrics on performance to Scout."
-  s.license     = "Proprietary (See LICENSE.md)"
-
-  s.rubyforge_project = "scout_apm"
+  s.license     = "MIT"
 
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
@@ -21,6 +19,8 @@ Gem::Specification.new do |s|
   s.extensions << 'ext/allocations/extconf.rb'
   s.extensions << 'ext/rusage/extconf.rb'
 
+  s.required_ruby_version = '>= 2.1'
+
   s.add_development_dependency "minitest"
   s.add_development_dependency "mocha"
   s.add_development_dependency "pry"
@@ -28,6 +28,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency "rake-compiler"
   s.add_development_dependency "addressable"
   s.add_development_dependency "activesupport"
+  s.add_runtime_dependency "parser"
 
   # These are general development dependencies which are used in instrumentation
   # tests. Specific versions are pulled in using specific gemfiles, e.g. 
@@ -35,10 +36,8 @@ Gem::Specification.new do |s|
   s.add_development_dependency "activerecord"
   s.add_development_dependency "sqlite3"
 
-  if RUBY_VERSION >= "1.9.3"
-    s.add_development_dependency "rubocop"
-    s.add_development_dependency "guard"
-    s.add_development_dependency "guard-minitest"
-    s.add_development_dependency "m"
-  end
+  s.add_development_dependency "rubocop"
+  s.add_development_dependency "guard"
+  s.add_development_dependency "guard-minitest"
+  s.add_development_dependency "m"
 end

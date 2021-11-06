@@ -69,14 +69,14 @@ module ScoutApm
     private
 
     def build_logger
-      logger_class.new(@log_destination)
+      logger_class.new(@log_destination) rescue logger_class.new
     end
 
     def logger_class
       klass = @opts.fetch(:logger_class, ::Logger)
       case klass
       when String
-        result = KlassHelper.lookup(klass)
+        result = Utils::KlassHelper.lookup(klass)
         if result == :missing_class
           ::Logger
         else

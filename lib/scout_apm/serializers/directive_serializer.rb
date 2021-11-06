@@ -5,6 +5,10 @@ module ScoutApm
     class DirectiveSerializer
       def self.serialize(data)
         Marshal.dump(data)
+      rescue
+        ScoutApm::Agent.instance.logger.info("Failed Marshalling Directive")
+        ScoutApm::Agent.instance.logger.info(ScoutApm::Utils::MarshalLogging.new(data).dive) rescue nil
+        raise
       end
 
       def self.deserialize(data)

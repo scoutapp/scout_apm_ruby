@@ -96,11 +96,18 @@ module ScoutApm
     end
 
     def slow_request_policy
-      @slow_request_policy ||= ScoutApm::SlowRequestPolicy.new(self)
+      @slow_request_policy ||= ScoutApm::SlowRequestPolicy.new(self).tap{|p| p.add_default_policies }
     end
 
     def slow_job_policy
-      @slow_job_policy ||= ScoutApm::SlowJobPolicy.new(self)
+      @slow_job_policy ||= ScoutApm::SlowRequestPolicy.new(self).tap{|p| p.add_default_policies }
+    end
+
+    # Maintains a Histogram of insignificant/significant autoinstrument layers.
+    # significant = 1
+    # insignificant = 0
+    def auto_instruments_layer_histograms
+      @auto_instruments_layer_histograms ||= ScoutApm::RequestHistograms.new
     end
 
     # Histogram of the cumulative requests since the start of the process
@@ -133,6 +140,18 @@ module ScoutApm
 
     def dev_trace_enabled?
       config.value('dev_trace') && environment.env == "development"
+    end
+
+    ###################
+    #  Error Service  #
+    ###################
+
+    def error_buffer
+      @error_buffer ||= ScoutApm::ErrorService::ErrorBuffer.new(self)
+    end
+
+    def ignored_exceptions
+      @ignored_exceptions ||= ScoutApm::ErrorService::IgnoredExceptions.new(self, config.value('errors_ignored_exceptions'))
     end
 
     #############

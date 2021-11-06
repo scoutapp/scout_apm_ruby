@@ -65,6 +65,31 @@ class TracerTest < Minitest::Test
     assert_recorded(recorder, "Test", "name")
   end
 
+  if ScoutApm::Agent.instance.context.environment.supports_kwarg_delegation?
+    def test_instrument_method_with_keyword_args
+      initial_value = Warning[:deprecated]
+      Warning[:deprecated] = true
+      recorder = FakeRecorder.new
+      ScoutApm::Agent.instance.context.recorder = recorder
+
+      klass = Class.new { include ScoutApm::Tracer }
+
+      invoked = false
+      klass.send(:define_method, :work) { |run:| invoked = true }
+      klass.instrument_method(:work, :type => "Test", :name => "name")
+
+      args = { run: false }
+      assert_output(nil, '') do
+        klass.new.work(**args)
+      end
+
+      assert invoked, "instrumented code was not invoked"
+      assert_recorded(recorder, "Test", "name")
+    ensure
+      Warning[:deprecated] = initial_value
+    end
+  end
+
   private
 
   def assert_recorded(recorder, type, name)
