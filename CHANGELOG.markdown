@@ -1,6 +1,7 @@
 # Unreleased
 
 * Specify correct (MIT) license in Gemspec (#430)
+* Sanitize FROM jsonb_as_recordset AS correctly in Postgres (#332)
 
 # 5.0.0
 

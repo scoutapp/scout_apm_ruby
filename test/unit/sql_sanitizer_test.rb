@@ -194,6 +194,17 @@ module ScoutApm
         WHERE (title = ?)|, ss.to_s
       end
 
+      def test_postgres_insert_select_from_jsonb_to_recordset_with_as
+        sql = %q|
+        INSERT INTO foos(foo_id, bar_id, external_id, email_address, created_at, updated_at)
+          SELECT 123, 456, external_id, email_address, NOW(), NOW()
+          FROM jsonb_to_recordset($${"items":[{"external_id":1234,"email_address":"test@domain.com"}]}$$::jsonb->'items')
+            AS t(external_id integer, email_address varchar)
+        |
+        ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :postgres }
+        assert_equal %q|INSERT INTO foos(foo_id, bar_id, external_id, email_address, created_at, updated_at) SELECT ?, ?, external_id, email_address, NOW(), NOW() FROM jsonb_to_recordset($${"items":[{"external_id":?,"email_address":"?"}]}$$::jsonb->'items') AS t(external_id integer, email_address varchar)|, ss.to_s
+      end
+
       def assert_faster_than(target_seconds)
         t1 = ::Time.now
         yield
