@@ -1,4 +1,4 @@
-class TestController < ApplicationController
+class AutoInstrumentTestController
   def index
     quests = policy_scope(Quest.open)
     quests.each { _1.current_user = current_user }
