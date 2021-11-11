@@ -1,6 +1,7 @@
 # Unreleased
 
 * Specify correct (MIT) license in Gemspec (#430)
+* Install HTTP::Client instruments (#420)
 
 # 5.0.0
 
