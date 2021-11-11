@@ -443,8 +443,8 @@ module ScoutApm
             logger.info("Couldn't find configuration in #{@resolved_file_path} for environment: #{app_environment}. Configuration in ENV will still be applied.")
             @file_loaded = false
           end
-        rescue Exception => e # Explicit `Exception` handling to catch SyntaxError and anything else that ERB or YAML may throw
-          logger.info("Failed loading configuration file (#{@resolved_file_path}): #{e.message}. ScoutAPM will continue starting with configuration from ENV and defaults")
+        rescue ScoutApm::AllExceptionsExceptOnesWeMustNotRescue => e # Everything except the most important exceptions we should never interfere with
+          logger.info("Failed loading configuration file (#{@resolved_file_path}): ScoutAPM will continue starting with configuration from ENV and defaults. Exception was #{e.class}: #{e.message}#{e.backtrace.map { |bt| "\n  #{bt}" }.join('')}")
           @file_loaded = false
         end
       end
