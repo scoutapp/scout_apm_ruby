@@ -80,6 +80,7 @@ require 'scout_apm/histogram'
 
 require 'scout_apm/instruments/net_http'
 require 'scout_apm/instruments/http_client'
+require 'scout_apm/instruments/http'
 require 'scout_apm/instruments/typhoeus'
 require 'scout_apm/instruments/moped'
 require 'scout_apm/instruments/mongoid'
