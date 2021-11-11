@@ -78,7 +78,7 @@ module ScoutApm
         end
 
         if adapter.nil?
-          adapter = ActiveRecord::Base.configurations[env]["adapter"]
+          adapter = ActiveRecord::Base.configurations.to_h[env]["adapter"]
         end
 
         return adapter
