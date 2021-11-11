@@ -32,6 +32,7 @@ module ScoutApm
       install_instrument(ScoutApm::Instruments::NetHttp)
       install_instrument(ScoutApm::Instruments::Typhoeus)
       install_instrument(ScoutApm::Instruments::HttpClient)
+      install_instrument(ScoutApm::Instruments::HTTP)
       install_instrument(ScoutApm::Instruments::Memcached)
       install_instrument(ScoutApm::Instruments::Redis)
       install_instrument(ScoutApm::Instruments::InfluxDB)
