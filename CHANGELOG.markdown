@@ -4,6 +4,7 @@
 * Install HTTP::Client instruments (#420)
 * Sanitize FROM jsonb_as_recordset AS correctly in Postgres (#332)
 * Call to_h on `ActiveRecord::Base.configurations` (#434)
+* Allow loading of trusted `config/scout_apm.yml` via `YAML.unsafe_load` if available (#435)
 
 # 5.0.0
 
