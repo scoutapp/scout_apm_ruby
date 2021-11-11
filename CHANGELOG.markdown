@@ -3,6 +3,7 @@
 * Specify correct (MIT) license in Gemspec (#430)
 * Install HTTP::Client instruments (#420)
 * Sanitize FROM jsonb_as_recordset AS correctly in Postgres (#332)
+* Call to_h on `ActiveRecord::Base.configurations` (#434)
 
 # 5.0.0
 
