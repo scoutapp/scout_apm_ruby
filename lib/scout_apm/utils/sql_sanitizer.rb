@@ -12,11 +12,13 @@ module ScoutApm
 
       PSQL_VAR_INTERPOLATION = %r|\[\[.*\]\]\s*\z|.freeze
       PSQL_REMOVE_STRINGS = /'(?:[^']|'')*'/.freeze
+      PSQL_REMOVE_JSON_STRINGS = /:"(?:[^"]|"")*"/.freeze
       PSQL_REMOVE_INTEGERS = /(?<!LIMIT )\b\d+\b/.freeze
       PSQL_AFTER_SELECT = /(?:SELECT\s+).*?(?:WHERE|FROM\z)/im.freeze # Should be everything between a FROM and a WHERE
       PSQL_PLACEHOLDER = /\$\d+/.freeze
       PSQL_IN_CLAUSE = /IN\s+\(\?[^\)]*\)/.freeze
       PSQL_AFTER_FROM = /(?:FROM\s+).*?(?:WHERE|\z)/im.freeze # Should be everything between a FROM and a WHERE
+      PSQL_AFTER_FROM_AS = /(?:FROM\s+).*?(?:AS|\z)/im.freeze # Should be everything between a FROM and AS without WHERE
       PSQL_AFTER_JOIN = /(?:JOIN\s+).*?\z/im.freeze
       PSQL_AFTER_WHERE = /(?:WHERE\s+).*?(?:SELECT|\z)/im.freeze
       PSQL_AFTER_SET = /(?:SET\s+).*?(?:WHERE|\z)/im.freeze
@@ -76,6 +78,7 @@ module ScoutApm
         sql.gsub!(PSQL_VAR_INTERPOLATION, '')
         # sql.gsub!(PSQL_REMOVE_STRINGS, '?')
         sql.gsub!(PSQL_AFTER_WHERE) {|c| c.gsub(PSQL_REMOVE_STRINGS, '?')}
+        sql.gsub!(PSQL_AFTER_FROM_AS) {|c| c.gsub(PSQL_REMOVE_JSON_STRINGS, ':"?"')}
         sql.gsub!(PSQL_AFTER_JOIN) {|c| c.gsub(PSQL_REMOVE_STRINGS, '?')}
         sql.gsub!(PSQL_AFTER_SET) {|c| c.gsub(PSQL_REMOVE_STRINGS, '?')}
         sql.gsub!(PSQL_REMOVE_INTEGERS, '?')
