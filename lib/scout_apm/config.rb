@@ -432,7 +432,7 @@ module ScoutApm
         begin
           raw_file = File.read(@resolved_file_path)
           erb_file = ERB.new(raw_file).result(binding)
-          parsed_yaml = YAML.load(erb_file)
+          parsed_yaml = YAML.respond_to?(:unsafe_load) ? YAML.unsafe_load(erb_file) : YAML.load(erb_file)
           file_settings = parsed_yaml[app_environment]
 
           if file_settings.is_a? Hash
