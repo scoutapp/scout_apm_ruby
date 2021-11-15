@@ -223,8 +223,12 @@ if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR
         ScoutApm::Agent.instance.install
 
         if ScoutApm::Agent.instance.context.config.value("auto_instruments")
-          ScoutApm::Agent.instance.context.logger.debug("AutoInstruments is enabled.")
-          require 'scout_apm/auto_instrument'
+          if defined?(Parser::TreeRewriter)
+            ScoutApm::Agent.instance.context.logger.debug("AutoInstruments is enabled.")
+            require 'scout_apm/auto_instrument'
+          else # AutoInstruments is turned on, but we don't he the prerequisites to use it
+            ScoutApm::Agent.instance.context.logger.debug("AutoInstruments is enabled, but Parser::TreeRewriter is missing. Update 'parser' gem to >= 2.5.0.")
+          end
         else
           ScoutApm::Agent.instance.context.logger.debug("AutoInstruments is disabled.")
         end
