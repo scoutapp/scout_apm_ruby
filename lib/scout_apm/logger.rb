@@ -69,7 +69,11 @@ module ScoutApm
     private
 
     def build_logger
-      logger_class.new(@log_destination) rescue logger_class.new
+      logger_class.new(@log_destination)
+    rescue => e
+      logger = ::Logger.new(STDERR)
+      logger.error("Error while building ScoutApm logger: #{e.message}. Falling back to STDERR")
+      logger
     end
 
     def logger_class
