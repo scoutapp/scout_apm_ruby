@@ -5,6 +5,7 @@
 * Sanitize FROM jsonb_as_recordset AS correctly in Postgres (#332)
 * Call to_h on `ActiveRecord::Base.configurations` (#434)
 * Allow loading of trusted `config/scout_apm.yml` via `YAML.unsafe_load` if available (#435)
+* Check for nil other_metric_set in merge_external_service_metrics (#437)
 
 # 5.0.0
 
