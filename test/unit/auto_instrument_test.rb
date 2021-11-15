@@ -57,6 +57,8 @@ class AutoInstrumentTest < Minitest::Test
   end
 
   def test_anonymous_block_value
-    ::ScoutApm::AutoInstrument::Rails.rewrite(source_path("anonymous_block_value"))
+    ::ScoutApm::AutoInstrument::Rails.expects(:rewrite).once
+    ::RubyVM::InstructionSequence.expects(:compile).once
+    ::ScoutApm::AutoInstrument::InstructionSequence.load_iseq(source_path("app/controllers/anonymous_block_value_controller"))
   end
 end if defined? ScoutApm::AutoInstrument
