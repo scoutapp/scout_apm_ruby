@@ -1,3 +1,7 @@
+# Unreleased
+
+* Add mutex to RequestHistograms (#428)
+
 # 4.1.2
 
 * Add record_queue_time configuration (PR #422)
