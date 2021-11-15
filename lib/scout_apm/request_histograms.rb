@@ -14,20 +14,25 @@ module ScoutApm
     attr_reader :histogram_size
 
     def initialize(histogram_size = DEFAULT_HISTOGRAM_SIZE)
+      @mutex = Monitor.new
       @histogram_size = histogram_size
       initialize_histograms_hash
     end
 
     def each_name
-      @histograms.keys.each { |n| yield n }
+      @mutex.synchronize do
+        @histograms.keys.each { |n| yield n }
+      end
     end
 
     def as_json
-      Hash[
-        @histograms.map{ |key, histogram|
-          [key, histogram.as_json]
-        }
-      ]
+      @mutex.synchronize do
+        Hash[
+          @histograms.map{ |key, histogram|
+            [key, histogram.as_json]
+          }
+        ]
+      end
     end
 
     def add(item, value)
@@ -44,7 +49,9 @@ module ScoutApm
 
     # Wipes all histograms, setting them back to empty
     def reset_all!
-      initialize_histograms_hash
+      @mutex.synchronize do
+        initialize_histograms_hash
+      end
     end
 
     def raw(item)
@@ -52,7 +59,9 @@ module ScoutApm
     end
 
     def initialize_histograms_hash
-      @histograms = Hash.new { |h, k| h[k] = NumericHistogram.new(histogram_size) }
+      @mutex.synchronize do
+        @histograms = Hash.new { |h, k| h[k] = NumericHistogram.new(histogram_size) }
+      end
     end
   end
 end
