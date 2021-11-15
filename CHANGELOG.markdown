@@ -8,6 +8,7 @@
 * Better exception handling when loading config (#436)
 * Check for nil other_metric_set in merge_external_service_metrics (#437)
 * Log `warn` in InstructionSequence only if SCOUT_LOG_LEVEL is debug (#438)
+* Fall back to STDERR upon exception in build_logger (#441)
 
 
 # 5.0.0
