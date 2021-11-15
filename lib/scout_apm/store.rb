@@ -266,7 +266,11 @@ module ScoutApm
     end
 
     def merge_external_service_metrics!(other_metric_set)
-      external_service_metric_set.combine!(other_metric_set)
+      if other_metric_set.nil?
+        logger.debug("Missing other_metric_set for merge_external_service_metrics - skipping.")
+      else
+        external_service_metric_set.combine!(other_metric_set)
+      end
       self
     end
 
