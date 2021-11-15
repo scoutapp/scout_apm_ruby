@@ -49,9 +49,7 @@ module ScoutApm
 
     # Wipes all histograms, setting them back to empty
     def reset_all!
-      @mutex.synchronize do
-        initialize_histograms_hash
-      end
+      initialize_histograms_hash
     end
 
     def raw(item)
