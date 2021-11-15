@@ -10,10 +10,10 @@ module ScoutApm
             new_code = Rails.rewrite(path)
             return self.compile(new_code, path, path)
           rescue
-            warn "Failed to apply auto-instrumentation to #{path}: #{$!}"
+            warn "Failed to apply auto-instrumentation to #{path}: #{$!}" if ENV['SCOUT_LOG_LEVEL'].to_s.downcase == "debug"
           end
         elsif Rails.ignore?(path)
-          warn "AutoInstruments are ignored for path=#{path}."
+          warn "AutoInstruments are ignored for path=#{path}." if ENV['SCOUT_LOG_LEVEL'].to_s.downcase == "debug"
         end
 
         return self.compile_file(path)
