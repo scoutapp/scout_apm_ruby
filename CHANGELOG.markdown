@@ -1,5 +1,7 @@
 # Unreleased
 
+# 5.1.0
+
 * Specify correct (MIT) license in Gemspec (#430)
 * Install HTTP::Client instruments (#420)
 * Sanitize FROM jsonb_as_recordset AS correctly in Postgres (#332)
