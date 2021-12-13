@@ -131,7 +131,6 @@ module ScoutApm
       def test_sqlserver_strings
         sql = "EXEC sp_executesql N'SELECT  [users].* FROM [users] WHERE first_name = N'john' AND last_name = N'doe' ORDER BY [users].[id] ASC OFFSET 0 ROWS FETCH NEXT @0 ROWS ONLY', N'@0 int', @0 = 10"
         ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :sqlserver }
-        binding.pry
         assert_equal %q|EXEC Authenticate @username = N?, @password = N?, @token = NULL, @app_name = N?, @log_login = true, @ip_address = N?, @external_type = NULL, @external_success = NULL|, ss.to_s
       end
 
