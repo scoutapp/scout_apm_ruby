@@ -123,24 +123,25 @@ module ScoutApm
       end
 
       def test_sqlserver_integers
-        skip "SQLServer Support requires Ruby 1.9+ For Regexes"
-
         sql = "EXEC sp_executesql N'SELECT  [users].* FROM [users] WHERE (age > 50)  ORDER BY [users].[id] ASC OFFSET 0 ROWS FETCH NEXT @0 ROWS ONLY', N'@0 int', @0 = 10"
         ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :sqlserver }
         assert_equal %q|SELECT  [users].* FROM [users] WHERE (age > ?)  ORDER BY [users].[id] ASC OFFSET ? ROWS FETCH NEXT @0 ROWS ONLY|, ss.to_s
       end
 
       def test_sqlserver_strings
-        skip "SQLServer Support requires Ruby 1.9+ For Regexes"
-
-        sql = "EXEC sp_executesql N'SELECT  [users].* FROM [users] WHERE [users].[email] = @0  ORDER BY [users].[id] ASC OFFSET 0 ROWS FETCH NEXT @1 ROWS ONLY', N'@0 nvarchar(4000), @1 int', @0 = N'foo', @1 = 10"
+        sql = "EXEC sp_executesql N'SELECT  [users].* FROM [users] WHERE first_name = N'john' AND last_name = N'doe' ORDER BY [users].[id] ASC OFFSET 0 ROWS FETCH NEXT @0 ROWS ONLY', N'@0 int', @0 = 10"
         ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :sqlserver }
-        assert_equal %q|SELECT  [users].* FROM [users] WHERE [users].[email] = @0  ORDER BY [users].[id] ASC OFFSET ? ROWS FETCH NEXT @1 ROWS ONLY|, ss.to_s
+        binding.pry
+        assert_equal %q|EXEC Authenticate @username = N?, @password = N?, @token = NULL, @app_name = N?, @log_login = true, @ip_address = N?, @external_type = NULL, @external_success = NULL|, ss.to_s
+      end
+
+      def test_sqlserver_strings_no_executesql
+        sql = "EXEC Authenticate @username = N'abraham.lincoln', @password = N'somepassword!', @token = NULL, @app_name = N'Central Auth Service', @log_login = true, @ip_address = N'127.0.0.1', @external_type = NULL, @external_success = NULL"
+        ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :sqlserver }
+        assert_equal %q|EXEC Authenticate @username = N?, @password = N?, @token = NULL, @app_name = N?, @log_login = true, @ip_address = N?, @external_type = NULL, @external_success = NULL|, ss.to_s
       end
 
       def test_sqlserver_in_clause
-        skip "SQLServer Support requires Ruby 1.9+ For Regexes"
-
         sql = "EXEC sp_executesql N'SELECT  [users].* FROM [users] WHERE (id IN (1,2,3))  ORDER BY [users].[id] ASC OFFSET 0 ROWS FETCH NEXT @0 ROWS ONLY', N'@0 int', @0 = 10"
         ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :sqlserver }
         assert_equal %q|SELECT  [users].* FROM [users] WHERE (id IN (?))  ORDER BY [users].[id] ASC OFFSET ? ROWS FETCH NEXT @0 ROWS ONLY|, ss.to_s
