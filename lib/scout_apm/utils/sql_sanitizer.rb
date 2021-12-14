@@ -34,7 +34,8 @@ module ScoutApm
       SQLITE_REMOVE_INTEGERS = /(?<!LIMIT )\b\d+\b/.freeze
 
       # => "EXEC sp_executesql N'SELECT  [users].* FROM [users] WHERE (age > 50)  ORDER BY [users].[id] ASC OFFSET 0 ROWS FETCH NEXT @0 ROWS ONLY', N'@0 int', @0 = 10"
-      SQLSERVER_EXECUTESQL = /EXEC sp_executesql N'(.*?)'.*/
+      SQLSERVER_REMOVE_EXECUTESQL = /EXEC sp_executesql (N')?/.freeze
+      SQLSERVER_REMOVE_STRINGS = /'(?:[^']|'')*'/.freeze
       SQLSERVER_REMOVE_INTEGERS = /(?<!LIMIT )\b(?<!@)\d+\b/.freeze
       SQLSERVER_IN_CLAUSE = /IN\s+\(\?[^\)]*\)/.freeze
 
@@ -67,7 +68,8 @@ module ScoutApm
       private
 
       def to_s_sqlserver
-        sql.gsub!(SQLSERVER_EXECUTESQL, '\1')
+        sql.gsub!(SQLSERVER_REMOVE_EXECUTESQL, '')
+        sql.gsub!(SQLSERVER_REMOVE_STRINGS, '?')
         sql.gsub!(SQLSERVER_REMOVE_INTEGERS, '?')
         sql.gsub!(SQLSERVER_IN_CLAUSE, 'IN (?)')
         sql
