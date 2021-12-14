@@ -1,5 +1,9 @@
 # Unreleased
 
+# 5.1.1
+
+* Improvements to SqlServer scrubbing in SqlSanitizer (#422)
+
 # 5.1.0
 
 * Specify correct (MIT) license in Gemspec (#430)
