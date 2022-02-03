@@ -217,6 +217,7 @@ module ScoutApm
 
     def initialize(timestamp, context)
       @timestamp = timestamp
+      @context = context
 
       @request_traces = ScoredItemSet.new(context.config.value('max_traces'))
       @job_traces = ScoredItemSet.new(context.config.value('max_traces'))
@@ -229,6 +230,11 @@ module ScoutApm
 
       @jobs = Hash.new
     end
+
+    def logger
+      @context.logger
+    end
+    private :logger
 
     # Merges another StoreReportingPeriod into this one
     def merge(other)
