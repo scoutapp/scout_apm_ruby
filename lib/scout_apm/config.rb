@@ -318,7 +318,7 @@ module ScoutApm
         'auto_instruments' => false,
         'auto_instruments_ignore' => [],
         'use_prepend' => false,
-        'alias_method_instruments', => [],
+        'alias_method_instruments' => [],
         'prepend_instruments' => [],
         'ssl_cert_file' => File.join( File.dirname(__FILE__), *%w[.. .. data cacert.pem] ),
         'errors_enabled' => false,
