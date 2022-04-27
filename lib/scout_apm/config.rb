@@ -199,7 +199,7 @@ module ScoutApm
       'auto_instruments' => BooleanCoercion.new,
       'auto_instruments_ignore' => JsonCoercion.new,
       'use_prepend' => BooleanCoercion.new,
-      'alias_method_instruments', JsonCoercion.new,
+      'alias_method_instruments' => JsonCoercion.new,
       'prepend_instruments' => JsonCoercion.new,
       'errors_enabled' => BooleanCoercion.new,
       'errors_ignored_exceptions' => JsonCoercion.new,
