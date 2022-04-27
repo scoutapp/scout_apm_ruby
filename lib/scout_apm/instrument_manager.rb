@@ -52,6 +52,23 @@ module ScoutApm
 
     private
 
+    def prepend_for_instrument?(instrument_klass)
+      instrument_short_name = instrument_klass.name.split("::").last
+
+      # `use_prepend` defaults to false, which means we use `alias_method` by default.
+      # If `use_prepend` is `true`, then we should default to using `prepend` unless
+      # the instrument is explicitly listed in the `alias_method_instruments` config array.
+      if config.value("use_prepend")
+        return (config.value("alias_method_instruments") || []).include?(instrument_short_name)
+      else
+        return true
+      end
+
+      # `use_prepend` is false, but we should use `prepend` if the instrument is
+      # explicitly listed in the `prepend_instruments` array.
+      return true if (config.value("prepend_instruments") || []).include?(instrument_short_name)
+    end
+
     def install_instrument(instrument_klass)
       return if already_installed?(instrument_klass)
 
@@ -62,7 +79,7 @@ module ScoutApm
 
       instance = instrument_klass.new(context)
       @installed_instruments << instance
-      instance.install
+      instance.install(prepend: prepend_for_instrument?(instrument_klass))
     end
 
     def already_installed?(instrument_klass)
