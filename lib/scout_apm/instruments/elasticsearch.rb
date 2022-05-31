@@ -18,7 +18,7 @@ module ScoutApm
         @installed
       end
 
-      def install
+      def install(prepend:)
         if defined?(::Elasticsearch) &&
             defined?(::Elasticsearch::Transport) &&
             defined?(::Elasticsearch::Transport::Client)

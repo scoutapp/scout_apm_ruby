@@ -16,7 +16,7 @@ module ScoutApm
         @installed
       end
 
-      def install
+      def install(prepend:)
         if defined?(ActionDispatch) && defined?(ActionDispatch::Routing) && defined?(ActionDispatch::Routing::RouteSet)
           @installed = true
 

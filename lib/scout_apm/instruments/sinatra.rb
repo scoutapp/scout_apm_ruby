@@ -15,7 +15,7 @@ module ScoutApm
         @installed
       end
 
-      def install
+      def install(prepend:)
         if defined?(::Sinatra) && defined?(::Sinatra::Base) && ::Sinatra::Base.private_method_defined?(:dispatch!)
           @installed = true
 

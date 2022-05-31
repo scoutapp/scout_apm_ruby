@@ -29,7 +29,7 @@ module ScoutApm
         context.environment.supports_module_prepend?
       end
 
-      def install
+      def install(prepend:)
         return unless defined?(::ActionView) && defined?(::ActionView::PartialRenderer)
 
         if prependable?

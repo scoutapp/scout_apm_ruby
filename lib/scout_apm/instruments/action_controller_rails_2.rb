@@ -16,7 +16,7 @@ module ScoutApm
         @installed
       end
 
-      def install
+      def install(prepend:)
         if defined?(::ActionController) && defined?(::ActionController::Base)
           @installed = true
 
