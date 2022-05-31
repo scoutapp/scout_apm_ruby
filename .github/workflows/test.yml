@@ -35,11 +35,16 @@ jobs:
             gemfile: gems/rails3.gemfile
             bundler: 1.17.3
           - ruby: 2.7
+          - ruby: 2.7
+            prepend: true
           - ruby: 3.0
+          - ruby: 3.0
+            prepend: true
 
     env:
       BUNDLE_GEMFILE: ${{ matrix.gemfile }}
       SCOUT_TEST_FEATURES: ${{ matrix.test_features }}
+      SCOUT_USE_PREPEND: ${{ matrix.prepend }}
 
     runs-on: ubuntu-latest
 
