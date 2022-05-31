@@ -10,7 +10,7 @@ if (ENV["SCOUT_TEST_FEATURES"] || "").include?("typhoeus")
       @context = ScoutApm::AgentContext.new
       @recorder = FakeRecorder.new
       ScoutApm::Agent.instance.context.recorder = @recorder
-      ScoutApm::Instruments::Typhoeus.new(@context).install
+      ScoutApm::Instruments::Typhoeus.new(@context).install(prepend: false)
     end
 
     def test_instruments_typhoeus_hydra

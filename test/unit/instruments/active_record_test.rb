@@ -29,7 +29,7 @@ class ActiveRecordTest < Minitest::Test
     agent_context.recorder = recorder
 
     instrument = ScoutApm::Instruments::ActiveRecord.new(agent_context)
-    instrument.install
+    instrument.install(prepend: false)
 
     ScoutApm::Tracer.instrument("Controller", "foo/bar") do
       user = User.create
