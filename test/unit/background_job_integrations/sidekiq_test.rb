@@ -3,7 +3,29 @@ require 'scout_apm/request_manager'
 require 'scout_apm/background_job_integrations/sidekiq'
 
 class SidekiqTest < Minitest::Test
+  SidekiqIntegration = ScoutApm::BackgroundJobIntegrations::Sidekiq
   SidekiqMiddleware = ScoutApm::BackgroundJobIntegrations::SidekiqMiddleware
+
+  ########################################
+  # Install
+  ########################################
+  if (ENV["SCOUT_TEST_FEATURES"] || "").include?("sidekiq_install")
+    require 'sidekiq'
+
+    def test_installs_processor_on_install
+      agent = ::ScoutApm::Agent.instance
+      agent.expects(:start)
+      integration_instance = SidekiqIntegration.new
+      integration_instance.expects(:install_processor)
+      integration_instance.install
+    end
+
+    def test_starts_on_startup
+      agent = ::ScoutApm::Agent.instance
+      agent.expects(:start)
+      SidekiqIntegration.new.install_processor
+    end
+  end
 
   ########################################
   # Middleware
