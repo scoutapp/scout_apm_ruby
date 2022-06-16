@@ -11,19 +11,22 @@ class SidekiqTest < Minitest::Test
   ########################################
   if (ENV["SCOUT_TEST_FEATURES"] || "").include?("sidekiq_install")
     require 'sidekiq'
+    require 'sidekiq/launcher'
 
     def test_installs_processor_on_install
-      agent = ::ScoutApm::Agent.instance
-      agent.expects(:start)
+      ::ScoutApm::Agent.any_instance.expects(:start)
       integration_instance = SidekiqIntegration.new
       integration_instance.expects(:install_processor)
       integration_instance.install
+      #Sidekiq::Launcher.new(Sidekiq).fire_event(:startup)
+      binding.pry
+      Sidekiq.options[:lifecycle_events][:startup].map(&:call)
     end
 
     def test_starts_on_startup
-      agent = ::ScoutApm::Agent.instance
-      agent.expects(:start)
+      ::ScoutApm::Agent.any_instance.expects(:start)
       SidekiqIntegration.new.install_processor
+      Sidekiq::Launcher.new(Sidekiq).fire_event(:startup)
     end
   end
 
