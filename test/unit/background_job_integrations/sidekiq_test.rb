@@ -11,22 +11,22 @@ class SidekiqTest < Minitest::Test
   ########################################
   if (ENV["SCOUT_TEST_FEATURES"] || "").include?("sidekiq_install")
     require 'sidekiq'
-    require 'sidekiq/launcher'
+
+    # Sidekiq::CLI needs to be defined in order for `Sidekiq.configure_server` to work
+    Sidekiq::CLI = nil
 
     def test_installs_processor_on_install
       ::ScoutApm::Agent.any_instance.expects(:start)
       integration_instance = SidekiqIntegration.new
       integration_instance.expects(:install_processor)
       integration_instance.install
-      #Sidekiq::Launcher.new(Sidekiq).fire_event(:startup)
-      binding.pry
       Sidekiq.options[:lifecycle_events][:startup].map(&:call)
     end
 
     def test_starts_on_startup
       ::ScoutApm::Agent.any_instance.expects(:start)
       SidekiqIntegration.new.install_processor
-      Sidekiq::Launcher.new(Sidekiq).fire_event(:startup)
+      Sidekiq.options[:lifecycle_events][:startup].map(&:call)
     end
   end
 
