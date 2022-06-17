@@ -15,17 +15,9 @@ class SidekiqTest < Minitest::Test
     # Sidekiq::CLI needs to be defined in order for `Sidekiq.configure_server` to work
     Sidekiq::CLI = nil
 
-    def test_installs_processor_on_install
-      ::ScoutApm::Agent.any_instance.expects(:start)
-      integration_instance = SidekiqIntegration.new
-      integration_instance.expects(:install_processor)
-      integration_instance.install
-      Sidekiq.options[:lifecycle_events][:startup].map(&:call)
-    end
-
     def test_starts_on_startup
       ::ScoutApm::Agent.any_instance.expects(:start)
-      SidekiqIntegration.new.install_processor
+      SidekiqIntegration.new.install
       Sidekiq.options[:lifecycle_events][:startup].map(&:call)
     end
   end
