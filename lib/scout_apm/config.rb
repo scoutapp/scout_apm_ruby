@@ -30,6 +30,7 @@ require 'scout_apm/environment'
 # scm_subdirectory - if the app root lives in source management in a subdirectory. E.g. #{SCM_ROOT}/src
 # uri_reporting    - 'path' or 'full_path' default is 'full_path', which reports URL params as well as the path.
 # record_queue_time - true/false to enable recording of queuetime.
+# unique_trace_names - true/false to allow multiple traces per a reporting period with same name.
 # remote_agent_host - Internal: What host to bind to, and also send messages to for remote. Default: 127.0.0.1.
 # remote_agent_port - What port to bind the remote webserver to
 # start_resque_server_instrument - Used in special situations with certain Resque installs
@@ -73,6 +74,7 @@ module ScoutApm
         'profile',
         'proxy',
         'record_queue_time',
+        'unique_trace_names',
         'remote_agent_host',
         'remote_agent_port',
         'report_format',
@@ -185,6 +187,7 @@ module ScoutApm
       'external_service_metric_report_limit' => IntegerCoercion.new,
       'instrument_http_url_length' => IntegerCoercion.new,
       'record_queue_time' => BooleanCoercion.new,
+      'unique_trace_names' => BooleanCoercion.new,
       'start_resque_server_instrument' => BooleanCoercion.new,
       'timeline_traces' => BooleanCoercion.new,
       'auto_instruments' => BooleanCoercion.new,
@@ -302,6 +305,7 @@ module ScoutApm
         'start_resque_server_instrument' => true, # still only starts if Resque is detected
         'collect_remote_ip' => true,
         'record_queue_time' => true,
+        'unique_trace_names' => true,
         'timeline_traces' => true,
         'auto_instruments' => false,
         'auto_instruments_ignore' => [],

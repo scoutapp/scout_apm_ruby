@@ -48,7 +48,7 @@ class ScoredItemSetTest < Minitest::Test
   end
 
   def test_evicts_at_capacity
-    set = ScoutApm::ScoredItemSet.new(3) # Force max_size to 3
+    set = ScoutApm::ScoredItemSet.new(true, 3)
 
     [ FakeScoredItem.new("users/index", 10),
       FakeScoredItem.new("users/show", 11),
@@ -61,5 +61,19 @@ class ScoredItemSetTest < Minitest::Test
     assert set.to_a.include?("called_11_users/show"),   "Expected to see users/show in #{set.to_a.inspect}"
     assert set.to_a.include?("called_12_posts/index"),  "Expected to see posts/index in #{set.to_a.inspect}"
     assert set.to_a.include?("called_13_posts/move"),   "Expected to see posts/move in #{set.to_a.inspect}"
+  end
+
+  def test_allow_same_name_when_unique_traces_names_false
+    set = ScoutApm::ScoredItemSet.new(unique_trace_names = false, max_size = 4)
+
+    [ FakeScoredItem.new("users/index", 10),
+      FakeScoredItem.new("users/index", 11),
+      FakeScoredItem.new("users/show", 12),
+      FakeScoredItem.new("users/show", 10)
+    ].shuffle.each { |fsi| set << fsi }
+
+    assert_equal set.count, 4
+    assert set.to_a.include?("called_11_users/index")
+    assert set.to_a.include?("called_10_users/index")
   end
 end

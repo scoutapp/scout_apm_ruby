@@ -14,11 +14,22 @@ module ScoutApm
     # Without otherwise saying, default the size to this
     DEFAULT_MAX_SIZE = 10
 
+    # Without otherwise saying, default to enforcing unique endpoints and/or job names.
+    DEFAULT_UNIQUE_TRACE_NAMES = true
+
     attr_reader :max_size
     attr_reader :items
 
-    def initialize(max_size = DEFAULT_MAX_SIZE)
+    def initialize(
+      unique_trace_names = DEFAULT_UNIQUE_TRACE_NAMES, 
+      max_size = DEFAULT_MAX_SIZE
+    )
       @items = {}
+
+      # Whether traces should be unique. If set to false, then multiple traces per an endpoint or job can be
+      # captured per a reporting period.
+      @unique_trace_names = unique_trace_names
+  
       @max_size = max_size
     end
 
@@ -32,9 +43,9 @@ module ScoutApm
     def <<(new_item)
       return if new_item.name == :unknown
 
-      # If we have this item in the hash already, compare the new & old ones, and store
-      # the new one only if it's higher score.
-      if items.has_key?(new_item.name)
+      # If unique traces name, and we have this item in the hash already, compare the new & old ones
+      # and store the new one only if it's higher score.
+      if @unique_trace_names && items.has_key?(new_item.name)
         if new_item.score > items[new_item.name].first
           store!(new_item)
         end
@@ -57,7 +68,7 @@ module ScoutApm
         end
 
 
-      # Set isn't full, and we've not seen this new_item, so go ahead and store it.
+      # Set isn't full, and we've not seen this new_item (if unique_trace_names), so go ahead and store it.
       else
         store!(new_item)
       end
@@ -78,7 +89,11 @@ module ScoutApm
 
     def store!(new_item)
       if !new_item.name.nil? # Never store a nil name.
-        items[new_item.name] = [new_item.score, new_item.call]
+
+        # The stored name used when evaluting/evicting traces when full.
+        realized_stored_name = @unique_trace_names ? new_item.name : "#{new_item.name}-#{new_item.score}"
+
+        items[realized_stored_name] = [new_item.score, new_item.call]
       end
     end
 

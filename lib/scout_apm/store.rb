@@ -219,8 +219,14 @@ module ScoutApm
       @timestamp = timestamp
       @context = context
 
-      @request_traces = ScoredItemSet.new(context.config.value('max_traces'))
-      @job_traces = ScoredItemSet.new(context.config.value('max_traces'))
+      @request_traces = ScoredItemSet.new(
+        context.config.value("unique_trace_names"),
+        context.config.value('max_traces')
+      )
+      @job_traces = ScoredItemSet.new(
+        context.config.value("unique_trace_names"),
+        context.config.value('max_traces')
+      )
 
       @histograms = []
 
