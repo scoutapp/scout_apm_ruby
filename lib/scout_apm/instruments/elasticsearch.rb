@@ -27,55 +27,104 @@ module ScoutApm
 
           logger.info "Instrumenting Elasticsearch"
 
-          ::Elasticsearch::Transport::Client.class_eval do
-            include ScoutApm::Tracer
+          if prepend
+            ::Elasticsearch::Transport::Client.send(:include, ScoutApm::Tracer)
+            ::Elasticsearch::Transport::Client.send(:prepend, ElasticsearchTransportClientInstrumentationPrepend)
+          else
+            ::Elasticsearch::Transport::Client.class_eval do
+              include ScoutApm::Tracer
 
-            def perform_request_with_scout_instruments(*args, &block)
-              name = _sanitize_name(args[1])
+              def perform_request_with_scout_instruments(*args, &block)
+                name = _sanitize_name(args[1])
 
-              self.class.instrument("Elasticsearch", name, :ignore_children => true) do
-                perform_request_without_scout_instruments(*args, &block)
+                self.class.instrument("Elasticsearch", name, :ignore_children => true) do
+                  perform_request_without_scout_instruments(*args, &block)
+                end
               end
-            end
 
-            alias_method :perform_request_without_scout_instruments, :perform_request
-            alias_method :perform_request, :perform_request_with_scout_instruments
+              alias_method :perform_request_without_scout_instruments, :perform_request
+              alias_method :perform_request, :perform_request_with_scout_instruments
 
-            def _sanitize_name(name)
-              name = name.split("/").last.gsub(/^_/, '')
-              allowed_names = ["bench",
-                               "bulk",
-                               "count",
-                               "exists",
-                               "explain",
-                               "field_stats",
-                               "health",
-                               "mget",
-                               "mlt",
-                               "mpercolate",
-                               "msearch",
-                               "mtermvectors",
-                               "percolate",
-                               "query",
-                               "scroll",
-                               "search_shards",
-                               "source",
-                               "suggest",
-                               "template",
-                               "termvectors",
-                               "update",
-                               "search", ]
+              def _sanitize_name(name)
+                name = name.split("/").last.gsub(/^_/, '')
+                allowed_names = ["bench",
+                                "bulk",
+                                "count",
+                                "exists",
+                                "explain",
+                                "field_stats",
+                                "health",
+                                "mget",
+                                "mlt",
+                                "mpercolate",
+                                "msearch",
+                                "mtermvectors",
+                                "percolate",
+                                "query",
+                                "scroll",
+                                "search_shards",
+                                "source",
+                                "suggest",
+                                "template",
+                                "termvectors",
+                                "update",
+                                "search", ]
 
-              if allowed_names.include?(name)
-                name
-              else
+                if allowed_names.include?(name)
+                  name
+                else
+                  "Unknown"
+                end
+              rescue
                 "Unknown"
               end
-            rescue
-              "Unknown"
             end
           end
         end
+      end
+    end
+
+    module ElasticsearchTransportClientInstrumentationPrepend
+      def perform_request(*args, &block)
+        name = _sanitize_name(args[1])
+
+        self.class.instrument("Elasticsearch", name, :ignore_children => true) do
+          super(*args, &block)
+        end
+      end
+
+      def _sanitize_name(name)
+        name = name.split("/").last.gsub(/^_/, '')
+        allowed_names = ["bench",
+                        "bulk",
+                        "count",
+                        "exists",
+                        "explain",
+                        "field_stats",
+                        "health",
+                        "mget",
+                        "mlt",
+                        "mpercolate",
+                        "msearch",
+                        "mtermvectors",
+                        "percolate",
+                        "query",
+                        "scroll",
+                        "search_shards",
+                        "source",
+                        "suggest",
+                        "template",
+                        "termvectors",
+                        "update",
+                        "search", ]
+
+        if allowed_names.include?(name)
+          name
+        else
+          "Unknown"
+        end
+      rescue
+        "Unknown"
       end
     end
   end
