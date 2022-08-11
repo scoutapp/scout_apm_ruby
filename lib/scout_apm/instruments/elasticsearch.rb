@@ -25,7 +25,7 @@ module ScoutApm
 
           @installed = true
 
-          logger.info "Instrumenting Elasticsearch"
+          logger.info "Instrumenting Elasticsearch. Prepend: #{prepend}"
 
           if prepend
             ::Elasticsearch::Transport::Client.send(:include, ScoutApm::Tracer)

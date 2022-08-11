@@ -20,11 +20,11 @@ module ScoutApm
         if defined?(::Dalli) && defined?(::Dalli::Client)
           @installed = true
 
-          logger.info "Instrumenting Memcached"
+          logger.info "Instrumenting Memcached. Prepend: #{prepend}"
 
           if prepend
             ::Dalli::Client.send(:include, ScoutApm::Tracer)
-            ::Dalli::Client.send(:prepend, RMemcachedInstrumentationPrepend)
+            ::Dalli::Client.send(:prepend, MemcachedInstrumentationPrepend)
           else
             ::Dalli::Client.class_eval do
               include ScoutApm::Tracer

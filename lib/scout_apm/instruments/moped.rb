@@ -20,7 +20,7 @@ module ScoutApm
         if defined?(::Moped)
           @installed = true
 
-          logger.info "Instrumenting Moped"
+          logger.info "Instrumenting Moped. Prepend: #{prepend}"
 
           if prepend
             ::Moped::Node.send(:include, ScoutApm::Tracer)

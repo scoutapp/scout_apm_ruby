@@ -20,7 +20,7 @@ module ScoutApm
         if defined?(::HTTP) && defined?(::HTTP::Client)
           @installed = true
 
-          logger.info "Instrumenting HTTP::Client"
+          logger.info "Instrumenting HTTP::Client. Prepend: #{prepend}"
 
           if prepend
             ::HTTP::Client.send(:include, ScoutApm::Tracer)

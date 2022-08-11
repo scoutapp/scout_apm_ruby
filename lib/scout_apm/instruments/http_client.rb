@@ -20,11 +20,11 @@ module ScoutApm
         if defined?(::HTTPClient)
           @installed = true
 
-          logger.info "Instrumenting HTTPClient"
+          logger.info "Instrumenting HTTPClient. Prepend: #{prepend}"
 
           if prepend
             ::HTTPClient.send(:include, ScoutApm::Tracer)
-            ::HTTPClient.send(:prepend, HTTPClientInstrumentationPrepend)
+            ::HTTPClient.send(:prepend, HttpClientInstrumentationPrepend)
           else
             ::HTTPClient.class_eval do
               include ScoutApm::Tracer

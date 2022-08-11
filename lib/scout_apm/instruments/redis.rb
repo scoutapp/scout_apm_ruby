@@ -20,7 +20,7 @@ module ScoutApm
         if defined?(::Redis) && defined?(::Redis::Client)
           @installed = true
 
-          logger.info "Instrumenting Redis"
+          logger.info "Instrumenting Redis. Prepend: #{prepend}"
 
           if prepend
             ::Redis::Client.send(:include, ScoutApm::Tracer)
