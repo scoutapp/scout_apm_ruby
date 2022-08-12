@@ -47,6 +47,9 @@ jobs:
             gemfile: gems/instruments.gemfile
             prepend: true
             test_features: "instruments"
+          - ruby: 3.0
+            gemfile: gems/sidekiq.gemfile
+            test_features: "sidekiq_install"
 
     env:
       BUNDLE_GEMFILE: ${{ matrix.gemfile }}

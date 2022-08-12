@@ -1,5 +1,9 @@
 # Unreleased
 
+# 5.2.0
+
+* Use Sidekiq lifecycle hooks to start Scout agent on Sidekiq start. (#449)
+
 # 5.1.1
 
 * Improvements to SqlServer scrubbing in SqlSanitizer (#422)
