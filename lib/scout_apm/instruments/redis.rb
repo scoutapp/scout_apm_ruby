@@ -16,26 +16,41 @@ module ScoutApm
         @installed
       end
 
-      def install
+      def install(prepend:)
         if defined?(::Redis) && defined?(::Redis::Client)
           @installed = true
 
-          logger.info "Instrumenting Redis"
+          logger.info "Instrumenting Redis. Prepend: #{prepend}"
 
-          ::Redis::Client.class_eval do
-            include ScoutApm::Tracer
+          if prepend
+            ::Redis::Client.send(:include, ScoutApm::Tracer)
+            ::Redis::Client.send(:prepend, RedisClientInstrumentationPrepend)
+          else
+            ::Redis::Client.class_eval do
+              include ScoutApm::Tracer
 
-            def call_with_scout_instruments(*args, &block)
-              command = args.first.first rescue "Unknown"
+              def call_with_scout_instruments(*args, &block)
+                command = args.first.first rescue "Unknown"
 
-              self.class.instrument("Redis", command) do
-                call_without_scout_instruments(*args, &block)
+                self.class.instrument("Redis", command) do
+                  call_without_scout_instruments(*args, &block)
+                end
               end
-            end
 
-            alias_method :call_without_scout_instruments, :call
-            alias_method :call, :call_with_scout_instruments
+              alias_method :call_without_scout_instruments, :call
+              alias_method :call, :call_with_scout_instruments
+            end
           end
+        end
+      end
+    end
+
+    module RedisClientInstrumentationPrepend
+      def call(*args, &block)
+        command = args.first.first rescue "Unknown"
+
+        self.class.instrument("Redis", command) do
+          super(*args, &block)
         end
       end
     end

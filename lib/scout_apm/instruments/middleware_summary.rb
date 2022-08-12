@@ -21,7 +21,7 @@ module ScoutApm
         @installed
       end
 
-      def install
+      def install(prepend:)
         if defined?(ActionDispatch) && defined?(ActionDispatch::MiddlewareStack)
           @installed = true
 

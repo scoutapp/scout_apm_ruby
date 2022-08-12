@@ -21,7 +21,7 @@ module ScoutApm
         @installed = true
       end
 
-      def install
+      def install(prepend:)
         if !defined?(::ActiveSupport)
           return
         end

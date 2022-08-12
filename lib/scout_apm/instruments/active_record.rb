@@ -50,7 +50,7 @@ module ScoutApm
         @installed
       end
 
-      def install
+      def install(prepend:)
         if install_via_after_initialize?
           Rails.configuration.after_initialize do
             add_instruments

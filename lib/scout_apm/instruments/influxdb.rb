@@ -16,11 +16,11 @@ module ScoutApm
         @installed
       end
 
-      def install
+      def install(prepend:)
         if defined?(::InfluxDB)
           @installed = true
 
-          logger.debug "Instrumenting InfluxDB"
+          logger.debug "Instrumenting InfluxDB."
 
           ::InfluxDB::Client.class_eval do
             include ScoutApm::Tracer

@@ -35,7 +35,13 @@ require 'scout_apm/environment'
 # start_resque_server_instrument - Used in special situations with certain Resque installs
 # timeline_traces - true/false to enable sending of of the timeline trace format.
 # auto_instruments - true/false whether to install autoinstruments. Only installed if on a supported Ruby version.
-# auto_instruments_ignore - An array of file names to exclude from autoinstruments (Ex: ['application_controller']).
+# auto_instruments_ignore  - An array of file names to exclude from autoinstruments (Ex: ['application_controller']).
+# use_prepend              - Whether to apply instrumentation using Module#Prepend instead
+#                            of Module#alias_method (Default: false)
+# alias_method_instruments - If `use_prepend` is true, continue to use Module#alias_method for
+#                            any instruments listed in this array. Default: []
+# prepend_instruments      - If `use_prepend` is false, force using Module#prepend for any
+#                            instruments listed in this array. Default: []
 #
 # Any of these config settings can be set with an environment variable prefixed
 # by SCOUT_ and uppercasing the key: SCOUT_LOG_LEVEL for instance.
@@ -85,6 +91,9 @@ module ScoutApm
         'timeline_traces',
         'auto_instruments',
         'auto_instruments_ignore',
+        'use_prepend',
+        'alias_method_instruments',
+        'prepend_instruments',
 
         # Error Service Related Configuration
         'errors_enabled',
@@ -189,6 +198,9 @@ module ScoutApm
       'timeline_traces' => BooleanCoercion.new,
       'auto_instruments' => BooleanCoercion.new,
       'auto_instruments_ignore' => JsonCoercion.new,
+      'use_prepend' => BooleanCoercion.new,
+      'alias_method_instruments' => JsonCoercion.new,
+      'prepend_instruments' => JsonCoercion.new,
       'errors_enabled' => BooleanCoercion.new,
       'errors_ignored_exceptions' => JsonCoercion.new,
       'errors_filtered_params' => JsonCoercion.new,
@@ -305,6 +317,9 @@ module ScoutApm
         'timeline_traces' => true,
         'auto_instruments' => false,
         'auto_instruments_ignore' => [],
+        'use_prepend' => false,
+        'alias_method_instruments' => [],
+        'prepend_instruments' => [],
         'ssl_cert_file' => File.join( File.dirname(__FILE__), *%w[.. .. data cacert.pem] ),
         'errors_enabled' => false,
         'errors_ignored_exceptions' => %w(ActiveRecord::RecordNotFound ActionController::RoutingError),

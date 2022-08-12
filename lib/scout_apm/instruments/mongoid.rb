@@ -16,7 +16,7 @@ module ScoutApm
         @installed
       end
 
-      def install
+      def install(prepend:)
         @installed = true
 
         # Mongoid versions that use Moped should instrument Moped.
