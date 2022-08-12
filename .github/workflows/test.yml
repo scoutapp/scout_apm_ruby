@@ -40,6 +40,13 @@ jobs:
           - ruby: 3.0
           - ruby: 3.0
             prepend: true
+          - ruby: 3.0
+            gemfile: gems/instruments.gemfile
+            test_features: "instruments"
+          - ruby: 3.0
+            gemfile: gems/instruments.gemfile
+            prepend: true
+            test_features: "instruments"
 
     env:
       BUNDLE_GEMFILE: ${{ matrix.gemfile }}
