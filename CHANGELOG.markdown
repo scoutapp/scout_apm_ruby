@@ -1,5 +1,13 @@
 # Unreleased
 
+# 5.3.0
+
+* Add configuraiton option to use `Module#prepend` instead of `Module#alias_method` (default)
+  for instrumentation (#448). The default method for instrumentation has not changed, but
+  configuration options were added to allow switching to `Module#prepend` for most
+  instrumentation. Refer to the documentation for more information:
+  [Library Instrumentation Method](https://scoutapm.com/docs/ruby/configuration#library-instrumentation-method)
+
 # 5.2.0
 
 * Use Sidekiq lifecycle hooks to start Scout agent on Sidekiq start. (#449)
