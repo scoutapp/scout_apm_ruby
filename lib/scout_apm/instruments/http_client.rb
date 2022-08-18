@@ -59,7 +59,7 @@ module ScoutApm
         url = url && url.to_s[0..(max_length - 1)]
 
         self.class.instrument("HTTP", method, :desc => url) do
-          super(request, *args, &block)
+          super(*args, &block)
         end
       end
     end
