@@ -1,5 +1,8 @@
 # Unreleased
 
+# 5.3.1
+
+* Fix typo in HTTPClient prepend instrumentation (#457)
 # 5.3.0
 
 * Add configuraiton option to use `Module#prepend` instead of `Module#alias_method` (default)
