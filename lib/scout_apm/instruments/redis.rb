@@ -17,7 +17,7 @@ module ScoutApm
       end
 
       def install(prepend:)
-        if defined?(::Redis) && defined?(::Redis::Client)
+        if defined?(::Redis) && defined?(::Redis::Client) && ::Redis::Client.instance_methods(false).include?(:call)
           @installed = true
 
           logger.info "Instrumenting Redis. Prepend: #{prepend}"

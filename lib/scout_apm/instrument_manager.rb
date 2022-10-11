@@ -35,6 +35,7 @@ module ScoutApm
       install_instrument(ScoutApm::Instruments::HTTP)
       install_instrument(ScoutApm::Instruments::Memcached)
       install_instrument(ScoutApm::Instruments::Redis)
+      install_instrument(ScoutApm::Instruments::Redis5)
       install_instrument(ScoutApm::Instruments::InfluxDB)
       install_instrument(ScoutApm::Instruments::Elasticsearch)
       install_instrument(ScoutApm::Instruments::Grape)
