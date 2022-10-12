@@ -8,7 +8,7 @@ if (ENV["SCOUT_TEST_FEATURES"] || "").include?("instruments")
   class RedisTest < Minitest::Test
     def setup
       @context = ScoutApm::AgentContext.new
-      @instance = ScoutApm::Instruments::Redis.new(@context)
+      @instance = ScoutApm::Instruments::Redis5.new(@context)
       @instrument_manager = ScoutApm::InstrumentManager.new(@context)
       @instance.install(prepend: @instrument_manager.prepend_for_instrument?(@instance.class))
     end
