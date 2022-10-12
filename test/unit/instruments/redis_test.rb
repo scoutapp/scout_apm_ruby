@@ -1,9 +1,9 @@
 if (ENV["SCOUT_TEST_FEATURES"] || "").include?("instruments")
   require 'test_helper'
 
-  require 'scout_apm/instruments/redis'
+  require 'scout_apm/instruments/redis5'
 
-  require 'redis'
+  require 'redis5'
 
   class RedisTest < Minitest::Test
     def setup
@@ -15,9 +15,9 @@ if (ENV["SCOUT_TEST_FEATURES"] || "").include?("instruments")
 
     def test_installs_using_proper_method
       if @instrument_manager.prepend_for_instrument?(@instance.class) == true
-        assert ::Redis::Client.ancestors.include?(ScoutApm::Instruments::RedisClientInstrumentationPrepend)
+        assert ::Redis::Client.ancestors.include?(ScoutApm::Instruments::Redis5ClientInstrumentationPrepend)
       else
-        assert_equal false, ::Redis::Client.ancestors.include?(ScoutApm::Instruments::RedisClientInstrumentationPrepend)
+        assert_equal false, ::Redis::Client.ancestors.include?(ScoutApm::Instruments::Redis5ClientInstrumentationPrepend)
       end
     end
   end
