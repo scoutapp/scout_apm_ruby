@@ -3,7 +3,7 @@ if (ENV["SCOUT_TEST_FEATURES"] || "").include?("instruments")
 
   require 'scout_apm/instruments/redis5'
 
-  require 'redis5'
+  require 'redis'
 
   class RedisTest < Minitest::Test
     def setup
