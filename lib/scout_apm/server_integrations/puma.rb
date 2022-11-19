@@ -24,7 +24,7 @@ module ScoutApm
       end
 
       def install
-        old = ::Puma.cli_config.options[:before_worker_boot] || []
+        old = ::Puma.cli_config.user_options[:before_worker_boot] || []
         new = Array(old) + [Proc.new do
           logger.info "Installing Puma worker loop."
           ScoutApm::Agent.instance.start_background_worker
