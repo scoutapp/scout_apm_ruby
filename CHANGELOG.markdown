@@ -1,5 +1,9 @@
 # Unreleased
 
+# 5.3.3
+
+* Fix double firing of Puma `on_worker_boot` when preloading. (#463)
+
 # 5.3.2
 
 * Update redis instruments to support redis v5.0+ (#458)
