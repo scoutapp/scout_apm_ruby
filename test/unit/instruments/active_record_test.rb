@@ -24,6 +24,34 @@ class ActiveRecordTest < Minitest::Test
   class User < ActiveRecord::Base
   end
 
+  class DumbRailsConfig
+    def self.after_initialize; end
+  end
+
+  def test_old_rails_initialization
+    recorder = FakeRecorder.new
+    agent_context.recorder = recorder
+    old_rails_version = (1..2).to_a.sample
+    fake_rails(old_rails_version)
+
+    ::Rails.expects(:configuration).never
+
+    instrument = ScoutApm::Instruments::ActiveRecord.new(agent_context)
+    instrument.install(prepend: false)
+  end
+
+  def test_modern_rails_initialization
+    recorder = FakeRecorder.new
+    agent_context.recorder = recorder
+    modern_rails_version = (3..7).to_a.sample
+    fake_rails(modern_rails_version)
+
+    ::Rails.expects(:configuration).returns(DumbRailsConfig).once
+
+    instrument = ScoutApm::Instruments::ActiveRecord.new(agent_context)
+    instrument.install(prepend: false)
+  end
+
   def test_instrumentation
     recorder = FakeRecorder.new
     agent_context.recorder = recorder

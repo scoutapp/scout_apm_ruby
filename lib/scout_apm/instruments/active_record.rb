@@ -66,7 +66,7 @@ module ScoutApm
         defined?(::Rails) &&
           defined?(::Rails::VERSION) &&
           defined?(::Rails::VERSION::MAJOR) &&
-          ::Rails::VERSION::MAJOR.to_i == 3 &&
+          ::Rails::VERSION::MAJOR.to_i >= 3 &&
           ::Rails.respond_to?(:configuration)
       end
 
