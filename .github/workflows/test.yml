@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
@@ -37,20 +37,21 @@ jobs:
           - ruby: 2.7
           - ruby: 2.7
             prepend: true
-          - ruby: 3.0
-          - ruby: 3.0
+          - ruby: "3.0"
+          - ruby: "3.0"
             prepend: true
-          - ruby: 3.0
+          - ruby: "3.0"
             gemfile: gems/instruments.gemfile
             test_features: "instruments"
-          - ruby: 3.0
+          - ruby: "3.0"
             gemfile: gems/instruments.gemfile
             prepend: true
             test_features: "instruments"
-          - ruby: 3.0
+          - ruby: "3.0"
             gemfile: gems/sidekiq.gemfile
             test_features: "sidekiq_install"
-
+          - ruby: 3.1
+          - ruby: 3.2
     env:
       BUNDLE_GEMFILE: ${{ matrix.gemfile }}
       SCOUT_TEST_FEATURES: ${{ matrix.test_features }}
@@ -60,7 +61,7 @@ jobs:
     runs-on: ${{ matrix.ruby == '2.2' && 'ubuntu-20.04' || 'ubuntu-latest' }}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
