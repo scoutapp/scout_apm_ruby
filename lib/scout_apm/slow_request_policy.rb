@@ -14,7 +14,7 @@ module ScoutApm
 
     def add_default_policies
       add(SlowPolicy::SpeedPolicy.new(context))
-      add(SlowPolicy::PercentilePolicy.new(context))
+      add(SlowPolicy::PercentPolicy.new(context))
       add(SlowPolicy::AgePolicy.new(context))
       add(SlowPolicy::PercentilePolicy.new(context))
     end
