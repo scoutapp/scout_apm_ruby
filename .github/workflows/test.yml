@@ -50,6 +50,32 @@ jobs:
           - ruby: 3.0
             gemfile: gems/sidekiq.gemfile
             test_features: "sidekiq_install"
+          - ruby: 3.1
+          - ruby: 3.1
+            prepend: true
+          - ruby: 3.1
+            gemfile: gems/instruments.gemfile
+            test_features: "instruments"
+          - ruby: 3.1
+            gemfile: gems/instruments.gemfile
+            prepend: true
+            test_features: "instruments"
+          - ruby: 3.1
+            gemfile: gems/sidekiq.gemfile
+            test_features: "sidekiq_install"
+          - ruby: 3.2
+          - ruby: 3.2
+            prepend: true
+          - ruby: 3.2
+            gemfile: gems/instruments.gemfile
+            test_features: "instruments"
+          - ruby: 3.2
+            gemfile: gems/instruments.gemfile
+            prepend: true
+            test_features: "instruments"
+          - ruby: 3.2
+            gemfile: gems/sidekiq.gemfile
+            test_features: "sidekiq_install"
 
     env:
       BUNDLE_GEMFILE: ${{ matrix.gemfile }}
