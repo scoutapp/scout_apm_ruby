@@ -55,6 +55,8 @@ module ScoutApm
         method = args[0].to_s
         url = args[1]
 
+        logger.info "ESMETRICS - URL: #{url}"
+
         max_length = ScoutApm::Agent.instance.context.config.value('instrument_http_url_length')
         url = url && url.to_s[0..(max_length - 1)]
 

@@ -52,6 +52,7 @@ module ScoutApm
 
     module HTTPInstrumentationPrepend
       def request(verb, uri, opts = {})
+        logger.info "ESMETRICS - URI: #{uri}"
         self.class.instrument("HTTP", verb, :ignore_children => true, :desc => request_scout_description(verb, uri)) do
           super(verb, uri, opts)
         end

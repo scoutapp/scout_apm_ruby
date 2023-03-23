@@ -48,6 +48,7 @@ module ScoutApm
       def domain_name(layer)
         domain = ""
         desc_str = layer.desc.to_s
+        context.logger.info("ESMETRICS desc - #{desc_str}")
         desc_str = 'http://' + desc_str unless desc_str =~ /^http/i
         domain = URI.parse(desc_str).host
       rescue
