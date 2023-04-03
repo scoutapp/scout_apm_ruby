@@ -60,7 +60,7 @@ module ScoutApm
 
     module NetHttpInstrumentationPrepend
       def request(request, *args, &block)
-        self.class.instrument("HTTP", "request", :ignore_children => true, :desc => request_scout_description(args.first)) do
+        self.class.instrument("HTTP", "request", :ignore_children => true, :desc => request_scout_description(request)) do
           super(request, *args, &block)
         end
       end
