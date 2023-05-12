@@ -38,6 +38,7 @@ class ActiveRecordTest < Minitest::Test
 
     instrument = ScoutApm::Instruments::ActiveRecord.new(agent_context)
     instrument.install(prepend: false)
+    clean_fake_rails
   end
 
   def test_modern_rails_initialization
@@ -50,6 +51,7 @@ class ActiveRecordTest < Minitest::Test
 
     instrument = ScoutApm::Instruments::ActiveRecord.new(agent_context)
     instrument.install(prepend: false)
+    clean_fake_rails
   end
 
   def test_instrumentation
