@@ -1,5 +1,11 @@
 # Unreleased
 
+# 5.3.4
+* Fix adding instrumentation of ActiveRecord after configuration has initialized for Rails versions greater than 3.
+* Fix typo with double use of PercentilePolicy, instead of PercentPolicy, for scoring.
+* Fix span annotations/desc for external service requests with the use of prepend.
+* Fix replacement for ActiveSupport methods with non ActiveSupport methods.
+
 # 5.3.3
 
 * Fix double firing of Puma `on_worker_boot` when preloading. (#463)
