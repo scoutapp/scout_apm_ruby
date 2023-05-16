@@ -53,7 +53,7 @@ module ScoutApm
       rescue
         # Do nothing
       ensure
-        domain = DEFAULT_DOMAIN if domain.to_s.blank?
+        domain = DEFAULT_DOMAIN if (domain.nil? || domain.empty?)
         domain
       end
 
