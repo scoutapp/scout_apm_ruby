@@ -1,10 +1,13 @@
 # Unreleased
 
+# 5.3.5
+* Fix adding instrumentation of ActiveRecord after configuration has initialized for Rails versions greater than 3. (#465)
+* Fix typo with double use of PercentilePolicy, instead of PercentPolicy, for scoring. (#468)
+* Fix span annotations/desc for external service requests with the use of prepend. (#471)
+* Fix ActiveSupport methods and replace them with non ActiveSupport methods. (#474)
+
 # 5.3.4
-* Fix adding instrumentation of ActiveRecord after configuration has initialized for Rails versions greater than 3.
-* Fix typo with double use of PercentilePolicy, instead of PercentPolicy, for scoring.
-* Fix span annotations/desc for external service requests with the use of prepend.
-* Fix ActiveSupport methods and replace them with non ActiveSupport methods.
+Unused.
 
 # 5.3.3
 
