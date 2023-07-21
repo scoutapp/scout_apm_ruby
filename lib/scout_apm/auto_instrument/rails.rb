@@ -64,6 +64,7 @@ module ScoutApm
 
         def instrument(source, file_name, line)
           # Don't log huge chunks of code... just the first line:
+
           if lines = source.lines and lines.count > 1
             source = lines.first.chomp + "..."
           end
@@ -130,6 +131,8 @@ module ScoutApm
           column = node.location.column || 'column?' # not used
           method_name = node.children[1] || '*unknown*' # not used
           file_name = @source_rewriter.source_buffer.name
+
+          return if method_name == :request
 
           # Wrap the expression with instrumentation:
           wrap(node.location.expression, *instrument(node.location.expression.source, file_name, line))
