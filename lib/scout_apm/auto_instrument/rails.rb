@@ -135,6 +135,27 @@ module ScoutApm
           wrap(node.location.expression, *instrument(node.location.expression.source, file_name, line))
         end
 
+        def on_hash(node)
+          node.children.each do |pair|
+            # Skip `pair` if we're sure it's not using the hash shorthand syntax
+            next if pair.type != :pair
+            key_node, value_node = pair.children
+            next unless key_node.type == :sym && value_node.type == :send
+            key = key_node.children[0]
+            next unless value_node.children[0].nil? && key == value_node.children[1]
+
+            # Extract useful metadata for instrumentation:
+            line = pair.location.line || 'line?'
+            # column = pair.location.column || 'column?' # not used
+            # method_name = key || '*unknown*' # not used
+            file_name = @source_rewriter.source_buffer.name
+
+            instrument_before, instrument_after = instrument(pair.location.expression.source, file_name, line)
+            replace(pair.loc.expression, "#{key}: #{instrument_before}#{key}#{instrument_after}")
+          end
+          super
+        end
+
         # def on_class(node)
         #   class_name = node.children[1]
         #
