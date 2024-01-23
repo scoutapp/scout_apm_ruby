@@ -72,18 +72,51 @@ module ScoutApm
 
         logger.info "Instrumenting ActionView::TemplateRenderer"
         ::ActionView::TemplateRenderer.prepend(ActionViewTemplateRendererInstruments)
+
+        if defined?(::ActionView::CollectionRenderer)
+          logger.info "Instrumenting ActionView::CollectionRenderer"
+          ::ActionView::CollectionRenderer.prepend(ActionViewCollectionRendererInstruments)
+        end
+      end
+
+      # In Rails 6.1 collection was moved to CollectionRender.
+
+      module ActionViewCollectionRendererInstruments
+        def render_collection(*args, **kwargs)
+          req = ScoutApm::RequestManager.lookup
+
+          maybe_template = args[3]
+
+          template_name ||= maybe_template.virtual_path rescue nil
+          template_name ||= "Unknown Collection"
+          layer_name = template_name + "/Rendering"
+
+          layer = ScoutApm::Layer.new("View", layer_name)
+          layer.subscopable!
+
+          begin
+            req.start_layer(layer)
+            if ScoutApm::Agent.instance.context.environment.supports_kwarg_delegation?
+              super(*args, **kwargs)
+            else
+              super(*args)
+            end
+          ensure
+            req.stop_layer
+          end
+        end
       end
 
       module ActionViewPartialRendererInstruments
-        # In Rails 6, the signature changed to pass the view & template args directly, as opposed to through the instance var
-        # New signature is: def render_partial(view, template)
-        def render_partial(*args, **kwargs)
+        # In Rails 6.1, render_partial was renamed to render_partial_template,
+        # https://github.com/rails/rails/commit/9187f7482c40bfcb090e2107b274384f12db4f0b
+        def render_partial_template(*args, **kwargs)
           req = ScoutApm::RequestManager.lookup
 
-          maybe_template = args[1]
+          # Template was moved to the third argument in Rails 6.1.
+          maybe_template = args[2]
 
-          template_name = @template.virtual_path rescue nil        # Works on Rails 3.2 -> end of Rails 5 series
-          template_name ||= maybe_template.virtual_path rescue nil # Works on Rails 6 -> 6.0.3.5
+          template_name ||= maybe_template.virtual_path rescue nil
           template_name ||= "Unknown Partial"
 
           layer_name = template_name + "/Rendering"
@@ -102,13 +135,41 @@ module ScoutApm
           end
         end
 
+        # In Rails 6, the signature changed to pass the view & template args directly, as opposed to through the instance var
+        # New signature is: def render_partial(view, template)
+        def render_partial(*args, **kwargs)
+          req = ScoutApm::RequestManager.lookup
+
+          maybe_template = args[1]
+
+          template_name = @template.virtual_path rescue nil        # Works on Rails 3.2 -> end of Rails 5 series
+          template_name ||= maybe_template.virtual_path rescue nil # Works on Rails 6 -> 6.0.6
+          template_name ||= "Unknown Partial"
+
+          layer_name = template_name + "/Rendering"
+          layer = ScoutApm::Layer.new("View", layer_name)
+          layer.subscopable!
+
+          begin
+            req.start_layer(layer)
+            if ScoutApm::Agent.instance.context.environment.supports_kwarg_delegation?
+              super(*args, **kwargs)
+            else
+              super(*args)
+            end
+          ensure
+            req.stop_layer
+          end
+        end
+
+        # This method was moved in Rails 6.1 to CollectionRender. 
         def collection_with_template(*args, **kwargs)
           req = ScoutApm::RequestManager.lookup
 
           maybe_template = args[1]
 
           template_name = @template.virtual_path rescue nil # Works on Rails 3.2 -> end of Rails 5 series
-          template_name ||= maybe_template.virtual_path rescue nil # Works on Rails 6 -> 6.0.3.5
+          template_name ||= maybe_template.virtual_path rescue nil # Works on Rails 6 -> 6.0.6
           template_name ||= "Unknown Collection"
           layer_name = template_name + "/Rendering"
 
@@ -137,7 +198,7 @@ module ScoutApm
           maybe_template = args[1]
 
           template_name = args[0].virtual_path rescue nil # Works on Rails 3.2 -> end of Rails 5 series
-          template_name ||= maybe_template.virtual_path rescue nil # Works on Rails 6 -> 6.1.3
+          template_name ||= maybe_template.virtual_path rescue nil # Works on Rails 6 -> 7.1.3
           template_name ||= "Unknown"
           layer_name = template_name + "/Rendering"
 
