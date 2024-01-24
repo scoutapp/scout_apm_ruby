@@ -65,7 +65,13 @@ class FakeEnvironment
   end
 end
 
+def remove_rails_namespace
+  Object.send(:remove_const, "Rails") if defined?(Rails)
+end
+
 def fake_rails(version)
+  remove_rails_namespace if (ENV["SCOUT_TEST_FEATURES"] || "").include?("instruments")
+
   Kernel.const_set("Rails", Module.new)
   Kernel.const_set("ActionController", Module.new)
   r = Kernel.const_get("Rails")
