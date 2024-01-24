@@ -79,8 +79,7 @@ module ScoutApm
         end
       end
 
-      # In Rails 6.1 collection was moved to CollectionRender.
-
+      # In Rails 6.1 collection was moved to CollectionRenderer.
       module ActionViewCollectionRendererInstruments
         def render_collection(*args, **kwargs)
           req = ScoutApm::RequestManager.lookup
@@ -108,8 +107,7 @@ module ScoutApm
       end
 
       module ActionViewPartialRendererInstruments
-        # In Rails 6.1, render_partial was renamed to render_partial_template,
-        # https://github.com/rails/rails/commit/9187f7482c40bfcb090e2107b274384f12db4f0b
+        # In Rails 6.1, render_partial was renamed to render_partial_template
         def render_partial_template(*args, **kwargs)
           req = ScoutApm::RequestManager.lookup
 
