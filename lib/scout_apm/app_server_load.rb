@@ -51,7 +51,7 @@ module ScoutApm
     ensure
       # Sometimes :database_engine and :database_adapter can cause a reference to an AR connection.
       # Make sure we release all AR connections held by this thread.
-      ActiveRecord::Base.clear_active_connections! if Utils::KlassHelper.defined?("ActiveRecord::Base")
+      ActiveRecord::Base.connection_handler.clear_active_connections! if Utils::KlassHelper.defined?("ActiveRecord::Base")
     end
 
     # Calls `.to_s` on the object passed in.

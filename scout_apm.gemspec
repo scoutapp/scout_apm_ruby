@@ -28,10 +28,10 @@ Gem::Specification.new do |s|
   s.add_development_dependency "rake-compiler"
   s.add_development_dependency "addressable"
   s.add_development_dependency "activesupport"
-  s.add_runtime_dependency "parser"
+  s.add_runtime_dependency "parser", Gem::Version.new(RUBY_VERSION).approximate_recommendation
 
   # These are general development dependencies which are used in instrumentation
-  # tests. Specific versions are pulled in using specific gemfiles, e.g. 
+  # tests. Specific versions are pulled in using specific gemfiles, e.g.
   # `gems/rails3.gemfile`.
   s.add_development_dependency "activerecord"
   s.add_development_dependency "sqlite3"
