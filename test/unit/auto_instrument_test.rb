@@ -4,7 +4,7 @@ require 'scout_apm/auto_instrument'
 
 class AutoInstrumentTest < Minitest::Test
   ROOT = File.expand_path("../../", __dir__)
-  
+
   def source_path(name)
     File.expand_path("auto_instrument/#{name}.rb", __dir__)
   end
@@ -36,6 +36,12 @@ class AutoInstrumentTest < Minitest::Test
 
     assert_equal instrumented_source("controller"),
       normalize_backtrace(::ScoutApm::AutoInstrument::Rails.rewrite(source_path("controller")))
+  end
+
+  def test_controller_rewrite_hash_shorthand
+    skip if RUBY_VERSION < "3.1"
+    assert_equal instrumented_source("hash_shorthand_controller"),
+      normalize_backtrace(::ScoutApm::AutoInstrument::Rails.rewrite(source_path("hash_shorthand_controller")))
   end
 
   def test_rescue_from_rewrite
