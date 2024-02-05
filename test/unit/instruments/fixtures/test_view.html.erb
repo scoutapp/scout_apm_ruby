@@ -1,0 +1,10 @@
+<html>
+  <head>
+    <title>View</title>
+  </head>
+  <body>
+    <h1>View</h1>
+    <%= render partial: "test_partial", locals: { message: 'Partial' } %>
+    <%= render partial: "test_partial_collection", collection: [1, 2, 3], as: :index %>
+  </body>
+</html>
