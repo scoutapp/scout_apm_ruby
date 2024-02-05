@@ -142,7 +142,7 @@ module ScoutApm
             key_node, value_node = pair.children
             next unless key_node.type == :sym && value_node.type == :send
             key = key_node.children[0]
-            next unless value_node.children[0].nil? && key == value_node.children[1]
+            next unless value_node.children.size == 2 && value_node.children[0].nil? && key == value_node.children[1]
 
             # Extract useful metadata for instrumentation:
             line = pair.location.line || 'line?'

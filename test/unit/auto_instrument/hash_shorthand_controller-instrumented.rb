@@ -11,12 +11,17 @@ class HashShorthandController < ApplicationController
       non_nil_receiver: ::ScoutApm::AutoInstrument("non_nil_receiver.value",["ROOT/test/unit/auto_instrument/hash_shorthand_controller.rb:11:in `hash'"]){non_nil_receiver.value},
       nested: {
         shorthand: ::ScoutApm::AutoInstrument("shorthand:",["ROOT/test/unit/auto_instrument/hash_shorthand_controller.rb:13:in `hash'"]){shorthand},
-      }
+      },
+      nested_call: ::ScoutApm::AutoInstrument("nested_call(params[\"timestamp\"])",["ROOT/test/unit/auto_instrument/hash_shorthand_controller.rb:15:in `hash'"]){nested_call(params["timestamp"])}
     }
-    ::ScoutApm::AutoInstrument("render json:",["ROOT/test/unit/auto_instrument/hash_shorthand_controller.rb:16:in `hash'"]){render json:}
+    ::ScoutApm::AutoInstrument("render json:",["ROOT/test/unit/auto_instrument/hash_shorthand_controller.rb:17:in `hash'"]){render json:}
   end
 
   private
+
+  def nested_call(noop)
+    noop
+  end
 
   def shorthand
     "shorthand"
@@ -31,6 +36,6 @@ class HashShorthandController < ApplicationController
   end
 
   def non_nil_receiver
-    ::ScoutApm::AutoInstrument("OpenStruct.new(value: \"value\")",["ROOT/test/unit/auto_instrument/hash_shorthand_controller.rb:34:in `non_nil_receiver'"]){OpenStruct.new(value: "value")}
+    ::ScoutApm::AutoInstrument("OpenStruct.new(value: \"value\")",["ROOT/test/unit/auto_instrument/hash_shorthand_controller.rb:39:in `non_nil_receiver'"]){OpenStruct.new(value: "value")}
   end
 end

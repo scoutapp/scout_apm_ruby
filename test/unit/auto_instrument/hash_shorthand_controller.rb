@@ -11,12 +11,17 @@ class HashShorthandController < ApplicationController
       non_nil_receiver: non_nil_receiver.value,
       nested: {
         shorthand:,
-      }
+      },
+      nested_call: nested_call(params["timestamp"])
     }
     render json:
   end
 
   private
+
+  def nested_call(noop)
+    noop
+  end
 
   def shorthand
     "shorthand"
