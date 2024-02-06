@@ -1,5 +1,10 @@
 # Unreleased
 
+# 5.3.6
+* Fix AutoInstruments when instrumenting hash with shorthand (#486)
+* Fix Connection Handling deprecation in ActiveRecord for Rails 7.1 (#483)
+* Update ActionView partial instrumentation for Rails 7 (#487)
+
 # 5.3.5
 * Fix adding instrumentation of ActiveRecord after configuration has initialized for Rails versions greater than 3. (#465)
 * Fix typo with double use of PercentilePolicy, instead of PercentPolicy, for scoring. (#468)
