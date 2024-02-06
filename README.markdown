@@ -1,6 +1,6 @@
 # ScoutApm Ruby Agent
 
-[![Build Status](https://travis-ci.org/scoutapp/scout_apm_ruby.svg?branch=master)](https://travis-ci.org/scoutapp/scout_apm_ruby)
+[![Build Status](https://github.com/scoutapp/scout_apm_ruby/actions/workflows/test.yml/badge.svg)](https://github.com/scoutapp/scout_apm_ruby/actions)
 
 A Ruby gem for detailed Rails application performance monitoring 📈. Metrics and transaction traces are
 reported to [Scout](https://scoutapp.com), a hosted application monitoring
