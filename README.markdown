@@ -47,7 +47,7 @@ to your controllers.
 
 This feature needs to be [enabled in your configuration](https://scoutapm.com/docs/ruby/advanced-features#enabling-autoinstruments). 
 
-Further, our agent relies on the `parser` gem for AutoInstruments, and the `parser` gem version [needs to support your version of Ruby](https://github.com/whitequark/parser?tab=readme-ov-file#backwards-compatibility). For example, if you're on Ruby 3.3.0:
+For AutoInstruments, the agent relies on the `parser` gem, and the `parser` gem version [needs to support your version of Ruby](https://github.com/whitequark/parser?tab=readme-ov-file#backwards-compatibility). For example, if you're on Ruby 3.3.0:
 ```ruby
 gem 'parser', '~> 3.3.0.0'
 ```
