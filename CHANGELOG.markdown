@@ -1,5 +1,8 @@
 # Unreleased
 
+# 5.3.7
+* Fix parser dependency issue
+
 # 5.3.6
 * Fix AutoInstruments when instrumenting hash with shorthand (#486)
 * Fix Connection Handling deprecation in ActiveRecord for Rails 7.1 (#483)
