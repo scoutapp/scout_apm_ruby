@@ -21,6 +21,10 @@ Add the gem to your Gemfile
 
     gem 'scout_apm'
 
+Add [a version of the `parser` gem that supports your version of Ruby](https://github.com/whitequark/parser?tab=readme-ov-file#backwards-compatibility). For example, if you're on Ruby 3.3.0:
+
+    gem 'parser', '~> 3.3.0.0'
+
 Update your Gemfile
 
     bundle install
