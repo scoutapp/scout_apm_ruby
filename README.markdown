@@ -21,10 +21,6 @@ Add the gem to your Gemfile
 
     gem 'scout_apm'
 
-Add [a version of the `parser` gem that supports your version of Ruby](https://github.com/whitequark/parser?tab=readme-ov-file#backwards-compatibility). For example, if you're on Ruby 3.3.0:
-
-    gem 'parser', '~> 3.3.0.0'
-
 Update your Gemfile
 
     bundle install
@@ -44,6 +40,18 @@ Your config file should look like:
 
     production:
       <<: *defaults
+
+## AutoInstruments
+In addition to the libraries that we [automatically instrument](https://scoutapm.com/docs/ruby#instrumented-libraries), the agent has the ability to parse & capture timings related
+to your controllers. 
+
+This feature needs to be [enabled in your configuration](https://scoutapm.com/docs/ruby/advanced-features#enabling-autoinstruments). 
+
+Further, our agent relies on the `parser` gem for AutoInstruments, and the `parser` gem version [needs to support your version of Ruby](https://github.com/whitequark/parser?tab=readme-ov-file#backwards-compatibility). For example, if you're on Ruby 3.3.0:
+```ruby
+gem 'parser', '~> 3.3.0.0'
+```
+
 
 ## DevTrace Quickstart
 
