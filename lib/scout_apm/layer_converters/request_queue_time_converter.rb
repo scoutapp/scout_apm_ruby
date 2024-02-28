@@ -4,6 +4,8 @@ module ScoutApm
 
       HEADERS = %w(X-Queue-Start X-Request-Start X-QUEUE-START X-REQUEST-START x-queue-start x-request-start)
 
+      WEBSOCKET_HEADERS = %w(SEC_WEBSOCKET_VERSION Sec-WebSocket-Version SEC_WEBSOCKET_PROTOCOL Sec-WebSocket-Protocol SEC_WEBSOCKET_KEY Sec-WebSocket-Key)
+
       def headers
         request.headers
       end
@@ -14,6 +16,8 @@ module ScoutApm
         return unless context.config.value('record_queue_time')
 
         return unless headers
+
+        return if request_over_websocket?
 
         raw_start = locate_timestamp
         return unless raw_start
@@ -37,6 +41,10 @@ module ScoutApm
       end
 
       private
+
+      def request_over_websocket?
+        WEBSOCKET_HEADERS.any? { |header| headers[header] }
+      end
 
       # Looks through the possible headers with this data, and extracts the raw
       # value of the header
