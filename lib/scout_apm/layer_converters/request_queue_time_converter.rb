@@ -4,8 +4,6 @@ module ScoutApm
 
       HEADERS = %w(X-Queue-Start X-Request-Start X-QUEUE-START X-REQUEST-START x-queue-start x-request-start)
 
-      WEBSOCKET_HEADERS = %w(SEC_WEBSOCKET_VERSION Sec-WebSocket-Version SEC_WEBSOCKET_PROTOCOL Sec-WebSocket-Protocol SEC_WEBSOCKET_KEY Sec-WebSocket-Key)
-
       def headers
         request.headers
       end
@@ -17,7 +15,7 @@ module ScoutApm
 
         return unless headers
 
-        # When an application uses TurboStreams, we capture very innaccurate queue times.
+        # When an application uses Turbo Streams, we capture very innaccurate queue times.
         return if request_over_websocket?
 
         raw_start = locate_timestamp
@@ -44,7 +42,7 @@ module ScoutApm
       private
 
       def request_over_websocket?
-        WEBSOCKET_HEADERS.any? { |header| headers[header] }
+        headers["Upgrade"] == "websocket"
       end
 
       # Looks through the possible headers with this data, and extracts the raw
