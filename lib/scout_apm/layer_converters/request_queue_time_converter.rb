@@ -17,6 +17,7 @@ module ScoutApm
 
         return unless headers
 
+        # When an application uses TurboStreams, we capture very innaccurate queue times.
         return if request_over_websocket?
 
         raw_start = locate_timestamp
