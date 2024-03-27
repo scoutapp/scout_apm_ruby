@@ -15,6 +15,9 @@ module ScoutApm
 
         return unless headers
 
+        # When an application uses Turbo Streams, we capture very innaccurate queue times.
+        return if request_over_websocket?
+
         raw_start = locate_timestamp
         return unless raw_start
 
@@ -37,6 +40,10 @@ module ScoutApm
       end
 
       private
+
+      def request_over_websocket?
+        headers["Upgrade"] == "websocket"
+      end
 
       # Looks through the possible headers with this data, and extracts the raw
       # value of the header
