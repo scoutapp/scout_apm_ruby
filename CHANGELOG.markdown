@@ -1,5 +1,8 @@
 # Unreleased
 
+# 5.3.8
+* Avoid inaccurate websocket queue time capturing (#494)
+
 # 5.3.7
 * Fix parser dependency issue
 
