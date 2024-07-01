@@ -12,7 +12,8 @@ module ScoutApm
       end
 
       def run
-        Bundler.rubygems.all_specs.map {|spec| [spec.name, spec.version.to_s] }
+        specs = Bundler.rubygems.public_send(Bundler.rubygems.respond_to?(:installed_specs) ? :installed_specs : :all_specs)
+        specs.map { |spec| [spec.name, spec.version.to_s] }
       rescue => e
         logger.warn("Couldn't fetch Gem information: #{e.message}")
         []
