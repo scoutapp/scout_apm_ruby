@@ -11,11 +11,13 @@ module ScoutApm
     def self.find
       req = Thread.current[:scout_request]
 
-      if req && (req.stopping? || req.recorded?)
-        nil
-      else
-        req
-      end
+      # this ordering is important as if the req is set to be ignored it's also stopping and recorded
+      # binding.irb if req
+      return req if req&.ignoring_request?
+
+      return if req && (req.stopping? || req.recorded?)
+
+      req
     end
 
     # Create a new TrackedRequest object for this thread
