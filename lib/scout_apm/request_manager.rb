@@ -13,7 +13,7 @@ module ScoutApm
 
       # this ordering is important as if the req is set to be ignored it's also stopping and recorded
       # binding.irb if req
-      return req if req&.ignoring_request?
+      return req if req & req.ignoring_request?
 
       return if req && (req.stopping? || req.recorded?)
 
