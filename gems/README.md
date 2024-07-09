@@ -1,15 +1,11 @@
 # Gems
 
-These gemfiles list specific configurations of gems that we use in travis testing.
+These gemfiles list specific configurations of gems that we use in testing.
 
-## Travis Matrix
+## Test Matrix
 
-```yaml
-matrix:
-  include:
-    - rvm: "1.8.7"
-      gemfile: gems/rails3.gemfile
-```
+- See [.github/workflows/test.yml](.github/workflows/test.yml) for the matrix of gemfiles that are tested.
+
 
 Using a gemfile controls the specific versions of the gems that are installed, and can be used to reproduce customer configurations for testing.
 
