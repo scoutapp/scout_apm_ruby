@@ -51,6 +51,7 @@ jobs:
             test_features: "sidekiq_install"
           - ruby: 3.1
           - ruby: 3.2
+          - ruby: 3.3
     env:
       BUNDLE_GEMFILE: ${{ matrix.gemfile }}
       SCOUT_TEST_FEATURES: ${{ matrix.test_features }}
