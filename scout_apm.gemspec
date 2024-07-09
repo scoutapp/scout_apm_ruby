@@ -34,7 +34,7 @@ Gem::Specification.new do |s|
   # tests. Specific versions are pulled in using specific gemfiles, e.g.
   # `gems/rails3.gemfile`.
   s.add_development_dependency "activerecord"
-  s.add_development_dependency "sqlite3", "~> 1.7", ">= 1.7.0"
+  s.add_development_dependency "sqlite3", "~> 1.6", ">= 1.6.9"
 
   s.add_development_dependency "rubocop"
   s.add_development_dependency "guard"
