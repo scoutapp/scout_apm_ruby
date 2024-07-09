@@ -35,6 +35,8 @@ Gem::Specification.new do |s|
   # `gems/rails3.gemfile`.
   s.add_development_dependency "activerecord"
   # s.add_development_dependency "sqlite3"
+  # This is going to change in Rails 7.1.4, but we need to lock it down for now.
+  # https://github.com/rails/rails/pull/51592
   s.add_development_dependency "sqlite3", "~> 1.6", ">= 1.6.9"
 
   s.add_development_dependency "rubocop"
