@@ -31,6 +31,7 @@ module ScoutApm
       ScoutApm::BackgroundJobIntegrations::DelayedJob.new,
       ScoutApm::BackgroundJobIntegrations::Que.new,
       ScoutApm::BackgroundJobIntegrations::Faktory.new,
+      ScoutApm::BackgroundJobIntegrations::GoodJob.new,
     ]
 
     FRAMEWORK_INTEGRATIONS = [
