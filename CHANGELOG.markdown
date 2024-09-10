@@ -1,5 +1,9 @@
 # Unreleased
 
+# 5.4.0
+* Add support for GoodJob (#506)
+* Add support for Solid Queue (#508)
+
 # 5.3.8
 * Avoid inaccurate websocket queue time capturing (#494)
 
