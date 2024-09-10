@@ -68,6 +68,7 @@ require 'scout_apm/background_job_integrations/sneakers'
 require 'scout_apm/background_job_integrations/que'
 require 'scout_apm/background_job_integrations/legacy_sneakers'
 require 'scout_apm/background_job_integrations/good_job'
+require 'scout_apm/background_job_integrations/solid_queue'
 
 require 'scout_apm/framework_integrations/rails_2'
 require 'scout_apm/framework_integrations/rails_3_or_4'

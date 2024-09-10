@@ -32,6 +32,7 @@ module ScoutApm
       ScoutApm::BackgroundJobIntegrations::Que.new,
       ScoutApm::BackgroundJobIntegrations::Faktory.new,
       ScoutApm::BackgroundJobIntegrations::GoodJob.new,
+      ScoutApm::BackgroundJobIntegrations::SolidQueue.new,
     ]
 
     FRAMEWORK_INTEGRATIONS = [
