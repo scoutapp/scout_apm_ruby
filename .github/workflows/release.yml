@@ -1,0 +1,30 @@
+name: Release Gem
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+# Directly from https://github.com/rubygems/release-gem/tree/v1
+# Predicated on Tag Ruleset preventing arbitrary tag creation and
+# requiring checks to pass for commit before tag creation
+jobs:
+  push:
+    name: Push gem to RubyGems.org
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write # IMPORTANT: this permission is mandatory for trusted publishing
+      contents: write # IMPORTANT: this permission is required for `rake release` to push the release tag
+
+    steps:
+      # Set up
+      - uses: actions/checkout@v4
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+          ruby-version: ruby
+
+      # Release
+      - uses: rubygems/release-gem@v1
