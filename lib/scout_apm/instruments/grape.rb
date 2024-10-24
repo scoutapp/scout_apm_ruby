@@ -53,7 +53,7 @@ module ScoutApm
                   self.options[:path].first,
           ].compact.map{ |n| n.to_s }.join("/")
         rescue => e
-          logger.info("Error getting Grape Endpoint Name. Error: #{e.message}. Options: #{self.options.inspect}")
+          ScoutApm::Agent.instance.context.logger.info("Error getting Grape Endpoint Name. Error: #{e.message}. Options: #{self.options.inspect}")
           name = "Grape/Unknown"
         end
 
