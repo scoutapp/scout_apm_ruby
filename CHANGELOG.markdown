@@ -1,4 +1,5 @@
 # Unreleased
+- Fix undeclared logger in grape instruments (#510)
 
 # 5.4.0
 * Add support for GoodJob (#506)
