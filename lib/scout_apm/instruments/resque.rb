@@ -36,4 +36,3 @@ module ScoutApm
     end
   end
 end
-
