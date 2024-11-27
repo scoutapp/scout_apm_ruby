@@ -8,7 +8,8 @@ module ScoutApm
       def present?
         defined?(::Resque) &&
           ::Resque.respond_to?(:before_first_fork) &&
-          ::Resque.respond_to?(:after_fork)
+          ::Resque.respond_to?(:after_fork)# &&
+          # ::Resque.respond_to?(:before_perform)
       end
 
       # Lies. This forks really aggressively, but we have to do handling
@@ -20,7 +21,15 @@ module ScoutApm
 
       def install
         install_before_fork
+
+        ScoutApm::Agent.instance.context.logger.info "resque_debug Installing Resque Instrumentation"
         install_after_fork
+        # # If forking is disabled, after_fork is never executed. Must instrument somewhere else.
+        # if ENV["FORK_PER_JOB"] == "false"
+        #   install_before_perform
+        # else
+        #   install_after_fork
+        # end
       end
 
       def install_before_fork
@@ -41,12 +50,25 @@ module ScoutApm
       end
 
       def install_after_fork
+        ScoutApm::Agent.instance.context.logger.info "resque_debug Installing Resque after_fork"
         ::Resque.after_fork do
           begin
             ScoutApm::Agent.instance.context.become_remote_client!(bind, port)
             inject_job_instrument
           rescue => e
             ScoutApm::Agent.instance.context.logger.warn "Error while Installing Resque after_fork: #{e.inspect}"
+          end
+        end
+      end
+
+      def install_before_perform
+        ScoutApm::Agent.instance.context.logger.info "resque_debug Installing Resque before_perform"
+        ::Resque.before_perform do
+          begin
+            ScoutApm::Agent.instance.context.become_remote_client!(bind, port)
+            inject_job_instrument
+          rescue => e
+            ScoutApm::Agent.instance.context.logger.warn "Error while Installing Resque before_perform: #{e.inspect}"
           end
         end
       end
@@ -85,4 +107,3 @@ module ScoutApm
     end
   end
 end
-
