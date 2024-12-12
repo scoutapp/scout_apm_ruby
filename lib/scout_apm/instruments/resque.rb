@@ -18,12 +18,14 @@ module ScoutApm
       end
 
       def before_perform_become_client(*args)
-        ScoutApm::Agent.instance.context.become_remote_client!(bind, port)
-        logger.info "resque_debug REMOTE AGENT"
+        if ScoutApm::Agent.instance.context.config.value('start_resque_server_instrument')
+          ScoutApm::Agent.instance.context.become_remote_client!(bind, port)
+        else
+          logger.debug("Not becoming remote client due to 'start_resque_server_instrument' setting")
+        end
       end
 
       def around_perform_with_scout_instruments(*args)
-        logger.info "resque_debug IN AROUND PERFORM"
         job_name = self.to_s
         queue = find_queue
 
@@ -32,26 +34,18 @@ module ScoutApm
           queue = args.first["queue_name"] rescue queue_name
         end
 
-        logger.info "resque_debug JOB: #{job_name} QUEUE: #{queue}"
-
         req = ScoutApm::RequestManager.lookup
-
-        # logger.info "resque_debug REQUEST: #{req.inspect}"
 
         begin
           req.start_layer(ScoutApm::Layer.new('Queue', queue))
           started_queue = true
           req.start_layer(ScoutApm::Layer.new('Job', job_name))
           started_job = true
-
-          logger.info "resque_debug DOING LAYERS"
-
           yield
         rescue => e
           req.error!
           raise
         ensure
-          logger.info "resque_debug ENSURING"
           req.stop_layer if started_job
           req.stop_layer if started_queue
         end

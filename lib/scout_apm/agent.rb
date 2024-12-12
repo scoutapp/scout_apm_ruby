@@ -106,7 +106,6 @@ module ScoutApm
     # possible, it's no harm to have the "wrong" one also installed while running.
     def install_background_job_integrations
       context.environment.background_job_integrations.each do |int|
-        logger.info "resque_debug Attempting to install resque"
         int.install
         logger.info "Installed Background Job Integration [#{int.name}]"
       end
