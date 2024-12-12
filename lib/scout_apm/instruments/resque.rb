@@ -24,7 +24,6 @@ module ScoutApm
       def before_perform_become_client(*args)
         # Don't become remote client if explicitly disabled or if forking is disabled to force synchronous recording.
         if ScoutApm::Agent.instance.context.config.value('start_resque_server_instrument') && forking?
-          logger.info "BECOMING REMOTE CLIENT"
           ScoutApm::Agent.instance.context.become_remote_client!(bind, port)
         else
           logger.debug("Not becoming remote client due to 'start_resque_server_instrument' setting or 'fork_per_job' setting")
