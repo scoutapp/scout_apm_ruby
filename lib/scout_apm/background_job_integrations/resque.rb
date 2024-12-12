@@ -7,8 +7,7 @@ module ScoutApm
 
       def present?
         defined?(::Resque) &&
-          ::Resque.respond_to?(:before_first_fork)# &&
-          # ::Resque.respond_to?(:after_fork)
+          ::Resque.respond_to?(:before_first_fork)
       end
 
       # Lies. This forks really aggressively, but we have to do handling
@@ -20,20 +19,17 @@ module ScoutApm
 
       def install
         install_before_first_fork
-        # install_after_fork
-        # install_enqueue
         install_instruments
       end
 
       def install_before_first_fork
         ::Resque.before_first_fork do
-          ScoutApm::Agent.instance.context.logger.info "resque_debug Installing Resque before_first_fork"
           begin
             if ScoutApm::Agent.instance.context.config.value('start_resque_server_instrument')
               ScoutApm::Agent.instance.start
               ScoutApm::Agent.instance.context.start_remote_server!(bind, port)
             else
-              logger.info("Not starting remote server due to 'start_resque_server_instrument' setting")
+              ScoutApm::Agent.instance.context.logger.info("Not starting remote server due to 'start_resque_server_instrument' setting")
             end
           rescue Errno::EADDRINUSE
             ScoutApm::Agent.instance.context.logger.warn "Error while Installing Resque Instruments, Port #{port} already in use. Set via the `remote_agent_port` configuration option"
@@ -48,8 +44,6 @@ module ScoutApm
           def payload_class_with_scout_instruments
             klass = payload_class_without_scout_instruments
             klass.extend(ScoutApm::Instruments::Resque)
-            # ScoutApm::Agent.instance.context.logger.info "resque_debug responds to before_perform_scout_instrument? #{klass.respond_to?(:before_perform_scout_instrument)}"
-            # ScoutApm::Agent.instance.context.logger.info "resque_debug responds to before_perform_in_app? #{klass.respond_to?(:before_perform_scout)}"
             klass
           end
           alias_method :payload_class_without_scout_instruments, :payload_class
