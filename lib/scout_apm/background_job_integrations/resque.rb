@@ -52,6 +52,8 @@ module ScoutApm
         end
       end
 
+      private
+
       def bind
         config.value("remote_agent_host")
       end
