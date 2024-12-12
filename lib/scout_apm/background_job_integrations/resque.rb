@@ -25,6 +25,7 @@ module ScoutApm
       def install_before_first_fork
         ::Resque.before_first_fork do
           begin
+            # Don't check fork_per_job here in case some workers fork_per_job and some don't.
             if ScoutApm::Agent.instance.context.config.value('start_resque_server_instrument')
               ScoutApm::Agent.instance.start
               ScoutApm::Agent.instance.context.start_remote_server!(bind, port)
