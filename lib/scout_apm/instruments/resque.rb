@@ -53,11 +53,11 @@ module ScoutApm
       end
 
       def config
-        @config || ScoutApm::Agent.instance.context.config
+        @config ||= ScoutApm::Agent.instance.context.config
       end
 
       def logger
-        ScoutApm::Agent.instance.context.logger
+        @logger = ScoutApm::Agent.instance.context.logger
       end
 
       def forking?
