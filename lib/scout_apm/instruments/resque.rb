@@ -57,7 +57,7 @@ module ScoutApm
       end
 
       def logger
-        @logger = ScoutApm::Agent.instance.context.logger
+        @logger ||= ScoutApm::Agent.instance.context.logger
       end
 
       def forking?
