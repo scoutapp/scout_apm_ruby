@@ -27,6 +27,7 @@ module ScoutApm
 
       def install_before_first_fork
         ::Resque.before_first_fork do
+          ScoutApm::Agent.instance.context.logger.info "resque_debug Installing Resque before_first_fork"
           begin
             if ScoutApm::Agent.instance.context.config.value('start_resque_server_instrument')
               ScoutApm::Agent.instance.start
