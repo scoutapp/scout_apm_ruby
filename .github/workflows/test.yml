@@ -19,13 +19,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - ruby: 2.1
-            gemfile: gems/rails3.gemfile
-          - ruby: 2.2
-          - ruby: 2.3
-            gemfile: gems/sqlite3-1.3.gemfile
-          - ruby: 2.4
-            gemfile: gems/sqlite3-1.3.gemfile
           - ruby: 2.5
           - ruby: 2.6
           - ruby: 2.6
@@ -56,9 +49,6 @@ jobs:
       BUNDLE_GEMFILE: ${{ matrix.gemfile }}
       SCOUT_TEST_FEATURES: ${{ matrix.test_features }}
       SCOUT_USE_PREPEND: ${{ matrix.prepend }}
-
-    # https://github.com/ruby/setup-ruby/issues/496
-    runs-on: ${{ matrix.ruby == '2.2' && 'ubuntu-20.04' || 'ubuntu-latest' }}
 
     steps:
       - uses: actions/checkout@v4
