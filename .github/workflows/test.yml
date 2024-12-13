@@ -50,6 +50,8 @@ jobs:
       SCOUT_TEST_FEATURES: ${{ matrix.test_features }}
       SCOUT_USE_PREPEND: ${{ matrix.prepend }}
 
+    runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
       - uses: ruby/setup-ruby@v1
