@@ -1,5 +1,6 @@
 # Unreleased
 - Fix undeclared logger in grape instruments (#510)
+- Drop guaranteed support for Rubies <= 2.4
 
 # 5.4.0
 * Add support for GoodJob (#506)
@@ -669,7 +670,7 @@ reusing that version number to avoid confusion.
 
 # 1.2.12
 
-* Add uri_reporting option to report bare path (as opposed to fullpath). Default is 'fullpath'; set to 'path' to avoid exposing URL parameters.  
+* Add uri_reporting option to report bare path (as opposed to fullpath). Default is 'fullpath'; set to 'path' to avoid exposing URL parameters.
 
 # 1.2.11
 
