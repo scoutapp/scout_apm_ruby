@@ -208,7 +208,7 @@ module ScoutApm
 
       @error_service_background_worker = ScoutApm::BackgroundWorker.new(context, ERROR_SEND_FREQUENCY)
       @error_service_background_worker_thread = Thread.new do
-        @error_service_background_worker.start { 
+        @error_service_background_worker.start {
           periodic_work.run
         }
       end
