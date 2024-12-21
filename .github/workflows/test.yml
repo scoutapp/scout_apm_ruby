@@ -44,7 +44,9 @@ jobs:
             test_features: "sidekiq_install"
           - ruby: 3.1
           - ruby: 3.2
+            gemfile: gems/sqlite3-v2.gemfile
           - ruby: 3.3
+            gemfile: gems/sqlite3-v2.gemfile
     env:
       BUNDLE_GEMFILE: ${{ matrix.gemfile }}
       SCOUT_TEST_FEATURES: ${{ matrix.test_features }}
