@@ -7,8 +7,7 @@ module ScoutApm
 
       def present?
         defined?(::Resque) &&
-          ::Resque.respond_to?(:before_first_fork) &&
-          ::Resque.respond_to?(:after_fork)
+          ::Resque.respond_to?(:before_first_fork)
       end
 
       # Lies. This forks really aggressively, but we have to do handling
@@ -19,13 +18,14 @@ module ScoutApm
       end
 
       def install
-        install_before_fork
-        install_after_fork
+        install_before_first_fork
+        install_instruments
       end
 
-      def install_before_fork
+      def install_before_first_fork
         ::Resque.before_first_fork do
           begin
+            # Don't check fork_per_job here in case some workers fork_per_job and some don't.
             if ScoutApm::Agent.instance.context.config.value('start_resque_server_instrument')
               ScoutApm::Agent.instance.start
               ScoutApm::Agent.instance.context.start_remote_server!(bind, port)
@@ -33,31 +33,14 @@ module ScoutApm
               logger.info("Not starting remote server due to 'start_resque_server_instrument' setting")
             end
           rescue Errno::EADDRINUSE
-            ScoutApm::Agent.instance.context.logger.warn "Error while Installing Resque Instruments, Port #{port} already in use. Set via the `remote_agent_port` configuration option"
+            logger.warn "Error while Installing Resque Instruments, Port #{port} already in use. Set via the `remote_agent_port` configuration option"
           rescue => e
-            ScoutApm::Agent.instance.context.logger.warn "Error while Installing Resque before_first_fork: #{e.inspect}"
+            logger.warn "Error while Installing Resque before_first_fork: #{e.inspect}"
           end
         end
       end
 
-      def install_after_fork
-        ::Resque.after_fork do
-          begin
-            ScoutApm::Agent.instance.context.become_remote_client!(bind, port)
-            inject_job_instrument
-          rescue => e
-            ScoutApm::Agent.instance.context.logger.warn "Error while Installing Resque after_fork: #{e.inspect}"
-          end
-        end
-      end
-
-      # Insert ourselves into the point when resque turns a string "TestJob"
-      # into the class constant TestJob, and insert our instrumentation plugin
-      # into that constantized class
-      #
-      # This automates away any need for the user to insert our instrumentation into
-      # each of their jobs
-      def inject_job_instrument
+      def install_instruments
         ::Resque::Job.class_eval do
           def payload_class_with_scout_instruments
             klass = payload_class_without_scout_instruments
@@ -80,9 +63,12 @@ module ScoutApm
       end
 
       def config
-        @config || ScoutApm::Agent.instance.context.config
+        @config ||= ScoutApm::Agent.instance.context.config
+      end
+
+      def logger
+        @logger ||= ScoutApm::Agent.instance.context.logger
       end
     end
   end
 end
-

@@ -1,6 +1,7 @@
 # Unreleased
 - Fix undeclared logger in grape instruments (#510)
 - Drop guaranteed support for Rubies <= 2.4
+- Instrument Resque without relying on forking per job (#514)
 
 # 5.4.0
 * Add support for GoodJob (#506)
