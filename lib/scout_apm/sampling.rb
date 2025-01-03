@@ -7,21 +7,21 @@ module ScoutApm
       # web endpoints matched prefix by regex
       # jobs matched explicitly by name
       @sample_endpoints = individual_sample_to_hash(config.value('sample_endpoints'))
-      @sample_uri_regex = create_uri_regex(sample_endpoints.keys)
-      @sample_jobs = individual_sample_to_hash(config.value('sample_jobs'))
       @ignore_uri_regex = create_uri_regex(config.value('ignore_endpoints'))
-      @ignore_jobs = config.value('ignore_jobs').split(',')
+      @sample_uri_regex = create_uri_regex(sample_endpoints.keys) if sample_endpoints
+      @ignore_jobs = config.value('ignore_jobs').split(',') if config.value('ignore_jobs')
+      @sample_jobs = individual_sample_to_hash(config.value('sample_jobs'))
       # TODO make this safer/smarter
     end
 
-    def ignored?(transaction)
+    def ignore?(transaction)
       # global sample check
       if global_sample_rate
         return true if sample?(global_sample_rate)
       end
 
       # job or endpoint?
-      # check ignored _then_ sampled
+      # check if ignored _then_ sampled
       if transaction.job?
         job_name = transaction.layer_finder.job.name
         return true if ignore_job?(transaction.job_name)
@@ -29,18 +29,18 @@ module ScoutApm
           return true if sample?(sample_jobs[transaction.job_name])
         end
       elsif transaction.web?
-        return true if ignore_uri?(transaction.annotations[:uri])
-        if sample_uri?(transaction.annotations[:uri])
-          return true if sample?(sample_endpoints[transaction.annotations[:uri]])
+        uri = transaction.annotations[:uri]
+        return true if ignore_uri?(uri)
+        if sample_uri?(uri)
+          return true if sample?(uri)
         end
       end
 
-      false
+      false # not ignored
     end
 
-    private
-
     def individual_sample_to_hash(sampling_config)
+      return nil if sampling_config.nil?
       # config looks like ['/foo:50','/bar:100']. parse it into hash of string: integer
       sample_hash = {}
       sampling_config.each do |sample|
@@ -52,6 +52,7 @@ module ScoutApm
     end
 
     def create_uri_regex(prefixes)
+      return nil if prefixes.nil?
       regexes = Array(prefixes).
         reject{|prefix| prefix == ""}.
         map {|prefix| %r{\A#{prefix}} }
@@ -67,7 +68,13 @@ module ScoutApm
     end
 
     def ignore_job?(job_name)
+      return false if ignore_jobs.nil?
       @ignored_jobs.include?(job_name)
+    end
+
+    def sample_job?(job_name)
+      return false if sample_jobs.nil?
+      @sample_jobs.has_key?(job_name)
     end
 
     def sample?(rate)
