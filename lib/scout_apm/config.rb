@@ -328,7 +328,7 @@ module ScoutApm
         'external_service_metric_limit'        => 5000, # The hard limit on external service metrics
         'external_service_metric_report_limit' => 1000,
         'instrument_http_url_length'           => 300,
-        'sample_rate'                          => 100, # or maybe just 1? or maybe nil? all means the same
+        'sample_rate'                          => 100,
         'sample_endpoints'                     => [],
         'sample_jobs'                          => [],
         'start_resque_server_instrument'       => true, # still only starts if Resque is detected
