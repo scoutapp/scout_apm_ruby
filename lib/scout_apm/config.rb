@@ -42,6 +42,11 @@ require 'scout_apm/environment'
 #                            any instruments listed in this array. Default: []
 # prepend_instruments      - If `use_prepend` is false, force using Module#prepend for any
 #                            instruments listed in this array. Default: []
+# ignore_endpoints         - An array of endpoints to ignore. These are matched as regular expressions. (supercedes 'ignore')
+# ignore_jobs              - An array of job names to ignore.
+# sample_rate              - An integer between 0 and 100. 0 means no traces are sent, 100 means all traces are sent.
+# sample_endpoints         - An array of endpoints to sample. These are matched as regular expressions with individual sample rate of 0 to 100.
+# sample_jobs              - An array of job names with individual sample rate of 0 to 100.
 #
 # Any of these config settings can be set with an environment variable prefixed
 # by SCOUT_ and uppercasing the key: SCOUT_LOG_LEVEL for instance.
@@ -67,6 +72,8 @@ module ScoutApm
         'host',
         'hostname',
         'ignore',
+        'ignore_endpoints',
+        'ignore_jobs',
         'key',
         'log_class',
         'log_file_path',
@@ -83,6 +90,9 @@ module ScoutApm
         'remote_agent_port',
         'report_format',
         'revision_sha',
+        'sample_rate',
+        'sample_endpoints',
+        'sample_jobs',
         'scm_subdirectory',
         'start_resque_server_instrument',
         'ssl_cert_file',
@@ -184,6 +194,8 @@ module ScoutApm
       'dev_trace' => BooleanCoercion.new,
       'enable_background_jobs' => BooleanCoercion.new,
       'ignore' => JsonCoercion.new,
+      'ignore_endpoints' => JsonCoercion.new,
+      'ignore_jobs' => JsonCoercion.new,
       'max_traces' => IntegerCoercion.new,
       'monitor' => BooleanCoercion.new,
       'collect_remote_ip' => BooleanCoercion.new,
@@ -194,6 +206,9 @@ module ScoutApm
       'external_service_metric_report_limit' => IntegerCoercion.new,
       'instrument_http_url_length' => IntegerCoercion.new,
       'record_queue_time' => BooleanCoercion.new,
+      'sample_rate' => IntegerCoercion.new,
+      'sample_endpoints' => JsonCoercion.new,
+      'sample_jobs' => JsonCoercion.new,
       'start_resque_server_instrument' => BooleanCoercion.new,
       'timeline_traces' => BooleanCoercion.new,
       'auto_instruments' => BooleanCoercion.new,
@@ -290,41 +305,46 @@ module ScoutApm
 
     class ConfigDefaults
       DEFAULTS = {
-        'compress_payload'       => true,
-        'detailed_middleware'    => false,
-        'dev_trace'              => false,
-        'direct_host'            => 'https://apm.scoutapp.com',
-        'disabled_instruments'   => [],
-        'enable_background_jobs' => true,
-        'host'                   => 'https://checkin.scoutapp.com',
-        'ignore'                 => [],
-        'log_level'              => 'info',
-        'max_traces'             => 10,
-        'profile'                => true, # for scoutprof
-        'report_format'          => 'json',
-        'scm_subdirectory'       => '',
-        'uri_reporting'          => 'full_path',
-        'remote_agent_host'      => '127.0.0.1',
-        'remote_agent_port'      => 7721, # picked at random
-        'database_metric_limit'  => 5000, # The hard limit on db metrics
-        'database_metric_report_limit' => 1000,
-        'external_service_metric_limit'  => 5000, # The hard limit on external service metrics
+        'compress_payload'                     => true,
+        'detailed_middleware'                  => false,
+        'dev_trace'                            => false,
+        'direct_host'                          => 'https://apm.scoutapp.com',
+        'disabled_instruments'                 => [],
+        'enable_background_jobs'               => true,
+        'host'                                 => 'https://checkin.scoutapp.com',
+        'ignore'                               => [],
+        'ignore_endpoints'                     => [],
+        'ignore_jobs'                          => [],
+        'log_level'                            => 'info',
+        'max_traces'                           => 10,
+        'profile'                              => true, # for scoutprof
+        'report_format'                        => 'json',
+        'scm_subdirectory'                     => '',
+        'uri_reporting'                        => 'full_path',
+        'remote_agent_host'                    => '127.0.0.1',
+        'remote_agent_port'                    => 7721, # picked at random
+        'database_metric_limit'                => 5000, # The hard limit on db metrics
+        'database_metric_report_limit'         => 1000,
+        'external_service_metric_limit'        => 5000, # The hard limit on external service metrics
         'external_service_metric_report_limit' => 1000,
-        'instrument_http_url_length' => 300,
-        'start_resque_server_instrument' => true, # still only starts if Resque is detected
-        'collect_remote_ip' => true,
-        'record_queue_time' => true,
-        'timeline_traces' => true,
-        'auto_instruments' => false,
-        'auto_instruments_ignore' => [],
-        'use_prepend' => false,
-        'alias_method_instruments' => [],
-        'prepend_instruments' => [],
-        'ssl_cert_file' => File.join( File.dirname(__FILE__), *%w[.. .. data cacert.pem] ),
-        'errors_enabled' => false,
-        'errors_ignored_exceptions' => %w(ActiveRecord::RecordNotFound ActionController::RoutingError),
-        'errors_filtered_params' => %w(password s3-key),
-        'errors_host' => 'https://errors.scoutapm.com',
+        'instrument_http_url_length'           => 300,
+        'sample_rate'                          => 100,
+        'sample_endpoints'                     => [],
+        'sample_jobs'                          => [],
+        'start_resque_server_instrument'       => true, # still only starts if Resque is detected
+        'collect_remote_ip'                    => true,
+        'record_queue_time'                    => true,
+        'timeline_traces'                      => true,
+        'auto_instruments'                     => false,
+        'auto_instruments_ignore'              => [],
+        'use_prepend'                          => false,
+        'alias_method_instruments'             => [],
+        'prepend_instruments'                  => [],
+        'ssl_cert_file'                        => File.join( File.dirname(__FILE__), *%w[.. .. data cacert.pem] ),
+        'errors_enabled'                       => false,
+        'errors_ignored_exceptions'            => %w(ActiveRecord::RecordNotFound ActionController::RoutingError),
+        'errors_filtered_params'               => %w(password s3-key),
+        'errors_host'                          => 'https://errors.scoutapm.com',
       }.freeze
 
       def value(key)
