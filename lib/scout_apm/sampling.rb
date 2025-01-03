@@ -69,12 +69,12 @@ module ScoutApm
 
     def ignore_job?(job_name)
       return false if ignore_jobs.nil?
-      @ignored_jobs.include?(job_name)
+      ignore_jobs.include?(job_name)
     end
 
     def sample_job?(job_name)
       return false if sample_jobs.nil?
-      @sample_jobs.has_key?(job_name)
+      sample_jobs.has_key?(job_name)
     end
 
     def sample?(rate)
