@@ -6,12 +6,17 @@ module ScoutApm
       @global_sample_rate = config.value('sample_rate')
       # web endpoints matched prefix by regex
       # jobs matched explicitly by name
+
+      # for now still support old config key ('ignore') for backwards compatibility
+      uris = config.value('ignore').present? ? config.value('ignore') : config.value('ignore_endpoints')
+      @ignore_uri_regex = create_uri_regex(uris)
+
       @sample_endpoints = individual_sample_to_hash(config.value('sample_endpoints'))
-      @ignore_uri_regex = create_uri_regex(config.value('ignore_endpoints'))
       @sample_uri_regex = create_uri_regex(sample_endpoints.keys) if sample_endpoints
+
       @ignore_jobs = config.value('ignore_jobs')
       @sample_jobs = individual_sample_to_hash(config.value('sample_jobs'))
-      # TODO make this safer/smarter
+
       logger.info("Sampling Initialized: global_sample_rate: #{global_sample_rate}, sample_endpoints: #{sample_endpoints}, ignore_uri_regex: #{ignore_uri_regex}, sample_uri_regex: #{sample_uri_regex}, ignore_jobs: #{ignore_jobs}, sample_jobs: #{sample_jobs}")
     end
 

@@ -29,14 +29,14 @@ class SamplingTest < Minitest::Test
 
     def test_uri_ignore
       sampling = ScoutApm::Sampling.new(@individual_config)
-      assert_equal true, sampling.ignore_uri?('/baz')
-      assert_equal false, sampling.ignore_uri?('/foo')
+      assert_equal true, sampling.ignore_uri?('/baz/bap')
+      assert_equal false, sampling.ignore_uri?('/foo/far')
     end
 
     def test_uri_sample
       sampling = ScoutApm::Sampling.new(@individual_config)
-      assert_equal true, sampling.sample_uri?('/foo')
-      assert_equal false, sampling.sample_uri?('/baz')
+      assert_equal true, sampling.sample_uri?('/foo/far')
+      assert_equal false, sampling.sample_uri?('/baz/bap')
     end
 
     def test_job_ignore
@@ -52,12 +52,18 @@ class SamplingTest < Minitest::Test
     end
 
     def test_sample
-      sampling = ScoutApm::Sampling.new(@global_sample_config)
+      sampling = ScoutApm::Sampling.new(@individual_config)
       sampling.stub(:rand, 0.01) do
         assert_equal(false, sampling.sample?(50))
       end
       sampling.stub(:rand, 0.99) do
         assert_equal(true, sampling.sample?(50))
       end
+    end
+
+    def test_old_ignore
+      config = FakeConfigOverlay.new({'ignore' => '/foo'})
+      sampling = ScoutApm::Sampling.new(config)
+      assert_equal true, sampling.ignore_uri?('/foo')
     end
 end
