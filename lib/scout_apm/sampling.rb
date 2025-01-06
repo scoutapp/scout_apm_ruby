@@ -9,9 +9,10 @@ module ScoutApm
       @sample_endpoints = individual_sample_to_hash(config.value('sample_endpoints'))
       @ignore_uri_regex = create_uri_regex(config.value('ignore_endpoints'))
       @sample_uri_regex = create_uri_regex(sample_endpoints.keys) if sample_endpoints
-      @ignore_jobs = config.value('ignore_jobs').split(',') if config.value('ignore_jobs')
+      @ignore_jobs = config.value('ignore_jobs')
       @sample_jobs = individual_sample_to_hash(config.value('sample_jobs'))
       # TODO make this safer/smarter
+      logger.info("Sampling Initialized: global_sample_rate: #{global_sample_rate}, sample_endpoints: #{sample_endpoints}, ignore_uri_regex: #{ignore_uri_regex}, sample_uri_regex: #{sample_uri_regex}, ignore_jobs: #{ignore_jobs}, sample_jobs: #{sample_jobs}")
     end
 
     def ignore?(transaction)
@@ -40,7 +41,7 @@ module ScoutApm
     end
 
     def individual_sample_to_hash(sampling_config)
-      return nil if sampling_config.nil?
+      return nil if sampling_config.empty?
       # config looks like ['/foo:50','/bar:100']. parse it into hash of string: integer
       sample_hash = {}
       sampling_config.each do |sample|
@@ -52,7 +53,7 @@ module ScoutApm
     end
 
     def create_uri_regex(prefixes)
-      return nil if prefixes.nil?
+      return nil if prefixes.empty?
       regexes = Array(prefixes).
         reject{|prefix| prefix == ""}.
         map {|prefix| %r{\A#{prefix}} }
@@ -79,6 +80,12 @@ module ScoutApm
 
     def sample?(rate)
       rand * 100 > rate
+    end
+
+    private
+
+    def logger
+      ScoutApm::Agent.instance.logger
     end
 
   end

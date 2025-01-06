@@ -303,7 +303,11 @@ module ScoutApm
       restore_from_dump! if @agent_context.nil?
 
       # Bail out early if the user asked us to ignore this uri
-      return if @agent_context.ignored_uris.ignore?(annotations[:uri])
+      # return if @agent_context.ignored_uris.ignore?(annotations[:uri])
+      if @agent_context.sampling.ignore?(self)
+        logger.debug("Ignoring request due to sampling")
+        return
+      end
 
       apply_name_override
 
