@@ -25,9 +25,9 @@ module ScoutApm
       # check if ignored _then_ sampled
       if transaction.job?
         job_name = transaction.layer_finder.job.name
-        return true if ignore_job?(transaction.job_name)
-        if sample_jobs.has_key?(transaction.job_name)
-          return true if sample?(sample_jobs[transaction.job_name])
+        return true if ignore_job?(job_name)
+        if sample_job?(job_name)
+          return true if sample?(sample_jobs[job_name])
         end
       elsif transaction.web?
         uri = transaction.annotations[:uri]
@@ -41,7 +41,7 @@ module ScoutApm
     end
 
     def individual_sample_to_hash(sampling_config)
-      return nil if sampling_config.empty?
+      return nil if sampling_config.blank?
       # config looks like ['/foo:50','/bar:100']. parse it into hash of string: integer
       sample_hash = {}
       sampling_config.each do |sample|
@@ -53,7 +53,7 @@ module ScoutApm
     end
 
     def create_uri_regex(prefixes)
-      return nil if prefixes.empty?
+      return nil if prefixes.blank?
       regexes = Array(prefixes).
         reject{|prefix| prefix == ""}.
         map {|prefix| %r{\A#{prefix}} }
@@ -61,20 +61,22 @@ module ScoutApm
     end
 
     def ignore_uri?(uri)
+      return false if ignore_uri_regex.nil?
       !! ignore_uri_regex.match(uri)
     end
 
     def sample_uri?(uri)
+      return false if sample_uri_regex.nil?
       !! sample_uri_regex.match(uri)
     end
 
     def ignore_job?(job_name)
-      return false if ignore_jobs.nil?
+      return false if ignore_jobs.blank?
       ignore_jobs.include?(job_name)
     end
 
     def sample_job?(job_name)
-      return false if sample_jobs.nil?
+      return false if sample_jobs.blank?
       sample_jobs.has_key?(job_name)
     end
 
