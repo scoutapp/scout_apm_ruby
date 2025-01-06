@@ -304,8 +304,8 @@ module ScoutApm
 
       # Bail out early if the user asked us to ignore this uri
       # return if @agent_context.ignored_uris.ignore?(annotations[:uri])
-      if @agent_context.sampling.drop_request?(self)
-        logger.debug("Dropping request due to sampling")
+      if @agent_context.sampling.ignore?(self)
+        logger.debug("Ignoring request due to sampling")
         return
       end
 
