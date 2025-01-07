@@ -3,7 +3,6 @@ require 'test_helper'
 require 'scout_apm/sampling'
 
 class SamplingTest < Minitest::Test
-    # tr = ScoutApm::TrackedRequest.new(ScoutApm::AgentContext.new, ScoutApm::FakeStore.new)
 
     def setup
       @global_sample_config = FakeConfigOverlay.new(

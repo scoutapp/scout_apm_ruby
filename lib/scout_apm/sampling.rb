@@ -38,7 +38,7 @@ module ScoutApm
         uri = transaction.annotations[:uri]
         return true if ignore_uri?(uri)
         if sample_uri?(uri)
-          return true if sample?(uri)
+          return true if sample?(sample_endpoints[uri])
         end
       end
 
@@ -51,8 +51,7 @@ module ScoutApm
       sample_hash = {}
       sampling_config.each do |sample|
         path, rate = sample.split(':')
-        rate = rate.to_i
-        sample_hash[path] = rate
+        sample_hash[path] = rate.to_i
       end
       sample_hash
     end
