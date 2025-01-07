@@ -1,4 +1,10 @@
 # Unreleased
+- New options for sampling and ignore configurationn (#521)
+  - `sample_rate` - Set the rate at which requests are sampled globally (1-100, a percentage of requests to keep).
+  - `ignore_endpoints` - Ignore endpoints by regex matching prefix (Same as and replaces `ignore`)
+  - `sample_endpoints` - Sample endpoints by regex matching prefix (i.e. ['/foo:70']).
+  - `ignore_jobs` - Ignore Jobs by explicit name match.
+  - `sample_jobs` - Sample Jobs by explicit name match (i.e. ['MyJob:70']).
 
 # 5.5.0
 - Fix undeclared logger in grape instruments (#510)
