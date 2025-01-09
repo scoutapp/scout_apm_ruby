@@ -8,11 +8,9 @@ module ScoutApm
       # jobs matched explicitly by name
 
       # for now still support old config key ('ignore') for backwards compatibility
-      uris = config.value('ignore').present? ? config.value('ignore') : config.value('ignore_endpoints')
-      @ignore_uri_regex = create_uri_regex(uris)
+      @ignore_endpoints = config.value('ignore').present? ? config.value('ignore') : config.value('ignore_endpoints')
 
       @sample_endpoints = individual_sample_to_hash(config.value('sample_endpoints'))
-      @sample_uri_regex = create_uri_regex(sample_endpoints.keys) if sample_endpoints
 
       @ignore_jobs = config.value('ignore_jobs')
       @sample_jobs = individual_sample_to_hash(config.value('sample_jobs'))
@@ -20,7 +18,7 @@ module ScoutApm
       logger.info("Sampling Initialized: global_sample_rate: #{global_sample_rate}, sample_endpoints: #{sample_endpoints}, ignore_uri_regex: #{ignore_uri_regex}, sample_uri_regex: #{sample_uri_regex}, ignore_jobs: #{ignore_jobs}, sample_jobs: #{sample_jobs}")
     end
 
-    def ignore?(transaction)
+    def drop_request?(transaction)
       # global sample check
       if global_sample_rate
         return true if sample?(global_sample_rate)
@@ -37,8 +35,9 @@ module ScoutApm
       elsif transaction.web?
         uri = transaction.annotations[:uri]
         return true if ignore_uri?(uri)
-        if sample_uri?(uri)
-          return true if sample?(sample_endpoints[uri])
+        do_sample, rate = sample_uri?(uri)
+        if do_sample
+          return true if sample?(rate)
         end
       end
 
@@ -56,22 +55,20 @@ module ScoutApm
       sample_hash
     end
 
-    def create_uri_regex(prefixes)
-      return nil if prefixes.blank?
-      regexes = Array(prefixes).
-        reject{|prefix| prefix == ""}.
-        map {|prefix| %r{\A#{prefix}} }
-      Regexp.union(*regexes)
-    end
-
     def ignore_uri?(uri)
-      return false if ignore_uri_regex.nil?
-      !! ignore_uri_regex.match(uri)
+      return false if @ignore_endpoints.blank?
+      @ignore_endpoints.each do |prefix|
+        return true if uri.start_with?(prefix)
+      end
+      false
     end
 
     def sample_uri?(uri)
-      return false if sample_uri_regex.nil?
-      !! sample_uri_regex.match(uri)
+      return false if @sample_endpoints.blank?
+      @sample_endpoints.each do |prefix, rate|
+        return true, rate if uri.start_with?(prefix)
+      end
+      return false, nil
     end
 
     def ignore_job?(job_name)

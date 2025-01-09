@@ -169,3 +169,28 @@ end
 class Minitest::Test
   include CustomAsserts
 end
+
+class FakeTrackedRequest
+  def self.new_web_request(uri)
+    context = ScoutApm::Agent.instance.context
+    fake_store = ScoutApm::FakeStore.new
+    req = ScoutApm::TrackedRequest.new(context, fake_store)
+
+    first_layer = ScoutApm::Layer.new("Controller", "index")
+    req.start_layer(first_layer)
+    req.annotate_request(:uri => uri)
+
+    req
+  end
+
+  def self.new_job_request(job_name)
+    context = ScoutApm::Agent.instance.context
+    fake_store = ScoutApm::FakeStore.new
+    req = ScoutApm::TrackedRequest.new(context, fake_store)
+
+    first_layer = ScoutApm::Layer.new("Job", job_name)
+    req.start_layer(first_layer)
+
+    req
+  end
+end
