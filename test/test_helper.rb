@@ -38,6 +38,10 @@ class FakeConfigOverlay
     @values[key]
   end
 
+  def values
+    @values
+  end
+
   def has_key?(key)
     @values.has_key?(key)
   end

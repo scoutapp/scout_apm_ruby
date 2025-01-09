@@ -19,29 +19,27 @@ module ScoutApm
     end
 
     def drop_request?(transaction)
-      # global sample check
-      if global_sample_rate
-        return true if sample?(global_sample_rate)
-      end
-
       # job or endpoint?
-      # check if ignored _then_ sampled
+      # check if request should be sampled first
+      # Individual sample rate always takes precedence over global sample rate
       if transaction.job?
         job_name = transaction.layer_finder.job.name
+        rate = job_sample_rate(job_name)
+        return sample?(rate) unless rate.nil?
         return true if ignore_job?(job_name)
-        if sample_job?(job_name)
-          return true if sample?(sample_jobs[job_name])
-        end
       elsif transaction.web?
         uri = transaction.annotations[:uri]
+        rate = web_sample_rate(uri)
+        return sample?(rate) unless rate.nil?
         return true if ignore_uri?(uri)
-        do_sample, rate = sample_uri?(uri)
-        if do_sample
-          return true if sample?(rate)
-        end
       end
 
-      false # not ignored
+      # global sample check
+      if @global_sample_rate
+        return sample?(@global_sample_rate)
+      end
+
+      false # don't drop the request
     end
 
     def individual_sample_to_hash(sampling_config)
@@ -63,22 +61,22 @@ module ScoutApm
       false
     end
 
-    def sample_uri?(uri)
-      return false if @sample_endpoints.blank?
+    def web_sample_rate(uri)
+      return nil if @sample_endpoints.blank?
       @sample_endpoints.each do |prefix, rate|
-        return true, rate if uri.start_with?(prefix)
+        return rate if uri.start_with?(prefix)
       end
-      return false, nil
+      nil
     end
 
     def ignore_job?(job_name)
-      return false if ignore_jobs.blank?
-      ignore_jobs.include?(job_name)
+      return false if @ignore_jobs.blank?
+      @ignore_jobs.include?(job_name)
     end
 
-    def sample_job?(job_name)
-      return false if sample_jobs.blank?
-      sample_jobs.has_key?(job_name)
+    def job_sample_rate(job_name)
+      return nil if @sample_jobs.blank?
+      @sample_jobs.fetch(job_name, nil)
     end
 
     def sample?(rate)
