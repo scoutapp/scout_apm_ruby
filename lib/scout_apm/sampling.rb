@@ -9,13 +9,12 @@ module ScoutApm
 
       # for now still support old config key ('ignore') for backwards compatibility
       @ignore_endpoints = config.value('ignore').present? ? config.value('ignore') : config.value('ignore_endpoints')
-
       @sample_endpoints = individual_sample_to_hash(config.value('sample_endpoints'))
 
       @ignore_jobs = config.value('ignore_jobs')
       @sample_jobs = individual_sample_to_hash(config.value('sample_jobs'))
 
-      logger.info("Sampling Initialized: global_sample_rate: #{global_sample_rate}, sample_endpoints: #{sample_endpoints}, ignore_uri_regex: #{ignore_uri_regex}, sample_uri_regex: #{sample_uri_regex}, ignore_jobs: #{ignore_jobs}, sample_jobs: #{sample_jobs}")
+      logger.info("Sampling initialized with config: global_sample_rate: #{@global_sample_rate}, sample_endpoints: #{@sample_endpoints}, ignore_endpoints: #{@ignore_endpoints}, sample_jobs: #{@sample_jobs}, ignore_jobs: #{@ignore_jobs}")
     end
 
     def drop_request?(transaction)
