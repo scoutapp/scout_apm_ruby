@@ -44,9 +44,11 @@ require 'scout_apm/environment'
 #                            instruments listed in this array. Default: []
 # ignore_endpoints         - An array of endpoints to ignore. These are matched as regular expressions. (supercedes 'ignore')
 # ignore_jobs              - An array of job names to ignore.
-# sample_rate              - An integer between 0 and 100. 0 means no traces are sent, 100 means all traces are sent.
+# sample_rate              - Rate to sample entire application. An integer between 0 and 100. 0 means no traces are sent, 100 means all traces are sent.
 # sample_endpoints         - An array of endpoints to sample. These are matched as regular expressions with individual sample rate of 0 to 100.
 # sample_jobs              - An array of job names with individual sample rate of 0 to 100.
+# endpoint_sample_rate     - Rate to sample all endpoints. An integer between 0 and 100. 0 means no traces are sent, 100 means all traces are sent. (supercedes 'sample_rate')
+# job_sample_rate          - Rate to sample all jobs. An integer between 0 and 100. 0 means no traces are sent, 100 means all traces are sent. (supercedes 'sample_rate')
 #
 # Any of these config settings can be set with an environment variable prefixed
 # by SCOUT_ and uppercasing the key: SCOUT_LOG_LEVEL for instance.
@@ -93,6 +95,8 @@ module ScoutApm
         'sample_rate',
         'sample_endpoints',
         'sample_jobs',
+        'endpoint_sample_rate',
+        'job_sample_rate',
         'scm_subdirectory',
         'start_resque_server_instrument',
         'ssl_cert_file',
@@ -209,6 +213,8 @@ module ScoutApm
       'sample_rate' => IntegerCoercion.new,
       'sample_endpoints' => JsonCoercion.new,
       'sample_jobs' => JsonCoercion.new,
+      'endpoint_sample_rate' => IntegerCoercion.new,
+      'job_sample_rate' => IntegerCoercion.new,
       'start_resque_server_instrument' => BooleanCoercion.new,
       'timeline_traces' => BooleanCoercion.new,
       'auto_instruments' => BooleanCoercion.new,
@@ -331,6 +337,8 @@ module ScoutApm
         'sample_rate'                          => 100,
         'sample_endpoints'                     => [],
         'sample_jobs'                          => [],
+        'endpoint_sample_rate'                 => 100,
+        'job_sample_rate'                      => 100,
         'start_resque_server_instrument'       => true, # still only starts if Resque is detected
         'collect_remote_ip'                    => true,
         'record_queue_time'                    => true,
