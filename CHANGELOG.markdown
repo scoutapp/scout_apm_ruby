@@ -1,5 +1,15 @@
 # Unreleased
 
+# 5.6.0
+- New options for sampling and ignore configurationn (#521)
+  - `sample_rate` - Set the rate at which requests are sampled globally (1-100, a percentage of requests to keep).
+  - `ignore_endpoints` - Ignore endpoints by regex matching prefix (Same as and replaces `ignore`)
+  - `sample_endpoints` - Sample endpoints by regex matching prefix (i.e. ['/foo:70']).
+  - `endpoint_sample_rate` - Set the rate at which all non-matching web requests are sampled.
+  - `ignore_jobs` - Ignore Jobs by explicit name match.
+  - `sample_jobs` - Sample Jobs by explicit name match (i.e. ['MyJob:70']).
+  - `job_sample_rate` - Set the rate at which all non-matching background jobs are sampled.
+
 # 5.5.0
 - Fix undeclared logger in grape instruments (#510)
 - Drop guaranteed support for Rubies <= 2.4
