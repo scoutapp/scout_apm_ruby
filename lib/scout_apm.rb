@@ -111,6 +111,7 @@ require 'scout_apm/instruments/samplers'
 require 'scout_apm/app_server_load'
 
 require 'scout_apm/ignored_uris.rb'
+require 'scout_apm/sampling.rb'
 require 'scout_apm/utils/active_record_metric_name'
 require 'scout_apm/utils/backtrace_parser'
 require 'scout_apm/utils/installed_gems'
