@@ -27,14 +27,12 @@ module ScoutApm
         job_name = transaction.layer_finder.job.name
         rate = job_sample_rate(job_name)
         return sample?(rate) unless rate.nil?
-        # can't always return here
         return true if ignore_job?(job_name)
         return sample?(@job_sample_rate) unless @job_sample_rate.nil?
       elsif transaction.web?
         uri = transaction.annotations[:uri]
         rate = web_sample_rate(uri)
         return sample?(rate) unless rate.nil?
-        # can't always return here
         return true if ignore_uri?(uri)
         return sample?(@endpoint_sample_rate) unless @endpoint_sample_rate.nil?
       end
