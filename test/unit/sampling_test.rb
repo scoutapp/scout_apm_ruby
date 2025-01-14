@@ -91,7 +91,6 @@ class SamplingTest < Minitest::Test
       transaction = FakeTrackedRequest.new_web_request('/faz/bap')
       assert_equal false, sampling.drop_request?(transaction)
 
-
       transaction = FakeTrackedRequest.new_web_request('/foo/far')
       sampling.stub(:rand, 0.01) do
         assert_equal false, sampling.drop_request?(transaction)
@@ -100,6 +99,29 @@ class SamplingTest < Minitest::Test
       # passes individual sample but caught by global rate
       sampling.stub(:rand, 0.99) do
         assert_equal true, sampling.drop_request?(transaction)
+      end
+    end
+
+    def test_web_reqeust_general_sampling
+      config = FakeConfigOverlay.new(@individual_config.values.merge({'endpoint_sample_rate' => 80}))
+      sampling = ScoutApm::Sampling.new(config)
+
+      transaction = FakeTrackedRequest.new_web_request('/foo/far')
+      transaction2 = FakeTrackedRequest.new_web_request('/ooo/oar')
+      # /foo/far sampled at 50 specifically, /ooo/oar caught by general endpoint rate of 80
+      sampling.stub(:rand, 0.01) do
+        assert_equal false, sampling.drop_request?(transaction)
+        assert_equal false, sampling.drop_request?(transaction2)
+      end
+
+      sampling.stub(:rand, 0.70) do
+        assert_equal true, sampling.drop_request?(transaction)
+        assert_equal false, sampling.drop_request?(transaction2)
+      end
+
+      sampling.stub(:rand, 0.99) do
+        assert_equal true, sampling.drop_request?(transaction)
+        assert_equal true, sampling.drop_request?(transaction2)
       end
     end
 
@@ -144,6 +166,29 @@ class SamplingTest < Minitest::Test
 
       sampling.stub(:rand, 0.99) do
         assert_equal true, sampling.drop_request?(transaction)
+      end
+    end
+
+    def test_job_general_sampling
+      config = FakeConfigOverlay.new(@individual_config.values.merge({'job_sample_rate' => 80}))
+      sampling = ScoutApm::Sampling.new(config)
+
+      transaction = FakeTrackedRequest.new_job_request('joba')
+      transaction2 = FakeTrackedRequest.new_job_request('jobz')
+      # joba sampled at 50 specifically, jobz caught by general job rate of 80
+      sampling.stub(:rand, 0.01) do
+        assert_equal false, sampling.drop_request?(transaction)
+        assert_equal false, sampling.drop_request?(transaction2)
+      end
+
+      sampling.stub(:rand, 0.70) do
+        assert_equal true, sampling.drop_request?(transaction)
+        assert_equal false, sampling.drop_request?(transaction2)
+      end
+
+      sampling.stub(:rand, 0.99) do
+        assert_equal true, sampling.drop_request?(transaction)
+        assert_equal true, sampling.drop_request?(transaction2)
       end
     end
 

@@ -10,27 +10,31 @@ module ScoutApm
       # for now still support old config key ('ignore') for backwards compatibility
       @ignore_endpoints = config.value('ignore').present? ? config.value('ignore') : config.value('ignore_endpoints')
       @sample_endpoints = individual_sample_to_hash(config.value('sample_endpoints'))
+      @endpoint_sample_rate = config.value('endpoint_sample_rate')
 
       @ignore_jobs = config.value('ignore_jobs')
       @sample_jobs = individual_sample_to_hash(config.value('sample_jobs'))
+      @job_sample_rate = config.value('job_sample_rate')
 
-      logger.info("Sampling initialized with config: global_sample_rate: #{@global_sample_rate}, sample_endpoints: #{@sample_endpoints}, ignore_endpoints: #{@ignore_endpoints}, sample_jobs: #{@sample_jobs}, ignore_jobs: #{@ignore_jobs}")
+      logger.info("Sampling initialized with config: global_sample_rate: #{@global_sample_rate}, endpoint_sample_rate: #{@endpoint_sample_rate}, sample_endpoints: #{@sample_endpoints}, ignore_endpoints: #{@ignore_endpoints}, job_sample_rate: #@job_sample_rate}, sample_jobs: #{@sample_jobs}, ignore_jobs: #{@ignore_jobs}")
     end
 
     def drop_request?(transaction)
-      # job or endpoint?
-      # check if request should be sampled first
-      # Individual sample rate always takes precedence over global sample rate
+      # Individual endpoint/job sampling takes precedence over ignoring.
+      # Individual endpoint/job sample rate always takes precedence over general endpoint/job rate.
+      # General endpoint/job rate always takes precedence over global sample rate
       if transaction.job?
         job_name = transaction.layer_finder.job.name
         rate = job_sample_rate(job_name)
         return sample?(rate) unless rate.nil?
         return true if ignore_job?(job_name)
+        return sample?(@job_sample_rate) unless @job_sample_rate.nil?
       elsif transaction.web?
         uri = transaction.annotations[:uri]
         rate = web_sample_rate(uri)
         return sample?(rate) unless rate.nil?
         return true if ignore_uri?(uri)
+        return sample?(@endpoint_sample_rate) unless @endpoint_sample_rate.nil?
       end
 
       # global sample check
