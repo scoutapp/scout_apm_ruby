@@ -91,6 +91,10 @@ module ScoutApm
       @logger ||= LoggerFactory.build(config, environment)
     end
 
+    def sampling
+      @sampling ||= ScoutApm::Sampling.new(config)
+    end
+
     def ignored_uris
       @ignored_uris ||= ScoutApm::IgnoredUris.new(config.value('ignore'))
     end
