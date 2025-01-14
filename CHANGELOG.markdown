@@ -1,4 +1,6 @@
 # Unreleased
+
+# 5.6.0
 - New options for sampling and ignore configurationn (#521)
   - `sample_rate` - Set the rate at which requests are sampled globally (1-100, a percentage of requests to keep).
   - `ignore_endpoints` - Ignore endpoints by regex matching prefix (Same as and replaces `ignore`)
