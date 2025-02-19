@@ -180,7 +180,8 @@ module ScoutApm
 
     class IntegerCoercion
       def coerce(val)
-        val.to_i
+        return val.to_i unless val.nil?
+        return val if val.nil?
       end
     end
 
@@ -337,8 +338,8 @@ module ScoutApm
         'sample_rate'                          => 100,
         'sample_endpoints'                     => [],
         'sample_jobs'                          => [],
-        'endpoint_sample_rate'                 => 100,
-        'job_sample_rate'                      => 100,
+        'endpoint_sample_rate'                 => nil,
+        'job_sample_rate'                      => nil,
         'start_resque_server_instrument'       => true, # still only starts if Resque is detected
         'collect_remote_ip'                    => true,
         'record_queue_time'                    => true,
