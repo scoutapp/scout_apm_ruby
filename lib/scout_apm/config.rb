@@ -180,8 +180,8 @@ module ScoutApm
 
     class IntegerCoercion
       def coerce(val)
-        return val.to_i unless val.nil?
         return val if val.nil?
+        val.to_i
       end
     end
 
