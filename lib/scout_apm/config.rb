@@ -180,6 +180,12 @@ module ScoutApm
 
     class IntegerCoercion
       def coerce(val)
+        val.to_i
+      end
+    end
+
+    class NullableIntegerCoercion
+      def coerce(val)
         return val if val.nil?
         val.to_i
       end
@@ -214,8 +220,8 @@ module ScoutApm
       'sample_rate' => IntegerCoercion.new,
       'sample_endpoints' => JsonCoercion.new,
       'sample_jobs' => JsonCoercion.new,
-      'endpoint_sample_rate' => IntegerCoercion.new,
-      'job_sample_rate' => IntegerCoercion.new,
+      'endpoint_sample_rate' => NullableIntegerCoercion.new,
+      'job_sample_rate' => NullableIntegerCoercion.new,
       'start_resque_server_instrument' => BooleanCoercion.new,
       'timeline_traces' => BooleanCoercion.new,
       'auto_instruments' => BooleanCoercion.new,
