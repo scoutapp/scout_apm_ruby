@@ -1,5 +1,8 @@
 # Unreleased
 
+# 5.6.1
+- Fix `job_sample_rate` and `endpoint_sample_rate` default configuration values (#529)
+
 # 5.6.0
 - New options for sampling and ignore configurationn (#521)
   - `sample_rate` - Set the rate at which requests are sampled globally (1-100, a percentage of requests to keep).
