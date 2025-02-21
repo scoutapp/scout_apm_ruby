@@ -16,7 +16,15 @@ module ScoutApm
       @sample_jobs = individual_sample_to_hash(config.value('sample_jobs'))
       @job_sample_rate = config.value('job_sample_rate')
 
-      logger.info("Sampling initialized with config: global_sample_rate: #{@global_sample_rate}, endpoint_sample_rate: #{@endpoint_sample_rate}, sample_endpoints: #{@sample_endpoints}, ignore_endpoints: #{@ignore_endpoints}, job_sample_rate: #@job_sample_rate}, sample_jobs: #{@sample_jobs}, ignore_jobs: #{@ignore_jobs}")
+      log_string = "Sampling initialized with config: "
+      log_string += "global_sample_rate: #{@global_sample_rate.inspect}, "
+      log_string += "endpoint_sample_rate: #{@endpoint_sample_rate.inspect}, "
+      log_string += "sample_endpoints: #{@sample_endpoints.inspect}, "
+      log_string += "ignore_endpoints: #{@ignore_endpoints.inspect}, "
+      log_string += "job_sample_rate: #{@job_sample_rate.inspect}, "
+      log_string += "sample_jobs: #{@sample_jobs.inspect}, "
+      log_string += "ignore_jobs: #{@ignore_jobs.inspect}"
+      logger.info(log_string)
     end
 
     def drop_request?(transaction)
