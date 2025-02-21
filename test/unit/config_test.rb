@@ -72,6 +72,26 @@ class ConfigTest < Minitest::Test
     assert_equal ["a"], coercion.coerce(["a"])
   end
 
+  def test_integer_coercion
+    coercion = ScoutApm::Config::IntegerCoercion.new
+    assert_equal 1, coercion.coerce("1")
+    assert_equal 1, coercion.coerce(1)
+    assert_equal 0, coercion.coerce("0")
+    assert_equal 0, coercion.coerce(0)
+    assert_equal 0, coercion.coerce("")
+    assert_equal 0, coercion.coerce(nil)
+  end
+
+  def test_nullable_integer_coercion
+    coercion = ScoutApm::Config::NullableIntegerCoercion.new
+    assert_equal 1, coercion.coerce("1")
+    assert_equal 1, coercion.coerce(1)
+    assert_equal 0, coercion.coerce("0")
+    assert_equal 0, coercion.coerce(0)
+    assert_equal 0, coercion.coerce("")
+    assert_equal nil, coercion.coerce(nil)
+  end
+
   def test_any_keys_found
     ENV.stubs(:has_key?).returns(nil)
 
