@@ -1,4 +1,3 @@
 eval_gemfile("../Gemfile")
 
-# https://github.com/scoutapp/scout_apm_ruby/issues/449
 gem 'sidekiq', '~> 7.0'
