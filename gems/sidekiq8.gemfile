@@ -1,0 +1,4 @@
+eval_gemfile("../Gemfile")
+eval_gemfile("../gems/sqlite3-v2.gemfile")
+
+gem 'sidekiq', '~> 8.0'
