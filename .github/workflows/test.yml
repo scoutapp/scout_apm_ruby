@@ -46,7 +46,7 @@ jobs:
             gemfile: gems/sidekiq7.gemfile
             test_features: "sidekiq_install"
           - ruby: "3.0"
-            gemfile: gems/sidekiq9.gemfile
+            gemfile: gems/sidekiq8.gemfile
             test_features: "sidekiq_install"
           - ruby: 3.1
           - ruby: 3.2
