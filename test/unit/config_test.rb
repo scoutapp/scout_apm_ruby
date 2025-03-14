@@ -89,7 +89,7 @@ class ConfigTest < Minitest::Test
     assert_equal 0, coercion.coerce("0")
     assert_equal 0, coercion.coerce(0)
     assert_equal 0, coercion.coerce("")
-    assert_equal nil, coercion.coerce(nil)
+    assert_nil coercion.coerce(nil)
   end
 
   def test_any_keys_found

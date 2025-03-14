@@ -1,4 +1,5 @@
 # Unreleased
+- Fix deprecation warning for Sidekiq 7.1.5+ (#535)
 
 # 5.6.1
 - Fix `job_sample_rate` and `endpoint_sample_rate` default configuration values (#529)

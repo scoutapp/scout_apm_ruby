@@ -28,7 +28,7 @@ module ScoutApm
 
       def install_sidekiq_with_error_handler
         ::Sidekiq.configure_server do |config|
-          config.error_handlers << proc { |exception, job_info|
+          config.error_handlers << proc { |exception, job_info, sidekiq_config|
             context = ScoutApm::Agent.instance.context
 
             # Bail out early, and reraise if the error is not interesting.

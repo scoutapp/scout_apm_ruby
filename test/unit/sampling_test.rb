@@ -26,7 +26,7 @@ class SamplingTest < Minitest::Test
       assert_equal({'/foo/bar' => 100, '/foo' => 50, '/bar/zap' => 80}, sampling.individual_sample_to_hash(@individual_config.value('sample_endpoints')))
 
       sampling = ScoutApm::Sampling.new(@global_sample_config)
-      assert_equal nil, sampling.individual_sample_to_hash(@global_sample_config.value('sample_endpoints'))
+      assert_nil sampling.individual_sample_to_hash(@global_sample_config.value('sample_endpoints'))
     end
 
     def test_uri_ignore
@@ -41,10 +41,10 @@ class SamplingTest < Minitest::Test
       assert_equal 50, rate
 
       rate = sampling.web_sample_rate('/bar')
-      assert_equal nil, rate
+      assert_nil rate
 
       rate = sampling.web_sample_rate('/baz/bap')
-      assert_equal nil, rate
+      assert_nil rate
 
       rate = sampling.web_sample_rate('/foo/bar/baz')
       assert_equal 100, rate
@@ -59,7 +59,7 @@ class SamplingTest < Minitest::Test
     def test_job_sample
       sampling = ScoutApm::Sampling.new(@individual_config)
       assert_equal 50, sampling.job_sample_rate('joba')
-      assert_equal nil, sampling.job_sample_rate('jobb')
+      assert_nil sampling.job_sample_rate('jobb')
     end
 
     def test_sample

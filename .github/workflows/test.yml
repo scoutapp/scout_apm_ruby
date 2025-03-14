@@ -42,6 +42,12 @@ jobs:
           - ruby: "3.0"
             gemfile: gems/sidekiq.gemfile
             test_features: "sidekiq_install"
+          - ruby: "3.0"
+            gemfile: gems/sidekiq7.gemfile
+            test_features: "sidekiq_install"
+          - ruby: "3.3"
+            gemfile: gems/sidekiq8.gemfile
+            test_features: "sidekiq_install"
           - ruby: 3.1
           - ruby: 3.2
             gemfile: gems/sqlite3-v2.gemfile

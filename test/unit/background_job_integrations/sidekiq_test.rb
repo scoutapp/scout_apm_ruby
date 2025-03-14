@@ -18,7 +18,9 @@ class SidekiqTest < Minitest::Test
     def test_starts_on_startup
       ::ScoutApm::Agent.any_instance.expects(:start)
       SidekiqIntegration.new.install
-      Sidekiq.options[:lifecycle_events][:startup].map(&:call)
+      ::Sidekiq.configure_server do |config|
+        config[:lifecycle_events][:startup].map(&:call)
+      end
     end
   end
 
