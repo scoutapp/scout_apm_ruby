@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # A TrackedRequest is a stack of layers, where completed layers (go into, then
 # come out of a layer) are forgotten as they finish. Layers are attached to
 # their children as the process goes, building a tree structure within the
@@ -55,7 +57,6 @@ module ScoutApm
     # Layers of type 'AutoInstrument' are not recorded if their total_call_time doesn't exceed this threshold.
     # AutoInstrument layers are frequently of short duration. This throws out this deadweight that is unlikely to be optimized.
     AUTO_INSTRUMENT_TIMING_THRESHOLD = 5/1_000.0 # units = seconds
-    AUTO_INSTRUMENT_TYPE = 'AutoInstrument'.freeze
 
     def initialize(agent_context, store)
       @agent_context = agent_context
@@ -190,7 +191,7 @@ module ScoutApm
     # records a Histogram of insignificant / significant layers by file name.
     def layer_insignificant?(layer)
       result = false # default is significant
-      if layer.type == AUTO_INSTRUMENT_TYPE
+      if layer.type == 'AutoInstrument'
         if layer.total_call_time < AUTO_INSTRUMENT_TIMING_THRESHOLD
           result = true # not significant
         end

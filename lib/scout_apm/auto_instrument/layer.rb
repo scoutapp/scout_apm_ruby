@@ -1,13 +1,13 @@
-module ScoutApm
-  AUTO_INSTRUMENT_TYPE = 'AutoInstrument'.freeze
+# frozen_string_literal: true
 
+module ScoutApm
   def self.AutoInstrument(name, backtrace)
     request = ScoutApm::RequestManager.lookup
 
     file_name, _ = backtrace.first.split(":", 2)
 
     begin
-      layer = ScoutApm::Layer.new(AUTO_INSTRUMENT_TYPE, name)
+      layer = ScoutApm::Layer.new('AutoInstrument', name)
       layer.backtrace = backtrace
       layer.file_name = file_name
 
