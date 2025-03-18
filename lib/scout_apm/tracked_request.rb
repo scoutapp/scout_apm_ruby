@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # A TrackedRequest is a stack of layers, where completed layers (go into, then
 # come out of a layer) are forgotten as they finish. Layers are attached to
 # their children as the process goes, building a tree structure within the
