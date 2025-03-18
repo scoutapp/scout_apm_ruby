@@ -20,25 +20,12 @@ module ScoutApm
         @installed = true
 
         # Mongoid versions that use Moped should instrument Moped.
+        ### See moped instrument for Moped driven deploys
         if defined?(::Mongoid) and !defined?(::Moped)
-          logger.info "Instrumenting Mongoid 2.x"
           @installed = true
 
-          ### OLD (2.x) mongoids
-          if defined?(::Mongoid::Collection)
-            ::Mongoid::Collection.class_eval do
-              include ScoutApm::Tracer
-              (::Mongoid::Collections::Operations::ALL - [:<<, :[]]).each do |method|
-                instrument_method method, :type => "MongoDB", :name => '#{@klass}/' + method.to_s
-              end
-            end
-          end
-
-          ### See moped instrument for Moped driven deploys
-
-          ### 5.x Mongoid
-          if (mongoid_v5? || mongoid_v6? || mongoid_v7?) && defined?(::Mongoid::Contextual::Mongo)
-            logger.info "Instrumenting Mongoid 5.x/6.x/7.x"
+          if (mongoid_at_least_5?) && defined?(::Mongoid::Contextual::Mongo)
+            logger.info "Instrumenting Mongoid"
             # All the public methods from Mongoid::Contextual::Mongo.
             # TODO: Geo and MapReduce support (?). They are in other Contextual::* classes
             methods = [
@@ -94,25 +81,9 @@ module ScoutApm
         end
       end
 
-      def mongoid_v5?
+      def mongoid_at_least_5?
         if defined?(::Mongoid::VERSION)
-          ::Mongoid::VERSION =~ /\A5/
-        else
-          false
-        end
-      end
-
-      def mongoid_v6?
-        if defined?(::Mongoid::VERSION)
-          ::Mongoid::VERSION =~ /\A6/
-        else
-          false
-        end
-      end
-
-      def mongoid_v7?
-        if defined?(::Mongoid::VERSION)
-          ::Mongoid::VERSION =~ /\A7/
+          ::Mongoid::VERSION =~ /\A[56789]/
         else
           false
         end
@@ -134,4 +105,3 @@ module ScoutApm
     end
   end
 end
-
