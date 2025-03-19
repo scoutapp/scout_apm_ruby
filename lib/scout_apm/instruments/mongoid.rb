@@ -75,6 +75,8 @@ module ScoutApm
                 ]
 
                 ::Mongoid::Contextual::Mongo.class_eval(with_scout_instruments)
+              else
+                logger.warn "Expected method #{method} not defined in Mongoid::Contextual::Mongo."
               end
             end
           end
