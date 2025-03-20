@@ -1,6 +1,9 @@
 # Unreleased
+
+# 5.6.2
 - Fix deprecation warning for Sidekiq 7.1.5+ (#535)
 - Add support for Mongoid 8 and 9. Remove support for old versions. (#538)
+- Detect deployed SHA from Kamal (#528)
 
 # 5.6.1
 - Fix `job_sample_rate` and `endpoint_sample_rate` default configuration values (#529)
