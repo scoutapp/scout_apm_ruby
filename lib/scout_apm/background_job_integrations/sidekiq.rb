@@ -70,7 +70,11 @@ module ScoutApm
       end
 
       UNKNOWN_CLASS_PLACEHOLDER = 'UnknownJob'.freeze
-      ACTIVE_JOB_KLASS = 'ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper'.freeze
+      ACTIVE_JOB_KLASS = if ::Sidekiq::VERSION.to_i >= 8
+                          'Sidekiq::ActiveJob::Wrapper'.freeze
+                        else
+                          'ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper'.freeze
+                        end
       DELAYED_WRAPPER_KLASS = 'Sidekiq::Extensions::DelayedClass'.freeze
 
 
