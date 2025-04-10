@@ -70,6 +70,7 @@ module ScoutApm
       end
 
       UNKNOWN_CLASS_PLACEHOLDER = 'UnknownJob'.freeze
+      # This name was changed in Sidekiq 8
       ACTIVE_JOB_KLASS = if ::Sidekiq::VERSION.to_i >= 8
                           'Sidekiq::ActiveJob::Wrapper'.freeze
                         else
@@ -123,7 +124,13 @@ module ScoutApm
       def latency(msg, time = Time.now.to_f)
         created_at = msg['enqueued_at'] || msg['created_at']
         if created_at
-          (time - created_at)
+          # Sidekiq 8+ uses milliseconds, older versions use seconds
+          if ::Sidekiq::VERSION.to_i >= 8
+            # Convert milliseconds to seconds for consistency
+            (time - (created_at.to_f / 1000.0))
+          else
+            (time - created_at)
+          end
         else
           0
         end
