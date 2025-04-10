@@ -103,9 +103,9 @@ class SidekiqTest < Minitest::Test
   def test_latency_from_created_at
     # Created at time 80, but now it is 200. Latency was 120
     msg = if SidekiqMiddleware.sidekiq_version_8?
-            { 'enqueued_at' => 80000 } # milliseconds for Sidekiq 8+
+            { 'created_at' => 80000 } # milliseconds for Sidekiq 8+
           else
-            { 'enqueued_at' => 80 }
+            { 'created_at' => 80 }
           end
     assert_equal 120, SidekiqMiddleware.new.latency(msg, 200)
   end
@@ -113,7 +113,7 @@ class SidekiqTest < Minitest::Test
   def test_latency_from_enqueued_at
     # Created at time 80, but now it is 200. Latency was 120
     msg = if SidekiqMiddleware.sidekiq_version_8?
-            { 'enqueued_at' => 8000 } # milliseconds for Sidekiq 8+
+            { 'enqueued_at' => 80000 } # milliseconds for Sidekiq 8+
           else
             { 'enqueued_at' => 80 }
           end
