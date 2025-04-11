@@ -1,5 +1,8 @@
 # Unreleased
 
+# 5.6.3
+- Use new ActiveJob class name and timestamp units for Sidekiq 8+ (#544)
+
 # 5.6.2
 - Fix deprecation warning for Sidekiq 7.1.5+ (#535)
 - Add support for Mongoid 8 and 9. Remove support for old versions. (#538)
