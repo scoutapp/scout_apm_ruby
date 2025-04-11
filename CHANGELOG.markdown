@@ -1,6 +1,6 @@
 # Unreleased
 
-# 5.6.3
+# 5.6.4
 - Use new ActiveJob class name and timestamp units for Sidekiq 8+ (#544)
 
 # 5.6.2
