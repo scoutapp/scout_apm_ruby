@@ -58,7 +58,7 @@ module ScoutApm
       # config looks like ['/foo:50','/bar:100']. parse it into hash of string: integer
       sample_hash = {}
       sampling_config.each do |sample|
-        path, rate = sample.split(':')
+        path, _, rate = sample.rpartition(':')
         sample_hash[path] = rate.to_i
       end
       sample_hash
