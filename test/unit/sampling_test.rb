@@ -15,7 +15,7 @@ class SamplingTest < Minitest::Test
         {
           'sample_endpoints' => ['/foo/bar:100', '/foo:50', '/bar/zap:80'],
           'ignore_endpoints' => ['/baz'],
-          'sample_jobs' => ['joba:50'],
+          'sample_jobs' => ['joba:50', 'Foo::BarJob:95'],
           'ignore_jobs' => 'jobb,jobc',
         }
       )
@@ -59,6 +59,7 @@ class SamplingTest < Minitest::Test
     def test_job_sample
       sampling = ScoutApm::Sampling.new(@individual_config)
       assert_equal 50, sampling.job_sample_rate('joba')
+      assert_equal 95, sampling.job_sample_rate('Foo::BarJob')
       assert_nil sampling.job_sample_rate('jobb')
     end
 
