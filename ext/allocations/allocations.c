@@ -20,7 +20,7 @@ void increment_allocations() {
 }
 
 static VALUE
-get_allocation_count() {
+get_allocation_count(VALUE klass) {
   return ULL2NUM(endpoint_allocations);
 }
 
@@ -64,7 +64,7 @@ void Init_allocations()
 #else
 
 static VALUE
-get_allocation_count() {
+get_allocation_count(VALUE klass) {
   return ULL2NUM(0);
 }
 
