@@ -1,18 +1,30 @@
-#ifdef HAVE_RUBY_RUBY_H
-#include <ruby/ruby.h>
-#else // Ruby <= 1.8.7
 #include <ruby.h>
-#endif
 
 VALUE mScoutApm;
 VALUE mInstruments;
 VALUE cAllocations;
 
-#if defined(RUBY_INTERNAL_EVENT_NEWOBJ) && !defined(_WIN32)
+#ifdef _WIN32
+
+#define ALLOCATIONS_ENABLED Qfalse
+
+static VALUE
+get_allocation_count(VALUE klass) {
+  return ULL2NUM(0);
+}
+
+void
+Init_hooks(VALUE module)
+{
+}
+
+#else // _WIN32
 
 #include <sys/resource.h> // is this needed?
 #include <sys/time.h>
 #include <ruby/debug.h>
+
+#define ALLOCATIONS_ENABLED Qtrue
 
 static __thread uint64_t endpoint_allocations;
 void increment_allocations() {
@@ -20,7 +32,7 @@ void increment_allocations() {
 }
 
 static VALUE
-get_allocation_count() {
+get_allocation_count(VALUE klass) {
   return ULL2NUM(endpoint_allocations);
 }
 
@@ -50,28 +62,7 @@ Init_hooks(VALUE module)
     set_gc_hook(RUBY_INTERNAL_EVENT_NEWOBJ);
 }
 
-void Init_allocations()
-{
-    mScoutApm = rb_define_module("ScoutApm");
-    mInstruments = rb_define_module_under(mScoutApm, "Instruments");
-    cAllocations = rb_define_class_under(mInstruments, "Allocations", rb_cObject);
-    rb_define_singleton_method(cAllocations, "count", get_allocation_count, 0);
-    rb_define_singleton_method(cAllocations, "count", get_allocation_count, 0);
-    rb_define_const(cAllocations, "ENABLED", Qtrue);
-    Init_hooks(mScoutApm);
-}
-
-#else
-
-static VALUE
-get_allocation_count() {
-  return ULL2NUM(0);
-}
-
-void
-Init_hooks(VALUE module)
-{
-}
+#endif // _WIN32
 
 void Init_allocations()
 {
@@ -79,10 +70,6 @@ void Init_allocations()
     mInstruments = rb_define_module_under(mScoutApm, "Instruments");
     cAllocations = rb_define_class_under(mInstruments, "Allocations", rb_cObject);
     rb_define_singleton_method(cAllocations, "count", get_allocation_count, 0);
-    rb_define_singleton_method(cAllocations, "count", get_allocation_count, 0);
-    rb_define_const(cAllocations, "ENABLED", Qfalse);
+    rb_define_const(cAllocations, "ENABLED", ALLOCATIONS_ENABLED);
     Init_hooks(mScoutApm);
 }
-
-#endif //#ifdef RUBY_INTERNAL_EVENT_NEWOBJ
-
