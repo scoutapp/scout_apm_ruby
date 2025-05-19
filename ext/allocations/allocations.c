@@ -1,8 +1,4 @@
-#ifdef HAVE_RUBY_RUBY_H
-#include <ruby/ruby.h>
-#else // Ruby <= 1.8.7
 #include <ruby.h>
-#endif
 
 VALUE mScoutApm;
 VALUE mInstruments;
