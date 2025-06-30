@@ -89,6 +89,12 @@ module ScoutApm
             current_layer = req.current_layer
             agent_context = ScoutApm::Agent.instance.context
 
+            if current_layer
+              agent_context.logger.debug "ActionController layer w/ previous: #{current_layer.legacy_metric_name})"
+            else
+              agent_context.logger.debug "Starting new ActionController layer"
+            end
+
             # Check if this this request is to be reported instantly
             if instant_key = request.cookies['scoutapminstant']
               agent_context.logger.info "Instant trace request with key=#{instant_key} for path=#{path}"
