@@ -85,6 +85,8 @@ module ScoutApm
 
       return ignoring_start_layer if ignoring_request?
 
+      logger.debug("Starting layer: #{@transaction_id} - #{layer.legacy_metric_name} - #{@layers.length} layers")
+
       start_request(layer) unless @root_layer
 
       if REQUEST_TYPES.include?(layer.type)
@@ -102,6 +104,8 @@ module ScoutApm
       return ignoring_stop_layer if ignoring_request?
 
       layer = @layers.pop
+
+      logger.debug("Stopping layer: #{@transaction_id} - #{layer.legacy_metric_name} - #{@layers.length} layers left")
 
       # Safeguard against a mismatch in the layer tracking in an instrument.
       # This class works under the assumption that start & stop layers are
@@ -307,8 +311,10 @@ module ScoutApm
       # Bail out early if the user asked us to ignore this uri
       # return if @agent_context.ignored_uris.ignore?(annotations[:uri])
       if @agent_context.sampling.drop_request?(self)
-        logger.debug("Dropping request due to sampling")
+        logger.debug("Dropping request due to sampling - #{@transaction_id}")
         return
+      else
+        logger.debug("Recording request - #{@transaction_id}")
       end
 
       apply_name_override
@@ -484,6 +490,7 @@ module ScoutApm
       @call_set = nil
       @annotations = {}
       @instant_key = nil
+      logger.debug("Ignoring request - #{@transaction_id}")
     end
 
     def ignoring_request?
