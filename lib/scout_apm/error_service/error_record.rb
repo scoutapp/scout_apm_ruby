@@ -12,6 +12,8 @@ module ScoutApm
       attr_reader :trace
       attr_reader :request_components
       attr_reader :context
+      attr_reader :agent_time
+      attr_reader :git_sha
 
       def initialize(agent_context, exception, env, context=nil)
         @agent_context = agent_context
@@ -30,6 +32,8 @@ module ScoutApm
         @environment = clean_params(strip_env(env))
         @trace = clean_backtrace(exception.backtrace)
         @request_components = components(env)
+        @agent_time = Time.now.iso8601
+        @git_sha = @agent_context.environment.git_revision.sha.to_s
       end
 
       # TODO: This is rails specific
