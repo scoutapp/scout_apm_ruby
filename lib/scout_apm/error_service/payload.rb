@@ -40,6 +40,8 @@ module ScoutApm
           :trace => error_record.trace,
           :request_components => error_record.request_components,
           :context => error_record.context,
+          :agent_time => error_record.agent_time,
+          :git_sha => error_record.git_sha,
         }
       end
     end

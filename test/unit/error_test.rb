@@ -34,6 +34,10 @@ class ErrorTest < Minitest::Test
       assert_equal "Oh no an error", exceptions[0].message
       assert_equal "ScoutApm::Error::Custom", exceptions[0].exception_class
 
+      # Ensure we capture time and git sha
+      refute_nil exceptions[0].git_sha
+      assert exceptions[0].agent_time.is_a?(String)
+
       assert_equal "Oh no another error", exceptions[1].message
       assert_equal "ScoutApm::Error::Custom", exceptions[1].exception_class
 
