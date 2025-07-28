@@ -5,23 +5,77 @@ module ScoutApm
   module Error
     # Capture an exception, optionally with an environment hash. This may be a
     # Rack environment, but is not required.
-    def self.capture(exception, env={})
-      context = ScoutApm::Agent.instance.context
+    class ScoutDefined < Exception; end
+    class Custom < ScoutDefined; end
+      
+    class << self
+      def capture(exception, env={}, name: "ScoutApm::Error::Custom")
+        context = ScoutApm::Agent.instance.context
 
-      # Skip if error monitoring isn't enabled at all
-      if ! context.config.value("errors_enabled")
-        return false
+        # Skip if error monitoring isn't enabled at all
+        if ! context.config.value("errors_enabled")
+          return false
+        end
+
+        exception = validate_or_create_exception(exception, name)
+        return false unless exception
+
+        # Skip if this one error is ignored
+        if context.ignored_exceptions.ignored?(exception)
+          return false
+        end
+
+        # Capture the error for further processing and shipping
+        context.error_buffer.capture(exception, env)
+
+        return true
       end
 
-      # Skip if this one error is ignored
-      if context.ignored_exceptions.ignored?(exception)
-        return false
+      private
+
+      def get_caller_location
+        caller_locations(0, 10)
+          .reject { |loc| loc.absolute_path == __FILE__ }
+          .map(&:to_s)
+      end
+      
+      def define_error_class(name_str)
+        # e.g., "some_error" → "SomeError", "some error" → "SomeError"
+        class_name = name_str.gsub(/(?:^|[_\s])([a-zA-Z])/) { $1.upcase }
+
+        if Object.const_defined?(class_name)
+          klass = Object.const_get(class_name)
+          return klass if klass.ancestors.include?(ScoutApm::Error::ScoutDefined)
+          
+          log_warning("Error class name '#{class_name}' is already defined. Falling back to ScoutApm::Error::Custom.")
+          return Custom
+        else
+          Object.const_set(class_name, Class.new(ScoutDefined))
+        end
       end
 
-      # Capture the error for further processing and shipping
-      context.error_buffer.capture(exception, env)
+      def log_warning(message)
+        ScoutApm::Agent.instance.context.logger.warn(message)
+      end
 
-      return true
+      def validate_or_create_exception(exception, name)
+        return exception if exception.is_a?(Exception) && exception.backtrace
+
+        if exception.is_a?(Exception)
+          exception.tap do |e| 
+            e.set_backtrace(get_caller_location)
+          end
+
+        elsif exception.is_a?(String)
+          define_error_class(name).new(exception).tap do |e|
+            e.set_backtrace(get_caller_location)
+          end
+
+        else
+          log_warning("Invalid exception type: #{exception.class}. Expected Exception or String.")
+          nil
+        end
+      end
     end
   end
 end
