@@ -1,5 +1,10 @@
 # Unreleased
 
+# 5.6.5
+- Improve error capture API (#555)
+- Add git sha and agent time tracking to error payloads (#554)
+- Add support for named spaced jobs in sampling (#549)
+
 # 5.6.4
 - Use new ActiveJob class name and timestamp units for Sidekiq 8+ (#544)
 
