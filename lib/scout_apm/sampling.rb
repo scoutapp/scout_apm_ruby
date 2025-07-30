@@ -8,7 +8,7 @@ module ScoutApm
       # jobs matched explicitly by name
 
       # for now still support old config key ('ignore') for backwards compatibility
-      @ignore_endpoints = config.value('ignore').present? ? config.value('ignore') : config.value('ignore_endpoints')
+      @ignore_endpoints = config.value_present?('ignore') ? config.value('ignore') : config.value('ignore_endpoints')
       @sample_endpoints = individual_sample_to_hash(config.value('sample_endpoints'))
       @endpoint_sample_rate = config.value('endpoint_sample_rate')
 

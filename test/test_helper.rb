@@ -37,6 +37,11 @@ class FakeConfigOverlay
   def value(key)
     @values[key]
   end
+  
+  def value_present?(key)
+    val = value(key)
+    val.respond_to?(:empty?) ? !val.empty? : false
+  end
 
   def values
     @values
