@@ -290,6 +290,12 @@ module ScoutApm
       coercion.coerce(raw_value)
     end
 
+    # https://github.com/rails/rails/blob/aca037411eab504a48c41472e696547da1543a19/activesupport/lib/active_support/core_ext/object/blank.rb#L25
+    def value_present?(key)
+      val = value(key)
+      val.respond_to?(:empty?) ? !val.empty? : false
+    end
+
     # Did we load anything for configuration?
     def any_keys_found?
       @overlays.any? { |overlay| overlay.any_keys_found? }
