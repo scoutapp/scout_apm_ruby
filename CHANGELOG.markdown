@@ -1,5 +1,9 @@
 # Unreleased
 
+# 5.7.0
+- Fix native extension compilation with GCC 15 (#552)
+- Handle non Rails/ActiveSupport applications w/ sampling (#557)
+
 # 5.6.5
 - Improve error capture API (#555)
 - Add git sha and agent time tracking to error payloads (#554)
