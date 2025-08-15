@@ -35,7 +35,6 @@ module ScoutApm
           :message => error_record.message,
           :request_uri => error_record.request_uri,
           :request_params => error_record.request_params,
-          :request_session => error_record.request_session,
           :environment => error_record.environment,
           :trace => error_record.trace,
           :request_components => error_record.request_components,

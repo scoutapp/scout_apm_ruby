@@ -7,7 +7,6 @@ module ScoutApm
       attr_reader :message
       attr_reader :request_uri
       attr_reader :request_params
-      attr_reader :request_session
       attr_reader :environment
       attr_reader :trace
       attr_reader :request_components
@@ -28,8 +27,7 @@ module ScoutApm
         @message = LengthLimit.new(exception.message, 100).to_s
         @request_uri = LengthLimit.new(rack_request_url(env), 200).to_s
         @request_params = clean_params(env["action_dispatch.request.parameters"])
-        @request_session = clean_params(session_data(env))
-        @environment = clean_params(strip_env(env))
+        @environment = clean_params(env_captured(env))
         @trace = clean_backtrace(exception.backtrace)
         @request_components = components(env)
         @agent_time = Time.now.iso8601
@@ -92,46 +90,20 @@ module ScoutApm
         end
       end
 
-      # Deletes params from env
-      #
-      # These are not configurable, and will leak PII info up to Scout if
-      # allowed through. Things like specific parameters can be exposed with
-      # the ScoutApm::Context interface.
-      KEYS_TO_REMOVE = [
-        "rack.request.form_hash",
-        "rack.request.form_vars",
-        "async.callback",
-
-        # Security related items
-        "action_dispatch.secret_key_base",
-        "action_dispatch.http_auth_salt",
-        "action_dispatch.signed_cookie_salt",
-        "action_dispatch.encrypted_cookie_salt",
-        "action_dispatch.encrypted_signed_cookie_salt",
-        "action_dispatch.authenticated_encrypted_cookie_salt",
-
-        # Raw data from the URL & parameters. Would bypass our normal params filtering
-        "QUERY_STRING",
-        "REQUEST_URI",
-        "REQUEST_PATH",
-        "ORIGINAL_FULLPATH",
-        "action_dispatch.request.query_parameters",
-        "action_dispatch.request.parameters",
-        "rack.request.query_string",
-        "rack.request.query_hash",
+      # Capture params from env
+      KEYS_TO_KEEP = [
+        "HTTP_USER_AGENT",
+        "HTTP_REFERER",
+        "HTTP_ACCEPT_ENCODING",
+        "HTTP_ORIGIN",
       ]
-      def strip_env(env)
-        env.reject { |k, v| KEYS_TO_REMOVE.include?(k) }
-      end
-
-      def session_data(env)
-        session = env["action_dispatch.request.session"]
-        return if session.nil?
-
-        if session.respond_to?(:to_hash)
-          session.to_hash
-        else
-          session.data
+      def env_captured(env)
+        env.select { |k, v| KEYS_TO_KEEP.include?(k) }.tap do |filtered_env|
+          filtered_env["HTTP_X_FORWARDED_FOR"] = env["HTTP_X_FORWARDED_FOR"] if @agent_context.config.value('collect_remote_ip') && env["HTTP_X_FORWARDED_FOR"]
+          
+          @agent_context.config.value('errors_env_capture').each do |key|
+            filtered_env[key] = env[key] if env[key]
+          end
         end
       end
 
