@@ -9,11 +9,11 @@ module ScoutApm
     class Custom < ScoutDefined; end
       
     class << self
-      def capture(exception, env={}, name: "ScoutApm::Error::Custom")
-        context = ScoutApm::Agent.instance.context
+      def capture(exception, context={}, env: {}, name: "ScoutApm::Error::Custom")
+        agent_context = ScoutApm::Agent.instance.context
 
         # Skip if error monitoring isn't enabled at all
-        if ! context.config.value("errors_enabled")
+        if ! agent_context.config.value("errors_enabled")
           return false
         end
 
@@ -21,12 +21,23 @@ module ScoutApm
         return false unless exception
 
         # Skip if this one error is ignored
-        if context.ignored_exceptions.ignored?(exception)
+        if agent_context.ignored_exceptions.ignored?(exception)
           return false
         end
 
+        unless env.is_a?(Hash)
+          log_warning("Expected env to be a Hash, got #{env.class}")
+          env = {}
+        end
+
+        unless context.is_a?(Hash)
+          log_warning("Expected context to be a Hash, got #{context.class}")
+          context = {}
+        end
+        ScoutApm::Context.add(context)
+
         # Capture the error for further processing and shipping
-        context.error_buffer.capture(exception, env)
+        agent_context.error_buffer.capture(exception, env)
 
         return true
       end
