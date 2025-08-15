@@ -50,6 +50,14 @@ require 'scout_apm/environment'
 # endpoint_sample_rate     - Rate to sample all endpoints. An integer between 0 and 100. 0 means no traces are sent, 100 means all traces are sent. (supercedes 'sample_rate')
 # job_sample_rate          - Rate to sample all jobs. An integer between 0 and 100. 0 means no traces are sent, 100 means all traces are sent. (supercedes 'sample_rate')
 #
+#
+# Errors Service Configuration
+# errors_enabled - true/false to enable the errors service
+# errors_ignored_exceptions - An array of exception classes to ignore.
+# errors_filtered_params - An array of parameter names to filter/redact out of error reports.
+# errors_env_capture - An array of environment variables to capture in error reports.
+# errors_host - The host to send error reports to.
+#
 # Any of these config settings can be set with an environment variable prefixed
 # by SCOUT_ and uppercasing the key: SCOUT_LOG_LEVEL for instance.
 
@@ -113,6 +121,7 @@ module ScoutApm
         'errors_enabled',
         'errors_ignored_exceptions',
         'errors_filtered_params',
+        'errors_env_capture',
         'errors_host',
     ]
 
@@ -232,6 +241,7 @@ module ScoutApm
       'errors_enabled' => BooleanCoercion.new,
       'errors_ignored_exceptions' => JsonCoercion.new,
       'errors_filtered_params' => JsonCoercion.new,
+      'errors_env_capture' => JsonCoercion.new,
     }
 
 
@@ -365,6 +375,7 @@ module ScoutApm
         'errors_enabled'                       => false,
         'errors_ignored_exceptions'            => %w(ActiveRecord::RecordNotFound ActionController::RoutingError),
         'errors_filtered_params'               => %w(password s3-key),
+        'errors_env_capture'                   => %w(),
         'errors_host'                          => 'https://errors.scoutapm.com',
       }.freeze
 
