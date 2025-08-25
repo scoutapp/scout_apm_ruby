@@ -1,5 +1,9 @@
 # Unreleased
 
+# 5.7.1
+- Update error capture API to use context (#560)
+- Filter env in error records (#559)
+
 # 5.7.0
 - Fix native extension compilation with GCC 15 (#552)
 - Handle non Rails/ActiveSupport applications w/ sampling (#557)
