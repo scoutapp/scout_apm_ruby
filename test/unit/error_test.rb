@@ -7,6 +7,7 @@ class ErrorTest < Minitest::Test
   def test_captures_and_stores_exceptions_and_env
     config = make_fake_config(
       'errors_enabled' => true,
+      'errors_env_capture' => %w(),
     )
     test_context = ScoutApm::AgentContext.new().tap{|c| c.config = config }
     ScoutApm::Agent.instance.stub(:context, test_context) do
