@@ -39,6 +39,7 @@ module ScoutApm
       install_instrument(ScoutApm::Instruments::Redis5)
       install_instrument(ScoutApm::Instruments::InfluxDB)
       install_instrument(ScoutApm::Instruments::Elasticsearch)
+      install_instrument(ScoutApm::Instruments::OpenSearch)
       install_instrument(ScoutApm::Instruments::Grape)
     rescue
       logger.warn "Exception loading instruments:"
