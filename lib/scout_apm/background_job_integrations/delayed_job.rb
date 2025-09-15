@@ -71,10 +71,15 @@ module ScoutApm
                 # Call the job itself.
                 block.call(job, *args)
               rescue Exception => exception
-                req.error!
                 # Capture the error for further processing and shipping
+                req.error!
+                # Abusing this key to pass job info
+                params_key = 'action_dispatch.request.parameters'
+                env = {}
+                env[params_key] = { queue: queue,  args: args }
+                env[:custom_controller] = name
                 context = ScoutApm::Agent.instance.context
-                context.error_buffer.capture(exception, {:custom_controller => name})
+                context.error_buffer.capture(exception, env)
                 raise
               ensure
                 req.stop_layer if started_job
