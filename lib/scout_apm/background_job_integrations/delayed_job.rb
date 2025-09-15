@@ -76,7 +76,7 @@ module ScoutApm
                 # Abusing this key to pass job info
                 params_key = 'action_dispatch.request.parameters'
                 env = {}
-                env[params_key] = { queue: queue,  args: args }
+                env[params_key] = { queue: queue, data: job.payload_object.job_data }
                 env[:custom_controller] = name
                 context = ScoutApm::Agent.instance.context
                 context.error_buffer.capture(exception, env)
