@@ -46,6 +46,7 @@ module ScoutApm
         # For background workers like sidekiq
         # TODO: extract data creation for background jobs
         components[:controller] ||= env[:custom_controller]
+        components[:action] ||= env[:custom_action]
 
         components
       end
