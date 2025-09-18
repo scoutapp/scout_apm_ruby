@@ -92,6 +92,20 @@ class ConfigTest < Minitest::Test
     assert_nil coercion.coerce(nil)
   end
 
+  def test_sample_rate_coercion
+    coercion = ScoutApm::Config::SampleRateCoercion.new
+    assert_in_delta 0.01, coercion.coerce("1")
+    assert_in_delta 0.015, coercion.coerce("1.5")
+    assert_in_delta 0.01, coercion.coerce(1)
+    assert_in_delta 0.015, coercion.coerce(1.5)
+    assert_in_delta 0.0, coercion.coerce("0")
+    assert_in_delta 0.0, coercion.coerce(0)
+    assert_in_delta 0.0, coercion.coerce("")
+    assert_in_delta 0.0, coercion.coerce(nil)
+    assert_in_delta 0.5, coercion.coerce("0.5")
+    assert_in_delta 0, coercion.coerce("-2.5")
+  end
+
   def test_any_keys_found
     ENV.stubs(:has_key?).returns(nil)
 

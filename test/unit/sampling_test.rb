@@ -7,7 +7,7 @@ class SamplingTest < Minitest::Test
     def setup
       @global_sample_config = FakeConfigOverlay.new(
         {
-          'sample_rate' => 80,
+          'sample_rate' => 0.80,
         }
       )
 
@@ -23,7 +23,7 @@ class SamplingTest < Minitest::Test
 
     def test_individual_sample_to_hash
       sampling = ScoutApm::Sampling.new(@individual_config)
-      assert_equal({'/foo/bar' => 100, '/foo' => 50, '/bar/zap' => 80}, sampling.individual_sample_to_hash(@individual_config.value('sample_endpoints')))
+      assert_equal({'/foo/bar' => 1, '/foo' => 0.50, '/bar/zap' => 0.80}, sampling.individual_sample_to_hash(@individual_config.value('sample_endpoints')))
 
       sampling = ScoutApm::Sampling.new(@global_sample_config)
       assert_nil sampling.individual_sample_to_hash(@global_sample_config.value('sample_endpoints'))
@@ -38,7 +38,7 @@ class SamplingTest < Minitest::Test
     def test_uri_sample
       sampling = ScoutApm::Sampling.new(@individual_config)
       rate = sampling.web_sample_rate('/foo/far')
-      assert_equal 50, rate
+      assert_in_delta 0.50, rate
 
       rate = sampling.web_sample_rate('/bar')
       assert_nil rate
@@ -47,7 +47,7 @@ class SamplingTest < Minitest::Test
       assert_nil rate
 
       rate = sampling.web_sample_rate('/foo/bar/baz')
-      assert_equal 100, rate
+      assert_equal 1.0, rate
     end
 
     def test_job_ignore
@@ -58,18 +58,18 @@ class SamplingTest < Minitest::Test
 
     def test_job_sample
       sampling = ScoutApm::Sampling.new(@individual_config)
-      assert_equal 50, sampling.job_sample_rate('joba')
-      assert_equal 95, sampling.job_sample_rate('Foo::BarJob')
+      assert_in_delta 0.50, sampling.job_sample_rate('joba')
+      assert_in_delta 0.95, sampling.job_sample_rate('Foo::BarJob')
       assert_nil sampling.job_sample_rate('jobb')
     end
 
     def test_sample
       sampling = ScoutApm::Sampling.new(@individual_config)
       sampling.stub(:rand, 0.01) do
-        assert_equal(false, sampling.sample?(50))
+        assert_equal(false, sampling.sample?(0.50))
       end
       sampling.stub(:rand, 0.99) do
-        assert_equal(true, sampling.sample?(50))
+        assert_equal(true, sampling.sample?(0.50))
       end
     end
 
@@ -104,7 +104,7 @@ class SamplingTest < Minitest::Test
     end
 
     def test_web_reqeust_general_sampling
-      config = FakeConfigOverlay.new(@individual_config.values.merge({'endpoint_sample_rate' => 80}))
+      config = FakeConfigOverlay.new(@individual_config.values.merge({'endpoint_sample_rate' => 0.80}))
       sampling = ScoutApm::Sampling.new(config)
 
       transaction = FakeTrackedRequest.new_web_request('/foo/far')
@@ -171,7 +171,7 @@ class SamplingTest < Minitest::Test
     end
 
     def test_job_general_sampling
-      config = FakeConfigOverlay.new(@individual_config.values.merge({'job_sample_rate' => 80}))
+      config = FakeConfigOverlay.new(@individual_config.values.merge({'job_sample_rate' => 0.80}))
       sampling = ScoutApm::Sampling.new(config)
 
       transaction = FakeTrackedRequest.new_job_request('joba')
