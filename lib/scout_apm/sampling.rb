@@ -59,7 +59,7 @@ module ScoutApm
       sample_hash = {}
       sampling_config.each do |sample|
         path, _, rate = sample.rpartition(':')
-        sample_hash[path] = rate.to_i
+        sample_hash[path] = coerce_to_rate(rate)
       end
       sample_hash
     end
@@ -91,7 +91,7 @@ module ScoutApm
     end
 
     def sample?(rate)
-      rand * 100 > rate
+      rand > rate
     end
 
     private
@@ -100,5 +100,18 @@ module ScoutApm
       ScoutApm::Agent.instance.logger
     end
 
+    def coerce_to_rate(val)
+      # Analogous to Config::SampleRateCoercion
+      v = val.to_f
+      # Anything above 1 is assumed a percentage for backwards compat, so convert to a decimal
+      if v >= 1
+        v = v / 100
+      end
+      if v < 0 || v > 1
+        logger.warn("Sample rates must be between 0 and 1. You passed in #{val.inspect}, which we interpreted as #{v}. Clamping.")
+        v = v.clamp(0, 1)
+      end
+      v
+    end
   end
 end

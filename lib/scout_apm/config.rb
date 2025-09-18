@@ -207,6 +207,23 @@ module ScoutApm
       end
     end
 
+    class SampleRateCoercion
+      def coerce(val)
+        v = val.to_f
+        # Anything above 1 is assumed a percentage for backwards compat, so convert to a decimal
+        if v >= 1
+          v = v / 100
+        end
+        if v < 0 || v > 1
+          v = v.clamp(0, 1)
+        end
+        v
+      end
+    end
+
+    # Map of config keys to coercions.  Any key not listed here will be passed
+    # through without modification.
+
 
     SETTING_COERCIONS = {
       'async_recording' => BooleanCoercion.new,
@@ -226,7 +243,7 @@ module ScoutApm
       'external_service_metric_report_limit' => IntegerCoercion.new,
       'instrument_http_url_length' => IntegerCoercion.new,
       'record_queue_time' => BooleanCoercion.new,
-      'sample_rate' => IntegerCoercion.new,
+      'sample_rate' => SampleRateCoercion.new,
       'sample_endpoints' => JsonCoercion.new,
       'sample_jobs' => JsonCoercion.new,
       'endpoint_sample_rate' => NullableIntegerCoercion.new,
@@ -357,7 +374,7 @@ module ScoutApm
         'external_service_metric_limit'        => 5000, # The hard limit on external service metrics
         'external_service_metric_report_limit' => 1000,
         'instrument_http_url_length'           => 300,
-        'sample_rate'                          => 100,
+        'sample_rate'                          => 1,
         'sample_endpoints'                     => [],
         'sample_jobs'                          => [],
         'endpoint_sample_rate'                 => nil,
