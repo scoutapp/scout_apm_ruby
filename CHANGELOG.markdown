@@ -3,6 +3,7 @@
 - Fix user error context being incorrectly flattened (#581)
 - Handle Delayed Job PerformableMethod jobs for error tracking (#584)
 - Require 'httpclient' library on instrumentation install (#586)
+- Update sample rate to support floats (#564)
 
 # 5.8.0
 - Add error monitoring to SolidQueue, faktory, goodjob, que, shoryuken, sneakers (#571)
