@@ -2,9 +2,12 @@
 
 [![Build Status](https://github.com/scoutapp/scout_apm_ruby/actions/workflows/test.yml/badge.svg)](https://github.com/scoutapp/scout_apm_ruby/actions)
 
-A Ruby gem for detailed Rails application performance monitoring 📈. Metrics and transaction traces are
-reported to [Scout](https://scoutapp.com), a hosted application monitoring
-service.
+A Ruby gem for detailed Rails application performance monitoring 📈. Metrics, errors and transaction traces are
+reported to [Scout](https://www.scoutapm.com), a hosted application monitoring
+service. We have a free plan for small apps and a 14-day all-access trial to test out all
+the features. If you want to send us Rails logs, add our [other
+gem](https://github.com/scoutapp/scout_apm_ruby_logging) and we will correlate them with
+your performance data!
 
 ## What's the special sauce? 🤔
 
@@ -12,7 +15,6 @@ The Scout agent is engineered to do some wonderful things:
 
 * A unique focus on identifying those hard-to-investigate outliers like memory bloat, N+1s, and user-specific problems. [See an example workflow](http://scoutapp.com/newrelic-alternative).
 * [Low-overhead](http://blog.scoutapp.com/articles/2016/02/07/overhead-benchmarks-new-relic-vs-scout)
-* View your performance metrics during development with [DevTrace](https://docs.scoutapm.com/#devtrace) and in production via [server_timing](https://github.com/scoutapp/ruby_server_timing).
 * Production-Safe profiling of custom code via [ScoutProf](https://docs.scoutapm.com/#scoutprof) (BETA).
 
 ## Getting Started
@@ -29,8 +31,8 @@ Update your Gemfile
 
     bundle install
 
-Signup for a [Scout](https://scoutapm.com) account and put the provided
-config file at `RAILS_ROOT/config/scout_apm.yml`.
+Signup for a [Scout](https://scoutapm.com/users/sign_up?utm_source=github&utm_medium=github&utm_campaign=scout_apm_ruby)
+account and put the provided config file at `RAILS_ROOT/config/scout_apm.yml`.
 
 Your config file should look like:
 
@@ -44,6 +46,10 @@ Your config file should look like:
 
     production:
       <<: *defaults
+
+## Error Monitoring
+
+All of our accounts
 
 ## DevTrace Quickstart
 
@@ -71,8 +77,8 @@ SCOUT_DEV_TRACE=true rails server
 ## Docs
 
 For the complete list of supported frameworks, Rubies, configuration options
-and more, see our [help site](https://docs.scoutapm.com/).
+and more, see our [help site](https://scoutapm.com/docs).
 
 ## Help
 
-Email support@scoutapp.com if you need a hand.
+Email support@scoutapm.com if you need a hand.
