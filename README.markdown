@@ -49,7 +49,13 @@ Your config file should look like:
 
 ## Error Monitoring
 
-All of our accounts
+All of our accounts include Error Monitoring with 5000 errors/month free. To enable it, add the following to your `scout_apm.yml`:
+
+```yaml
+# Common/dev/production/etc. whereever you would like to start trying it
+# monitor: true should also be required to ensure your App exists in Scout
+errors_enabled: true
+```
 
 ## DevTrace Quickstart
 
