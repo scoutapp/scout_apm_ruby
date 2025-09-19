@@ -105,7 +105,7 @@ module ScoutApm
       # Analogous to Config::SampleRateCoercion
       v = val.to_f
       # Anything above 1 is assumed a percentage for backwards compat, so convert to a decimal
-      if v >= 1
+      if v > 1
         v = v / 100
       end
       if v < 0 || v > 1

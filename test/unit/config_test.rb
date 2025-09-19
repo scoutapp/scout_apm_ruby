@@ -94,9 +94,9 @@ class ConfigTest < Minitest::Test
 
   def test_sample_rate_coercion
     coercion = ScoutApm::Config::SampleRateCoercion.new
-    assert_in_delta 0.01, coercion.coerce("1")
+    assert_in_delta 1.0, coercion.coerce("1")
     assert_in_delta 0.015, coercion.coerce("1.5")
-    assert_in_delta 0.01, coercion.coerce(1)
+    assert_in_delta 1.0, coercion.coerce(1)
     assert_in_delta 0.015, coercion.coerce(1.5)
     assert_in_delta 0.0, coercion.coerce("0")
     assert_in_delta 0.0, coercion.coerce(0)
