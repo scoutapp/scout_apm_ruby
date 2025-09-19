@@ -34,20 +34,20 @@ module ScoutApm
       if transaction.job?
         job_name = transaction.layer_finder.job.name
         rate = job_sample_rate(job_name)
-        return sample?(rate) unless rate.nil?
+        return downsample?(rate) unless rate.nil?
         return true if ignore_job?(job_name)
-        return sample?(@job_sample_rate) unless @job_sample_rate.nil?
+        return downsample?(@job_sample_rate) unless @job_sample_rate.nil?
       elsif transaction.web?
         uri = transaction.annotations[:uri]
         rate = web_sample_rate(uri)
-        return sample?(rate) unless rate.nil?
+        return downsample?(rate) unless rate.nil?
         return true if ignore_uri?(uri)
-        return sample?(@endpoint_sample_rate) unless @endpoint_sample_rate.nil?
+        return downsample?(@endpoint_sample_rate) unless @endpoint_sample_rate.nil?
       end
 
       # global sample check
       if @global_sample_rate
-        return sample?(@global_sample_rate)
+        return downsample?(@global_sample_rate)
       end
 
       false # don't drop the request
@@ -90,7 +90,8 @@ module ScoutApm
       @sample_jobs.fetch(job_name, nil)
     end
 
-    def sample?(rate)
+    def downsample?(rate)
+      # Should we drop this request based on the sample rate?
       rand > rate
     end
 

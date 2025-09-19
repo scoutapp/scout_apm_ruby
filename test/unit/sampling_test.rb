@@ -66,10 +66,10 @@ class SamplingTest < Minitest::Test
     def test_sample
       sampling = ScoutApm::Sampling.new(@individual_config)
       sampling.stub(:rand, 0.01) do
-        assert_equal(false, sampling.sample?(0.50))
+        assert_equal(false, sampling.downsample?(0.50))
       end
       sampling.stub(:rand, 0.99) do
-        assert_equal(true, sampling.sample?(0.50))
+        assert_equal(true, sampling.downsample?(0.50))
       end
     end
 
