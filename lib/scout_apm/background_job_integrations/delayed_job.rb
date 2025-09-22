@@ -4,6 +4,7 @@ module ScoutApm
       ACTIVE_JOB_KLASS = 'ActiveJob::QueueAdapters::DelayedJobAdapter::JobWrapper'.freeze
       DJ_PERFORMABLE_METHOD = 'Delayed::PerformableMethod'.freeze
 
+
       attr_reader :logger
 
       def name
@@ -69,8 +70,17 @@ module ScoutApm
 
                 # Call the job itself.
                 block.call(job, *args)
-              rescue
+              rescue Exception => exception
+                # Capture the error for further processing and shipping
                 req.error!
+                # Abusing this key to pass job info
+                params_key = 'action_dispatch.request.parameters'
+                env = {}
+                env[params_key] = job.payload_object.job_data
+                env[:custom_controller] = name
+                env[:custom_action] = queue
+                context = ScoutApm::Agent.instance.context
+                context.error_buffer.capture(exception, env)
                 raise
               ensure
                 req.stop_layer if started_job

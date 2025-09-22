@@ -1,4 +1,5 @@
 # Unreleased
+- Enable Delayed Job error tracking (#565)
 
 # 5.7.1
 - Update error capture API to use context (#560)
