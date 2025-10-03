@@ -55,7 +55,7 @@ class ErrorTest < Minitest::Test
 
       assert_equal "No context or env", exceptions[3].message
       assert_equal "AnotherError", exceptions[3].exception_class
-      assert_equal assert_empty_context, exceptions[3].context
+      assert_equal assert_default_context, exceptions[3].context
 
       assert_equal "Whoops", exceptions[4].message
       assert_equal "ErrorTest::FakeError", exceptions[4].exception_class
@@ -84,8 +84,8 @@ class ErrorTest < Minitest::Test
     }
   end
 
-  def assert_empty_context
-    {user: {}}
+  def assert_default_context
+    {user: {}, transaction_id: ScoutApm::RequestManager.lookup.transaction_id}
   end
 
   def ex(msg="Whoops")

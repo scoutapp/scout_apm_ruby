@@ -22,6 +22,8 @@ module ScoutApm
         else
           {}
         end
+        # Add the transaction_id, as it won't be added to the context normally until the request has been recorded.
+        @context[:transaction_id] ||= RequestManager.lookup.transaction_id
 
         @exception_class = LengthLimit.new(exception.class.name).to_s
         @message = LengthLimit.new(exception.message, 100).to_s
