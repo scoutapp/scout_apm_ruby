@@ -65,14 +65,14 @@ module ScoutApm
               started_job = true
 
               process_work_without_scout(*args)
-            rescue Exception => e
+            rescue Exception => exception
               req.error!
               env = {
                 :custom_controller => job_class,
                 :custom_action => queue
               }
               context = ScoutApm::Agent.instance.context
-              context.error_buffer.capture(e, env)
+              context.error_buffer.capture(exception, env)
               raise
             ensure
               req.stop_layer if started_job
