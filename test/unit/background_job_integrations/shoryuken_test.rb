@@ -27,9 +27,12 @@ class ShoryukenTest < Minitest::Test
     ScoutApm::Agent.instance.expects(:context).returns(fake_context)
 
     worker_instance = mock
-    worker_instance.expects(:class).returns(mock(to_s: "TestWorker"))
+    mock_class = mock
+    mock_class.expects(:to_s).twice.returns("TestWorker")
+    worker_instance.expects(:class).twice.returns(mock_class)
     queue = "test-queue"
     msg = mock
+    msg.expects(:attributes).returns({'SentTimestamp' => '1534873927868'})
     body = {}
 
     assert_raises RuntimeError do
@@ -61,9 +64,12 @@ class ShoryukenTest < Minitest::Test
     ScoutApm::Agent.instance.expects(:context).returns(fake_context)
 
     worker_instance = mock
-    worker_instance.expects(:class).returns(mock(to_s: "ActiveJob::QueueAdapters::ShoryukenAdapter::JobWrapper"))
+    mock_class = mock
+    mock_class.expects(:to_s).returns("ActiveJob::QueueAdapters::ShoryukenAdapter::JobWrapper")
+    worker_instance.expects(:class).returns(mock_class)
     queue = "priority-queue"
     msg = mock
+    msg.expects(:attributes).returns({'SentTimestamp' => '1534873927868'})
     body = { "job_class" => "MyRealJob" }
 
     assert_raises RuntimeError do
