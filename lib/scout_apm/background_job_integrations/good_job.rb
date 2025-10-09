@@ -36,10 +36,28 @@ module ScoutApm
               block.call
             rescue Exception => exception
               req.error!
+              params_key = 'action_dispatch.request.parameters'
+              job_args = begin
+                {
+                  job_class: job.class.name,
+                  arguments: job.arguments,
+                  job_id: job.job_id,
+                  queue_name: job.queue_name,
+                  enqueued_at: job.enqueued_at,
+                  scheduled_at: job.scheduled_at,
+                  executions: job.executions
+                }
+              rescue => e
+                { error_extracting_params: e.message }
+              end
+              
               env = {
+                params_key => job_args,
                 :custom_controller => job.class.name,
                 :custom_action => job.queue_name.presence || UNKNOWN_QUEUE_PLACEHOLDER
               }
+              ScoutApm::Agent.instance.context.logger.info "Capturing good job error: #{exception.message} with env: #{env}"
+
               context = ScoutApm::Agent.instance.context
               context.error_buffer.capture(exception, env)
               raise

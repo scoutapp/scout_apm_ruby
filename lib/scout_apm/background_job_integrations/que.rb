@@ -6,8 +6,6 @@ module ScoutApm
       ACTIVE_JOB_KLASS = 'ActiveJob::QueueAdapters::QueAdapter::JobWrapper'.freeze
       UNKNOWN_QUEUE_PLACEHOLDER = 'UnknownQueue'.freeze
 
-      attr_reader :logger
-
       def name
         :que
       end
@@ -117,10 +115,29 @@ module ScoutApm
               _run_without_scout(*args)
             rescue Exception => exception
               req.error!
+              # Extract job parameters like DelayedJob does
+              params_key = 'action_dispatch.request.parameters'
+              job_args = begin
+                {
+                  job_class: job_class,
+                  queue: queue,
+                  job_id: attrs['job_id'],
+                  priority: attrs['priority'],
+                  run_at: attrs['run_at'],
+                  args: attrs['args'],
+                  error_count: attrs['error_count'],
+                  created_at: attrs['created_at']
+                }
+              rescue => e
+                { error_extracting_params: e.message, attrs_keys: attrs.keys }
+              end
+              
               env = {
+                params_key => job_args,
                 :custom_controller => job_class,
                 :custom_action => queue
               }
+              ScoutApm::Agent.instance.context.logger.info "Capturing que error: #{exception.message} with env: #{env}"
               context = ScoutApm::Agent.instance.context
               context.error_buffer.capture(exception, env)
               raise

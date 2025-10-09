@@ -44,10 +44,30 @@ module ScoutApm
           end
         rescue Exception => exception
           req.error!
+          # Extract job parameters like DelayedJob does
+          params_key = 'action_dispatch.request.parameters'
+          job_args = begin
+            {
+              job_class: job_class,
+              queue: queue,
+              message: msg,
+              routing_key: delivery_info[:routing_key],
+              exchange: delivery_info[:exchange],
+              delivery_tag: delivery_info[:delivery_tag],
+              consumer_tag: delivery_info[:consumer_tag],
+              redelivered: delivery_info[:redelivered],
+              metadata: metadata
+            }
+          rescue => e
+            { error_extracting_params: e.message, delivery_info_keys: delivery_info.keys, msg_type: msg.class.name }
+          end
+          
           env = {
+            params_key => job_args,
             :custom_controller => job_class,
             :custom_action => queue
           }
+          ScoutApm::Agent.instance.context.logger.info "Capturing Legacy Sneakers error: #{exception.message} with env: #{env}"
           context = ScoutApm::Agent.instance.context
           context.error_buffer.capture(exception, env)
           raise

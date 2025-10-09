@@ -62,11 +62,31 @@ module ScoutApm
           yield
         rescue Exception => exception
           req.error!
+          params_key = 'action_dispatch.request.parameters'
+          job_args = begin
+            {
+              job_class: job_class(job),
+              queue: queue,
+              jid: job['jid'],
+              jobtype: job['jobtype'],
+              args: job['args'],
+              created_at: job['created_at'],
+              enqueued_at: job['enqueued_at'],
+              custom: job['custom'],
+              retry: job['retry'],
+              backtrace: job['backtrace']
+            }
+          rescue => e
+            { error_extracting_params: e.message, job_keys: job.keys }
+          end
+          
           env = {
+            params_key => job_args,
             :custom_controller => job_class(job),
             :custom_action => queue
           }
           context = ScoutApm::Agent.instance.context
+          ScoutApm::Agent.instance.context.logger.info "Capturing Faktory error: #{exception.message} with env: #{env}"
           context.error_buffer.capture(exception, env)
           raise
         ensure

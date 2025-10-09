@@ -67,7 +67,25 @@ module ScoutApm
               process_work_without_scout(*args)
             rescue Exception => exception
               req.error!
+              # Extract job parameters like DelayedJob does
+              params_key = 'action_dispatch.request.parameters'
+              job_args = begin
+                {
+                  job_class: job_class,
+                  queue: queue,
+                  message: msg,
+                  routing_key: delivery_info[:routing_key],
+                  exchange: delivery_info[:exchange],
+                  delivery_tag: delivery_info[:delivery_tag],
+                  consumer_tag: delivery_info[:consumer_tag],
+                  redelivered: delivery_info[:redelivered]
+                }
+              rescue => e
+                { error_extracting_params: e.message, delivery_info_keys: delivery_info.keys, msg_keys: msg.is_a?(Hash) ? msg.keys : 'not_hash' }
+              end
+              
               env = {
+                params_key => job_args,
                 :custom_controller => job_class,
                 :custom_action => queue
               }

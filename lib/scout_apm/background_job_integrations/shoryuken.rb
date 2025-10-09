@@ -1,7 +1,6 @@
 module ScoutApm
   module BackgroundJobIntegrations
     class Shoryuken
-      attr_reader :logger
 
       def name
         :shoryuken
@@ -81,10 +80,29 @@ module ScoutApm
           yield
         rescue Exception => exception
           req.error!
+          # Extract job parameters like DelayedJob does
+          params_key = 'action_dispatch.request.parameters'
+          job_args = begin
+            {
+              job_class: job_class,
+              queue: queue,
+              worker_class: worker_instance.class.to_s,
+              body: body,
+              message_id: msg.try(:message_id),
+              receipt_handle: msg.try(:receipt_handle),
+              md5_of_body: msg.try(:md5_of_body),
+              attributes: msg.try(:attributes)
+            }
+          rescue => e
+            { error_extracting_params: e.message, body_keys: body.is_a?(Hash) ? body.keys : 'not_hash' }
+          end
+          
           env = {
+            params_key => job_args,
             :custom_controller => job_class,
             :custom_action => queue
           }
+          ScoutApm::Agent.instance.context.logger.info "Capturing Shoryuken error: #{exception.message} with env: #{env}"
           context = ScoutApm::Agent.instance.context
           context.error_buffer.capture(exception, env)
           raise
