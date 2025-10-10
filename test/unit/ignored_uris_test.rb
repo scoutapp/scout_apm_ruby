@@ -19,4 +19,12 @@ class IgnoredUrlsTest < Minitest::Test
     assert_equal false, i.ignore?("/users/2/health")
     assert_equal true, i.ignore?("/admin/dashboard")
   end
+
+  def test_ignores_prefix_regex
+    i = ScoutApm::IgnoredUris.new(["/slow/\\d+/notifications", "/health"])
+    puts i.regex.inspect
+    assert_equal true, i.ignore?("/slow/123/notifications")
+    assert_equal false, i.ignore?("/slow/abcd/notifications")
+    assert_equal true, i.ignore?("/health")
+  end
 end
