@@ -34,8 +34,14 @@ module ScoutApm
               started_job = true # Following Convention
 
               block.call
-            rescue
+            rescue Exception => exception
               req.error!
+              env = {
+                :custom_controller => job.class.name,
+                :custom_action => job.queue_name.presence || UNKNOWN_QUEUE_PLACEHOLDER
+              }
+              context = ScoutApm::Agent.instance.context
+              context.error_buffer.capture(exception, env)
               raise
             ensure
               req.stop_layer if started_job

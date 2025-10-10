@@ -32,8 +32,26 @@ module ScoutApm
               started_job = true # Following Convention
 
               block.call
-            rescue
+            rescue Exception => exception
               req.error!
+              # Extract job parameters like DelayedJob does
+              params_key = 'action_dispatch.request.parameters'
+              job_args = begin
+                {
+                  arguments: job.arguments,
+                  job_id: job.job_id,
+                }
+              rescue => e
+                { error_extracting_params: e.message }
+              end
+              
+              env = {
+                params_key => job_args,
+                :custom_controller => job.class.name,
+                :custom_action => job.queue_name.presence || UNKNOWN_QUEUE_PLACEHOLDER
+              }
+              context = ScoutApm::Agent.instance.context
+              context.error_buffer.capture(exception, env)
               raise
             ensure
               req.stop_layer if started_job
