@@ -8,7 +8,8 @@ module ScoutApm
       # jobs matched explicitly by name
 
       # for now still support old config key ('ignore') for backwards compatibility
-      @ignore_endpoints = config.value_present?('ignore') ? config.value('ignore') : config.value('ignore_endpoints')
+      raw_ignore = config.value_present?('ignore') ? config.value('ignore') : config.value('ignore_endpoints')
+      @ignore_endpoints = IgnoredUris.new(raw_ignore) unless raw_ignore.blank?
       @sample_endpoints = individual_sample_to_hash(config.value('sample_endpoints'))
       @endpoint_sample_rate = config.value('endpoint_sample_rate')
 
@@ -66,10 +67,7 @@ module ScoutApm
 
     def ignore_uri?(uri)
       return false if @ignore_endpoints.blank?
-      @ignore_endpoints.each do |prefix|
-        return true if uri.start_with?(prefix)
-      end
-      false
+      @ignore_endpoints.ignore?(uri)
     end
 
     def web_sample_rate(uri)
