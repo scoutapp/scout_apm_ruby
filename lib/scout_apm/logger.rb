@@ -145,7 +145,7 @@ module ScoutApm
       def call(severity, time, progname, msg)
         # since STDOUT isn't exclusive like the scout_apm.log file, apply a prefix.
         # XXX: Pass in context to the formatter
-        "[#{Utils::Time.to_s(time)} #{ScoutApm::Agent.instance.context.environment.hostname} (#{$$})] #{severity} : #{msg}\n"
+        "[#{time.strftime("%m/%d/%y %H:%M:%S %z")} #{ScoutApm::Agent.instance.context.environment.hostname} (#{$$})] #{severity} : #{msg}\n"
       end
     end
 
