@@ -18,16 +18,16 @@ class LimitedLayerTest < Minitest::Test
     ll = ScoutApm::LimitedLayer.new("ActiveRecord")
 
     ll.absorb faux_layer("ActiveRecord", "User#Find", 2, 1, 200, 100)
-    assert_equal 1, ll.total_exclusive_time
+    assert_equal 2, ll.total_exclusive_time
     assert_equal 2, ll.total_call_time
-    assert_equal 100, ll.total_exclusive_allocations
+    assert_equal 200, ll.total_exclusive_allocations
     assert_equal 200, ll.total_allocations
 
 
     ll.absorb faux_layer("ActiveRecord", "User#Find", 4, 3, 400, 300)
-    assert_equal 4, ll.total_exclusive_time           # 3 + 1
+    assert_equal 6, ll.total_exclusive_time           # 4 + 2 (for limited layers, should equal total time)
     assert_equal 6, ll.total_call_time                # 4 + 2
-    assert_equal 400, ll.total_exclusive_allocations  # 300 + 100
+    assert_equal 600, ll.total_exclusive_allocations  # 400 + 200 (same goes for allocations)
     assert_equal 600, ll.total_allocations            # 400 + 200
   end
 

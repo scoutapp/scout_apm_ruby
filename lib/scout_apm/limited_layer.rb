@@ -21,10 +21,13 @@ module ScoutApm
       @total_layers += 1
 
       @total_call_time += layer.total_call_time
-      @total_exclusive_time += layer.total_exclusive_time
+      # For limited layers, exclusive time should equal total time since limited layers
+      # report no children. As such, we need to consider all absorbed time as exclusive.
+      @total_exclusive_time += layer.total_call_time
 
       @total_allocations += layer.total_allocations
-      @total_exclusive_allocations += layer.total_exclusive_allocations
+      # Same logic applies to allocations
+      @total_exclusive_allocations += layer.total_allocations
     end
 
     def total_call_time
