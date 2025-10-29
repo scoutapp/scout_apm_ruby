@@ -95,6 +95,7 @@ module ScoutApm
 
       # Capture params from env
       KEYS_TO_KEEP = [
+        "REQUEST_METHOD",
         "HTTP_USER_AGENT",
         "HTTP_REFERER",
         "HTTP_ACCEPT_ENCODING",

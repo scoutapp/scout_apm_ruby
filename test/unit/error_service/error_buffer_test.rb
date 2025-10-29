@@ -25,6 +25,7 @@ class ErrorBufferTest < Minitest::Test
 
       exception = exceptions[0]
       expected_env_keys = [
+        "REQUEST_METHOD",
         "ANOTHER_HEADER",
         "HTTP_X_FORWARDED_FOR",
         "HTTP_USER_AGENT",
