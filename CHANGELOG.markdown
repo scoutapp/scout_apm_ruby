@@ -1,6 +1,13 @@
 # Unreleased
 - Enable Delayed Job error tracking (#565)
 
+# 5.8.0
+- Add error monitoring to SolidQueue, faktory, goodjob, que, shoryuken, sneakers (#571)
+- Treat exclusive time as total time for limited layers in background jobs (#576)
+- Remove unused time util conflict with DeviseTokenAuth (#575)
+- Add transaction ID to error records (#568)-
+- Adds request method to captured error context (#577)
+
 # 5.7.1
 - Update error capture API to use context (#560)
 - Filter env in error records (#559)
