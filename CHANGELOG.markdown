@@ -1,5 +1,5 @@
 # Unreleased
-- Enable Delayed Job error tracking (#565)
+- Update sample rate to support floats (#564)
 
 # 5.8.0
 - Add error monitoring to SolidQueue, faktory, goodjob, que, shoryuken, sneakers (#571)
@@ -7,6 +7,7 @@
 - Remove unused time util conflict with DeviseTokenAuth (#575)
 - Add transaction ID to error records (#568)-
 - Adds request method to captured error context (#577)
+- Enable Delayed Job error tracking (#565)
 
 # 5.7.1
 - Update error capture API to use context (#560)
