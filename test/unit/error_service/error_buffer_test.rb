@@ -68,4 +68,35 @@ class ErrorBufferTest < Minitest::Test
   def ex(msg="Whoops")
     FakeError.new(msg)
   end
+
+  def test_user_context_is_flattened_with_user_prefix
+    config = make_fake_config(
+      'errors_enabled' => true,
+      'errors_env_capture' => %w()
+    )
+    test_context = ScoutApm::AgentContext.new().tap { |c| c.config = config }
+    
+    ScoutApm::Agent.instance.stub(:context, test_context) do
+      eb = ScoutApm::ErrorService::ErrorBuffer.new(test_context)
+      
+      # Set user context using add_user
+      ScoutApm::Context.add_user(id: 2)
+      # Set extra context using add
+      ScoutApm::Context.add(organization: 3)
+      
+      eb.capture(ex, env)
+      exceptions = eb.instance_variable_get(:@error_records)
+      
+      assert_equal 1, exceptions.length
+      exception = exceptions[0]
+      
+      # User context should be flattened with "user_" prefix
+      assert_equal 2, exception.context["user_id"]
+      # Extra context should remain as-is
+      assert_equal 3, exception.context[:organization]
+      
+      # Should NOT have nested :user key
+      refute exception.context.key?(:user)
+    end
+  end
 end

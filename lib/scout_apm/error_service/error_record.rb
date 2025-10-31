@@ -18,7 +18,7 @@ module ScoutApm
         @agent_context = agent_context
 
         @context = if context
-          context.to_hash
+          context.to_flat_hash
         else
           {}
         end
