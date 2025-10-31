@@ -85,7 +85,7 @@ class ErrorTest < Minitest::Test
   end
 
   def assert_default_context
-    {user: {}, transaction_id: ScoutApm::RequestManager.lookup.transaction_id}
+    {transaction_id: ScoutApm::RequestManager.lookup.transaction_id}
   end
 
   def ex(msg="Whoops")
