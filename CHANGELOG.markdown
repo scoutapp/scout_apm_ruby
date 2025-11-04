@@ -1,6 +1,9 @@
 # Unreleased
 - Enable Delayed Job error tracking (#565)
 
+## Pending
+- Fix user error context being incorrectly flattened (#581)
+
 # 5.8.0
 - Add error monitoring to SolidQueue, faktory, goodjob, que, shoryuken, sneakers (#571)
 - Treat exclusive time as total time for limited layers in background jobs (#576)
