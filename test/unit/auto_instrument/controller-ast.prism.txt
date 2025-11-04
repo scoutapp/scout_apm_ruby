@@ -1,0 +1,712 @@
+@ ProgramNode (location: (2,0)-(47,3))
+├── flags: ∅
+├── locals: []
+└── statements:
+    @ StatementsNode (location: (2,0)-(47,3))
+    ├── flags: ∅
+    └── body: (length: 1)
+        └── @ ClassNode (location: (2,0)-(47,3))
+            ├── flags: newline
+            ├── locals: []
+            ├── class_keyword_loc: (2,0)-(2,5) = "class"
+            ├── constant_path:
+            │   @ ConstantReadNode (location: (2,6)-(2,23))
+            │   ├── flags: ∅
+            │   └── name: :ClientsController
+            ├── inheritance_operator_loc: ∅
+            ├── superclass: ∅
+            ├── body:
+            │   @ StatementsNode (location: (3,2)-(46,5))
+            │   ├── flags: ∅
+            │   └── body: (length: 5)
+            │       ├── @ DefNode (location: (3,2)-(9,5))
+            │       │   ├── flags: newline
+            │       │   ├── name: :index
+            │       │   ├── name_loc: (3,6)-(3,11) = "index"
+            │       │   ├── receiver: ∅
+            │       │   ├── parameters: ∅
+            │       │   ├── body:
+            │       │   │   @ StatementsNode (location: (4,4)-(8,7))
+            │       │   │   ├── flags: ∅
+            │       │   │   └── body: (length: 1)
+            │       │   │       └── @ IfNode (location: (4,4)-(8,7))
+            │       │   │           ├── flags: newline
+            │       │   │           ├── if_keyword_loc: (4,4)-(4,6) = "if"
+            │       │   │           ├── predicate:
+            │       │   │           │   @ CallNode (location: (4,7)-(4,37))
+            │       │   │           │   ├── flags: ∅
+            │       │   │           │   ├── receiver:
+            │       │   │           │   │   @ CallNode (location: (4,7)-(4,22))
+            │       │   │           │   │   ├── flags: ∅
+            │       │   │           │   │   ├── receiver:
+            │       │   │           │   │   │   @ CallNode (location: (4,7)-(4,13))
+            │       │   │           │   │   │   ├── flags: variable_call, ignore_visibility
+            │       │   │           │   │   │   ├── receiver: ∅
+            │       │   │           │   │   │   ├── call_operator_loc: ∅
+            │       │   │           │   │   │   ├── name: :params
+            │       │   │           │   │   │   ├── message_loc: (4,7)-(4,13) = "params"
+            │       │   │           │   │   │   ├── opening_loc: ∅
+            │       │   │           │   │   │   ├── arguments: ∅
+            │       │   │           │   │   │   ├── closing_loc: ∅
+            │       │   │           │   │   │   └── block: ∅
+            │       │   │           │   │   ├── call_operator_loc: ∅
+            │       │   │           │   │   ├── name: :[]
+            │       │   │           │   │   ├── message_loc: (4,13)-(4,22) = "[:status]"
+            │       │   │           │   │   ├── opening_loc: (4,13)-(4,14) = "["
+            │       │   │           │   │   ├── arguments:
+            │       │   │           │   │   │   @ ArgumentsNode (location: (4,14)-(4,21))
+            │       │   │           │   │   │   ├── flags: ∅
+            │       │   │           │   │   │   └── arguments: (length: 1)
+            │       │   │           │   │   │       └── @ SymbolNode (location: (4,14)-(4,21))
+            │       │   │           │   │   │           ├── flags: static_literal, forced_us_ascii_encoding
+            │       │   │           │   │   │           ├── opening_loc: (4,14)-(4,15) = ":"
+            │       │   │           │   │   │           ├── value_loc: (4,15)-(4,21) = "status"
+            │       │   │           │   │   │           ├── closing_loc: ∅
+            │       │   │           │   │   │           └── unescaped: "status"
+            │       │   │           │   │   ├── closing_loc: (4,21)-(4,22) = "]"
+            │       │   │           │   │   └── block: ∅
+            │       │   │           │   ├── call_operator_loc: ∅
+            │       │   │           │   ├── name: :==
+            │       │   │           │   ├── message_loc: (4,23)-(4,25) = "=="
+            │       │   │           │   ├── opening_loc: ∅
+            │       │   │           │   ├── arguments:
+            │       │   │           │   │   @ ArgumentsNode (location: (4,26)-(4,37))
+            │       │   │           │   │   ├── flags: ∅
+            │       │   │           │   │   └── arguments: (length: 1)
+            │       │   │           │   │       └── @ StringNode (location: (4,26)-(4,37))
+            │       │   │           │   │           ├── flags: ∅
+            │       │   │           │   │           ├── opening_loc: (4,26)-(4,27) = "\""
+            │       │   │           │   │           ├── content_loc: (4,27)-(4,36) = "activated"
+            │       │   │           │   │           ├── closing_loc: (4,36)-(4,37) = "\""
+            │       │   │           │   │           └── unescaped: "activated"
+            │       │   │           │   ├── closing_loc: ∅
+            │       │   │           │   └── block: ∅
+            │       │   │           ├── then_keyword_loc: ∅
+            │       │   │           ├── statements:
+            │       │   │           │   @ StatementsNode (location: (5,6)-(5,33))
+            │       │   │           │   ├── flags: ∅
+            │       │   │           │   └── body: (length: 1)
+            │       │   │           │       └── @ InstanceVariableWriteNode (location: (5,6)-(5,33))
+            │       │   │           │           ├── flags: newline
+            │       │   │           │           ├── name: :@clients
+            │       │   │           │           ├── name_loc: (5,6)-(5,14) = "@clients"
+            │       │   │           │           ├── value:
+            │       │   │           │           │   @ CallNode (location: (5,17)-(5,33))
+            │       │   │           │           │   ├── flags: ∅
+            │       │   │           │           │   ├── receiver:
+            │       │   │           │           │   │   @ ConstantReadNode (location: (5,17)-(5,23))
+            │       │   │           │           │   │   ├── flags: ∅
+            │       │   │           │           │   │   └── name: :Client
+            │       │   │           │           │   ├── call_operator_loc: (5,23)-(5,24) = "."
+            │       │   │           │           │   ├── name: :activated
+            │       │   │           │           │   ├── message_loc: (5,24)-(5,33) = "activated"
+            │       │   │           │           │   ├── opening_loc: ∅
+            │       │   │           │           │   ├── arguments: ∅
+            │       │   │           │           │   ├── closing_loc: ∅
+            │       │   │           │           │   └── block: ∅
+            │       │   │           │           └── operator_loc: (5,15)-(5,16) = "="
+            │       │   │           ├── subsequent:
+            │       │   │           │   @ ElseNode (location: (6,4)-(8,7))
+            │       │   │           │   ├── flags: ∅
+            │       │   │           │   ├── else_keyword_loc: (6,4)-(6,8) = "else"
+            │       │   │           │   ├── statements:
+            │       │   │           │   │   @ StatementsNode (location: (7,6)-(7,35))
+            │       │   │           │   │   ├── flags: ∅
+            │       │   │           │   │   └── body: (length: 1)
+            │       │   │           │   │       └── @ InstanceVariableWriteNode (location: (7,6)-(7,35))
+            │       │   │           │   │           ├── flags: newline
+            │       │   │           │   │           ├── name: :@clients
+            │       │   │           │   │           ├── name_loc: (7,6)-(7,14) = "@clients"
+            │       │   │           │   │           ├── value:
+            │       │   │           │   │           │   @ CallNode (location: (7,17)-(7,35))
+            │       │   │           │   │           │   ├── flags: ∅
+            │       │   │           │   │           │   ├── receiver:
+            │       │   │           │   │           │   │   @ ConstantReadNode (location: (7,17)-(7,23))
+            │       │   │           │   │           │   │   ├── flags: ∅
+            │       │   │           │   │           │   │   └── name: :Client
+            │       │   │           │   │           │   ├── call_operator_loc: (7,23)-(7,24) = "."
+            │       │   │           │   │           │   ├── name: :inactivated
+            │       │   │           │   │           │   ├── message_loc: (7,24)-(7,35) = "inactivated"
+            │       │   │           │   │           │   ├── opening_loc: ∅
+            │       │   │           │   │           │   ├── arguments: ∅
+            │       │   │           │   │           │   ├── closing_loc: ∅
+            │       │   │           │   │           │   └── block: ∅
+            │       │   │           │   │           └── operator_loc: (7,15)-(7,16) = "="
+            │       │   │           │   └── end_keyword_loc: (8,4)-(8,7) = "end"
+            │       │   │           └── end_keyword_loc: (8,4)-(8,7) = "end"
+            │       │   ├── locals: []
+            │       │   ├── def_keyword_loc: (3,2)-(3,5) = "def"
+            │       │   ├── operator_loc: ∅
+            │       │   ├── lparen_loc: ∅
+            │       │   ├── rparen_loc: ∅
+            │       │   ├── equal_loc: ∅
+            │       │   └── end_keyword_loc: (9,2)-(9,5) = "end"
+            │       ├── @ DefNode (location: (11,2)-(20,5))
+            │       │   ├── flags: newline
+            │       │   ├── name: :create
+            │       │   ├── name_loc: (11,6)-(11,12) = "create"
+            │       │   ├── receiver: ∅
+            │       │   ├── parameters: ∅
+            │       │   ├── body:
+            │       │   │   @ StatementsNode (location: (12,4)-(19,7))
+            │       │   │   ├── flags: ∅
+            │       │   │   └── body: (length: 2)
+            │       │   │       ├── @ InstanceVariableWriteNode (location: (12,4)-(12,41))
+            │       │   │       │   ├── flags: newline
+            │       │   │       │   ├── name: :@client
+            │       │   │       │   ├── name_loc: (12,4)-(12,11) = "@client"
+            │       │   │       │   ├── value:
+            │       │   │       │   │   @ CallNode (location: (12,14)-(12,41))
+            │       │   │       │   │   ├── flags: ∅
+            │       │   │       │   │   ├── receiver:
+            │       │   │       │   │   │   @ ConstantReadNode (location: (12,14)-(12,20))
+            │       │   │       │   │   │   ├── flags: ∅
+            │       │   │       │   │   │   └── name: :Client
+            │       │   │       │   │   ├── call_operator_loc: (12,20)-(12,21) = "."
+            │       │   │       │   │   ├── name: :new
+            │       │   │       │   │   ├── message_loc: (12,21)-(12,24) = "new"
+            │       │   │       │   │   ├── opening_loc: (12,24)-(12,25) = "("
+            │       │   │       │   │   ├── arguments:
+            │       │   │       │   │   │   @ ArgumentsNode (location: (12,25)-(12,40))
+            │       │   │       │   │   │   ├── flags: ∅
+            │       │   │       │   │   │   └── arguments: (length: 1)
+            │       │   │       │   │   │       └── @ CallNode (location: (12,25)-(12,40))
+            │       │   │       │   │   │           ├── flags: ∅
+            │       │   │       │   │   │           ├── receiver:
+            │       │   │       │   │   │           │   @ CallNode (location: (12,25)-(12,31))
+            │       │   │       │   │   │           │   ├── flags: variable_call, ignore_visibility
+            │       │   │       │   │   │           │   ├── receiver: ∅
+            │       │   │       │   │   │           │   ├── call_operator_loc: ∅
+            │       │   │       │   │   │           │   ├── name: :params
+            │       │   │       │   │   │           │   ├── message_loc: (12,25)-(12,31) = "params"
+            │       │   │       │   │   │           │   ├── opening_loc: ∅
+            │       │   │       │   │   │           │   ├── arguments: ∅
+            │       │   │       │   │   │           │   ├── closing_loc: ∅
+            │       │   │       │   │   │           │   └── block: ∅
+            │       │   │       │   │   │           ├── call_operator_loc: ∅
+            │       │   │       │   │   │           ├── name: :[]
+            │       │   │       │   │   │           ├── message_loc: (12,31)-(12,40) = "[:client]"
+            │       │   │       │   │   │           ├── opening_loc: (12,31)-(12,32) = "["
+            │       │   │       │   │   │           ├── arguments:
+            │       │   │       │   │   │           │   @ ArgumentsNode (location: (12,32)-(12,39))
+            │       │   │       │   │   │           │   ├── flags: ∅
+            │       │   │       │   │   │           │   └── arguments: (length: 1)
+            │       │   │       │   │   │           │       └── @ SymbolNode (location: (12,32)-(12,39))
+            │       │   │       │   │   │           │           ├── flags: static_literal, forced_us_ascii_encoding
+            │       │   │       │   │   │           │           ├── opening_loc: (12,32)-(12,33) = ":"
+            │       │   │       │   │   │           │           ├── value_loc: (12,33)-(12,39) = "client"
+            │       │   │       │   │   │           │           ├── closing_loc: ∅
+            │       │   │       │   │   │           │           └── unescaped: "client"
+            │       │   │       │   │   │           ├── closing_loc: (12,39)-(12,40) = "]"
+            │       │   │       │   │   │           └── block: ∅
+            │       │   │       │   │   ├── closing_loc: (12,40)-(12,41) = ")"
+            │       │   │       │   │   └── block: ∅
+            │       │   │       │   └── operator_loc: (12,12)-(12,13) = "="
+            │       │   │       └── @ IfNode (location: (13,4)-(19,7))
+            │       │   │           ├── flags: newline
+            │       │   │           ├── if_keyword_loc: (13,4)-(13,6) = "if"
+            │       │   │           ├── predicate:
+            │       │   │           │   @ CallNode (location: (13,7)-(13,19))
+            │       │   │           │   ├── flags: ∅
+            │       │   │           │   ├── receiver:
+            │       │   │           │   │   @ InstanceVariableReadNode (location: (13,7)-(13,14))
+            │       │   │           │   │   ├── flags: ∅
+            │       │   │           │   │   └── name: :@client
+            │       │   │           │   ├── call_operator_loc: (13,14)-(13,15) = "."
+            │       │   │           │   ├── name: :save
+            │       │   │           │   ├── message_loc: (13,15)-(13,19) = "save"
+            │       │   │           │   ├── opening_loc: ∅
+            │       │   │           │   ├── arguments: ∅
+            │       │   │           │   ├── closing_loc: ∅
+            │       │   │           │   └── block: ∅
+            │       │   │           ├── then_keyword_loc: ∅
+            │       │   │           ├── statements:
+            │       │   │           │   @ StatementsNode (location: (14,6)-(14,25))
+            │       │   │           │   ├── flags: ∅
+            │       │   │           │   └── body: (length: 1)
+            │       │   │           │       └── @ CallNode (location: (14,6)-(14,25))
+            │       │   │           │           ├── flags: newline, ignore_visibility
+            │       │   │           │           ├── receiver: ∅
+            │       │   │           │           ├── call_operator_loc: ∅
+            │       │   │           │           ├── name: :redirect_to
+            │       │   │           │           ├── message_loc: (14,6)-(14,17) = "redirect_to"
+            │       │   │           │           ├── opening_loc: ∅
+            │       │   │           │           ├── arguments:
+            │       │   │           │           │   @ ArgumentsNode (location: (14,18)-(14,25))
+            │       │   │           │           │   ├── flags: ∅
+            │       │   │           │           │   └── arguments: (length: 1)
+            │       │   │           │           │       └── @ InstanceVariableReadNode (location: (14,18)-(14,25))
+            │       │   │           │           │           ├── flags: ∅
+            │       │   │           │           │           └── name: :@client
+            │       │   │           │           ├── closing_loc: ∅
+            │       │   │           │           └── block: ∅
+            │       │   │           ├── subsequent:
+            │       │   │           │   @ ElseNode (location: (15,4)-(19,7))
+            │       │   │           │   ├── flags: ∅
+            │       │   │           │   ├── else_keyword_loc: (15,4)-(15,8) = "else"
+            │       │   │           │   ├── statements:
+            │       │   │           │   │   @ StatementsNode (location: (18,6)-(18,18))
+            │       │   │           │   │   ├── flags: ∅
+            │       │   │           │   │   └── body: (length: 1)
+            │       │   │           │   │       └── @ CallNode (location: (18,6)-(18,18))
+            │       │   │           │   │           ├── flags: newline, ignore_visibility
+            │       │   │           │   │           ├── receiver: ∅
+            │       │   │           │   │           ├── call_operator_loc: ∅
+            │       │   │           │   │           ├── name: :render
+            │       │   │           │   │           ├── message_loc: (18,6)-(18,12) = "render"
+            │       │   │           │   │           ├── opening_loc: ∅
+            │       │   │           │   │           ├── arguments:
+            │       │   │           │   │           │   @ ArgumentsNode (location: (18,13)-(18,18))
+            │       │   │           │   │           │   ├── flags: ∅
+            │       │   │           │   │           │   └── arguments: (length: 1)
+            │       │   │           │   │           │       └── @ StringNode (location: (18,13)-(18,18))
+            │       │   │           │   │           │           ├── flags: ∅
+            │       │   │           │   │           │           ├── opening_loc: (18,13)-(18,14) = "\""
+            │       │   │           │   │           │           ├── content_loc: (18,14)-(18,17) = "new"
+            │       │   │           │   │           │           ├── closing_loc: (18,17)-(18,18) = "\""
+            │       │   │           │   │           │           └── unescaped: "new"
+            │       │   │           │   │           ├── closing_loc: ∅
+            │       │   │           │   │           └── block: ∅
+            │       │   │           │   └── end_keyword_loc: (19,4)-(19,7) = "end"
+            │       │   │           └── end_keyword_loc: (19,4)-(19,7) = "end"
+            │       │   ├── locals: []
+            │       │   ├── def_keyword_loc: (11,2)-(11,5) = "def"
+            │       │   ├── operator_loc: ∅
+            │       │   ├── lparen_loc: ∅
+            │       │   ├── rparen_loc: ∅
+            │       │   ├── equal_loc: ∅
+            │       │   └── end_keyword_loc: (20,2)-(20,5) = "end"
+            │       ├── @ DefNode (location: (22,2)-(30,5))
+            │       │   ├── flags: newline
+            │       │   ├── name: :edit
+            │       │   ├── name_loc: (22,6)-(22,10) = "edit"
+            │       │   ├── receiver: ∅
+            │       │   ├── parameters: ∅
+            │       │   ├── body:
+            │       │   │   @ StatementsNode (location: (23,4)-(29,7))
+            │       │   │   ├── flags: ∅
+            │       │   │   └── body: (length: 2)
+            │       │   │       ├── @ InstanceVariableWriteNode (location: (23,4)-(23,41))
+            │       │   │       │   ├── flags: newline
+            │       │   │       │   ├── name: :@client
+            │       │   │       │   ├── name_loc: (23,4)-(23,11) = "@client"
+            │       │   │       │   ├── value:
+            │       │   │       │   │   @ CallNode (location: (23,14)-(23,41))
+            │       │   │       │   │   ├── flags: ∅
+            │       │   │       │   │   ├── receiver:
+            │       │   │       │   │   │   @ ConstantReadNode (location: (23,14)-(23,20))
+            │       │   │       │   │   │   ├── flags: ∅
+            │       │   │       │   │   │   └── name: :Client
+            │       │   │       │   │   ├── call_operator_loc: (23,20)-(23,21) = "."
+            │       │   │       │   │   ├── name: :new
+            │       │   │       │   │   ├── message_loc: (23,21)-(23,24) = "new"
+            │       │   │       │   │   ├── opening_loc: (23,24)-(23,25) = "("
+            │       │   │       │   │   ├── arguments:
+            │       │   │       │   │   │   @ ArgumentsNode (location: (23,25)-(23,40))
+            │       │   │       │   │   │   ├── flags: ∅
+            │       │   │       │   │   │   └── arguments: (length: 1)
+            │       │   │       │   │   │       └── @ CallNode (location: (23,25)-(23,40))
+            │       │   │       │   │   │           ├── flags: ∅
+            │       │   │       │   │   │           ├── receiver:
+            │       │   │       │   │   │           │   @ CallNode (location: (23,25)-(23,31))
+            │       │   │       │   │   │           │   ├── flags: variable_call, ignore_visibility
+            │       │   │       │   │   │           │   ├── receiver: ∅
+            │       │   │       │   │   │           │   ├── call_operator_loc: ∅
+            │       │   │       │   │   │           │   ├── name: :params
+            │       │   │       │   │   │           │   ├── message_loc: (23,25)-(23,31) = "params"
+            │       │   │       │   │   │           │   ├── opening_loc: ∅
+            │       │   │       │   │   │           │   ├── arguments: ∅
+            │       │   │       │   │   │           │   ├── closing_loc: ∅
+            │       │   │       │   │   │           │   └── block: ∅
+            │       │   │       │   │   │           ├── call_operator_loc: ∅
+            │       │   │       │   │   │           ├── name: :[]
+            │       │   │       │   │   │           ├── message_loc: (23,31)-(23,40) = "[:client]"
+            │       │   │       │   │   │           ├── opening_loc: (23,31)-(23,32) = "["
+            │       │   │       │   │   │           ├── arguments:
+            │       │   │       │   │   │           │   @ ArgumentsNode (location: (23,32)-(23,39))
+            │       │   │       │   │   │           │   ├── flags: ∅
+            │       │   │       │   │   │           │   └── arguments: (length: 1)
+            │       │   │       │   │   │           │       └── @ SymbolNode (location: (23,32)-(23,39))
+            │       │   │       │   │   │           │           ├── flags: static_literal, forced_us_ascii_encoding
+            │       │   │       │   │   │           │           ├── opening_loc: (23,32)-(23,33) = ":"
+            │       │   │       │   │   │           │           ├── value_loc: (23,33)-(23,39) = "client"
+            │       │   │       │   │   │           │           ├── closing_loc: ∅
+            │       │   │       │   │   │           │           └── unescaped: "client"
+            │       │   │       │   │   │           ├── closing_loc: (23,39)-(23,40) = "]"
+            │       │   │       │   │   │           └── block: ∅
+            │       │   │       │   │   ├── closing_loc: (23,40)-(23,41) = ")"
+            │       │   │       │   │   └── block: ∅
+            │       │   │       │   └── operator_loc: (23,12)-(23,13) = "="
+            │       │   │       └── @ IfNode (location: (25,4)-(29,7))
+            │       │   │           ├── flags: newline
+            │       │   │           ├── if_keyword_loc: (25,4)-(25,6) = "if"
+            │       │   │           ├── predicate:
+            │       │   │           │   @ CallNode (location: (25,7)-(25,20))
+            │       │   │           │   ├── flags: ∅
+            │       │   │           │   ├── receiver:
+            │       │   │           │   │   @ CallNode (location: (25,7)-(25,14))
+            │       │   │           │   │   ├── flags: variable_call, ignore_visibility
+            │       │   │           │   │   ├── receiver: ∅
+            │       │   │           │   │   ├── call_operator_loc: ∅
+            │       │   │           │   │   ├── name: :request
+            │       │   │           │   │   ├── message_loc: (25,7)-(25,14) = "request"
+            │       │   │           │   │   ├── opening_loc: ∅
+            │       │   │           │   │   ├── arguments: ∅
+            │       │   │           │   │   ├── closing_loc: ∅
+            │       │   │           │   │   └── block: ∅
+            │       │   │           │   ├── call_operator_loc: (25,14)-(25,15) = "."
+            │       │   │           │   ├── name: :post?
+            │       │   │           │   ├── message_loc: (25,15)-(25,20) = "post?"
+            │       │   │           │   ├── opening_loc: ∅
+            │       │   │           │   ├── arguments: ∅
+            │       │   │           │   ├── closing_loc: ∅
+            │       │   │           │   └── block: ∅
+            │       │   │           ├── then_keyword_loc: ∅
+            │       │   │           ├── statements:
+            │       │   │           │   @ StatementsNode (location: (26,6)-(28,9))
+            │       │   │           │   ├── flags: ∅
+            │       │   │           │   └── body: (length: 1)
+            │       │   │           │       └── @ CallNode (location: (26,6)-(28,9))
+            │       │   │           │           ├── flags: newline
+            │       │   │           │           ├── receiver:
+            │       │   │           │           │   @ InstanceVariableReadNode (location: (26,6)-(26,13))
+            │       │   │           │           │   ├── flags: ∅
+            │       │   │           │           │   └── name: :@client
+            │       │   │           │           ├── call_operator_loc: (26,13)-(26,14) = "."
+            │       │   │           │           ├── name: :transaction
+            │       │   │           │           ├── message_loc: (26,14)-(26,25) = "transaction"
+            │       │   │           │           ├── opening_loc: ∅
+            │       │   │           │           ├── arguments: ∅
+            │       │   │           │           ├── closing_loc: ∅
+            │       │   │           │           └── block:
+            │       │   │           │               @ BlockNode (location: (26,26)-(28,9))
+            │       │   │           │               ├── flags: ∅
+            │       │   │           │               ├── locals: []
+            │       │   │           │               ├── parameters: ∅
+            │       │   │           │               ├── body:
+            │       │   │           │               │   @ StatementsNode (location: (27,8)-(27,50))
+            │       │   │           │               │   ├── flags: ∅
+            │       │   │           │               │   └── body: (length: 1)
+            │       │   │           │               │       └── @ CallNode (location: (27,8)-(27,50))
+            │       │   │           │               │           ├── flags: newline
+            │       │   │           │               │           ├── receiver:
+            │       │   │           │               │           │   @ InstanceVariableReadNode (location: (27,8)-(27,15))
+            │       │   │           │               │           │   ├── flags: ∅
+            │       │   │           │               │           │   └── name: :@client
+            │       │   │           │               │           ├── call_operator_loc: (27,15)-(27,16) = "."
+            │       │   │           │               │           ├── name: :update_attributes
+            │       │   │           │               │           ├── message_loc: (27,16)-(27,33) = "update_attributes"
+            │       │   │           │               │           ├── opening_loc: (27,33)-(27,34) = "("
+            │       │   │           │               │           ├── arguments:
+            │       │   │           │               │           │   @ ArgumentsNode (location: (27,34)-(27,49))
+            │       │   │           │               │           │   ├── flags: ∅
+            │       │   │           │               │           │   └── arguments: (length: 1)
+            │       │   │           │               │           │       └── @ CallNode (location: (27,34)-(27,49))
+            │       │   │           │               │           │           ├── flags: ∅
+            │       │   │           │               │           │           ├── receiver:
+            │       │   │           │               │           │           │   @ CallNode (location: (27,34)-(27,40))
+            │       │   │           │               │           │           │   ├── flags: variable_call, ignore_visibility
+            │       │   │           │               │           │           │   ├── receiver: ∅
+            │       │   │           │               │           │           │   ├── call_operator_loc: ∅
+            │       │   │           │               │           │           │   ├── name: :params
+            │       │   │           │               │           │           │   ├── message_loc: (27,34)-(27,40) = "params"
+            │       │   │           │               │           │           │   ├── opening_loc: ∅
+            │       │   │           │               │           │           │   ├── arguments: ∅
+            │       │   │           │               │           │           │   ├── closing_loc: ∅
+            │       │   │           │               │           │           │   └── block: ∅
+            │       │   │           │               │           │           ├── call_operator_loc: ∅
+            │       │   │           │               │           │           ├── name: :[]
+            │       │   │           │               │           │           ├── message_loc: (27,40)-(27,49) = "[:client]"
+            │       │   │           │               │           │           ├── opening_loc: (27,40)-(27,41) = "["
+            │       │   │           │               │           │           ├── arguments:
+            │       │   │           │               │           │           │   @ ArgumentsNode (location: (27,41)-(27,48))
+            │       │   │           │               │           │           │   ├── flags: ∅
+            │       │   │           │               │           │           │   └── arguments: (length: 1)
+            │       │   │           │               │           │           │       └── @ SymbolNode (location: (27,41)-(27,48))
+            │       │   │           │               │           │           │           ├── flags: static_literal, forced_us_ascii_encoding
+            │       │   │           │               │           │           │           ├── opening_loc: (27,41)-(27,42) = ":"
+            │       │   │           │               │           │           │           ├── value_loc: (27,42)-(27,48) = "client"
+            │       │   │           │               │           │           │           ├── closing_loc: ∅
+            │       │   │           │               │           │           │           └── unescaped: "client"
+            │       │   │           │               │           │           ├── closing_loc: (27,48)-(27,49) = "]"
+            │       │   │           │               │           │           └── block: ∅
+            │       │   │           │               │           ├── closing_loc: (27,49)-(27,50) = ")"
+            │       │   │           │               │           └── block: ∅
+            │       │   │           │               ├── opening_loc: (26,26)-(26,28) = "do"
+            │       │   │           │               └── closing_loc: (28,6)-(28,9) = "end"
+            │       │   │           ├── subsequent: ∅
+            │       │   │           └── end_keyword_loc: (29,4)-(29,7) = "end"
+            │       │   ├── locals: []
+            │       │   ├── def_keyword_loc: (22,2)-(22,5) = "def"
+            │       │   ├── operator_loc: ∅
+            │       │   ├── lparen_loc: ∅
+            │       │   ├── rparen_loc: ∅
+            │       │   ├── equal_loc: ∅
+            │       │   └── end_keyword_loc: (30,2)-(30,5) = "end"
+            │       ├── @ DefNode (location: (32,2)-(40,5))
+            │       │   ├── flags: newline
+            │       │   ├── name: :data
+            │       │   ├── name_loc: (32,6)-(32,10) = "data"
+            │       │   ├── receiver: ∅
+            │       │   ├── parameters: ∅
+            │       │   ├── body:
+            │       │   │   @ StatementsNode (location: (33,4)-(39,103))
+            │       │   │   ├── flags: ∅
+            │       │   │   └── body: (length: 3)
+            │       │   │       ├── @ InstanceVariableWriteNode (location: (33,4)-(33,25))
+            │       │   │       │   ├── flags: newline
+            │       │   │       │   ├── name: :@clients
+            │       │   │       │   ├── name_loc: (33,4)-(33,12) = "@clients"
+            │       │   │       │   ├── value:
+            │       │   │       │   │   @ CallNode (location: (33,15)-(33,25))
+            │       │   │       │   │   ├── flags: ∅
+            │       │   │       │   │   ├── receiver:
+            │       │   │       │   │   │   @ ConstantReadNode (location: (33,15)-(33,21))
+            │       │   │       │   │   │   ├── flags: ∅
+            │       │   │       │   │   │   └── name: :Client
+            │       │   │       │   │   ├── call_operator_loc: (33,21)-(33,22) = "."
+            │       │   │       │   │   ├── name: :all
+            │       │   │       │   │   ├── message_loc: (33,22)-(33,25) = "all"
+            │       │   │       │   │   ├── opening_loc: ∅
+            │       │   │       │   │   ├── arguments: ∅
+            │       │   │       │   │   ├── closing_loc: ∅
+            │       │   │       │   │   └── block: ∅
+            │       │   │       │   └── operator_loc: (33,13)-(33,14) = "="
+            │       │   │       ├── @ LocalVariableWriteNode (location: (35,4)-(37,7))
+            │       │   │       │   ├── flags: newline
+            │       │   │       │   ├── name: :formatter
+            │       │   │       │   ├── depth: 0
+            │       │   │       │   ├── name_loc: (35,4)-(35,13) = "formatter"
+            │       │   │       │   ├── value:
+            │       │   │       │   │   @ CallNode (location: (35,16)-(37,7))
+            │       │   │       │   │   ├── flags: ignore_visibility
+            │       │   │       │   │   ├── receiver: ∅
+            │       │   │       │   │   ├── call_operator_loc: ∅
+            │       │   │       │   │   ├── name: :proc
+            │       │   │       │   │   ├── message_loc: (35,16)-(35,20) = "proc"
+            │       │   │       │   │   ├── opening_loc: ∅
+            │       │   │       │   │   ├── arguments: ∅
+            │       │   │       │   │   ├── closing_loc: ∅
+            │       │   │       │   │   └── block:
+            │       │   │       │   │       @ BlockNode (location: (35,21)-(37,7))
+            │       │   │       │   │       ├── flags: ∅
+            │       │   │       │   │       ├── locals: [:row]
+            │       │   │       │   │       ├── parameters:
+            │       │   │       │   │       │   @ BlockParametersNode (location: (35,24)-(35,29))
+            │       │   │       │   │       │   ├── flags: ∅
+            │       │   │       │   │       │   ├── parameters:
+            │       │   │       │   │       │   │   @ ParametersNode (location: (35,25)-(35,28))
+            │       │   │       │   │       │   │   ├── flags: ∅
+            │       │   │       │   │       │   │   ├── requireds: (length: 1)
+            │       │   │       │   │       │   │   │   └── @ RequiredParameterNode (location: (35,25)-(35,28))
+            │       │   │       │   │       │   │   │       ├── flags: ∅
+            │       │   │       │   │       │   │   │       └── name: :row
+            │       │   │       │   │       │   │   ├── optionals: (length: 0)
+            │       │   │       │   │       │   │   ├── rest: ∅
+            │       │   │       │   │       │   │   ├── posts: (length: 0)
+            │       │   │       │   │       │   │   ├── keywords: (length: 0)
+            │       │   │       │   │       │   │   ├── keyword_rest: ∅
+            │       │   │       │   │       │   │   └── block: ∅
+            │       │   │       │   │       │   ├── locals: (length: 0)
+            │       │   │       │   │       │   ├── opening_loc: (35,24)-(35,25) = "|"
+            │       │   │       │   │       │   └── closing_loc: (35,28)-(35,29) = "|"
+            │       │   │       │   │       ├── body:
+            │       │   │       │   │       │   @ StatementsNode (location: (36,6)-(36,17))
+            │       │   │       │   │       │   ├── flags: ∅
+            │       │   │       │   │       │   └── body: (length: 1)
+            │       │   │       │   │       │       └── @ CallNode (location: (36,6)-(36,17))
+            │       │   │       │   │       │           ├── flags: newline
+            │       │   │       │   │       │           ├── receiver:
+            │       │   │       │   │       │           │   @ LocalVariableReadNode (location: (36,6)-(36,9))
+            │       │   │       │   │       │           │   ├── flags: ∅
+            │       │   │       │   │       │           │   ├── name: :row
+            │       │   │       │   │       │           │   └── depth: 0
+            │       │   │       │   │       │           ├── call_operator_loc: (36,9)-(36,10) = "."
+            │       │   │       │   │       │           ├── name: :to_json
+            │       │   │       │   │       │           ├── message_loc: (36,10)-(36,17) = "to_json"
+            │       │   │       │   │       │           ├── opening_loc: ∅
+            │       │   │       │   │       │           ├── arguments: ∅
+            │       │   │       │   │       │           ├── closing_loc: ∅
+            │       │   │       │   │       │           └── block: ∅
+            │       │   │       │   │       ├── opening_loc: (35,21)-(35,23) = "do"
+            │       │   │       │   │       └── closing_loc: (37,4)-(37,7) = "end"
+            │       │   │       │   └── operator_loc: (35,14)-(35,15) = "="
+            │       │   │       └── @ CallNode (location: (39,4)-(39,103))
+            │       │   │           ├── flags: newline, ignore_visibility
+            │       │   │           ├── receiver: ∅
+            │       │   │           ├── call_operator_loc: ∅
+            │       │   │           ├── name: :respond_with
+            │       │   │           ├── message_loc: (39,4)-(39,16) = "respond_with"
+            │       │   │           ├── opening_loc: ∅
+            │       │   │           ├── arguments:
+            │       │   │           │   @ ArgumentsNode (location: (39,17)-(39,103))
+            │       │   │           │   ├── flags: contains_keywords
+            │       │   │           │   └── arguments: (length: 2)
+            │       │   │           │       ├── @ CallNode (location: (39,17)-(39,53))
+            │       │   │           │       │   ├── flags: ∅
+            │       │   │           │       │   ├── receiver:
+            │       │   │           │       │   │   @ CallNode (location: (39,17)-(39,42))
+            │       │   │           │       │   │   ├── flags: ∅
+            │       │   │           │       │   │   ├── receiver:
+            │       │   │           │       │   │   │   @ InstanceVariableReadNode (location: (39,17)-(39,25))
+            │       │   │           │       │   │   │   ├── flags: ∅
+            │       │   │           │       │   │   │   └── name: :@clients
+            │       │   │           │       │   │   ├── call_operator_loc: (39,25)-(39,26) = "."
+            │       │   │           │       │   │   ├── name: :each
+            │       │   │           │       │   │   ├── message_loc: (39,26)-(39,30) = "each"
+            │       │   │           │       │   │   ├── opening_loc: (39,30)-(39,31) = "("
+            │       │   │           │       │   │   ├── arguments: ∅
+            │       │   │           │       │   │   ├── closing_loc: (39,41)-(39,42) = ")"
+            │       │   │           │       │   │   └── block:
+            │       │   │           │       │   │       @ BlockArgumentNode (location: (39,31)-(39,41))
+            │       │   │           │       │   │       ├── flags: ∅
+            │       │   │           │       │   │       ├── expression:
+            │       │   │           │       │   │       │   @ LocalVariableReadNode (location: (39,32)-(39,41))
+            │       │   │           │       │   │       │   ├── flags: ∅
+            │       │   │           │       │   │       │   ├── name: :formatter
+            │       │   │           │       │   │       │   └── depth: 0
+            │       │   │           │       │   │       └── operator_loc: (39,31)-(39,32) = "&"
+            │       │   │           │       │   ├── call_operator_loc: (39,42)-(39,43) = "."
+            │       │   │           │       │   ├── name: :join
+            │       │   │           │       │   ├── message_loc: (39,43)-(39,47) = "join"
+            │       │   │           │       │   ├── opening_loc: (39,47)-(39,48) = "("
+            │       │   │           │       │   ├── arguments:
+            │       │   │           │       │   │   @ ArgumentsNode (location: (39,48)-(39,52))
+            │       │   │           │       │   │   ├── flags: ∅
+            │       │   │           │       │   │   └── arguments: (length: 1)
+            │       │   │           │       │   │       └── @ StringNode (location: (39,48)-(39,52))
+            │       │   │           │       │   │           ├── flags: ∅
+            │       │   │           │       │   │           ├── opening_loc: (39,48)-(39,49) = "\""
+            │       │   │           │       │   │           ├── content_loc: (39,49)-(39,51) = "\\n"
+            │       │   │           │       │   │           ├── closing_loc: (39,51)-(39,52) = "\""
+            │       │   │           │       │   │           └── unescaped: "\n"
+            │       │   │           │       │   ├── closing_loc: (39,52)-(39,53) = ")"
+            │       │   │           │       │   └── block: ∅
+            │       │   │           │       └── @ KeywordHashNode (location: (39,55)-(39,103))
+            │       │   │           │           ├── flags: symbol_keys
+            │       │   │           │           └── elements: (length: 1)
+            │       │   │           │               └── @ AssocNode (location: (39,55)-(39,103))
+            │       │   │           │                   ├── flags: ∅
+            │       │   │           │                   ├── key:
+            │       │   │           │                   │   @ SymbolNode (location: (39,55)-(39,68))
+            │       │   │           │                   │   ├── flags: static_literal, forced_us_ascii_encoding
+            │       │   │           │                   │   ├── opening_loc: (39,55)-(39,56) = ":"
+            │       │   │           │                   │   ├── value_loc: (39,56)-(39,68) = "content_type"
+            │       │   │           │                   │   ├── closing_loc: ∅
+            │       │   │           │                   │   └── unescaped: "content_type"
+            │       │   │           │                   ├── value:
+            │       │   │           │                   │   @ StringNode (location: (39,72)-(39,103))
+            │       │   │           │                   │   ├── flags: ∅
+            │       │   │           │                   │   ├── opening_loc: (39,72)-(39,73) = "'"
+            │       │   │           │                   │   ├── content_loc: (39,73)-(39,102) = "application/json; boundary=NL"
+            │       │   │           │                   │   ├── closing_loc: (39,102)-(39,103) = "'"
+            │       │   │           │                   │   └── unescaped: "application/json; boundary=NL"
+            │       │   │           │                   └── operator_loc: (39,69)-(39,71) = "=>"
+            │       │   │           ├── closing_loc: ∅
+            │       │   │           └── block: ∅
+            │       │   ├── locals: [:formatter]
+            │       │   ├── def_keyword_loc: (32,2)-(32,5) = "def"
+            │       │   ├── operator_loc: ∅
+            │       │   ├── lparen_loc: ∅
+            │       │   ├── rparen_loc: ∅
+            │       │   ├── equal_loc: ∅
+            │       │   └── end_keyword_loc: (40,2)-(40,5) = "end"
+            │       └── @ DefNode (location: (42,2)-(46,5))
+            │           ├── flags: newline
+            │           ├── name: :things
+            │           ├── name_loc: (42,6)-(42,12) = "things"
+            │           ├── receiver: ∅
+            │           ├── parameters: ∅
+            │           ├── body:
+            │           │   @ StatementsNode (location: (43,4)-(45,27))
+            │           │   ├── flags: ∅
+            │           │   └── body: (length: 3)
+            │           │       ├── @ LocalVariableWriteNode (location: (43,4)-(43,10))
+            │           │       │   ├── flags: newline
+            │           │       │   ├── name: :x
+            │           │       │   ├── depth: 0
+            │           │       │   ├── name_loc: (43,4)-(43,5) = "x"
+            │           │       │   ├── value:
+            │           │       │   │   @ HashNode (location: (43,8)-(43,10))
+            │           │       │   │   ├── flags: static_literal
+            │           │       │   │   ├── opening_loc: (43,8)-(43,9) = "{"
+            │           │       │   │   ├── elements: (length: 0)
+            │           │       │   │   └── closing_loc: (43,9)-(43,10) = "}"
+            │           │       │   └── operator_loc: (43,6)-(43,7) = "="
+            │           │       ├── @ IndexOrWriteNode (location: (44,4)-(44,22))
+            │           │       │   ├── flags: newline
+            │           │       │   ├── receiver:
+            │           │       │   │   @ LocalVariableReadNode (location: (44,4)-(44,5))
+            │           │       │   │   ├── flags: ∅
+            │           │       │   │   ├── name: :x
+            │           │       │   │   └── depth: 0
+            │           │       │   ├── call_operator_loc: ∅
+            │           │       │   ├── opening_loc: (44,5)-(44,6) = "["
+            │           │       │   ├── arguments:
+            │           │       │   │   @ ArgumentsNode (location: (44,6)-(44,11))
+            │           │       │   │   ├── flags: ∅
+            │           │       │   │   └── arguments: (length: 1)
+            │           │       │   │       └── @ SymbolNode (location: (44,6)-(44,11))
+            │           │       │   │           ├── flags: static_literal, forced_us_ascii_encoding
+            │           │       │   │           ├── opening_loc: (44,6)-(44,7) = ":"
+            │           │       │   │           ├── value_loc: (44,7)-(44,11) = "this"
+            │           │       │   │           ├── closing_loc: ∅
+            │           │       │   │           └── unescaped: "this"
+            │           │       │   ├── closing_loc: (44,11)-(44,12) = "]"
+            │           │       │   ├── block: ∅
+            │           │       │   ├── operator_loc: (44,13)-(44,16) = "||="
+            │           │       │   └── value:
+            │           │       │       @ StringNode (location: (44,17)-(44,22))
+            │           │       │       ├── flags: ∅
+            │           │       │       ├── opening_loc: (44,17)-(44,18) = "'"
+            │           │       │       ├── content_loc: (44,18)-(44,21) = "foo"
+            │           │       │       ├── closing_loc: (44,21)-(44,22) = "'"
+            │           │       │       └── unescaped: "foo"
+            │           │       └── @ IndexAndWriteNode (location: (45,4)-(45,27))
+            │           │           ├── flags: newline
+            │           │           ├── receiver:
+            │           │           │   @ LocalVariableReadNode (location: (45,4)-(45,5))
+            │           │           │   ├── flags: ∅
+            │           │           │   ├── name: :x
+            │           │           │   └── depth: 0
+            │           │           ├── call_operator_loc: ∅
+            │           │           ├── opening_loc: (45,5)-(45,6) = "["
+            │           │           ├── arguments:
+            │           │           │   @ ArgumentsNode (location: (45,6)-(45,11))
+            │           │           │   ├── flags: ∅
+            │           │           │   └── arguments: (length: 1)
+            │           │           │       └── @ SymbolNode (location: (45,6)-(45,11))
+            │           │           │           ├── flags: static_literal, forced_us_ascii_encoding
+            │           │           │           ├── opening_loc: (45,6)-(45,7) = ":"
+            │           │           │           ├── value_loc: (45,7)-(45,11) = "that"
+            │           │           │           ├── closing_loc: ∅
+            │           │           │           └── unescaped: "that"
+            │           │           ├── closing_loc: (45,11)-(45,12) = "]"
+            │           │           ├── block: ∅
+            │           │           ├── operator_loc: (45,13)-(45,16) = "&&="
+            │           │           └── value:
+            │           │               @ CallNode (location: (45,17)-(45,27))
+            │           │               ├── flags: ∅
+            │           │               ├── receiver:
+            │           │               │   @ StringNode (location: (45,17)-(45,22))
+            │           │               │   ├── flags: ∅
+            │           │               │   ├── opening_loc: (45,17)-(45,18) = "'"
+            │           │               │   ├── content_loc: (45,18)-(45,21) = "foo"
+            │           │               │   ├── closing_loc: (45,21)-(45,22) = "'"
+            │           │               │   └── unescaped: "foo"
+            │           │               ├── call_operator_loc: (45,22)-(45,23) = "."
+            │           │               ├── name: :size
+            │           │               ├── message_loc: (45,23)-(45,27) = "size"
+            │           │               ├── opening_loc: ∅
+            │           │               ├── arguments: ∅
+            │           │               ├── closing_loc: ∅
+            │           │               └── block: ∅
+            │           ├── locals: [:x]
+            │           ├── def_keyword_loc: (42,2)-(42,5) = "def"
+            │           ├── operator_loc: ∅
+            │           ├── lparen_loc: ∅
+            │           ├── rparen_loc: ∅
+            │           ├── equal_loc: ∅
+            │           └── end_keyword_loc: (46,2)-(46,5) = "end"
+            ├── end_keyword_loc: (47,0)-(47,3) = "end"
+            └── name: :ClientsController
