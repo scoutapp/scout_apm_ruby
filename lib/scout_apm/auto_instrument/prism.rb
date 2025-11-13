@@ -42,10 +42,13 @@ module ScoutApm
           # when we modify the string
           sorted_replacements = @replacements.sort_by { |r| -r[:start] }
 
-          result = @code.dup
+          # Convert to ASCII-8bit as Prism outputs offsets in bytes
+          result = @code.dup.b
           sorted_replacements.each do |replacement|
-            result[replacement[:start]...replacement[:end]] = replacement[:new_text]
+            result[replacement[:start]...replacement[:end]] = replacement[:new_text].b
           end
+          # ::RubyVM::InstructionSequence.compile will infer the encoding when compiling
+          # and will compile with ASCII-8bit correctly.
           result
         end
 
