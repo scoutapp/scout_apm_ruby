@@ -15,7 +15,8 @@ module ScoutApm
       class Rewriter
         def initialize(path, code)
           @path = path
-          @code = code
+          # Set encoding to ASCII-8bit as Prism uses byte offsets
+          @code = code.b
           @replacements = []
           @instrumented_nodes = Set.new
 
@@ -44,8 +45,10 @@ module ScoutApm
 
           result = @code.dup
           sorted_replacements.each do |replacement|
-            result[replacement[:start]...replacement[:end]] = replacement[:new_text]
+            result[replacement[:start]...replacement[:end]] = replacement[:new_text].b
           end
+          # ::RubyVM::InstructionSequence.compile will infer the encoding when compiling
+          # and will compile with ASCII-8bit correctly.
           result
         end
 
@@ -79,6 +82,15 @@ module ScoutApm
           # Skip if this node or any parent has already been instrumented
           return if @instrumented_nodes.include?(node)
 
+          # Skip if any ancestor node has been instrumented (to avoid overlapping replacements)
+          @nesting.each do |ancestor|
+            return if @instrumented_nodes.include?(ancestor)
+          end
+
+          # Skip if any descendant node has already been instrumented (to avoid overlapping replacements)
+          # This prevents a parent node from being wrapped when a child node has already been modified
+          return if has_instrumented_descendant?(node)
+
           start_offset = node.location.start_offset
           end_offset = node.location.end_offset
           line = node.location.start_line
@@ -90,9 +102,23 @@ module ScoutApm
           @instrumented_nodes.add(node)
         end
 
+        def has_instrumented_descendant?(node)
+          node.compact_child_nodes.any? do |child|
+            @instrumented_nodes.include?(child) || has_instrumented_descendant?(child)
+          end
+        end
+
         def visit_block_node(node)
           # If we are not in a method, don't do any instrumentation:
           return process_children(node) if @method.empty?
+
+          # If this block is attached to a CallNode, don't wrap it separately
+          # The CallNode will wrap the entire call including the block
+          return process_children(node) if parent_type?(Prism::CallNode)
+
+          # If this block is attached to a SuperNode or ForwardingSuperNode, don't wrap it separately
+          # The super node will wrap the entire call including the block
+          return process_children(node) if parent_type?(Prism::SuperNode) || parent_type?(Prism::ForwardingSuperNode)
 
           wrap_node(node)
         end
@@ -114,18 +140,65 @@ module ScoutApm
           return process_children(node) if parent_type?(Prism::BlockNode)
 
           wrap_node(node)
+
+          # Process children to handle nested calls, but blocks attached to this call
+          # won't be wrapped separately (handled by visit_block_node check)
+          process_children(node)
+        end
+
+        def visit_super_node(node)
+          # We aren't interested in top level super calls:
+          return process_children(node) if @method.empty?
+
+          # This ignores super calls inside blocks:
+          return process_children(node) if parent_type?(Prism::BlockNode)
+
+          # Only wrap super calls that have a block attached
+          # Bare super calls (with or without arguments) are just delegation and shouldn't be instrumented
+          if node.block
+            wrap_node(node)
+          end
+
+          # Process children to handle nested calls, but blocks attached to this super
+          # won't be wrapped separately (handled by visit_block_node check)
+          process_children(node)
+        end
+
+        def visit_forwarding_super_node(node)
+          # We aren't interested in top level super calls:
+          return process_children(node) if @method.empty?
+
+          # This ignores super calls inside blocks:
+          return process_children(node) if parent_type?(Prism::BlockNode)
+
+          # Only wrap super calls that have a block attached
+          # Bare super calls are just delegation and shouldn't be instrumented
+          if node.block
+            wrap_node(node)
+          end
+
+          # Process children to handle nested calls, but blocks attached to this super
+          # won't be wrapped separately (handled by visit_block_node check)
+          process_children(node)
         end
 
         # This is meant to mirror that of the parser implementation.
         # See test/unit/auto_instrument/hash_shorthand_controller-instrumented.rb
         # Non-nil receiver is handled in visit_call_node.
         def visit_hash_node(node)
+          # If this hash is a descendant of a CallNode (at any level), don't instrument individual elements
+          # The parent CallNode will wrap the entire expression
+          # This allows hashes in local variable assignments to be instrumented,
+          # but hashes in method calls to be wrapped as a unit
+          in_call_node = @nesting.any? { |n| n.is_a?(Prism::CallNode) }
+
           node.elements.each do |element|
             if element.is_a?(Prism::AssocNode) && element.key.is_a?(Prism::SymbolNode)
               value_node = element.value
 
+              # Only instrument hash element values if we're not in a CallNode
               # Handles shorthand syntax like `shorthand:` → line 6
-              if value_node.is_a?(Prism::ImplicitNode)
+              if !in_call_node && value_node.is_a?(Prism::ImplicitNode)
                 key = element.key.unescaped
                 inner_call = value_node.value
 
@@ -143,7 +216,7 @@ module ScoutApm
                 @instrumented_nodes.add(value_node)
                 @instrumented_nodes.add(inner_call)
                 next
-              elsif value_node.is_a?(Prism::CallNode) && value_node.receiver.nil?
+              elsif !in_call_node && value_node.is_a?(Prism::CallNode) && value_node.receiver.nil?
                 line = element.location.start_line
                 key = element.key.unescaped
                 value_name = value_node.name.to_s
@@ -230,6 +303,10 @@ module ScoutApm
             visit_multi_target_node(node)
           when Prism::CallNode
             visit_call_node(node)
+          when Prism::SuperNode
+            visit_super_node(node)
+          when Prism::ForwardingSuperNode
+            visit_forwarding_super_node(node)
           when Prism::HashNode
             visit_hash_node(node)
           when Prism::CallOperatorWriteNode, Prism::CallOrWriteNode, Prism::CallAndWriteNode
@@ -262,7 +339,11 @@ module ScoutApm
         unless @local_assignments.key?(node)
           if node.is_a?(Prism::LocalVariableWriteNode)
             @local_assignments[node] = true
-          elsif node.compact_child_nodes.find{|child| self.local_assignments?(child)}
+          elsif node.compact_child_nodes.find{|child|
+            # Don't check blocks - assignments inside blocks shouldn't affect the parent call
+            next if child.is_a?(Prism::BlockNode)
+            self.local_assignments?(child)
+          }
             @local_assignments[node] = true
           else
             @local_assignments[node] = false
