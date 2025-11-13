@@ -8,6 +8,7 @@ module ScoutApm
         if Rails.controller_path?(path) & !Rails.ignore?(path)
           begin
             new_code = Rails.rewrite(path)
+            
             return self.compile(new_code, path, path)
           rescue
             warn "Failed to apply auto-instrumentation to #{path}: #{$!}" if ENV['SCOUT_LOG_LEVEL'].to_s.downcase == "debug"

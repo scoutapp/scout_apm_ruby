@@ -1,6 +1,7 @@
 
 class HashShorthandController < ApplicationController
   def hash
+    THREAD.current[:ternary_check] = true
     json = {
       static: "static",
       shorthand:,
@@ -12,15 +13,32 @@ class HashShorthandController < ApplicationController
       nested: {
         shorthand:,
       },
-      nested_call: nested_call(params["timestamp"])
+      nested_call: nested_call(params["timestamp"]),
+      nested_with_ternaries: {
+                            truthy: THREAD.current[:ternary_check] == true ? 1 : 0,
+                            falsy: THREAD.current[:ternary_check] == false ? 1 : 0,
+                          },
+      ternary: ternary ? ternary : nil,
     }
     render json:
   end
 
   private
 
+  def simple_method
+    "simple"
+  end
+
+  def inner_method
+    "inner"
+  end
+
   def nested_call(noop)
     noop
+  end
+
+  def ternary
+    true
   end
 
   def shorthand
