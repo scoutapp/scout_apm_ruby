@@ -10,6 +10,12 @@ class ClientsController < ApplicationController
     end
   end
 
+  def new
+    super do |something|
+      @client = Client.new
+    end
+  end
+
   def create
     @client = Client.new(params[:client])
     if @client.save
@@ -45,5 +51,24 @@ class ClientsController < ApplicationController
     x = {}
     x[:this] ||= 'foo'
     x[:that] &&= 'foo'.size
+  end
+
+  def do_something
+    wrap_call("123",
+              something: -> { puts "Do something" }
+            ) do
+
+      raw_data = '{ "key": "123" }'
+
+      payload = begin
+                  Marshal.load(raw_data)
+                rescue
+                  puts 'Failed with bad/unhelpful error message'
+                end
+    end
+  end
+
+  def wrap_call(*args, **kwargs)
+    yield
   end
 end
