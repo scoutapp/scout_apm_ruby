@@ -226,10 +226,13 @@ if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR
         ScoutApm::Agent.instance.install
 
         if ScoutApm::Agent.instance.context.config.value("auto_instruments")
-          if defined?(Parser::TreeRewriter)
+          require 'scout_apm/auto_instrument/requirements'
+          if defined?(Prism) || defined?(Parser::TreeRewriter)
             ScoutApm::Agent.instance.context.logger.debug("AutoInstruments is enabled.")
             require 'scout_apm/auto_instrument'
-          else # AutoInstruments is turned on, but we don't he the prerequisites to use it
+          else 
+            # AutoInstruments is turned on, but we don't have the prerequisites to use it
+            # Prism should be available for Ruby >= 3.3.0
             ScoutApm::Agent.instance.context.logger.debug("AutoInstruments is enabled, but Parser::TreeRewriter is missing. Update 'parser' gem to >= 2.5.0.")
           end
         else
