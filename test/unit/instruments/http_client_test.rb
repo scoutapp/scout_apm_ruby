@@ -3,8 +3,6 @@ if (ENV["SCOUT_TEST_FEATURES"] || "").include?("instruments")
 
   require 'scout_apm/instruments/http_client'
 
-  require 'httpclient'
-
   class HttpClientTest < Minitest::Test
     def setup
       @context = ScoutApm::AgentContext.new
