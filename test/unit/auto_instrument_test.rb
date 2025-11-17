@@ -1,3 +1,8 @@
+begin
+  require 'prism'
+rescue LoadError
+end
+
 require 'test_helper'
 
 require 'scout_apm/auto_instrument'
@@ -21,7 +26,8 @@ class AutoInstrumentTest < Minitest::Test
   # test controller.rb file, which will be different on different environments.
   # This normalizes backtraces across environments.
   def normalize_backtrace(string)
-    string.gsub(ROOT, "ROOT")
+    # Keep tests simple and just use UTF-8 encoding.
+    result = string.gsub(ROOT, "ROOT").force_encoding("UTF-8")
   end
 
   # Use this to automatically update the test fixtures.
