@@ -76,7 +76,21 @@ module ScoutApm
                 # Abusing this key to pass job info
                 params_key = 'action_dispatch.request.parameters'
                 env = {}
-                env[params_key] = job.payload_object.job_data
+
+                # Get job data safely - check for job_data first (ActiveJob), then fall back to args (PerformableMethod)
+                env[params_key] = if job.payload_object.respond_to?(:job_data)
+                                    job.payload_object.job_data
+                                  elsif job.payload_object.respond_to?(:args)
+                                    # For PerformableMethod, create a hash with relevant info
+                                    {
+                                      'args' => job.payload_object.args,
+                                      'method_name' => job.payload_object.method_name,
+                                      'object' => job.payload_object.object.class.to_s
+                                    }
+                                  else
+                                    {}
+                                  end
+
                 env[:custom_controller] = name
                 env[:custom_action] = queue
                 context = ScoutApm::Agent.instance.context

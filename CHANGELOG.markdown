@@ -3,6 +3,7 @@
 
 ## Pending
 - Fix user error context being incorrectly flattened (#581)
+- Handle Delayed Job PerformableMethod jobs for error tracking (#584)
 
 # 5.8.0
 - Add error monitoring to SolidQueue, faktory, goodjob, que, shoryuken, sneakers (#571)
