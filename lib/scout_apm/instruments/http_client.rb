@@ -15,8 +15,18 @@ module ScoutApm
       def installed?
         @installed
       end
+      
+      def require_library
+        unless defined?(::HTTPClient)
+          begin
+            require 'httpclient'
+          rescue LoadError
+          end
+        end
+      end
 
       def install(prepend:)
+        require_library
         if defined?(::HTTPClient)
           @installed = true
 
