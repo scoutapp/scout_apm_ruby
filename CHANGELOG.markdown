@@ -1,4 +1,5 @@
 ## Pending
+- Add Prism AutoInstruments Support (#582) (#587)
 - Fix user error context being incorrectly flattened (#581)
 - Handle Delayed Job PerformableMethod jobs for error tracking (#584)
 - Require 'httpclient' library on instrumentation install (#586)
