@@ -53,11 +53,28 @@ module ScoutApm
       #
       def install
         old = ::Puma.cli_config.options.user_options[:before_worker_boot] || []
-        new = Array(old) + [Proc.new do
-          logger.info "Installing Puma worker loop."
-          ScoutApm::Agent.instance.start_background_worker
-        end]
 
+        hook =
+          if Gem::Version.new(::Puma::Const::PUMA_VERSION) < Gem::Version.new("7.0.0")
+            # Puma < 7 uses a raw block
+            Proc.new do
+              logger.info "Installing Puma worker loop."
+              ScoutApm::Agent.instance.start_background_worker
+            end
+          else
+            # Puma >= 7 uses the structured hook format:
+            # https://github.com/puma/puma/commit/b16790f7a3c1bfc1847225a58897c9fbd19981f8
+            {
+              block: Proc.new {
+                logger.info "Installing Puma worker loop."
+                ScoutApm::Agent.instance.start_background_worker
+              },
+              id: nil,
+              cluster_only: false
+            }
+          end
+        
+        new = Array.new(old) + [hook]
         ::Puma.cli_config.options[:before_worker_boot] = new
       rescue
         logger.warn "Unable to install Puma worker loop: #{$!.message}"
