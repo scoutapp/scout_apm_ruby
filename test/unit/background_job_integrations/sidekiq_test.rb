@@ -125,4 +125,42 @@ class SidekiqTest < Minitest::Test
     msg = {}
     assert_equal 0, SidekiqMiddleware.new.latency(msg, 200)
   end
+
+  ########################################
+  # Job Arguments Capture
+  ########################################
+  def test_capture_job_args_when_enabled_with_valid_job
+    test_job_class = Class.new do
+      def self.name
+        'TestJobWithArgs'
+      end
+
+      def perform(user_id, email, filter_param, dict_val)
+      end
+    end
+
+    Object.const_set('TestJobWithArgs', test_job_class)
+
+    SidekiqMiddleware.any_instance.stubs(:capture_job_args?).returns(true)
+    SidekiqMiddleware.any_instance.stubs(:filtered_params_config).returns(["filter_param"])
+
+    fake_request = mock
+    fake_request.expects(:annotate_request)
+    fake_request.expects(:start_layer).twice
+    fake_request.expects(:stop_layer).twice
+
+    ScoutApm::RequestManager.stubs(:lookup).returns(fake_request)
+    ScoutApm::Context.expects(:add).with({ user_id: 123, email: 'test@example.com', filter_param: '[FILTERED]', dict_val: '[UNSUPPORTED TYPE]' })
+
+    msg = {
+      'class' => 'TestJobWithArgs',
+      'args' => [{ 'arguments' => [123, 'test@example.com', 'secret', {a: 1}] }]
+    }
+
+    block_called = false
+    SidekiqMiddleware.new.call(nil, msg, "defaultqueue") { block_called = true }
+    assert block_called
+
+    Object.send(:remove_const, 'TestJobWithArgs')
+  end
 end

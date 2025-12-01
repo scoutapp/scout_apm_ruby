@@ -42,7 +42,7 @@ if (ENV["SCOUT_TEST_FEATURES"] || "").include?("instruments")
 
     def test_httpx_request_retry
       begin
-        HTTPX.with(timeout: { connect_timeout: 0.1, request_timeout: 0.1 })
+        HTTPX.with(timeout: { connect_timeout: 0.25, request_timeout: 0.25 })
              .get("https://httpbin.org/delay/5")
       rescue
       end

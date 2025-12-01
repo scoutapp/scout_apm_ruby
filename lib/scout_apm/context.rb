@@ -7,6 +7,8 @@ module ScoutApm
   class Context
     attr_reader :context
 
+    VALID_TYPES = [String, Symbol, Numeric, Time, Date, TrueClass, FalseClass]
+
     def initialize(context)
       @context = context
       @extra = {}
@@ -93,7 +95,7 @@ module ScoutApm
       value = key_value.values.last
       if value.nil?
         false # don't log this ... easy to happen
-      elsif !valid_type?([String, Symbol, Numeric, Time, Date, TrueClass, FalseClass],value)
+      elsif !valid_type?(VALID_TYPES, value)
         logger.info "The value for [#{key_value.keys.first}] is not a valid type [#{value.class}]."
         false
       else
