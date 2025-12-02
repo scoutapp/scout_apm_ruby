@@ -8,6 +8,7 @@
 - Handle Delayed Job PerformableMethod jobs for error tracking (#584)
 - Require 'httpclient' library on instrumentation install (#586)
 - Add support for Puma 7.0 hook format (#589)
+- Update sample rate to support floats (#564)
 
 # 5.8.0
 - Add error monitoring to SolidQueue, faktory, goodjob, que, shoryuken, sneakers (#571)

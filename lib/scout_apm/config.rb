@@ -46,11 +46,11 @@ require 'scout_apm/environment'
 #                            instruments listed in this array. Default: []
 # ignore_endpoints         - An array of endpoints to ignore. These are matched as regular expressions. (supercedes 'ignore')
 # ignore_jobs              - An array of job names to ignore.
-# sample_rate              - Rate to sample entire application. An integer between 0 and 100. 0 means no traces are sent, 100 means all traces are sent.
-# sample_endpoints         - An array of endpoints to sample. These are matched as regular expressions with individual sample rate of 0 to 100.
-# sample_jobs              - An array of job names with individual sample rate of 0 to 100.
-# endpoint_sample_rate     - Rate to sample all endpoints. An integer between 0 and 100. 0 means no traces are sent, 100 means all traces are sent. (supercedes 'sample_rate')
-# job_sample_rate          - Rate to sample all jobs. An integer between 0 and 100. 0 means no traces are sent, 100 means all traces are sent. (supercedes 'sample_rate')
+# sample_rate              - Rate to sample entire application. A float between 0 and 1. 0 means no requests are tracked, 1 means all are, .05 means 5% are.
+# sample_endpoints         - An array of endpoints to sample. These are matched as regular expressions with individual sample rate of 0 to 1.
+# sample_jobs              - An array of job names with individual sample rate of 0 to 1.
+# endpoint_sample_rate     - Rate to sample all endpoints. A float between 0 and 1. 0 means no requests are tracked, 1 means all. (supercedes 'sample_rate')
+# job_sample_rate          - Rate to sample all jobs. A float between 0 and 1. 0 means no requests are tracked, 1 means all. (supercedes 'sample_rate')
 #
 #
 # Errors Service Configuration
@@ -211,6 +211,23 @@ module ScoutApm
       end
     end
 
+    class SampleRateCoercion
+      def coerce(val)
+        v = val.to_f
+        # Anything above 1 is assumed a percentage for backwards compat, so convert to a decimal
+        if v > 1
+          v = v / 100
+        end
+        if v < 0 || v > 1
+          v = v.clamp(0, 1)
+        end
+        v
+      end
+    end
+
+    # Map of config keys to coercions.  Any key not listed here will be passed
+    # through without modification.
+
 
     SETTING_COERCIONS = {
       'async_recording' => BooleanCoercion.new,
@@ -232,7 +249,7 @@ module ScoutApm
       'record_queue_time' => BooleanCoercion.new,
       'job_params_capture' => BooleanCoercion.new,
       'job_filtered_params' => JsonCoercion.new,
-      'sample_rate' => IntegerCoercion.new,
+      'sample_rate' => SampleRateCoercion.new,
       'sample_endpoints' => JsonCoercion.new,
       'sample_jobs' => JsonCoercion.new,
       'endpoint_sample_rate' => NullableIntegerCoercion.new,
@@ -363,7 +380,7 @@ module ScoutApm
         'external_service_metric_limit'        => 5000, # The hard limit on external service metrics
         'external_service_metric_report_limit' => 1000,
         'instrument_http_url_length'           => 300,
-        'sample_rate'                          => 100,
+        'sample_rate'                          => 1,
         'sample_endpoints'                     => [],
         'sample_jobs'                          => [],
         'endpoint_sample_rate'                 => nil,

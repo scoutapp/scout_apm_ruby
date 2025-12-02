@@ -34,20 +34,20 @@ module ScoutApm
       if transaction.job?
         job_name = transaction.layer_finder.job.name
         rate = job_sample_rate(job_name)
-        return sample?(rate) unless rate.nil?
+        return downsample?(rate) unless rate.nil?
         return true if ignore_job?(job_name)
-        return sample?(@job_sample_rate) unless @job_sample_rate.nil?
+        return downsample?(@job_sample_rate) unless @job_sample_rate.nil?
       elsif transaction.web?
         uri = transaction.annotations[:uri]
         rate = web_sample_rate(uri)
-        return sample?(rate) unless rate.nil?
+        return downsample?(rate) unless rate.nil?
         return true if ignore_uri?(uri)
-        return sample?(@endpoint_sample_rate) unless @endpoint_sample_rate.nil?
+        return downsample?(@endpoint_sample_rate) unless @endpoint_sample_rate.nil?
       end
 
       # global sample check
       if @global_sample_rate
-        return sample?(@global_sample_rate)
+        return downsample?(@global_sample_rate)
       end
 
       false # don't drop the request
@@ -59,7 +59,7 @@ module ScoutApm
       sample_hash = {}
       sampling_config.each do |sample|
         path, _, rate = sample.rpartition(':')
-        sample_hash[path] = rate.to_i
+        sample_hash[path] = coerce_to_rate(rate)
       end
       sample_hash
     end
@@ -90,8 +90,9 @@ module ScoutApm
       @sample_jobs.fetch(job_name, nil)
     end
 
-    def sample?(rate)
-      rand * 100 > rate
+    def downsample?(rate)
+      # Should we drop this request based on the sample rate?
+      rand > rate
     end
 
     private
@@ -100,5 +101,18 @@ module ScoutApm
       ScoutApm::Agent.instance.logger
     end
 
+    def coerce_to_rate(val)
+      # Analogous to Config::SampleRateCoercion
+      v = val.to_f
+      # Anything above 1 is assumed a percentage for backwards compat, so convert to a decimal
+      if v > 1
+        v = v / 100
+      end
+      if v < 0 || v > 1
+        logger.warn("Sample rates must be between 0 and 1. You passed in #{val.inspect}, which we interpreted as #{v}. Clamping.")
+        v = v.clamp(0, 1)
+      end
+      v
+    end
   end
 end
