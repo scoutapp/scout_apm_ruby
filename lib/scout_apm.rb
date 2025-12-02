@@ -226,7 +226,8 @@ if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR
         # Attempt to start right away, this will work best for preloading apps, Unicorn & Puma & similar
         ScoutApm::Agent.instance.install
 
-        if ScoutApm::Agent.instance.context.config.value("auto_instruments")
+        if ScoutApm::Agent.instance.context.config.value("auto_instruments") &&
+            ScoutApm::Agent.instance.should_load_instruments?
           require 'scout_apm/auto_instrument/requirements'
           if defined?(Prism) || defined?(Parser::TreeRewriter)
             ScoutApm::Agent.instance.context.logger.debug("AutoInstruments is enabled.")
