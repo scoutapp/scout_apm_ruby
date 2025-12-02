@@ -52,11 +52,14 @@ module ScoutApm
       def call(_worker, msg, queue)
         req = ScoutApm::RequestManager.lookup
         req.annotate_request(:queue_latency => latency(msg))
+        class_name = job_class(msg)
+
+        add_context!(msg, class_name) if capture_job_args?
 
         begin
           req.start_layer(ScoutApm::Layer.new('Queue', queue))
           started_queue = true
-          req.start_layer(ScoutApm::Layer.new('Job', job_class(msg)))
+          req.start_layer(ScoutApm::Layer.new('Job', class_name))
           started_job = true
 
           yield
@@ -129,6 +132,41 @@ module ScoutApm
         UNKNOWN_CLASS_PLACEHOLDER
       end
 
+      def capture_job_args?
+        ScoutApm::Agent.instance.context.config.value("job_params_capture")
+      end
+
+      def add_context!(msg, class_name)
+        return if class_name == UNKNOWN_CLASS_PLACEHOLDER
+        
+        klass = class_name.constantize rescue nil
+        return if klass.nil?
+
+        # Only allow required and optional parameters, as others aren't fully supported by Sidekiq by default.
+        # This also keeps it easy in terms of the canonical signature of parameters.
+        allowed_parameter_types = [:req, :opt]
+
+        known_parameters =
+          klass.instance_method(:perform).parameters.each_with_object([]) do |(type, name), acc|
+            acc << name if allowed_parameter_types.include?(type)
+          end
+
+        return if known_parameters.empty?
+
+        arguments = msg.fetch('args', [])
+        
+        # Don't think this can actually happen. With perform_all_later, 
+        # it appears we go through this middleware individually (even with multiples of the same job type).
+        return if arguments.length > 1
+
+        job_args = arguments.first.fetch('arguments', [])
+
+        # Reduce known parameters to just the ones that are present in the job arguments (excluding non altered optional params)
+        known_parameters = known_parameters[0...job_args.length]
+
+        ScoutApm::Context.add(filter_params(known_parameters.zip(job_args).to_h))
+      end
+
       def latency(msg, time = Time.now.to_f)
         created_at = msg['enqueued_at'] || msg['created_at']
         if created_at
@@ -145,6 +183,56 @@ module ScoutApm
         end
       rescue
         0
+      end
+
+      ###################
+      # Filtering Params
+      ###################
+
+      # Replaces parameter values with a string / set in config file
+      def filter_params(params)
+        return params unless filtered_params_config
+
+        params.each do |k, v|
+          if filter_key?(k)
+            params[k] = "[FILTERED]"
+            next
+          end
+
+          if filter_value?(v)
+            params[k] = "[UNSUPPORTED TYPE]"
+          end
+        end
+
+        params
+      end
+
+      def filter_value?(value)
+        !ScoutApm::Context::VALID_TYPES.any? { |klass| value.is_a?(klass) }
+      end
+
+      # Check, if a key should be filtered
+      def filter_key?(key)
+        params_to_filter.any? do |filter|
+          key.to_s == filter.to_s # key.to_s.include?(filter.to_s)
+        end
+      end
+
+      def params_to_filter
+        @params_to_filter ||= filtered_params_config + rails_filtered_params
+      end
+
+      # TODO: Flip this over to use a new class like filtered exceptions? Some shared logic between
+      # this and the error service.
+      def filtered_params_config
+        ScoutApm::Agent.instance.context.config.value("job_filtered_params")
+      end
+
+      def rails_filtered_params
+        return [] unless defined?(Rails)
+        Rails.configuration.filter_parameters
+      rescue 
+        []
       end
     end
   end
