@@ -1,5 +1,5 @@
 ## Pending
-- Add Prism AutoInstruments Support (#582) (#587)
+- Add Prism AutoInstruments Support (#582) (#594)
 - Add HTTPX instrumentation (#588)
 - Add ability to automatically capture Sidekiq job args as context
   - `job_params_capture` - Set to true to enable job argument capturing
