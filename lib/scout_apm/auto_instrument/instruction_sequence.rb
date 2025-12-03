@@ -7,7 +7,7 @@ module ScoutApm
       def load_iseq(path)
         if Rails.controller_path?(path) & !Rails.ignore?(path)
           begin
-            new_code = Rails.rewrite(path).force_encoding(ENCODING.default_external)
+            new_code = Rails.rewrite(path).force_encoding(Encoding.default_external)
             
             return self.compile(new_code, path, path)
           rescue
