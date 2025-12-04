@@ -1,5 +1,6 @@
-## Pending
+# 6.0.0
 - Add Prism AutoInstruments Support (#582) (#594)
+- Add OpenSearch instrumentation (#563)
 - Add HTTPX instrumentation (#588)
 - Add ability to automatically capture Sidekiq job args as context
   - `job_params_capture` - Set to true to enable job argument capturing
@@ -9,6 +10,7 @@
 - Require 'httpclient' library on instrumentation install (#586)
 - Add support for Puma 7.0 hook format (#589)
 - Update sample rate to support floats (#564)
+- Reintegrate Regex support for ignored URIs (#574)
 
 # 5.8.0
 - Add error monitoring to SolidQueue, faktory, goodjob, que, shoryuken, sneakers (#571)
