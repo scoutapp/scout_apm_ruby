@@ -153,13 +153,16 @@ module ScoutApm
 
         return if known_parameters.empty?
 
-        arguments = msg.fetch('args', [])
-        
-        # Don't think this can actually happen. With perform_all_later, 
-        # it appears we go through this middleware individually (even with multiples of the same job type).
-        return if arguments.length > 1
+        job_args = if msg["class"] == ACTIVE_JOB_KLASS
+            arguments = msg.fetch('args', [])
+            # Don't think this can actually happen. With perform_all_later, 
+            # it appears we go through this middleware individually (even with multiples of the same job type).
+            return if arguments.length > 1
 
-        job_args = arguments.first.fetch('arguments', [])
+            arguments.first.fetch('arguments', [])
+          else
+            msg.fetch('args', [])
+          end
 
         # Reduce known parameters to just the ones that are present in the job arguments (excluding non altered optional params)
         known_parameters = known_parameters[0...job_args.length]

@@ -153,7 +153,8 @@ class SidekiqTest < Minitest::Test
     ScoutApm::Context.expects(:add).with({ user_id: 123, email: 'test@example.com', filter_param: '[FILTERED]', dict_val: '[UNSUPPORTED TYPE]' })
 
     msg = {
-      'class' => 'TestJobWithArgs',
+      "class" => SidekiqMiddleware::ACTIVE_JOB_KLASS,
+      "wrapped" => "TestJobWithArgs",
       'args' => [{ 'arguments' => [123, 'test@example.com', 'secret', {a: 1}] }]
     }
 
