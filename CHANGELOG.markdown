@@ -1,3 +1,6 @@
+# 6.0.1
+- Fix capturing of job params for non ActiveJob
+
 # 6.0.0
 - Add Prism AutoInstruments Support (#582) (#594)
 - Add OpenSearch instrumentation (#563)
