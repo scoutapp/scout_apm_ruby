@@ -2,6 +2,13 @@
 - Fix capturing of job params for non ActiveJob
 
 # 6.0.0
+
+**Breaking Change**
+Sampling configuration options now take `float` arguments between `0.0` and `1.0`. This means
+you can now set sample rates lower than one. Backwards compatibility is maintained for
+existing config > 1 by converting to a percentage internally. **If your endpoint is
+sampled at exactly 1%, you must now set `0.01` instead of `1`.**
+
 - Add Prism AutoInstruments Support (#582) (#594)
 - Add OpenSearch instrumentation (#563)
 - Add HTTPX instrumentation (#588)

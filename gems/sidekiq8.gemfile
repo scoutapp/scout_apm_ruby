@@ -2,3 +2,4 @@ eval_gemfile("../Gemfile")
 
 gem 'sqlite3', '~> 2.0'
 gem 'sidekiq', '~> 8.0'
+gem 'minitest-mock'
