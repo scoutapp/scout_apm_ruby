@@ -94,15 +94,24 @@ class ConfigTest < Minitest::Test
 
   def test_sample_rate_coercion
     coercion = ScoutApm::Config::SampleRateCoercion.new
+    # Preserves nil and empty strings
+    assert_nil coercion.coerce(nil)
+    assert_nil coercion.coerce("")
+    assert_nil coercion.coerce("  ")
+    # Float strings work
     assert_in_delta 1.0, coercion.coerce("1")
     assert_in_delta 0.015, coercion.coerce("1.5")
+    assert_in_delta 0.5, coercion.coerce("0.5")
+    assert_in_delta 0.01, coercion.coerce("0.01")
+    # Numbers work
     assert_in_delta 1.0, coercion.coerce(1)
     assert_in_delta 0.015, coercion.coerce(1.5)
     assert_in_delta 0.0, coercion.coerce("0")
     assert_in_delta 0.0, coercion.coerce(0)
-    assert_in_delta 0.0, coercion.coerce("")
-    assert_in_delta 0.0, coercion.coerce(nil)
-    assert_in_delta 0.5, coercion.coerce("0.5")
+    # Backwards compatibility: values > 1 treated as percentages
+    assert_in_delta 0.15, coercion.coerce("15")
+    assert_in_delta 0.15, coercion.coerce(15)
+    # Clamping
     assert_in_delta 0, coercion.coerce("-2.5")
   end
 
@@ -149,5 +158,19 @@ class ConfigTest < Minitest::Test
     assert_in_delta 0.15, conf.value('job_sample_rate')
   ensure
     ENV.delete('SCOUT_JOB_SAMPLE_RATE')
+  end
+
+  def test_endpoint_sample_rate_nil_when_not_set
+    # Nil allows sampling to fall through to global sample_rate
+    ENV.delete('SCOUT_ENDPOINT_SAMPLE_RATE')
+    conf = ScoutApm::Config.without_file(@context)
+    assert_nil conf.value('endpoint_sample_rate')
+  end
+
+  def test_job_sample_rate_nil_when_not_set
+    # Nil allows sampling to fall through to global sample_rate
+    ENV.delete('SCOUT_JOB_SAMPLE_RATE')
+    conf = ScoutApm::Config.without_file(@context)
+    assert_nil conf.value('job_sample_rate')
   end
 end
