@@ -116,4 +116,38 @@ class ConfigTest < Minitest::Test
     conf = ScoutApm::Config.with_file(@context, "a_file_that_doesnt_exist.yml")
     assert conf.any_keys_found?
   end
+
+  def test_endpoint_sample_rate_from_env_with_float_string
+    ENV['SCOUT_ENDPOINT_SAMPLE_RATE'] = '0.01'
+    conf = ScoutApm::Config.without_file(@context)
+    assert_in_delta 0.01, conf.value('endpoint_sample_rate')
+  ensure
+    ENV.delete('SCOUT_ENDPOINT_SAMPLE_RATE')
+  end
+
+  def test_job_sample_rate_from_env_with_float_string
+    ENV['SCOUT_JOB_SAMPLE_RATE'] = '0.01'
+    conf = ScoutApm::Config.without_file(@context)
+    assert_in_delta 0.01, conf.value('job_sample_rate')
+  ensure
+    ENV.delete('SCOUT_JOB_SAMPLE_RATE')
+  end
+
+  def test_endpoint_sample_rate_backwards_compat_with_percentage
+    # Values > 1 should be treated as percentages for backwards compatibility
+    ENV['SCOUT_ENDPOINT_SAMPLE_RATE'] = '15'
+    conf = ScoutApm::Config.without_file(@context)
+    assert_in_delta 0.15, conf.value('endpoint_sample_rate')
+  ensure
+    ENV.delete('SCOUT_ENDPOINT_SAMPLE_RATE')
+  end
+
+  def test_job_sample_rate_backwards_compat_with_percentage
+    # Values > 1 should be treated as percentages for backwards compatibility
+    ENV['SCOUT_JOB_SAMPLE_RATE'] = '15'
+    conf = ScoutApm::Config.without_file(@context)
+    assert_in_delta 0.15, conf.value('job_sample_rate')
+  ensure
+    ENV.delete('SCOUT_JOB_SAMPLE_RATE')
+  end
 end
