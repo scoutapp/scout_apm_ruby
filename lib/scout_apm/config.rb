@@ -213,6 +213,8 @@ module ScoutApm
 
     class SampleRateCoercion
       def coerce(val)
+        return nil if val.nil?
+        return nil if val.to_s.strip.empty?
         v = val.to_f
         # Anything above 1 is assumed a percentage for backwards compat, so convert to a decimal
         if v > 1
