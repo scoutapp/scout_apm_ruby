@@ -1,3 +1,6 @@
+# 6.0.2
+- Fix `endpoint_sample_rate` and `job_sample_rate` to support float values 
+
 # 6.0.1
 - Fix capturing of job params for non ActiveJob
 
