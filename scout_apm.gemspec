@@ -3,14 +3,15 @@ $:.push File.expand_path("../lib", __FILE__)
 require "scout_apm/version"
 
 Gem::Specification.new do |s|
-  s.name        = "scout_apm"
-  s.version     = ScoutApm::VERSION
-  s.authors     = ["Derek Haynes", 'Andre Lewis']
-  s.email       = ["support@scoutapp.com"]
-  s.homepage    = "https://github.com/scoutapp/scout_apm_ruby"
-  s.summary     = "Ruby application performance monitoring"
-  s.description = "Monitors Ruby apps and reports detailed metrics on performance to Scout."
-  s.license     = "MIT"
+  s.name          = "scout_apm"
+  s.version       = ScoutApm::VERSION
+  s.authors       = ["Derek Haynes", 'Andre Lewis']
+  s.email         = ["support@scoutapp.com"]
+  s.homepage      = "https://github.com/scoutapp/scout_apm_ruby"
+  s.changelog_uri = "https://github.com/scoutapp/scout_apm_ruby/blob/master/CHANGELOG.markdown"
+  s.summary       = "Ruby application performance monitoring"
+  s.description   = "Monitors Ruby apps and reports detailed metrics on performance to Scout."
+  s.license       = "MIT"
 
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
