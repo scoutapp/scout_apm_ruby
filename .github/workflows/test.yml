@@ -55,7 +55,7 @@ jobs:
             gemfile: gems/sqlite3-v2.gemfile
           - ruby: 3.4
             gemfile: gems/sqlite3-v2.gemfile
-          - ruby:: 4.0
+          - ruby: 4.0
           - ruby: 4.0
             prepend: true
           - ruby: 4.0
