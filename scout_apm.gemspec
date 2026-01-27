@@ -22,6 +22,7 @@ Gem::Specification.new do |s|
   s.required_ruby_version = '>= 2.1'
 
   s.add_development_dependency "minitest"
+  s.add_development_dependency "minitest-mock"
   s.add_development_dependency "mocha"
   s.add_development_dependency "pry"
   s.add_development_dependency "simplecov"
