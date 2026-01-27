@@ -42,8 +42,4 @@ Gem::Specification.new do |s|
   s.add_development_dependency "guard-minitest"
   s.add_development_dependency "m"
 
-  if RUBY_VERSION >= "3.1"
-    s.add_development_dependency "minitest-mock"
-    s.add_development_dependency "ostruct"
-  end
 end
