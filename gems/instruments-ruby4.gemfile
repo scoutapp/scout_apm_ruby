@@ -1,0 +1,12 @@
+eval_gemfile("../Gemfile")
+
+gem 'minitest-mock'
+gem 'ostruct'
+gem "sqlite3", ">= 2.1"
+gem 'httpclient'
+gem 'http'
+gem 'redis'
+gem 'moped'
+gem 'actionpack'
+gem 'actionview'
+gem 'httpx'

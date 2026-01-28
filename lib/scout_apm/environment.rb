@@ -190,6 +190,16 @@ module ScoutApm
       @ruby_3 = defined?(RUBY_VERSION) && RUBY_VERSION.match(/^3/)
     end
 
+    def ruby_4?
+      return @ruby_4 if defined?(@ruby_4)
+      @ruby_4 = defined?(RUBY_VERSION) && RUBY_VERSION.match(/^4/)
+    end
+
+    def ruby_2_or_above?
+      ruby_2? || ruby_3? || ruby_4?
+    end
+
+
     def ruby_minor
       return @ruby_minor if defined?(@ruby_minor)
       @ruby_minor = defined?(RUBY_VERSION) && RUBY_VERSION.split(".")[1].to_i
@@ -197,12 +207,12 @@ module ScoutApm
 
     # Returns true if this Ruby version supports Module#prepend.
     def supports_module_prepend?
-      ruby_2? || ruby_3?
+      ruby_2_or_above?
     end
 
     # Returns true if this Ruby version makes positional and keyword arguments incompatible
     def supports_kwarg_delegation?
-      ruby_3? || (ruby_2? && ruby_minor >= 7)
+      ruby_4? || ruby_3? || (ruby_2? && ruby_minor >= 7)
     end
 
     # Returns a string representation of the OS (ex: darwin, linux)

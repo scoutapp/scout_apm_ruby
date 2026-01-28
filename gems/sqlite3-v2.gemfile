@@ -2,3 +2,4 @@ eval_gemfile("../Gemfile")
 
 gem "sqlite3", ">= 2.1"
 gem 'minitest-mock'
+gem 'ostruct'
