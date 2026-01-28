@@ -4,9 +4,9 @@
 
 if (ENV["SCOUT_TEST_FEATURES"] || "").include?("instruments")
   require 'test_helper'
-  require 'action_view'
   require 'action_pack'
   require 'action_controller'
+  require 'action_view'
 
   FIXTURE_LOAD_PATH = File.expand_path("fixtures", __dir__)
 
