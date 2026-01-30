@@ -56,16 +56,13 @@ jobs:
           - ruby: 3.4
             gemfile: gems/sqlite3-v2.gemfile
           - ruby: 4.0
-            bundler: 2
             gemfile: gems/sqlite3-v2.gemfile
           - ruby: 4.0
             prepend: true
             gemfile: gems/sqlite3-v2.gemfile
-            bundler: 2
           - ruby: 4.0
             gemfile: gems/instruments-ruby4.gemfile
             test_features: "instruments"
-            bundler: 2
     env:
       BUNDLE_GEMFILE: ${{ matrix.gemfile }}
       SCOUT_TEST_FEATURES: ${{ matrix.test_features }}

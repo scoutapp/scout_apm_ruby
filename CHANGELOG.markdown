@@ -1,3 +1,7 @@
+# Pending
+
+- Ruby 4 support
+
 # 6.0.2
 - Fix `endpoint_sample_rate` and `job_sample_rate` to support float values 
 
