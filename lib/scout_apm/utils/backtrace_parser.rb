@@ -11,16 +11,20 @@ module ScoutApm
 
       attr_reader :call_stack
 
-      # call_stack - an +Array+ of calls, typically generated via the +caller+ method. 
-      # Example single line: 
+      # call_stack - an +Array+ of calls, typically generated via the +caller+ method.
+      # Example single line:
       # "/Users/dlite/.rvm/rubies/ruby-2.4.5/lib/ruby/2.4.0/irb/workspace.rb:87:in `eval'"
-      def initialize(call_stack, root=ScoutApm::Agent.instance.context.environment.root)
+      # additional_dirs - an +Array+ of additional directory names to include beyond lib/, app/, and config/
+      def initialize(call_stack, root=ScoutApm::Agent.instance.context.environment.root, additional_dirs=ScoutApm::Agent.instance.context.config.value('backtrace_additional_directories'))
         @call_stack = call_stack
         # We can't use a constant as it'd be too early to fetch environment info
         #
         # This regex looks for files under the app root, inside lib/, app/, and
-        # config/ dirs, and captures the path under root.
-        @@app_dir_regex = %r[#{root}/((?:lib/|app/|config/).*)]
+        # config/ dirs (plus any additional configured directories), and captures the path under root.
+        base_dirs = %w[lib app config]
+        all_dirs = base_dirs + Array(additional_dirs)
+        dir_pattern = all_dirs.map { |d| Regexp.escape(d) + "/" }.join("|")
+        @@app_dir_regex = %r[#{root}/((?:#{dir_pattern}).*)]
       end
 
       def call
