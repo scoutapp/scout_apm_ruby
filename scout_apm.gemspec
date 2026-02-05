@@ -21,6 +21,7 @@ Gem::Specification.new do |s|
 
   s.required_ruby_version = '>= 2.1'
 
+
   s.add_development_dependency "minitest"
   s.add_development_dependency "mocha"
   s.add_development_dependency "pry"
@@ -34,10 +35,11 @@ Gem::Specification.new do |s|
   # tests. Specific versions are pulled in using specific gemfiles, e.g.
   # `gems/rails3.gemfile`.
   s.add_development_dependency "activerecord"
-  s.add_development_dependency "sqlite3",  "~> 1.4"
+  s.add_development_dependency "sqlite3"
 
   s.add_development_dependency "rubocop"
   s.add_development_dependency "guard"
   s.add_development_dependency "guard-minitest"
   s.add_development_dependency "m"
+
 end

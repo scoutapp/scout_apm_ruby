@@ -4,9 +4,22 @@
 
 if (ENV["SCOUT_TEST_FEATURES"] || "").include?("instruments")
   require 'test_helper'
-  require 'action_view'
+
+  # Rails 8.1+ ActionView::StructuredEventSubscriber calls Rails.try(:root)
+  # https://github.com/rails/rails/blob/3ad79fcede4f9b620f03b9fd76507d9fb3c07e95/actionview/lib/action_view/structured_event_subscriber.rb#L67
+  # which raises NameError if Rails is not defined. Define a minimal stub.
+  # Maybe this can get fixed at some point.
+  unless defined?(Rails)
+    module Rails
+      def self.root
+        nil
+      end
+    end
+  end
+
   require 'action_pack'
   require 'action_controller'
+  require 'action_view'
 
   FIXTURE_LOAD_PATH = File.expand_path("fixtures", __dir__)
 
@@ -62,6 +75,9 @@ if (ENV["SCOUT_TEST_FEATURES"] || "").include?("instruments")
 
     def setup
       super
+      # Ensure Rails exists - other tests may have called clean_fake_rails
+      fake_rails(8)
+
       @controller.logger      = ActiveSupport::Logger.new(nil)
       ActionView::Base.logger = ActiveSupport::Logger.new(nil)
 
@@ -75,6 +91,7 @@ if (ENV["SCOUT_TEST_FEATURES"] || "").include?("instruments")
       ActionView::Base.logger = nil
 
       ActionController::Base.view_paths = @old_view_paths
+      clean_fake_rails
     end
 
     def test_partial_instrumentation

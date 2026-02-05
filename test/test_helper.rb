@@ -81,7 +81,10 @@ end
 def fake_rails(version)
   remove_rails_namespace if (ENV["SCOUT_TEST_FEATURES"] || "").include?("instruments")
 
-  Kernel.const_set("Rails", Module.new)
+  Kernel.const_set("Rails", Module.new {
+    # ActionView 8.1+ StructuredEventSubscriber calls Rails.try(:root)
+    def self.root; nil; end
+  })
   Kernel.const_set("ActionController", Module.new)
   r = Kernel.const_get("Rails")
   r.const_set("VERSION", Module.new)
