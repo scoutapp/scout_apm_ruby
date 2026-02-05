@@ -148,4 +148,36 @@ class BacktraceParserTest < Minitest::Test
     assert_equal 1, result.length
     assert_equal false, (result[0] =~ %r|app/controllers/users_controller.rb|).nil?
   end
+
+  def test_backtrace_entirely_within_single_additional_directory
+    # Backtrace originates entirely from an additional directory with no default dirs
+    raw_backtrace = [
+      "#{root}/engines/core/lib/core/base.rb",
+      "#{root}/engines/core/app/models/engine_model.rb",
+      "#{root}/engines/auth/lib/auth/strategy.rb",
+      "#{root}/vendor/bundle/gems/some_gem.rb",
+    ]
+    result = ScoutApm::Utils::BacktraceParser.new(raw_backtrace, root, ['engines']).call
+
+    assert_equal 3, result.length
+    assert_equal false, (result[0] =~ %r|engines/core/lib/core/base.rb|).nil?
+    assert_equal false, (result[1] =~ %r|engines/core/app/models/engine_model.rb|).nil?
+    assert_equal false, (result[2] =~ %r|engines/auth/lib/auth/strategy.rb|).nil?
+  end
+
+  def test_backtrace_entirely_within_multiple_additional_directories
+    # Backtrace spans multiple additional directories with no default dirs
+    raw_backtrace = [
+      "#{root}/engines/billing/lib/invoice.rb",
+      "#{root}/components/shared/helpers.rb",
+      "#{root}/plugins/analytics/tracker.rb",
+      "#{root}/vendor/bundle/gems/external.rb",
+    ]
+    result = ScoutApm::Utils::BacktraceParser.new(raw_backtrace, root, ['engines', 'components', 'plugins']).call
+
+    assert_equal 3, result.length
+    assert_equal false, (result[0] =~ %r|engines/billing/lib/invoice.rb|).nil?
+    assert_equal false, (result[1] =~ %r|components/shared/helpers.rb|).nil?
+    assert_equal false, (result[2] =~ %r|plugins/analytics/tracker.rb|).nil?
+  end
 end
