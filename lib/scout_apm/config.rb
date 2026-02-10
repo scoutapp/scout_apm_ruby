@@ -120,6 +120,7 @@ module ScoutApm
         'use_prepend',
         'alias_method_instruments',
         'prepend_instruments',
+        'backtrace_additional_directories',
 
         # Error Service Related Configuration
         'errors_enabled',
@@ -267,6 +268,7 @@ module ScoutApm
       'errors_ignored_exceptions' => JsonCoercion.new,
       'errors_filtered_params' => JsonCoercion.new,
       'errors_env_capture' => JsonCoercion.new,
+      'backtrace_additional_directories' => JsonCoercion.new,
     }
 
 
@@ -404,6 +406,7 @@ module ScoutApm
         'errors_filtered_params'               => %w(password s3-key),
         'errors_env_capture'                   => %w(),
         'errors_host'                          => 'https://errors.scoutapm.com',
+        'backtrace_additional_directories'     => [],
       }.freeze
 
       def value(key)

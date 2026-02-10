@@ -1,10 +1,10 @@
 # Pending
-
 - Ruby 4 support
 - Update gem metadata
+- Add `backtrace_additional_directories` config option to allow additional directories to be included in the backtrace parser
 
 # 6.0.2
-- Fix `endpoint_sample_rate` and `job_sample_rate` to support float values 
+- Fix `endpoint_sample_rate` and `job_sample_rate` to support float values
 
 # 6.0.1
 - Fix capturing of job params for non ActiveJob
@@ -22,7 +22,7 @@ sampled at exactly 1%, you must now set `0.01` instead of `1`.**
 - Add HTTPX instrumentation (#588)
 - Add ability to automatically capture Sidekiq job args as context
   - `job_params_capture` - Set to true to enable job argument capturing
-  - `job_params_filter`  - A list of arguments to filter (automatically includes Rails filtered_parameters) 
+  - `job_params_filter`  - A list of arguments to filter (automatically includes Rails filtered_parameters)
 - Fix user error context being incorrectly flattened (#581)
 - Handle Delayed Job PerformableMethod jobs for error tracking (#584)
 - Require 'httpclient' library on instrumentation install (#586)
