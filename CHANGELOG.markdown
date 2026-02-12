@@ -1,4 +1,6 @@
 # Pending
+
+# 6.1.0
 - Ruby 4 support
 - Update gem metadata
 - Add `backtrace_additional_directories` config option to allow additional directories to be included in the backtrace parser
