@@ -94,7 +94,10 @@ module ScoutApm
         started_job = true
         begin
           result = yield
-          req.error! if result.error?
+          if result.error?
+            req.error!
+            capture_error(result.exception, {custom_controller: name})
+          end
           result
         rescue => e
           req.error!
@@ -112,7 +115,7 @@ module ScoutApm
         return unless ScoutApm::ErrorService.enabled?
 
         context = ScoutApm::Agent.instance.context
-        return if context.ignored_exceptions.ignore?(exception)
+        return if context.ignored_exceptions.ignored?(exception)
 
         context.error_buffer.capture(exception, env)
       rescue

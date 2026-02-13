@@ -20,6 +20,7 @@ module ScoutApm
       ScoutApm::ServerIntegrations::Puma.new(STDOUT_LOGGER),
       ScoutApm::ServerIntegrations::Thin.new(STDOUT_LOGGER),
       ScoutApm::ServerIntegrations::Webrick.new(STDOUT_LOGGER),
+      ScoutApm::ServerIntegrations::Iodine.new(STDOUT_LOGGER),
       ScoutApm::ServerIntegrations::Null.new(STDOUT_LOGGER), # must be last
     ]
 
