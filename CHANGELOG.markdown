@@ -1,5 +1,9 @@
 # Pending
 
+# 6.1.1
+
+- Fix Redis 5 prepend interaction (#611)
+
 # 6.1.0
 - Ruby 4 support
 - Update gem metadata
