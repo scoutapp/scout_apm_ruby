@@ -46,7 +46,7 @@ module ScoutApm
       end
   
       module Redis5ClientInstrumentationPrepend
-        def call(args, &block)
+        def call_v(args, &block)
           command = args.first rescue "Unknown"
   
           self.class.instrument("Redis", command) do
