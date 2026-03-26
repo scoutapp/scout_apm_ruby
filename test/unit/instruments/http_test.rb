@@ -15,9 +15,14 @@ if (ENV["SCOUT_TEST_FEATURES"] || "").include?("instruments")
 
     def test_installs_using_proper_method
       if @instrument_manager.prepend_for_instrument?(@instance.class) == true
-        assert ::HTTP::Client.ancestors.include?(ScoutApm::Instruments::HTTPInstrumentationPrepend)
+        if Gem::Version.new(::HTTP::VERSION) >= Gem::Version.new("6.0.0")
+          assert ::HTTP::Client.ancestors.include?(ScoutApm::Instruments::HTTPInstrumentationPrependV6)
+        else
+          assert ::HTTP::Client.ancestors.include?(ScoutApm::Instruments::HTTPInstrumentationPrepend)
+        end
       else
         assert_equal false, ::HTTP::Client.ancestors.include?(ScoutApm::Instruments::HTTPInstrumentationPrepend)
+        assert_equal false, ::HTTP::Client.ancestors.include?(ScoutApm::Instruments::HTTPInstrumentationPrependV6)
       end
     end
   end
