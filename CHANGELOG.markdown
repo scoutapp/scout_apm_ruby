@@ -1,5 +1,7 @@
 # Pending
 
+- Fix compatibility with `http >= 6.0.0` (#613)
+
 # 6.1.1
 
 - Fix Redis 5 prepend interaction (#611)
