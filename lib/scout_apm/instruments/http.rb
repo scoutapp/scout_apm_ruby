@@ -24,29 +24,62 @@ module ScoutApm
 
           if prepend
             ::HTTP::Client.send(:include, ScoutApm::Tracer)
-            ::HTTP::Client.send(:prepend, HTTPInstrumentationPrepend)
+            if http_version_at_least?("6.0.0")
+              ::HTTP::Client.send(:prepend, HTTPInstrumentationPrependV6)
+            else
+              ::HTTP::Client.send(:prepend, HTTPInstrumentationPrepend)
+            end
           else
-            ::HTTP::Client.class_eval do
-              include ScoutApm::Tracer
+            if http_version_at_least?("6.0.0")
+              ::HTTP::Client.class_eval do
+                include ScoutApm::Tracer
 
-              def request_with_scout_instruments(verb, uri, opts = {})
-                self.class.instrument("HTTP", verb, :ignore_children => true, :desc => request_scout_description(verb, uri)) do
-                  request_without_scout_instruments(verb, uri, opts)
+                def request_with_scout_instruments(verb, uri, **opts)
+                  self.class.instrument("HTTP", verb, :ignore_children => true, :desc => request_scout_description(verb, uri)) do
+                    request_without_scout_instruments(verb, uri, **opts)
+                  end
                 end
-              end
 
-              def request_scout_description(verb, uri)
-                max_length = ScoutApm::Agent.instance.context.config.value('instrument_http_url_length')
-                (String(uri).split('?').first)[0..(max_length - 1)]
-              rescue
-                ""
-              end
+                def request_scout_description(verb, uri)
+                  max_length = ScoutApm::Agent.instance.context.config.value('instrument_http_url_length')
+                  (String(uri).split('?').first)[0..(max_length - 1)]
+                rescue
+                  ""
+                end
 
-              alias request_without_scout_instruments request
-              alias request request_with_scout_instruments
+                alias request_without_scout_instruments request
+                alias request request_with_scout_instruments
+              end
+            else
+              ::HTTP::Client.class_eval do
+                include ScoutApm::Tracer
+
+                def request_with_scout_instruments(verb, uri, opts = {})
+                  self.class.instrument("HTTP", verb, :ignore_children => true, :desc => request_scout_description(verb, uri)) do
+                    request_without_scout_instruments(verb, uri, opts)
+                  end
+                end
+
+                def request_scout_description(verb, uri)
+                  max_length = ScoutApm::Agent.instance.context.config.value('instrument_http_url_length')
+                  (String(uri).split('?').first)[0..(max_length - 1)]
+                rescue
+                  ""
+                end
+
+                alias request_without_scout_instruments request
+                alias request request_with_scout_instruments
+              end
             end
           end
         end
+      end
+
+      private
+
+      def http_version_at_least?(version)
+        defined?(::HTTP::VERSION) &&
+          Gem::Version.new(::HTTP::VERSION) >= Gem::Version.new(version)
       end
     end
 
@@ -54,6 +87,21 @@ module ScoutApm
       def request(verb, uri, opts = {})
         self.class.instrument("HTTP", verb, :ignore_children => true, :desc => request_scout_description(verb, uri)) do
           super(verb, uri, opts)
+        end
+      end
+
+      def request_scout_description(verb, uri)
+        max_length = ScoutApm::Agent.instance.context.config.value('instrument_http_url_length')
+        (String(uri).split('?').first)[0..(max_length - 1)]
+      rescue
+        ""
+      end
+    end
+
+    module HTTPInstrumentationPrependV6
+      def request(verb, uri, **opts)
+        self.class.instrument("HTTP", verb, :ignore_children => true, :desc => request_scout_description(verb, uri)) do
+          super(verb, uri, **opts)
         end
       end
 
