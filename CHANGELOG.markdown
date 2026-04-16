@@ -1,5 +1,7 @@
 # Pending
 
+# 6.2.0
+
 - Fix compatibility with `http >= 6.0.0` (#613)
 
 # 6.1.1
