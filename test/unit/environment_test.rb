@@ -3,9 +3,15 @@ require 'test_helper'
 require 'scout_apm/environment'
 
 class EnvironmentTest < Minitest::Test
+  def setup
+    # Ensure no stubs from other test files leak in
+    Object.send(:remove_const, :Rage) if defined?(::Rage)
+  end
+
   def teardown
     clean_fake_rails
     clean_fake_sinatra
+    Object.send(:remove_const, :Rage) if defined?(::Rage)
   end
 
   def test_framework_rails

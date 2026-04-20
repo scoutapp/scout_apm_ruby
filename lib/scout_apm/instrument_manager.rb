@@ -23,6 +23,8 @@ module ScoutApm
         else
           install_instrument(ScoutApm::Instruments::MiddlewareSummary)
         end
+      when :rage then
+        install_instrument(ScoutApm::Instruments::Rage)
       end
 
       install_instrument(ScoutApm::Instruments::ActionView)

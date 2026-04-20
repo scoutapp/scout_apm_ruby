@@ -20,6 +20,7 @@ module ScoutApm
       ScoutApm::ServerIntegrations::Puma.new(STDOUT_LOGGER),
       ScoutApm::ServerIntegrations::Thin.new(STDOUT_LOGGER),
       ScoutApm::ServerIntegrations::Webrick.new(STDOUT_LOGGER),
+      ScoutApm::ServerIntegrations::Iodine.new(STDOUT_LOGGER),
       ScoutApm::ServerIntegrations::Null.new(STDOUT_LOGGER), # must be last
     ]
 
@@ -38,6 +39,7 @@ module ScoutApm
     FRAMEWORK_INTEGRATIONS = [
       ScoutApm::FrameworkIntegrations::Rails2.new,
       ScoutApm::FrameworkIntegrations::Rails3Or4.new,
+      ScoutApm::FrameworkIntegrations::Rage.new,
       ScoutApm::FrameworkIntegrations::Sinatra.new,
       ScoutApm::FrameworkIntegrations::Ruby.new, # Fallback if none match
     ]
@@ -111,6 +113,8 @@ module ScoutApm
         RAILS_ROOT.to_s
       elsif framework == :rails3_or_4
         Rails.root
+      elsif framework == :rage
+        ::Rage.root.to_s
       elsif framework == :sinatra
         Sinatra::Application.root || "."
       else

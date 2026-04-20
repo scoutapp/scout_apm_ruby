@@ -57,6 +57,7 @@ require 'scout_apm/server_integrations/rainbows'
 require 'scout_apm/server_integrations/thin'
 require 'scout_apm/server_integrations/unicorn'
 require 'scout_apm/server_integrations/webrick'
+require 'scout_apm/server_integrations/iodine'
 require 'scout_apm/server_integrations/null'
 
 require 'scout_apm/background_job_integrations/sidekiq'
@@ -72,6 +73,7 @@ require 'scout_apm/background_job_integrations/solid_queue'
 
 require 'scout_apm/framework_integrations/rails_2'
 require 'scout_apm/framework_integrations/rails_3_or_4'
+require 'scout_apm/framework_integrations/rage'
 require 'scout_apm/framework_integrations/sinatra'
 require 'scout_apm/framework_integrations/ruby'
 
@@ -102,6 +104,7 @@ require 'scout_apm/instruments/middleware_summary'
 require 'scout_apm/instruments/middleware_detailed' # Disabled by default, see the file for more details
 require 'scout_apm/instruments/rails_router'
 require 'scout_apm/instruments/grape'
+require 'scout_apm/instruments/rage'
 require 'scout_apm/instruments/sinatra'
 require 'allocations'
 
@@ -233,7 +236,7 @@ if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR
           if defined?(Prism) || defined?(Parser::TreeRewriter)
             ScoutApm::Agent.instance.context.logger.debug("AutoInstruments is enabled.")
             require 'scout_apm/auto_instrument'
-          else 
+          else
             # AutoInstruments is turned on, but we don't have the prerequisites to use it
             # Prism should be available for Ruby >= 3.3.0
             ScoutApm::Agent.instance.context.logger.debug("AutoInstruments is enabled, but Parser::TreeRewriter is missing. Update 'parser' gem to >= 2.5.0.")
@@ -259,6 +262,25 @@ if defined?(Rails) && defined?(Rails::VERSION) && defined?(Rails::VERSION::MAJOR
       end
     end
   end
+elsif defined?(::Rage) && defined?(::Rage::Configuration)
+  # Rage framework integration. Install the agent in an after_initialize hook
+  # so it runs before Rage::Telemetry.__setup compiles the tracer methods.
+  # This is analogous to the Rails Railtie initializer above.
+  ::Rage.config.after_initialize do
+    ScoutApm::Agent.instance.install
+  end
+elsif defined?(::Rage) && !defined?(::Rails)
+  # Rage gem is loaded but rage/all.rb hasn't run yet, so Rage::Configuration
+  # isn't available. Intercept Rage.configure (called after rage/all.rb loads)
+  # to register our after_initialize hook at the right time.
+  ::Rage.singleton_class.prepend(Module.new do
+    def configure(&block)
+      super(&block)
+      config.after_initialize do
+        ScoutApm::Agent.instance.install
+      end
+    end
+  end)
 else
   ScoutApm::Agent.instance.install
 end

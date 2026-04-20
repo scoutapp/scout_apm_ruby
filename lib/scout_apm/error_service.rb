@@ -18,9 +18,9 @@ module ScoutApm
       return if disabled?
 
       context = ScoutApm::Agent.instance.context
-      return if context.ignored_exceptions.ignore?(exception)
+      return if context.ignored_exceptions.ignored?(exception)
 
-      context.errors_buffer.capture(exception, env)
+      context.error_buffer.capture(exception, params)
     end
 
     def self.enabled?
