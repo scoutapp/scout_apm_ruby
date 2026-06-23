@@ -37,6 +37,10 @@ module ScoutApm
 
       logger.info "Scout Agent [#{ScoutApm::VERSION}] Initialized"
 
+      # Hook fork() so the agent's threads are never left alive across a fork
+      # (the cause of intermittent worker-boot deadlocks under forking servers).
+      ScoutApm::ForkSafety.install
+
       if should_load_instruments? || force
         instrument_manager.install!
         install_background_job_integrations
@@ -66,7 +70,7 @@ module ScoutApm
 
       if context.started?
         start_background_worker unless background_worker_running?
-        start_error_service_background_worker unless error_service_background_worker_running?
+        start_error_service_background_worker if error_service_enabled? && !error_service_background_worker_running?
         return
       end
 
@@ -82,7 +86,7 @@ module ScoutApm
       @app_server_load ||= AppServerLoad.new(context).run
 
       start_background_worker
-      start_error_service_background_worker
+      start_error_service_background_worker if error_service_enabled?
     end
 
     def instrument_manager
@@ -142,6 +146,47 @@ module ScoutApm
       context.config.value('monitor')
     end
 
+    ###############
+    #  Fork hooks #
+    ###############
+
+    # Called (via ScoutApm::ForkSafety) on the parent side just before fork().
+    # Tears down every agent-owned thread *fast* (no graceful join / flush -- a
+    # join could block on an in-flight request and we must not be mid-operation
+    # when fork() runs). The recorder is reset so the child rebuilds it lazily.
+    def stop_threads_for_fork
+      logger.debug "[ForkSafety] Stopping agent threads before fork (pid #{Process.pid})" if background_worker_running?
+
+      if @app_server_load && @app_server_load.respond_to?(:stop)
+        @app_server_load.stop
+      end
+      @app_server_load = nil
+
+      @background_worker.stop if @background_worker
+      @background_worker_thread.kill if @background_worker_thread && @background_worker_thread.alive?
+      @background_worker_thread = nil
+
+      @error_service_background_worker.stop if @error_service_background_worker
+      @error_service_background_worker_thread.kill if @error_service_background_worker_thread && @error_service_background_worker_thread.alive?
+      @error_service_background_worker_thread = nil
+
+      context.reset_recorder_for_fork!
+    end
+
+    # Called on both the parent and the child after fork() returns. Restarts the
+    # agent's threads so each process has a fresh, working set. No-op unless the
+    # agent had already started (and monitoring is on).
+    def restart_after_fork
+      return unless context.started?
+      return unless context.config.value('monitor')
+
+      logger.debug "[ForkSafety] Restarting agent threads after fork (pid #{Process.pid})"
+
+      @app_server_load = AppServerLoad.new(context).run
+      start_background_worker(true)
+      start_error_service_background_worker if error_service_enabled?
+    end
+
     #################################
     #  Background Worker Lifecycle  #
     #################################
@@ -168,15 +213,27 @@ module ScoutApm
 
       logger.info "Initializing worker thread."
 
-      ScoutApm::Agent::ExitHandler.new(context).install
+      # Install once per process. at_exit blocks are inherited across fork, so a
+      # forked child already has the handler and must not stack another one.
+      unless @exit_handler_installed
+        ScoutApm::Agent::ExitHandler.new(context).install
+        @exit_handler_installed = true
+      end
 
       periodic_work = ScoutApm::PeriodicWork.new(context)
 
       @background_worker = ScoutApm::BackgroundWorker.new(context)
-      @background_worker_thread = Thread.new do
-        @background_worker.start {
-          periodic_work.run
-        }
+      begin
+        @background_worker_thread = Thread.new do
+          @background_worker.start {
+            periodic_work.run
+          }
+        end
+      rescue ThreadError => e
+        logger.warn "Unable to start background worker thread: #{e.message}. Metrics will not be reported from this process."
+        @background_worker = nil
+        @background_worker_thread = nil
+        return false
       end
 
       return true
@@ -204,14 +261,29 @@ module ScoutApm
     # seconds to batch error reports
     ERROR_SEND_FREQUENCY = 5
     def start_error_service_background_worker
+      return false if error_service_background_worker_running?
+
       periodic_work = ScoutApm::ErrorService::PeriodicWork.new(context)
 
       @error_service_background_worker = ScoutApm::BackgroundWorker.new(context, ERROR_SEND_FREQUENCY)
-      @error_service_background_worker_thread = Thread.new do
-        @error_service_background_worker.start {
-          periodic_work.run
-        }
+      begin
+        @error_service_background_worker_thread = Thread.new do
+          @error_service_background_worker.start {
+            periodic_work.run
+          }
+        end
+      rescue ThreadError => e
+        logger.warn "Unable to start error service worker thread: #{e.message}. Errors will not be reported from this process."
+        @error_service_background_worker = nil
+        @error_service_background_worker_thread = nil
+        return false
       end
+
+      return true
+    end
+
+    def error_service_enabled?
+      context.config.value('errors_enabled')
     end
 
     def error_service_background_worker_running?
