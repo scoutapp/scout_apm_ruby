@@ -5,6 +5,7 @@ module ScoutApm
     def initialize(context)
       @context = context
       @reporting = ScoutApm::Reporting.new(context)
+      @diagnostic_reporter = ScoutApm::DiagnosticReporter.new(context)
     end
 
     # Expected to be called many times over the life of the agent
@@ -12,6 +13,7 @@ module ScoutApm
       ScoutApm::Debug.instance.call_periodic_hooks
       @reporting.process_metrics
       clean_old_percentiles
+      @diagnostic_reporter.tick!
 
       if context.config.value('auto_instruments')
         log_autoinstrument_significant_counts rescue nil
