@@ -12,6 +12,7 @@ require 'scout_apm/environment'
 # application_root - override the detected directory of the application
 # collect_remote_ip - automatically capture user's IP into a Trace's Context
 # compress_payload - true/false to enable gzipping of payload
+# connect_timeout  - seconds to wait when opening a connection to the reporting host before giving up. Default: 5
 # data_file        - override the default temporary storage location. Must be a location in a writable directory
 # dev_trace        - true or false. Enables always-on tracing in development environmen only
 # direct_host      - override the default "direct" host. The direct_host bypasses the ingestion pipeline and goes directly to the webserver, and is primarily used for features under development.
@@ -26,6 +27,7 @@ require 'scout_apm/environment'
 # name             - override the name reported to APM. This is the name that shows in the Web UI
 # profile          - turn on/off scoutprof (only applicable in Gem versions including scoutprof)
 # proxy            - an http proxy
+# read_timeout     - seconds to wait for a response from the reporting host before giving up. Default: 5
 # report_format    - 'json' or 'marshal'. Marshal is legacy and will be removed.
 # scm_subdirectory - if the app root lives in source management in a subdirectory. E.g. #{SCM_ROOT}/src
 # uri_reporting    - 'path' or 'full_path' default is 'full_path', which reports URL params as well as the path.
@@ -71,6 +73,7 @@ module ScoutApm
         'collect_remote_ip',
         'compress_payload',
         'config_file',
+        'connect_timeout',
         'data_file',
         'database_metric_limit',
         'database_metric_report_limit',
@@ -97,6 +100,7 @@ module ScoutApm
         'name',
         'profile',
         'proxy',
+        'read_timeout',
         'record_queue_time',
         'job_params_capture',
         'job_filtered_params',
@@ -244,6 +248,8 @@ module ScoutApm
       'monitor' => BooleanCoercion.new,
       'collect_remote_ip' => BooleanCoercion.new,
       'compress_payload' => BooleanCoercion.new,
+      'connect_timeout' => IntegerCoercion.new,
+      'read_timeout' => IntegerCoercion.new,
       'database_metric_limit'  => IntegerCoercion.new,
       'database_metric_report_limit' => IntegerCoercion.new,
       'external_service_metric_limit'  => IntegerCoercion.new,
@@ -362,6 +368,7 @@ module ScoutApm
     class ConfigDefaults
       DEFAULTS = {
         'compress_payload'                     => true,
+        'connect_timeout'                      => 5,    # seconds; Net::HTTP open_timeout for reporting
         'detailed_middleware'                  => false,
         'dev_trace'                            => false,
         'direct_host'                          => 'https://apm.scoutapp.com',
@@ -374,6 +381,7 @@ module ScoutApm
         'log_level'                            => 'info',
         'max_traces'                           => 10,
         'profile'                              => true, # for scoutprof
+        'read_timeout'                         => 5,    # seconds; Net::HTTP read_timeout for reporting
         'report_format'                        => 'json',
         'scm_subdirectory'                     => '',
         'uri_reporting'                        => 'full_path',
