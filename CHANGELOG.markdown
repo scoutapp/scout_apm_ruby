@@ -1,5 +1,9 @@
 # Pending
 
+- Make the agent fork-safe. Under forking app servers (Puma cluster/`preload_app!`, etc.) the agent's background threads were started in the master and left alive across `fork()`, which could intermittently deadlock worker boot (a thread holding a lock at fork time). The agent now hooks `Process._fork` (Ruby 3.1+) to stop its threads immediately before a fork and restart them in both parent and child. (#618)
+- Guard the agent's `Thread.new` calls against `ThreadError` ("can't alloc thread") so a process at its thread/pid limit logs and degrades instead of aborting agent startup. (#618)
+- Only start the error-service background worker when `errors_enabled` is true (previously it started unconditionally). (#618)
+
 # 6.2.0
 
 - Fix compatibility with `http >= 6.0.0` (#613)
