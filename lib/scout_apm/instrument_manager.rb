@@ -41,6 +41,7 @@ module ScoutApm
       install_instrument(ScoutApm::Instruments::Elasticsearch)
       install_instrument(ScoutApm::Instruments::OpenSearch)
       install_instrument(ScoutApm::Instruments::Grape)
+      install_instrument(ScoutApm::Instruments::GraphQL)
     rescue
       logger.warn "Exception loading instruments:"
       logger.warn $!.message
