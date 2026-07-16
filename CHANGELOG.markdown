@@ -1,5 +1,7 @@
 # Pending
 
+- Fix `SystemStackError` (stack level too deep) with `grape >= 3.3.0`. Grape now prepends a module in front of `Grape::Endpoint#run`, which is incompatible with the alias-method instrumentation chain; the Grape instrument now honors the `prepend` install option and automatically falls back to `prepend` when `#run` is not owned by `Grape::Endpoint` itself.
+
 # 6.2.0
 
 - Fix compatibility with `http >= 6.0.0` (#613)
