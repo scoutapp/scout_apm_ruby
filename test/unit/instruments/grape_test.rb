@@ -1,12 +1,8 @@
-require 'test_helper'
+if (ENV["SCOUT_TEST_FEATURES"] || "").include?("instruments")
 
-begin
+  require 'test_helper'
+
   require 'grape'
-rescue LoadError
-  # Grape not available in this gemfile, skip these tests
-end
-
-if defined?(::Grape)
   require 'scout_apm/instruments/grape'
 
   class GrapeTest < Minitest::Test
@@ -57,17 +53,31 @@ if defined?(::Grape)
       assert_includes body_content, 'hello'
     end
 
-    def test_installs_using_proper_method
-      if GRAPE_ENDPOINT_OWNS_RUN
-        # Safe to use the alias-method chain (the default)
-        assert_includes ::Grape::Endpoint.ancestors, ScoutApm::Instruments::GrapeEndpointInstruments
-        refute_includes ::Grape::Endpoint.ancestors, ScoutApm::Instruments::GrapeEndpointInstrumentsPrepend
-      else
-        # #run is owned by a module prepended onto Grape::Endpoint, so the
-        # instrument must fall back to prepend even though it defaults to
-        # the alias-method chain.
-        assert_includes ::Grape::Endpoint.ancestors, ScoutApm::Instruments::GrapeEndpointInstrumentsPrepend
+    # Either instrumentation method is valid: alias_method is the default,
+    # prepend is used when configured (`use_prepend`/`prepend_instruments`)
+    # or when the instrument falls back to it for safety.
+    def test_installs_using_prepend_or_alias_method
+      assert prepended? || aliased?, "expected Grape::Endpoint to be instrumented via prepend or alias_method"
+
+      unless GRAPE_ENDPOINT_OWNS_RUN
+        # On grape >= 3.3.0 #run is owned by a module prepended onto
+        # Grape::Endpoint, where an alias-method chain would recurse, so the
+        # instrument must have used prepend even though alias_method is the
+        # default.
+        assert prepended?, "grape >= 3.3.0 requires the prepend instrumentation method"
+        refute aliased?, "the alias-method chain must not be installed over a prepended #run"
       end
+    end
+
+    private
+
+    def prepended?
+      ::Grape::Endpoint.ancestors.include?(ScoutApm::Instruments::GrapeEndpointInstrumentsPrepend)
+    end
+
+    def aliased?
+      ::Grape::Endpoint.method_defined?(:run_without_scout_instruments) ||
+        ::Grape::Endpoint.private_method_defined?(:run_without_scout_instruments)
     end
   end
 end
