@@ -26,7 +26,9 @@ module ScoutApm
     end
 
     def detect_from_heroku
-      ENV['HEROKU_SLUG_COMMIT']
+      # HEROKU_SLUG_COMMIT is deprecated in favor of HEROKU_BUILD_COMMIT.
+      # https://devcenter.heroku.com/articles/dyno-metadata#usage
+      ENV['HEROKU_BUILD_COMMIT'] || ENV['HEROKU_SLUG_COMMIT']
     end
 
     # Config will locate the value from:

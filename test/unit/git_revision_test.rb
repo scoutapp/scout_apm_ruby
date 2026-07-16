@@ -34,6 +34,19 @@ class GitRevisionTest < Minitest::Test
     assert_equal 'heroku_slug', revision.sha
   end
 
+  def test_sha_from_heroku_build_commit
+    ENV['HEROKU_BUILD_COMMIT'] = 'heroku_build'
+    revision = ScoutApm::GitRevision.new(ScoutApm::AgentContext.new)
+    assert_equal 'heroku_build', revision.sha
+  end
+
+  def test_sha_from_heroku_prefers_build_commit_over_deprecated_slug_commit
+    ENV['HEROKU_BUILD_COMMIT'] = 'heroku_build'
+    ENV['HEROKU_SLUG_COMMIT'] = 'heroku_slug'
+    revision = ScoutApm::GitRevision.new(ScoutApm::AgentContext.new)
+    assert_equal 'heroku_build', revision.sha
+  end
+
   def test_sha_from_capistrano
     Dir.mktmpdir do |dir|
       context = context_with_file_in_root(File.join(dir, 'REVISION'), 'capistrano_sha')
