@@ -1,5 +1,7 @@
 # Pending
 
+- Set timeouts on the reporting HTTP connection so a slow or unreachable Scout host can no longer block the reporting thread indefinitely (previously fell back to Net::HTTP's 60s default). Configurable via `connect_timeout` / `read_timeout` (both default 5s).
+
 # 6.2.0
 
 - Fix compatibility with `http >= 6.0.0` (#613)

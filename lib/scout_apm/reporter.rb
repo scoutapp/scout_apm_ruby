@@ -124,6 +124,16 @@ module ScoutApm
                               proxy_uri.port,
                               proxy_uri.user,
                               proxy_uri.password).new(url.host, url.port)
+
+      # Bound how long a single reporting attempt can block. Without these,
+      # Net::HTTP falls back to a 60s default and a slow or unreachable host
+      # leaves the reporting thread stuck inside a native call (DNS, TLS,
+      # socket read). That is especially dangerous in a preloaded/forking app
+      # server, where a thread blocked there at fork() time can leave the
+      # forked worker holding a lock that no surviving thread will release.
+      http.open_timeout = config.value("connect_timeout")
+      http.read_timeout = config.value("read_timeout")
+
       if url.is_a?(URI::HTTPS)
         http.use_ssl = true
         http.ca_file = config.value("ssl_cert_file")
