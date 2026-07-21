@@ -77,6 +77,10 @@ module ScoutApm
       ignore_request! if @recorder.nil?
     end
 
+    def layer_count
+      @layers.size
+    end
+
     def start_layer(layer)
       # If we're already stopping, don't do additional layers
       return if stopping?
