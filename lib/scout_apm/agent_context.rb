@@ -259,7 +259,7 @@ module ScoutApm
     end
 
     def self.build_minimal_logger
-      ScoutApm::Logger.new(nil, :stdout => true)
+      ScoutApm::Logger.new(nil, :stdout => true, :log_level => ENV["SCOUT_LOG_LEVEL"])
     end
   end
 end
