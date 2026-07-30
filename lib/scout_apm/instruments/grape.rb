@@ -20,15 +20,34 @@ module ScoutApm
         if defined?(::Grape) && defined?(::Grape::Endpoint)
           @installed = true
 
-          logger.info "Instrumenting Grape::Endpoint"
+          # Grape >= 3.3.0 prepends a module of its own (Grape::Testing::RunBeforeEach)
+          # in front of Grape::Endpoint#run. An alias-method chain built on a method
+          # owned by a prepended module recurses infinitely (SystemStackError), because
+          # the aliased copy's `super` resolves back into our wrapper. Whenever #run is
+          # not owned by Grape::Endpoint itself, prepend is the only safe option.
+          prepend = true unless endpoint_owns_run?
 
-          ::Grape::Endpoint.class_eval do
-            include ScoutApm::Instruments::GrapeEndpointInstruments
+          logger.info "Instrumenting Grape::Endpoint. Prepend: #{prepend}"
 
-            alias run_without_scout_instruments run
-            alias run run_with_scout_instruments
+          if prepend
+            ::Grape::Endpoint.send(:prepend, GrapeEndpointInstrumentsPrepend)
+          else
+            ::Grape::Endpoint.class_eval do
+              include ScoutApm::Instruments::GrapeEndpointInstruments
+
+              alias run_without_scout_instruments run
+              alias run run_with_scout_instruments
+            end
           end
         end
+      end
+
+      private
+
+      def endpoint_owns_run?
+        ::Grape::Endpoint.instance_method(:run).owner == ::Grape::Endpoint
+      rescue NameError
+        true
       end
     end
 
@@ -68,6 +87,42 @@ module ScoutApm
         end
       end
     end
+
+    module GrapeEndpointInstrumentsPrepend
+      def run(*args)
+        request = ::Grape::Request.new(env || args.first)
+        req = ScoutApm::RequestManager.lookup
+
+        path = ScoutApm::Agent.instance.context.config.value("uri_reporting") == 'path' ? request.path : request.fullpath
+        req.annotate_request(:uri => path)
+
+        # IP Spoofing Protection can throw an exception, just move on w/o remote ip
+        req.context.add_user(:ip => request.ip) rescue nil
+
+        req.set_headers(request.headers)
+
+        begin
+          name = ["Grape",
+                  self.options[:method].first,
+                  self.options[:for].to_s,
+                  self.namespace.sub(%r{\A/}, ''), # removing leading slashes
+                  self.options[:path].first,
+          ].compact.map{ |n| n.to_s }.join("/")
+        rescue => e
+          ScoutApm::Agent.instance.context.logger.info("Error getting Grape Endpoint Name. Error: #{e.message}. Options: #{self.options.inspect}")
+          name = "Grape/Unknown"
+        end
+
+        req.start_layer( ScoutApm::Layer.new("Controller", name) )
+        begin
+          super(*args)
+        rescue
+          req.error!
+          raise
+        ensure
+          req.stop_layer
+        end
+      end
+    end
   end
 end
-
