@@ -1,6 +1,11 @@
 # Pending
 
-- Fix `SystemStackError` (stack level too deep) with `grape >= 3.3.0`. Grape now prepends a module in front of `Grape::Endpoint#run`, which is incompatible with the alias-method instrumentation chain; the Grape instrument now honors the `prepend` install option and automatically falls back to `prepend` when `#run` is not owned by `Grape::Endpoint` itself.
+# 6.2.1
+
+- Fix `SystemStackError` with `grape >= 3.3.0` by falling back to `prepend` instrumentation when Grape owns `Endpoint#run` itself (#624)
+- Fix a GraphQL layer leak where an unhandled exception skipping `end_execute_field` could leave stale layers on the request (#626)
+- Honor `SCOUT_LOG_LEVEL` during agent bootstrap instead of always logging at the default level (#628)
+- Use `HEROKU_BUILD_COMMIT` for Heroku git revision detection, since `HEROKU_SLUG_COMMIT` is deprecated (#625)
 
 # 6.2.0
 
