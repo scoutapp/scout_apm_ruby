@@ -302,10 +302,10 @@ module ScoutApm
     def record!
       recorded!
 
-      scout_diag!("record! ENTER") if ENV["SCOUT_DIAG"]
+      scout_diag!("record! ENTER")
 
       if ignoring_request?
-        scout_diag!("record! RETURN ignoring_request?") if ENV["SCOUT_DIAG"]
+        scout_diag!("record! RETURN ignoring_request?")
         return
       end
 
@@ -317,11 +317,11 @@ module ScoutApm
       # return if @agent_context.ignored_uris.ignore?(annotations[:uri])
       if @agent_context.sampling.drop_request?(self)
         logger.debug("Dropping request due to sampling")
-        scout_diag!("record! RETURN drop_request?(sampling)") if ENV["SCOUT_DIAG"]
+        scout_diag!("record! RETURN drop_request?(sampling)")
         return
       end
 
-      scout_diag!("record! WILL-RECORD") if ENV["SCOUT_DIAG"]
+      scout_diag!("record! WILL-RECORD")
 
       apply_name_override
 
@@ -376,10 +376,10 @@ module ScoutApm
       end
     end
 
-    # TEMP DIAGNOSTIC. Gated behind ENV["SCOUT_DIAG"]. Emits one INFO line per
-    # request describing the shape of the tracked request at record time, so we
-    # can tell WHY a web request did or did not produce Controller metrics.
-    # Safe to no-op if anything is unexpectedly nil.
+    # TEMP DIAGNOSTIC (diagnostic branch only, not for release). Emits one INFO
+    # line per request describing the shape of the tracked request at record
+    # time, so we can tell WHY a web request did or did not produce Controller
+    # metrics. Always on for this branch. Safe to no-op if anything is nil.
     def scout_diag!(stage)
       layers = @layers.map(&:type) rescue []
       # Walk the actual recorded tree (root_layer), not the live stack, so we
