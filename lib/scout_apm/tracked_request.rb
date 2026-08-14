@@ -98,6 +98,23 @@ module ScoutApm
     end
 
     def stop_layer
+      # [SCOUT_DIAG] One line ONLY when a guard is about to swallow a stop_layer
+      # while layers still remain to be popped -- i.e. the pathological
+      # never-unwinds case. $! is Ruby's current-exception global: non-nil means
+      # we're unwinding through a raise (e.g. a 404 RoutingError), which is our
+      # prime suspect for why the pop never happens.
+      if (stopping? || ignoring_children? || ignoring_request?) && !@layers.empty?
+        begin
+          reason = stopping? ? "stopping?" : (ignoring_children? ? "ignoring_children?" : "ignoring_request?")
+          logger.info("[SCOUT_DIAG] stop_layer SWALLOWED-POP reason=#{reason} " \
+            "remaining_layers=#{@layers.map(&:type).inspect} " \
+            "current_exception=#{$! ? $!.class.name : "nil"} " \
+            "oid=#{object_id}")
+        rescue => e
+          logger.info("[SCOUT_DIAG] stop_layer SWALLOWED-POP diag-error: #{e.message}")
+        end
+      end
+
       # If we're already stopping, don't do additional layers
       return if stopping?
 
