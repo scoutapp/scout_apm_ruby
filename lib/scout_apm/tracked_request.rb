@@ -302,7 +302,12 @@ module ScoutApm
     def record!
       recorded!
 
-      return if ignoring_request?
+      scout_diag!("record! ENTER") if ENV["SCOUT_DIAG"]
+
+      if ignoring_request?
+        scout_diag!("record! RETURN ignoring_request?") if ENV["SCOUT_DIAG"]
+        return
+      end
 
       # If we didn't have store, but we're trying to record anyway, go
       # figure that out. (this happens in Remote Agent scenarios)
@@ -312,8 +317,11 @@ module ScoutApm
       # return if @agent_context.ignored_uris.ignore?(annotations[:uri])
       if @agent_context.sampling.drop_request?(self)
         logger.debug("Dropping request due to sampling")
+        scout_diag!("record! RETURN drop_request?(sampling)") if ENV["SCOUT_DIAG"]
         return
       end
+
+      scout_diag!("record! WILL-RECORD") if ENV["SCOUT_DIAG"]
 
       apply_name_override
 
@@ -366,6 +374,39 @@ module ScoutApm
       if web? || job?
         ensure_background_worker
       end
+    end
+
+    # TEMP DIAGNOSTIC. Gated behind ENV["SCOUT_DIAG"]. Emits one INFO line per
+    # request describing the shape of the tracked request at record time, so we
+    # can tell WHY a web request did or did not produce Controller metrics.
+    # Safe to no-op if anything is unexpectedly nil.
+    def scout_diag!(stage)
+      layers = @layers.map(&:type) rescue []
+      # Walk the actual recorded tree (root_layer), not the live stack, so we
+      # see what the converters will see.
+      tree_types = Hash.new(0)
+      if root_layer
+        stack = [root_layer]
+        until stack.empty?
+          l = stack.pop
+          tree_types[l.type] += 1
+          (l.children.to_a rescue []).each { |c| stack.push(c) }
+        end
+      end
+      fresh = LayerConverters::FindLayerByType.new(self)
+      logger.info(
+        "[SCOUT_DIAG] #{stage} " \
+        "uri=#{(@annotations[:uri]).inspect} " \
+        "root_layer=#{(root_layer && root_layer.type).inspect}/#{(root_layer && root_layer.name).inspect} " \
+        "live_layers=#{layers.inspect} " \
+        "tree=#{tree_types.inspect} " \
+        "controller_layer?=#{!fresh.controller.nil?} " \
+        "job_layer?=#{!fresh.job.nil?} " \
+        "scope=#{(fresh.scope && fresh.scope.type).inspect} " \
+        "error?=#{error?} recorder=#{@recorder.class.name}"
+      )
+    rescue => e
+      logger.info("[SCOUT_DIAG] #{stage} diag-error: #{e.class}: #{e.message}")
     end
 
     # This request is a job transaction iff it has a 'Job' layer
