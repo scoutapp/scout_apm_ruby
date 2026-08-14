@@ -362,6 +362,23 @@ module ScoutApm
         memo
       end
 
+      begin
+        metrics = converter_results[:metrics] || {}
+        controller_metrics = metrics.keys.select { |meta| meta.metric_name =~ /\AController/ }
+        scope = layer_finder.scope
+        logger.info(
+          "[SCOUT_DIAG] record! POST-CONVERT " \
+          "uri=#{(@annotations[:uri]).inspect} " \
+          "metrics_count=#{metrics.size} " \
+          "controller_metric_names=#{controller_metrics.map(&:metric_name).inspect} " \
+          "scope=#{(scope && scope.legacy_metric_name).inspect} " \
+          "web?=#{web?} job?=#{job?} " \
+          "thread=#{Thread.current.object_id}"
+        )
+      rescue => e
+        logger.info("[SCOUT_DIAG] record! POST-CONVERT diag-error: #{e.class}: #{e.message}")
+      end
+
       @agent_context.extensions.run_transaction_callbacks(converter_results,context,layer_finder.scope)
 
       # If there's an instant_key, it means we need to report this right away
@@ -403,7 +420,8 @@ module ScoutApm
         "controller_layer?=#{!fresh.controller.nil?} " \
         "job_layer?=#{!fresh.job.nil?} " \
         "scope=#{(fresh.scope && fresh.scope.type).inspect} " \
-        "error?=#{error?} recorder=#{@recorder.class.name}"
+        "error?=#{error?} recorder=#{@recorder.class.name} " \
+        "thread=#{Thread.current.object_id}"
       )
     rescue => e
       logger.info("[SCOUT_DIAG] #{stage} diag-error: #{e.class}: #{e.message}")
