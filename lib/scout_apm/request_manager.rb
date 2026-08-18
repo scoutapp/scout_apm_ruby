@@ -21,7 +21,20 @@ module ScoutApm
       # stack, drops the transaction, and leaks layers across requests. If the
       # resident request was created on a different thread, treat it as absent so
       # lookup creates a fresh one owned by this thread.
-      return nil if req.creating_thread_id != Thread.current.object_id
+      if req.creating_thread_id != Thread.current.object_id
+        # [SCOUT_DIAG] Probe B. Confirms the fix is actually engaging in
+        # production: a thread inherited another thread's request (Live child)
+        # and we're handing it a fresh one instead of letting it race.
+        begin
+          ScoutApm::Agent.instance.context.logger.info(
+            "[SCOUT_DIAG] FRESH-REQ-FOR-CHILD-THREAD " \
+            "creating_thread=#{req.creating_thread_id} current_thread=#{Thread.current.object_id}"
+          )
+        rescue => e
+          # never let diagnostics break request lookup
+        end
+        return nil
+      end
 
       if req.stopping? || req.recorded?
         nil
