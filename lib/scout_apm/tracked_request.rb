@@ -93,6 +93,8 @@ module ScoutApm
     end
 
     def start_layer(layer)
+      scout_diag_cross_thread!("start_layer", layer)
+
       # If we're already stopping, don't do additional layers
       return if stopping?
 
@@ -109,6 +111,8 @@ module ScoutApm
     end
 
     def stop_layer
+      scout_diag_cross_thread!("stop_layer", @layers[-1])
+
       # [SCOUT_DIAG] One line ONLY when a guard is about to swallow a stop_layer
       # while layers still remain to be popped -- i.e. the pathological
       # never-unwinds case. $! is Ruby's current-exception global: non-nil means
@@ -453,6 +457,24 @@ module ScoutApm
       )
     rescue => e
       logger.info("[SCOUT_DIAG] #{stage} diag-error: #{e.class}: #{e.message}")
+    end
+
+    # [SCOUT_DIAG] Probe A. Fires ONE line only when a thread mutates a
+    # TrackedRequest it did NOT create -- i.e. the ActionController::Live
+    # parent/child cross-thread share. With the thread-identity fix in place this
+    # should NEVER fire; if it does, the fix is incomplete and the ids show the
+    # thread topology we missed. Silent (and ~free: one integer compare) on the
+    # normal single-thread path.
+    def scout_diag_cross_thread!(op, layer)
+      return if @creating_thread_id == Thread.current.object_id
+      logger.info(
+        "[SCOUT_DIAG] CROSS-THREAD-LAYER op=#{op} " \
+        "layer=#{(layer && layer.type).inspect} " \
+        "creating_thread=#{@creating_thread_id} current_thread=#{Thread.current.object_id} " \
+        "stopping=#{@stopping} layers=#{@layers.length} oid=#{object_id}"
+      )
+    rescue => e
+      logger.info("[SCOUT_DIAG] CROSS-THREAD-LAYER diag-error: #{e.message}")
     end
 
     # This request is a job transaction iff it has a 'Job' layer
