@@ -100,15 +100,10 @@ module ScoutApm
             # any layers started during a around_action (most likely
             # AutoInstrument, but could be another custom instrument)
             if current_layer && (current_layer.type == "Controller" || current_layer.type == "AutoInstrument" || req.web?)
-              begin
-                agent_context.logger.info("[SCOUT_DIAG] process_action DID-NOT-start-Controller-layer " \
-                  "current_layer.type=#{current_layer && current_layer.type.inspect} " \
-                  "req.web?=#{req.web?} root_layer.type=#{(req.root_layer && req.root_layer.type).inspect} " \
-                  "layers=#{req.instance_variable_get(:@layers).map(&:type).inspect} " \
-                  "controller=#{controller_path.inspect} action=#{scout_action_name(*args).inspect}")
-              rescue => e
-                agent_context.logger.info("[SCOUT_DIAG] process_action log error: #{e.message}")
-              end
+              # [SCOUT_DIAG] The verbose per-dispatch "DID-NOT-start-Controller-layer"
+              # line was removed: it fired N times per request (dominating the
+              # Heroku logplex L10 drops) and its signal is now superseded by the
+              # CROSS-THREAD (Probe A), FRESH-REQ (Probe B) and POST-CONVERT probes.
               super
             else
               begin
