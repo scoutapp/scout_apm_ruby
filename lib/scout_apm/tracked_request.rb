@@ -74,8 +74,19 @@ module ScoutApm
       @recorder = agent_context.recorder
       @real_request = false
       @transaction_id = ScoutApm::Utils::TransactionId.new.to_s
+      # The thread this request was created on. ActionController::Live copies the
+      # raw Thread.current locals (including :scout_request) into its streaming
+      # child thread, which would otherwise cause two threads to share and race
+      # on one TrackedRequest. RequestManager uses this to detect an inherited
+      # request and give the child its own instead. See RequestManager.find.
+      @creating_thread_id = Thread.current.object_id
       ignore_request! if @recorder.nil?
     end
+
+    # The object_id of the Thread that created this request. Used to detect a
+    # TrackedRequest that was inherited by a different thread (e.g. an
+    # ActionController::Live streaming thread) rather than created for it.
+    attr_reader :creating_thread_id
 
     def layer_count
       @layers.size
