@@ -1,5 +1,9 @@
 # Pending
 
+# 6.3.0
+
+- Fix span leak on `ActionController::Live` streaming requests (#631)
+
 # 6.2.1
 
 - Fix `SystemStackError` with `grape >= 3.3.0` by falling back to `prepend` instrumentation when Grape owns `Endpoint#run` itself (#624)
