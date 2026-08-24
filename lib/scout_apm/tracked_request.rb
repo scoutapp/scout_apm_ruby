@@ -379,14 +379,21 @@ module ScoutApm
       end
     end
 
-    # This request is a job transaction iff it has a 'Job' layer
-    # Use this only during recording
+    # True iff this request has a 'Job' layer. Only reliable during recording --
+    # see #web? for why.
     def job?
       layer_finder.job != nil
     end
 
-    # This request is a web transaction iff it has a 'Controller' layer
-    # Use this only during recording
+    # True iff this request has a 'Controller' layer.
+    #
+    # Only reliable during recording; returns false mid-request even for a real
+    # web request. #layer_finder walks root_layer's child *tree*, but layers are
+    # attached to that tree only in #stop_layer (via add_child), not in
+    # #start_layer. Controller/Job are top-level spans, so they stop last --
+    # meaning web?/job? only resolve as the request unwinds into recording.
+    # (Negative results aren't memoized, so an early false doesn't poison a
+    # later check.)
     def web?
       layer_finder.controller != nil
     end
