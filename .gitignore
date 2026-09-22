@@ -19,3 +19,4 @@ lib/*.bundle
 lib/*.so
 log/scout_apm.log
 gems/*.lock
+gems/vendor/
