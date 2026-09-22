@@ -53,6 +53,31 @@ if (ENV["SCOUT_TEST_FEATURES"] || "").include?("instruments")
       assert_includes body_content, 'hello'
     end
 
+    # Grape >= 4 moved endpoint route metadata (method/path/api) off the
+    # public `options` Hash and onto the protected `Endpoint#config` object.
+    # Reading the old `options[...]` keys under Grape 4 silently returns nil,
+    # so every request gets named "Grape/Unknown" instead of the real
+    # endpoint name.
+    def test_endpoint_name_reflects_the_route
+      captured_names = []
+      original_new = ScoutApm::Layer.method(:new)
+      ScoutApm::Layer.define_singleton_method(:new) do |type, name, *rest|
+        captured_names << name if type == "Controller"
+        original_new.call(type, name, *rest)
+      end
+
+      begin
+        status, _headers, _body = HelloAPI.call(Rack::MockRequest.env_for('/hello'))
+      ensure
+        ScoutApm::Layer.define_singleton_method(:new, original_new)
+      end
+
+      assert_equal 200, status
+      refute_empty captured_names
+      refute_equal "Grape/Unknown", captured_names.first
+      assert_equal "Grape/GET/#{HelloAPI}//hello", captured_names.first
+    end
+
     # Either instrumentation method is valid: alias_method is the default,
     # prepend is used when configured (`use_prepend`/`prepend_instruments`)
     # or when the instrument falls back to it for safety.

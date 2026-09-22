@@ -51,6 +51,36 @@ module ScoutApm
       end
     end
 
+    module GrapeEndpointNaming
+      # Grape >= 4 moved endpoint route metadata off the public `options`
+      # Hash and onto `Endpoint#config` (a Grape::Endpoint::Options Data
+      # object). Support both so the instrument works across Grape 3 and 4.
+      def self.name_for(endpoint)
+        # `config` is a protected reader on Grape::Endpoint, so a public
+        # respond_to? misses it: check with `true` and read via `send`.
+        if endpoint.respond_to?(:config, true) && endpoint.send(:config).respond_to?(:http_methods)
+          config = endpoint.send(:config)
+          method = config.http_methods && config.http_methods.first
+          api = config.api || (endpoint.respond_to?(:api) ? endpoint.api : nil)
+          path = config.path && config.path.first
+        else
+          method = endpoint.options[:method] && endpoint.options[:method].first
+          api = endpoint.options[:for]
+          path = endpoint.options[:path] && endpoint.options[:path].first
+        end
+
+        ["Grape",
+         method,
+         api.to_s,
+         endpoint.namespace.sub(%r{\A/}, ''), # removing leading slashes
+         path,
+        ].compact.map { |n| n.to_s }.join("/")
+      rescue => e
+        ScoutApm::Agent.instance.context.logger.info("Error getting Grape Endpoint Name. Error: #{e.message}. Options: #{endpoint.options.inspect}")
+        "Grape/Unknown"
+      end
+    end
+
     module GrapeEndpointInstruments
       def run_with_scout_instruments(*args)
         request = ::Grape::Request.new(env || args.first)
@@ -64,17 +94,7 @@ module ScoutApm
 
         req.set_headers(request.headers)
 
-        begin
-          name = ["Grape",
-                  self.options[:method].first,
-                  self.options[:for].to_s,
-                  self.namespace.sub(%r{\A/}, ''), # removing leading slashes
-                  self.options[:path].first,
-          ].compact.map{ |n| n.to_s }.join("/")
-        rescue => e
-          ScoutApm::Agent.instance.context.logger.info("Error getting Grape Endpoint Name. Error: #{e.message}. Options: #{self.options.inspect}")
-          name = "Grape/Unknown"
-        end
+        name = GrapeEndpointNaming.name_for(self)
 
         req.start_layer( ScoutApm::Layer.new("Controller", name) )
         begin
@@ -101,17 +121,7 @@ module ScoutApm
 
         req.set_headers(request.headers)
 
-        begin
-          name = ["Grape",
-                  self.options[:method].first,
-                  self.options[:for].to_s,
-                  self.namespace.sub(%r{\A/}, ''), # removing leading slashes
-                  self.options[:path].first,
-          ].compact.map{ |n| n.to_s }.join("/")
-        rescue => e
-          ScoutApm::Agent.instance.context.logger.info("Error getting Grape Endpoint Name. Error: #{e.message}. Options: #{self.options.inspect}")
-          name = "Grape/Unknown"
-        end
+        name = GrapeEndpointNaming.name_for(self)
 
         req.start_layer( ScoutApm::Layer.new("Controller", name) )
         begin
