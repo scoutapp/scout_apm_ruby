@@ -7,6 +7,7 @@ gem 'moped'
 gem 'actionpack'
 gem 'actionview'
 gem 'httpx'
+gem 'webmock'
 gem 'grape'
 # json 3.0 (released 2026-09) dropped the `quirks_mode` keyword that Grape 3's
 # ActiveSupport JSON formatter still passes, so any Grape 3 JSON request raises

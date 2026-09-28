@@ -4,13 +4,26 @@ if (ENV["SCOUT_TEST_FEATURES"] || "").include?("typhoeus")
   require 'scout_apm/instruments/typhoeus'
 
   require 'typhoeus'
+  require 'webmock'
 
   class TyphoeusTest < Minitest::Test
+    include WebMock::API
+
     def setup
+      WebMock.enable!
+      WebMock.disable_net_connect!
+      stub_request(:any, /example\.com/).to_return(status: 200, body: "")
+
       @context = ScoutApm::AgentContext.new
       @recorder = FakeRecorder.new
       ScoutApm::Agent.instance.context.recorder = @recorder
       ScoutApm::Instruments::Typhoeus.new(@context).install(prepend: false)
+    end
+
+    def teardown
+      WebMock.reset!
+      WebMock.allow_net_connect!
+      WebMock.disable!
     end
 
     def test_instruments_typhoeus_hydra
