@@ -10,6 +10,8 @@ if (ENV["SCOUT_TEST_FEATURES"] || "").include?("typhoeus")
     include WebMock::API
 
     def setup
+      super # clears Thread.current[:scout_request] so a stale request from a
+            # prior test can't swallow this test's layers
       WebMock.enable!
       WebMock.disable_net_connect!
       stub_request(:any, /example\.com/).to_return(status: 200, body: "")
@@ -24,6 +26,7 @@ if (ENV["SCOUT_TEST_FEATURES"] || "").include?("typhoeus")
       WebMock.reset!
       WebMock.allow_net_connect!
       WebMock.disable!
+      super
     end
 
     def test_instruments_typhoeus_hydra

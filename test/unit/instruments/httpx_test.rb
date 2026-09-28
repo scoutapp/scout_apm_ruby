@@ -10,6 +10,8 @@ if (ENV["SCOUT_TEST_FEATURES"] || "").include?("instruments")
     include WebMock::API
 
     def setup
+      super # clears Thread.current[:scout_request] so a stale request from a
+            # prior test can't swallow this test's layers
       WebMock.enable!
       WebMock.disable_net_connect!
 
@@ -23,6 +25,7 @@ if (ENV["SCOUT_TEST_FEATURES"] || "").include?("instruments")
       WebMock.reset!
       WebMock.allow_net_connect!
       WebMock.disable!
+      super
     end
 
     def test_httpx
