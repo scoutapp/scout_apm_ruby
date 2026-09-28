@@ -1,5 +1,9 @@
 # Pending
 
+# 6.3.1
+
+- Capture route names for Grape 4 (#635)
+
 # 6.3.0
 
 - Fix span leak on `ActionController::Live` streaming requests (#631)
