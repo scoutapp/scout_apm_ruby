@@ -14,6 +14,7 @@ module ScoutApm
     # I've put Thin and Webrick last as they are often used in development and included in Gemfiles
     # but less likely used in production.
     SERVER_INTEGRATIONS = [
+      ScoutApm::ServerIntegrations::Falcon.new(STDOUT_LOGGER),
       ScoutApm::ServerIntegrations::Passenger.new(STDOUT_LOGGER),
       ScoutApm::ServerIntegrations::Unicorn.new(STDOUT_LOGGER),
       ScoutApm::ServerIntegrations::Rainbows.new(STDOUT_LOGGER),

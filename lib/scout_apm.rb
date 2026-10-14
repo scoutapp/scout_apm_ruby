@@ -51,6 +51,7 @@ require 'scout_apm/layer_converters/trace_converter'
 require 'scout_apm/layer_converters/histograms'
 require 'scout_apm/layer_converters/find_layer_by_type'
 
+require 'scout_apm/server_integrations/falcon'
 require 'scout_apm/server_integrations/passenger'
 require 'scout_apm/server_integrations/puma'
 require 'scout_apm/server_integrations/rainbows'

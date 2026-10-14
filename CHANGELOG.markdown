@@ -1,5 +1,8 @@
 # Pending
 
+- Add a Falcon server integration: report `falcon` as the app server and start the agent in each forked worker
+- Count allocations per fiber, so concurrent requests on one thread (Falcon, Async) are no longer charged for each other's allocations
+
 # 6.3.1
 
 - Capture route names for Grape 4 (#635)
