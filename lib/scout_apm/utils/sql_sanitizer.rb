@@ -52,11 +52,9 @@ module ScoutApm
       end
 
       def to_s
-        if @sanitized
-          sql
-        else
-          @sanitized = true
-        end
+        return sql if @sanitized
+
+        @sanitized = true
         case database_engine
         when :postgres then to_s_postgres
         when :mysql    then to_s_mysql
