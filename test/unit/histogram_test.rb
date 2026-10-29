@@ -104,11 +104,85 @@ class HistogramTest < Minitest::Test
     assert_equal 5.5, hist.mean
   end
 
+  def test_add_and_combine_match_original_algorithm
+    random = Random.new(1)
+    200.times do
+      max_bins = random.rand(1..50)
+      values = Array.new(2) { random_values(random) }
+      hist, other = values.map { |vals| histogram_of(max_bins, vals) }
+      original, original_other = values.map { |vals| original_histogram(max_bins, vals) }
+
+      hist.combine!(other)
+
+      assert_equal exact(original_combine(original, original_other, max_bins)), exact(bin_pairs(hist))
+      assert_equal values.flatten.length, hist.total
+    end
+  end
+
   private
 
   # Ruby 1.8 compatible round with precision
   def round(number, precision)
     ((number * 10**precision).round.to_f) / (10**precision)
+  end
+
+  def random_values(random)
+    Array.new(random.rand(1..300)) do
+      random.rand < 0.5 ? random.rand(1..20).to_f : random.rand(1..2000) / 1000.0
+    end
+  end
+
+  def histogram_of(max_bins, values)
+    hist = ScoutApm::NumericHistogram.new(max_bins)
+    values.each { |value| hist.add(value) }
+    hist
+  end
+
+  def bin_pairs(hist)
+    hist.bins.map { |bin| [bin.value, bin.count] }
+  end
+
+  def exact(bins)
+    bins.map { |value, count| [[value].pack("G"), count] }
+  end
+
+  def original_histogram(max_bins, values)
+    values.inject([]) do |bins, value|
+      index = bins.index { |bin_value, _| bin_value >= value }
+      if index && bins[index][0] == value
+        bins[index][1] += 1
+      else
+        bins.insert(index || bins.length, [value, 1])
+      end
+      original_trim(bins, max_bins)
+    end
+  end
+
+  def original_combine(bins, other_bins, max_bins)
+    combined = (other_bins + bins).
+      group_by { |value, _| value }.
+      map { |value, group| [value, group.inject(0) { |sum, (_, count)| sum + count }] }.
+      sort_by { |value, _| value }
+    original_trim(combined, max_bins)
+  end
+
+  def original_trim(bins, max_bins)
+    while bins.length > max_bins
+      min_delta = Float::MAX
+      min_index = 0
+      (1...bins.length).each do |index|
+        delta = bins[index][0] - bins[index - 1][0]
+        if delta < min_delta
+          min_delta = delta
+          min_index = index
+        end
+      end
+
+      (left_value, left_count), (right_value, right_count) = bins[min_index - 1], bins[min_index]
+      count = left_count + right_count
+      bins[min_index - 1, 2] = [[(left_value * left_count + right_value * right_count) / count, count]]
+    end
+    bins
   end
 end
 

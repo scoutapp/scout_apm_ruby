@@ -90,11 +90,7 @@ module ScoutApm
     def combine!(other)
       mutex.synchronize do
         other.mutex.synchronize do
-          @bins = (other.bins + @bins).
-            group_by {|b| b.value }.
-            map {|val, bs| [val, bs.inject(0) {|sum, b| sum + b.count }] }.
-            map {|val, sum| HistogramBin.new(val,sum) }.
-            sort_by { |b| b.value }
+          @bins = merge_bins(other.bins + @bins)
           @total += other.total
           trim
           self
@@ -137,41 +133,36 @@ module ScoutApm
       bins << HistogramBin.new(new_value, 1)
     end
 
-    def trim
-      while bins.length > max_bins
-        trim_one
-      end
-    end
-
-    def trim_one
-      minDelta = Float::MAX
-      minDeltaIndex = 0
-
-      # Which two bins should we merge?
-      bins.each_with_index do |_, index|
-        next if index == 0
-
-        delta = bins[index].value - bins[index - 1].value
-        if delta < minDelta
-          minDelta = delta
-          minDeltaIndex = index
+    def merge_bins(bins)
+      merged = []
+      bins.sort_by(&:value).each do |bin|
+        last = merged.last
+        if last && last.value == bin.value
+          last.count += bin.count
+        else
+          merged << HistogramBin.new(bin.value, bin.count)
         end
       end
+      merged
+    end
 
-      # Create the merged bin with summed count, and weighted value
-      mergedCount = bins[minDeltaIndex - 1].count + bins[minDeltaIndex].count
-      mergedValue = (
-        bins[minDeltaIndex - 1].value * bins[minDeltaIndex - 1].count +
-        bins[minDeltaIndex].value     * bins[minDeltaIndex].count
-        ) / mergedCount
+    def trim
+      return if bins.length <= max_bins
 
-      mergedBin = HistogramBin.new(mergedValue, mergedCount)
+      deltas = Array.new(bins.length - 1) { |i| bins[i + 1].value - bins[i].value }
+      while bins.length > max_bins
+        index = deltas.index(deltas.min)
+        left = bins[index]
+        right = bins[index + 1]
+        count = left.count + right.count
+        bins[index, 2] = HistogramBin.new((left.value * left.count + right.value * right.count) / count, count)
 
-      # Remove the two bins we just merged together, then add the merged one
-      bins.slice!(minDeltaIndex - 1, 2)
-      bins.insert(minDeltaIndex - 1, mergedBin)
+        deltas.delete_at(index)
+        deltas[index - 1] = bins[index].value - bins[index - 1].value if index > 0
+        deltas[index] = bins[index + 1].value - bins[index].value if index < bins.length - 1
+      end
     rescue => e
-      ScoutApm::Agent.instance.context.logger.info("Error in NumericHistogram#trim_one. #{e.message}, #{e.backtrace}, #{self.inspect}")
+      ScoutApm::Agent.instance.context.logger.info("Error in NumericHistogram#trim. #{e.message}, #{e.backtrace}, #{self.inspect}")
       raise
     end
   end
