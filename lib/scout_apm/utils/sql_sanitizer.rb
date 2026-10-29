@@ -44,7 +44,6 @@ module ScoutApm
       def initialize(sql)
         @raw_sql = sql
         @database_engine = ScoutApm::Agent.instance.context.environment.database_engine
-        @sanitized = false # only sanitize once.
       end
 
       def sql
@@ -52,15 +51,12 @@ module ScoutApm
       end
 
       def to_s
-        return sql if @sanitized
-
-        @sanitized = true
-        case database_engine
-        when :postgres then to_s_postgres
-        when :mysql    then to_s_mysql
-        when :sqlite   then to_s_sqlite
-        when :sqlserver then to_s_sqlserver
-        end
+        @sanitized_sql ||= case database_engine
+                           when :postgres then to_s_postgres
+                           when :mysql    then to_s_mysql
+                           when :sqlite   then to_s_sqlite
+                           when :sqlserver then to_s_sqlserver
+                           end
       end
 
       private
