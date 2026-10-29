@@ -1,5 +1,7 @@
 # Pending
 
+- Combine and trim histograms in linear time instead of rescanning every bin for each merge
+
 # 6.3.2
 
 - Build the per-minute debug dumps of metrics, slow traces and auto-instrument histograms only when debug logging is enabled (#639)

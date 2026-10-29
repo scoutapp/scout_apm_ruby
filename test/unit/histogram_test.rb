@@ -104,11 +104,59 @@ class HistogramTest < Minitest::Test
     assert_equal 5.5, hist.mean
   end
 
+  def test_combine_matches_original_algorithm
+    random = Random.new(1)
+    100.times do
+      hist = random_histogram(random)
+      other = random_histogram(random)
+      expected = original_combine(bin_pairs(hist), bin_pairs(other), hist.max_bins)
+
+      assert_equal expected, bin_pairs(hist.combine!(other))
+    end
+  end
+
   private
 
   # Ruby 1.8 compatible round with precision
   def round(number, precision)
     ((number * 10**precision).round.to_f) / (10**precision)
+  end
+
+  def random_histogram(random)
+    hist = ScoutApm::NumericHistogram.new(50)
+    random.rand(1..300).times { hist.add(random.rand(1..2000) / 1000.0) }
+    hist
+  end
+
+  def bin_pairs(hist)
+    hist.bins.map { |bin| [bin.value, bin.count] }
+  end
+
+  def original_combine(bins, other_bins, max_bins)
+    combined = (other_bins + bins).
+      group_by { |value, _| value }.
+      map { |value, group| [value, group.inject(0) { |sum, (_, count)| sum + count }] }.
+      sort_by { |value, _| value }
+    original_trim(combined, max_bins)
+  end
+
+  def original_trim(bins, max_bins)
+    while bins.length > max_bins
+      min_delta = Float::MAX
+      min_index = 0
+      (1...bins.length).each do |index|
+        delta = bins[index][0] - bins[index - 1][0]
+        if delta < min_delta
+          min_delta = delta
+          min_index = index
+        end
+      end
+
+      (left_value, left_count), (right_value, right_count) = bins[min_index - 1], bins[min_index]
+      count = left_count + right_count
+      bins[min_index - 1, 2] = [[(left_value * left_count + right_value * right_count) / count, count]]
+    end
+    bins
   end
 end
 
