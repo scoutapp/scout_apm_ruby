@@ -21,6 +21,8 @@ module ScoutApm
     private
 
     def log_autoinstrument_significant_counts
+      return unless context.logger.debug?
+
       # Ex key/value -
       # "/Users/dlite/projects/scout/apm/app/controllers/application_controller.rb"=>[[0.0, 689], [1.0, 16]]
       hists = context.auto_instruments_layer_histograms.as_json
