@@ -1,3 +1,5 @@
+require 'json'
+
 module ScoutApm
   module Serializers
     module PayloadSerializerToJson
@@ -39,6 +41,29 @@ module ScoutApm
         end
 
         def jsonify_hash(hash)
+          JSON.generate(json_ready(hash), :allow_nan => true)
+        rescue JSON::GeneratorError, EncodingError, TypeError
+          jsonify_hash_by_hand(hash)
+        end
+
+        def json_ready(value)
+          case value
+          when Hash
+            value.each_with_object({}) { |(key, item), ready| ready[json_ready(key)] = json_ready(item) }
+          when Array
+            value.map { |item| json_ready(item) }
+          when Integer, Float, nil
+            value
+          when Numeric
+            raise TypeError, "#{value.class} has no exact JSON representation"
+          when Time
+            value.iso8601
+          else
+            value.to_s
+          end
+        end
+
+        def jsonify_hash_by_hand(hash)
           str_parts = []
           hash.each do |key, value|
             formatted_key = format_by_type(key)
@@ -69,7 +94,7 @@ module ScoutApm
         def format_by_type(formatee)
           case formatee
           when Hash
-            jsonify_hash(formatee)
+            jsonify_hash_by_hand(formatee)
           when Array
             all_the_elements = formatee.map {|value_guy| format_by_type(value_guy)}
             "[#{all_the_elements.join(",")}]"
