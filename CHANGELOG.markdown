@@ -1,6 +1,8 @@
 # Pending
 
-- Build the per-minute debug dumps of metrics, slow traces and auto-instrument histograms only when debug logging is enabled
+# 6.3.2
+
+- Build the per-minute debug dumps of metrics, slow traces and auto-instrument histograms only when debug logging is enabled (#639)
 
 # 6.3.1
 
