@@ -41,9 +41,7 @@ module ScoutApm
         end
 
         def jsonify_hash(hash)
-          JSON.generate(json_ready(hash), :allow_nan => true)
-        rescue JSON::GeneratorError, EncodingError, TypeError
-          jsonify_hash_by_hand(hash)
+          JSON.generate(json_ready(hash), :allow_nan => true, :max_nesting => false)
         end
 
         def json_ready(value)
@@ -55,58 +53,19 @@ module ScoutApm
           when Integer, Float, nil
             value
           when Numeric
-            raise TypeError, "#{value.class} has no exact JSON representation"
+            value.to_f
           when Time
             value.iso8601
           else
-            value.to_s
+            valid_utf8(value.to_s)
           end
         end
 
-        def jsonify_hash_by_hand(hash)
-          str_parts = []
-          hash.each do |key, value|
-            formatted_key = format_by_type(key)
-            formatted_value = format_by_type(value)
-            str_parts << "#{formatted_key}:#{formatted_value}"
-          end
-          "{#{str_parts.join(",")}}"
-        end
+        def valid_utf8(string)
+          return string if string.valid_encoding? && string.encoding != Encoding::BINARY
 
-        ESCAPE_MAPPINGS = {
-          # Stackoverflow answer on gsub matches and backslashes
-          # https://stackoverflow.com/a/4149087/2705125
-          '\\' => '\\\\\\\\',
-          "\b" => '\\b',
-          "\t" => '\\t',
-          "\n" => '\\n',
-          "\f" => '\\f',
-          "\r" => '\\r',
-          '"'  => '\\"',
-        }
-
-        def escape(string)
-          ESCAPE_MAPPINGS.inject(string.to_s) {|s, (bad, good)| 
-            s.gsub(bad, good)
-          }
-        end
-
-        def format_by_type(formatee)
-          case formatee
-          when Hash
-            jsonify_hash_by_hand(formatee)
-          when Array
-            all_the_elements = formatee.map {|value_guy| format_by_type(value_guy)}
-            "[#{all_the_elements.join(",")}]"
-          when Numeric
-            formatee
-          when Time
-            %Q["#{formatee.iso8601}"]
-          when nil
-            "null"
-          else # strings and everything
-            %Q["#{escape(formatee)}"]
-          end
+          string = string.dup.force_encoding(Encoding::UTF_8)
+          string.valid_encoding? ? string : string.scrub
         end
       end
     end

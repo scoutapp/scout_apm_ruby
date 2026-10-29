@@ -145,18 +145,16 @@ class PayloadSerializerTest < Minitest::Test
     assert_equal json, JSON.parse(result)
   end
 
-  def test_json_generator_matches_hand_written_encoder
+  def test_encodes_non_string_values
     hash = {
       :time => Time.utc(2026, 10, 29, 10, 0, 1),
-      :strings => ["quote \" backslash \\ newline \n tab \t", "Za\u017C\u00F3\u0142\u0107", ""],
-      :numbers => [0, -1, 2**40, 0.1, 1.0e-05, 1.0e20, -0.0, 2.0 / 3],
       :literals => [nil, true, false, :symbol],
-      :nested => [{ :a => [1, [2, { :b => nil }]] }],
+      :numbers => [1, 0.5, Rational(1, 4)],
     }
-    serializer = ScoutApm::Serializers::PayloadSerializerToJson
 
-    assert_equal JSON.parse(serializer.jsonify_hash_by_hand(hash)), JSON.parse(serializer.jsonify_hash(hash))
-    assert_equal "2026-10-29T10:00:01Z", JSON.parse(serializer.jsonify_hash(hash))["time"]
+    result = JSON.parse(ScoutApm::Serializers::PayloadSerializerToJson.jsonify_hash(hash))
+
+    assert_equal({ "time" => "2026-10-29T10:00:01Z", "literals" => [nil, "true", "false", "symbol"], "numbers" => [1, 0.5, 0.25] }, result)
   end
 
   def test_keeps_non_finite_floats
@@ -165,17 +163,11 @@ class PayloadSerializerTest < Minitest::Test
     assert_equal '{"nan":NaN,"inf":Infinity}', result
   end
 
-  def test_falls_back_to_hand_written_encoder_for_invalid_utf8
-    hash = { "foo" => "bad \xFF byte".dup.force_encoding("UTF-8") }
-    serializer = ScoutApm::Serializers::PayloadSerializerToJson
+  def test_replaces_invalid_utf8_bytes
+    hash = { "utf8" => "bad \xFF byte".dup.force_encoding("UTF-8"), "binary" => "caf\xC3\xA9 \xFF".b }
 
-    assert_equal serializer.jsonify_hash_by_hand(hash), serializer.jsonify_hash(hash)
-  end
+    result = ScoutApm::Serializers::PayloadSerializerToJson.jsonify_hash(hash)
 
-  def test_falls_back_to_hand_written_encoder_for_numbers_json_cannot_represent
-    hash = { "foo" => Rational(1, 3) }
-    serializer = ScoutApm::Serializers::PayloadSerializerToJson
-
-    assert_equal serializer.jsonify_hash_by_hand(hash), serializer.jsonify_hash(hash)
+    assert_equal({ "utf8" => "bad \uFFFD byte", "binary" => "caf\u00E9 \uFFFD" }, JSON.parse(result))
   end
 end
