@@ -163,6 +163,15 @@ module ScoutApm
         assert_equal %q|UPDATE "mytable" SET "myfield" = ?, "countofthings" = ? WHERE "user_id" = ?|, ss.to_s
       end
 
+      def test_sanitizes_only_once
+        sql = %q|SELECT "users".* FROM "users" WHERE "users"."id" = 1|
+        ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :postgres }
+        sanitized = ss.to_s
+
+        ss.expects(:to_s_postgres).never
+        assert_equal sanitized, ss.to_s
+      end
+
       def test_postgres_multiline_sql
         sql = %q|
         SELECT "html_form_payloads".*
