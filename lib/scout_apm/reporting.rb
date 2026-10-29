@@ -118,7 +118,7 @@ module ScoutApm
       histogram_clause  = "#{histograms.length} Histograms"
 
       logger.info "#{time_clause} Delivering #{metrics_clause} and #{slow_trans_clause} and #{job_clause}, #{process_log_str}."
-      logger.debug("\n\nMetrics: #{metrics.pretty_inspect}\nSlowTrans: #{slow_transactions.pretty_inspect}\nMetadata: #{metadata.inspect.pretty_inspect}\n\n")
+      logger.debug { "\n\nMetrics: #{metrics.pretty_inspect}\nSlowTrans: #{slow_transactions.pretty_inspect}\nMetadata: #{metadata.inspect.pretty_inspect}\n\n" }
     end
 
     # TODO: Move this into PayloadSerializer?

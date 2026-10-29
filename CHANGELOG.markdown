@@ -1,5 +1,7 @@
 # Pending
 
+- Build the per-minute debug dumps of metrics, slow traces and auto-instrument histograms only when debug logging is enabled
+
 # 6.3.1
 
 - Capture route names for Grape 4 (#635)
