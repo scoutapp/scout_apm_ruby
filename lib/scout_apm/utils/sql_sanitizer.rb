@@ -51,12 +51,12 @@ module ScoutApm
       end
 
       def to_s
-        @sanitized_sql ||= case database_engine
-                           when :postgres then to_s_postgres
-                           when :mysql    then to_s_mysql
-                           when :sqlite   then to_s_sqlite
-                           when :sqlserver then to_s_sqlserver
-                           end
+        @to_s ||= case database_engine
+                  when :postgres then to_s_postgres
+                  when :mysql    then to_s_mysql
+                  when :sqlite   then to_s_sqlite
+                  when :sqlserver then to_s_sqlserver
+                  end
       end
 
       private
