@@ -1,0 +1,41 @@
+name: Semgrep
+
+# Static analysis (Semgrep) on every PR to master. PRs are diff-aware: only findings
+# a PR introduces fail the check. Pushes to master run a full, report-only scan.
+
+on:
+  pull_request:
+    branches:
+    - master
+  push:
+    branches:
+    - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  semgrep:
+    name: Semgrep SAST
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container:
+      image: semgrep/semgrep:1.183.0
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+
+      - name: Scan
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          if [ -n "$BASE_SHA" ]; then
+            semgrep scan --config p/default --metrics=off --error --baseline-commit "$BASE_SHA"
+          else
+            semgrep scan --config p/default --metrics=off
+          fi
