@@ -1,5 +1,7 @@
 # Pending
 
+- Sanitize each SQL statement only once instead of on every `SqlSanitizer#to_s` call
+
 # 6.3.2
 
 - Build the per-minute debug dumps of metrics, slow traces and auto-instrument histograms only when debug logging is enabled (#639)
