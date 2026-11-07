@@ -1,5 +1,7 @@
 # Pending
 
+- Remove `[[...]]` bind lists that are on their own lines from Postgres SQL (#645)
+
 # 6.3.2
 
 - Build the per-minute debug dumps of metrics, slow traces and auto-instrument histograms only when debug logging is enabled (#639)

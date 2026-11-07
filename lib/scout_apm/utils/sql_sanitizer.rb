@@ -11,6 +11,10 @@ module ScoutApm
       MULTIPLE_QUESTIONS = /\?(,\?)+/.freeze
 
       PSQL_VAR_INTERPOLATION = %r|\[\[.*\]\]\s*\z|.freeze
+      # A line holding only a bind list, optionally followed by /* */ comments.
+      # The list body can't run past a "/*", and a comment body stops at its
+      # first "*/", so each line is matched in linear time.
+      PSQL_VAR_INTERPOLATION_LINES = %r{^[ \t]*\[\[(?:[^/\n]|/(?!\*))*\]\](?=(?:[ \t]*/\*(?:[^*\n]|\*(?!/))*\*/)*[ \t\r]*$)}.freeze
       PSQL_REMOVE_STRINGS = /'(?:[^']|'')*'/.freeze
       PSQL_REMOVE_JSON_STRINGS = /:"(?:[^"]|"")*"/.freeze
       PSQL_REMOVE_INTEGERS = /(?<!LIMIT )\b\d+\b/.freeze
@@ -77,7 +81,10 @@ module ScoutApm
 
       def to_s_postgres
         sql.gsub!(PSQL_PLACEHOLDER, '?')
-        sql.gsub!(PSQL_VAR_INTERPOLATION, '')
+        if sql.include?('[[')
+          sql.gsub!(PSQL_VAR_INTERPOLATION, '')
+          sql.gsub!(PSQL_VAR_INTERPOLATION_LINES, '')
+        end
         # sql.gsub!(PSQL_REMOVE_STRINGS, '?')
         sql.gsub!(PSQL_AFTER_WHERE) {|c| c.gsub(PSQL_REMOVE_STRINGS, '?')}
         sql.gsub!(PSQL_AFTER_FROM_AS) {|c| c.gsub(PSQL_REMOVE_JSON_STRINGS, ':"?"')}
