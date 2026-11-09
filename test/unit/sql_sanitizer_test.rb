@@ -25,6 +25,50 @@ module ScoutApm
         assert_equal %q|SELECT "users".* FROM "users" WHERE "users"."name" = ?|, ss.to_s
       end
 
+      def test_postgres_where_multiline_binds
+        sql = %Q|SELECT "users".* FROM "users" WHERE "users"."name" = $1 AND "users"."id" = $2\n  [["name", "chris"]]\n  [["id", 1]]|
+        ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :postgres }
+        assert_equal %q|SELECT "users".* FROM "users" WHERE "users"."name" = ? AND "users"."id" = ?|, ss.to_s
+      end
+
+      def test_postgres_where_multiline_binds_crlf
+        sql = %Q|SELECT "users".* FROM "users" WHERE "users"."name" = $1 AND "users"."id" = $2\r\n  [["name", "chris"]]\r\n  [["id", 1]]|
+        ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :postgres }
+        assert_equal %q|SELECT "users".* FROM "users" WHERE "users"."name" = ? AND "users"."id" = ?|, ss.to_s
+      end
+
+      def test_postgres_multiline_binds_before_comment
+        sql = %Q|SELECT "users".* FROM "users" WHERE "users"."name" = $1\n  [["name", "chris"]]\n  /*application:Blog*/|
+        ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :postgres }
+        assert_equal %q|SELECT "users".* FROM "users" WHERE "users"."name" = ? /*application:Blog*/|, ss.to_s
+      end
+
+      def test_postgres_multiline_binds_with_comment_on_same_line
+        sql = %Q|SELECT "users".* FROM "users" WHERE "users"."name" = $1 AND "users"."id" = $2\n  [["id", 1]]\n  [["name", "chris"]] /*application:Blog*/|
+        ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :postgres }
+        assert_equal %q|SELECT "users".* FROM "users" WHERE "users"."name" = ? AND "users"."id" = ? /*application:Blog*/|, ss.to_s
+      end
+
+      def test_postgres_keeps_array_literal_before_multiline_binds
+        sql = %Q|SELECT "users".* FROM "users" WHERE "users"."tags" = ARRAY[[1,2],[3,4]]\n  [["id", 1]]|
+        ss = SqlSanitizer.new(sql).tap{ |it| it.database_engine = :postgres }
+        assert_equal %q|SELECT "users".* FROM "users" WHERE "users"."tags" = ARRAY[[?,?],[?,?]]|, ss.to_s
+      end
+
+      # Inputs that make an unanchored, repeated or unbounded version of the
+      # bind-list line pattern backtrack quadratically or worse.
+      def test_postgres_bind_list_line_pattern_is_linear
+        [
+          "SELECT 1 " + ("[[" * 7000),
+          ("[[1]]\n" * 2700) + "x",
+          "[[" + ("]] /* x" * 2000),
+        ].each do |sql|
+          assert_faster_than(0.03) do
+            sql.gsub(SqlSanitizer::PSQL_VAR_INTERPOLATION_LINES, '')
+          end
+        end
+      end
+
       def test_postgres_strips_literals
         # Strip strings
         sql = %q|SELECT "users".* FROM "users" INNER JOIN "blogs" ON "blogs"."user_id" = "users"."id" WHERE (blogs.title = 'hello world')|
