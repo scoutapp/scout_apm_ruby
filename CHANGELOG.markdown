@@ -1,7 +1,9 @@
 # Pending
 
-- Encode the JSON reporting payload with the json library instead of the hand-written encoder
-- Sanitize each SQL statement only once instead of on every `SqlSanitizer#to_s` call
+# 6.3.3
+
+- Encode the JSON reporting payload with the json library instead of the hand-written encoder (#641)
+- Sanitize each SQL statement only once instead of on every `SqlSanitizer#to_s` call (#642)
 - Remove `[[...]]` bind lists that are on their own lines from Postgres SQL (#645)
 
 # 6.3.2
