@@ -1,3 +1,5 @@
+require 'json'
+
 module ScoutApm
   module Serializers
     module PayloadSerializerToJson
@@ -39,49 +41,31 @@ module ScoutApm
         end
 
         def jsonify_hash(hash)
-          str_parts = []
-          hash.each do |key, value|
-            formatted_key = format_by_type(key)
-            formatted_value = format_by_type(value)
-            str_parts << "#{formatted_key}:#{formatted_value}"
-          end
-          "{#{str_parts.join(",")}}"
+          JSON.generate(json_ready(hash), :allow_nan => true, :max_nesting => false)
         end
 
-        ESCAPE_MAPPINGS = {
-          # Stackoverflow answer on gsub matches and backslashes
-          # https://stackoverflow.com/a/4149087/2705125
-          '\\' => '\\\\\\\\',
-          "\b" => '\\b',
-          "\t" => '\\t',
-          "\n" => '\\n',
-          "\f" => '\\f',
-          "\r" => '\\r',
-          '"'  => '\\"',
-        }
-
-        def escape(string)
-          ESCAPE_MAPPINGS.inject(string.to_s) {|s, (bad, good)| 
-            s.gsub(bad, good)
-          }
-        end
-
-        def format_by_type(formatee)
-          case formatee
+        def json_ready(value)
+          case value
           when Hash
-            jsonify_hash(formatee)
+            value.each_with_object({}) { |(key, item), ready| ready[json_ready(key)] = json_ready(item) }
           when Array
-            all_the_elements = formatee.map {|value_guy| format_by_type(value_guy)}
-            "[#{all_the_elements.join(",")}]"
+            value.map { |item| json_ready(item) }
+          when Integer, Float, nil
+            value
           when Numeric
-            formatee
+            value.to_f
           when Time
-            %Q["#{formatee.iso8601}"]
-          when nil
-            "null"
-          else # strings and everything
-            %Q["#{escape(formatee)}"]
+            value.iso8601
+          else
+            valid_utf8(value.to_s)
           end
+        end
+
+        def valid_utf8(string)
+          return string if string.valid_encoding? && string.encoding != Encoding::BINARY
+
+          string = string.dup.force_encoding(Encoding::UTF_8)
+          string.valid_encoding? ? string : string.scrub
         end
       end
     end

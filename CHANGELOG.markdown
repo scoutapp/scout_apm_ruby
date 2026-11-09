@@ -1,5 +1,7 @@
 # Pending
 
+- Encode the JSON reporting payload with the json library instead of the hand-written encoder
+
 # 6.3.2
 
 - Build the per-minute debug dumps of metrics, slow traces and auto-instrument histograms only when debug logging is enabled (#639)

@@ -144,4 +144,30 @@ class PayloadSerializerTest < Minitest::Test
     result = ScoutApm::Serializers::PayloadSerializerToJson.jsonify_hash(json)
     assert_equal json, JSON.parse(result)
   end
+
+  def test_encodes_non_string_values
+    hash = {
+      :time => Time.utc(2026, 10, 29, 10, 0, 1),
+      :literals => [nil, true, false, :symbol],
+      :numbers => [1, 0.5, Rational(1, 4)],
+    }
+
+    result = JSON.parse(ScoutApm::Serializers::PayloadSerializerToJson.jsonify_hash(hash))
+
+    assert_equal({ "time" => "2026-10-29T10:00:01Z", "literals" => [nil, "true", "false", "symbol"], "numbers" => [1, 0.5, 0.25] }, result)
+  end
+
+  def test_keeps_non_finite_floats
+    result = ScoutApm::Serializers::PayloadSerializerToJson.jsonify_hash({ "nan" => Float::NAN, "inf" => Float::INFINITY })
+
+    assert_equal '{"nan":NaN,"inf":Infinity}', result
+  end
+
+  def test_replaces_invalid_utf8_bytes
+    hash = { "utf8" => "bad \xFF byte".dup.force_encoding("UTF-8"), "binary" => "caf\xC3\xA9 \xFF".b }
+
+    result = ScoutApm::Serializers::PayloadSerializerToJson.jsonify_hash(hash)
+
+    assert_equal({ "utf8" => "bad \uFFFD byte", "binary" => "caf\u00E9 \uFFFD" }, JSON.parse(result))
+  end
 end
