@@ -1,6 +1,7 @@
 # Pending
 
 - Encode the JSON reporting payload with the json library instead of the hand-written encoder
+- Sanitize each SQL statement only once instead of on every `SqlSanitizer#to_s` call
 
 # 6.3.2
 
