@@ -1,6 +1,7 @@
 require 'test_helper'
 
 require 'scout_apm/config'
+require 'tmpdir'
 
 class ConfigTest < Minitest::Test
   def setup
@@ -19,6 +20,36 @@ class ConfigTest < Minitest::Test
     # and still reads from ENV
     ENV['SCOUT_CONFIG_TEST_KEY'] = 'testval'
     assert_equal 'testval', conf.value('config_test_key')
+  end
+
+  def test_ssl_cert_file_defaults_to_os_store_when_cert_file_exists
+    Dir.mktmpdir do |dir|
+      cert_file = File.join(dir, 'cert.pem')
+      File.write(cert_file, 'certificate')
+
+      assert_nil ScoutApm::Config::ConfigDefaults.default_ssl_cert_file(cert_file, File.join(dir, 'missing'))
+    end
+  end
+
+  def test_ssl_cert_file_defaults_to_os_store_when_only_cert_dir_exists
+    Dir.mktmpdir do |dir|
+      assert_nil ScoutApm::Config::ConfigDefaults.default_ssl_cert_file(File.join(dir, 'missing'), dir)
+    end
+  end
+
+  def test_ssl_cert_file_falls_back_to_bundled_file_without_os_store
+    Dir.mktmpdir do |dir|
+      defaults = ScoutApm::Config::ConfigDefaults
+      assert_equal defaults::BUNDLED_SSL_CERT_FILE,
+                   defaults.default_ssl_cert_file(File.join(dir, 'missing.pem'), File.join(dir, 'missing-certs'))
+    end
+  end
+
+  def test_explicit_ssl_cert_file_overrides_default
+    ENV['SCOUT_SSL_CERT_FILE'] = '/tmp/custom-ca.pem'
+    assert_equal '/tmp/custom-ca.pem', ScoutApm::Config.without_file(@context).value('ssl_cert_file')
+  ensure
+    ENV.delete('SCOUT_SSL_CERT_FILE')
   end
 
   def test_loading_a_file
