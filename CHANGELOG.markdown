@@ -2,6 +2,7 @@
 
 - Use the OS trust store by default for HTTPS reporting, falling back to the bundled CA file when unavailable.
 - Fall back to the bundled CA file when the OS certificate directory has no certificates or `SSL_CERT_FILE`/`SSL_CERT_DIR` is set, and log which trust store HTTPS reporting uses
+- Update the bundled CA file to Mozilla's current root certificates, removing roots Mozilla no longer trusts
 
 # 6.3.3
 
