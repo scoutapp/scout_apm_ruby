@@ -67,6 +67,13 @@ class ConfigTest < Minitest::Test
     assert_nil ScoutApm::Config::ConfigDefaults.default_ssl_cert_file(File.join(dir, 'missing'), dir, {})
   end
 
+  def test_bundled_ssl_cert_file_loads_into_a_cert_store
+    bundled = ScoutApm::Config::ConfigDefaults::BUNDLED_SSL_CERT_FILE
+    OpenSSL::X509::Store.new.add_file(bundled)
+
+    assert_operator File.binread(bundled).scan('-----BEGIN CERTIFICATE-----').size, :>, 100
+  end
+
   def test_ssl_cert_file_falls_back_to_bundled_file_without_os_store
     Dir.mktmpdir do |dir|
       defaults = ScoutApm::Config::ConfigDefaults

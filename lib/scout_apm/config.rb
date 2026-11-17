@@ -374,6 +374,9 @@ module ScoutApm
     end
 
     class ConfigDefaults
+      # Mozilla's CA bundle as published by curl (https://curl.se/docs/caextract.html).
+      # To refresh it, download https://curl.se/ca/cacert.pem, check it against
+      # https://curl.se/ca/cacert.pem.sha256, and replace data/cacert.pem unmodified.
       BUNDLED_SSL_CERT_FILE = File.join(File.dirname(__FILE__), *%w[.. .. data cacert.pem])
 
       def self.default_ssl_cert_file(cert_file=OpenSSL::X509::DEFAULT_CERT_FILE,
