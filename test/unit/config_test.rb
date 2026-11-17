@@ -58,12 +58,13 @@ class ConfigTest < Minitest::Test
   end
 
   def test_ssl_cert_file_ignores_cert_dir_names_invalid_in_the_locale_encoding
-    Dir.mktmpdir do |dir|
-      invalid_name = "\xFFcert".dup.force_encoding('UTF-8')
-      Dir.stubs(:entries).with(dir).returns(['.', '..', invalid_name, '5ad8a5d6.0'])
+    # An existing directory that needs no cleanup: Dir.mktmpdir's cleanup calls
+    # Dir.entries too, which the stub would intercept.
+    dir = File.dirname(__FILE__)
+    invalid_name = "\xFFcert".dup.force_encoding('UTF-8')
+    Dir.stubs(:entries).with(dir).returns(['.', '..', invalid_name, '5ad8a5d6.0'])
 
-      assert_nil ScoutApm::Config::ConfigDefaults.default_ssl_cert_file(File.join(dir, 'missing'), dir, {})
-    end
+    assert_nil ScoutApm::Config::ConfigDefaults.default_ssl_cert_file(File.join(dir, 'missing'), dir, {})
   end
 
   def test_ssl_cert_file_falls_back_to_bundled_file_without_os_store
