@@ -1,5 +1,7 @@
 # Pending
 
+- Use the OS trust store by default for HTTPS reporting, falling back to the bundled CA file when unavailable.
+
 # 6.3.3
 
 - Encode the JSON reporting payload with the json library instead of the hand-written encoder (#641)

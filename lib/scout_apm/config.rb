@@ -1,5 +1,6 @@
 require 'yaml'
 require 'erb'
+require 'openssl'
 
 require 'scout_apm/environment'
 
@@ -360,6 +361,17 @@ module ScoutApm
     end
 
     class ConfigDefaults
+      BUNDLED_SSL_CERT_FILE = File.join(File.dirname(__FILE__), *%w[.. .. data cacert.pem])
+
+      def self.default_ssl_cert_file(cert_file=OpenSSL::X509::DEFAULT_CERT_FILE,
+                                     cert_dir=OpenSSL::X509::DEFAULT_CERT_DIR)
+        # nil leaves Net::HTTP on OpenSSL's default trust store.
+        return nil if (File.file?(cert_file) && File.readable?(cert_file)) ||
+                      (File.directory?(cert_dir) && File.readable?(cert_dir))
+
+        BUNDLED_SSL_CERT_FILE
+      end
+
       DEFAULTS = {
         'compress_payload'                     => true,
         'detailed_middleware'                  => false,
@@ -400,7 +412,7 @@ module ScoutApm
         'use_prepend'                          => false,
         'alias_method_instruments'             => [],
         'prepend_instruments'                  => [],
-        'ssl_cert_file'                        => File.join( File.dirname(__FILE__), *%w[.. .. data cacert.pem] ),
+        'ssl_cert_file'                        => default_ssl_cert_file,
         'errors_enabled'                       => false,
         'errors_ignored_exceptions'            => %w(ActiveRecord::RecordNotFound ActionController::RoutingError),
         'errors_filtered_params'               => %w(password s3-key),

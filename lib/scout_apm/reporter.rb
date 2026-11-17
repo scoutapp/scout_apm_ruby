@@ -126,7 +126,8 @@ module ScoutApm
                               proxy_uri.password).new(url.host, url.port)
       if url.is_a?(URI::HTTPS)
         http.use_ssl = true
-        http.ca_file = config.value("ssl_cert_file")
+        cert_file = config.value("ssl_cert_file")
+        http.ca_file = cert_file unless cert_file.nil?
         http.verify_mode = VERIFY_MODE
       end
       http
