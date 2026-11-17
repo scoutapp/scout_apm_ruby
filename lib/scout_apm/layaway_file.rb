@@ -41,7 +41,7 @@ module ScoutApm
     end
 
     def read_raw(f)
-      contents = ""
+      contents = +""
       while true
         contents << f.read_nonblock(10_000)
       end
