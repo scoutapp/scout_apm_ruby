@@ -354,6 +354,19 @@ module ScoutApm
         "Resolved Setting Values:\n" +
         all_settings.map{|hsh| "#{hsh[:source]} - #{hsh[:key]}: #{hsh[:value]}"}.join("\n")
       )
+      logger.debug(ssl_trust_store_message)
+    end
+
+    def ssl_trust_store_message
+      cert_file = value('ssl_cert_file')
+      if cert_file.nil?
+        "HTTPS reporting verifies against OpenSSL's default trust store " \
+          "(#{OpenSSL::X509::DEFAULT_CERT_FILE}, #{OpenSSL::X509::DEFAULT_CERT_DIR})"
+      elsif cert_file == ConfigDefaults::BUNDLED_SSL_CERT_FILE
+        "HTTPS reporting verifies against the bundled CA file #{cert_file}"
+      else
+        "HTTPS reporting verifies against ssl_cert_file #{cert_file}"
+      end
     end
 
     def logger
@@ -364,12 +377,32 @@ module ScoutApm
       BUNDLED_SSL_CERT_FILE = File.join(File.dirname(__FILE__), *%w[.. .. data cacert.pem])
 
       def self.default_ssl_cert_file(cert_file=OpenSSL::X509::DEFAULT_CERT_FILE,
-                                     cert_dir=OpenSSL::X509::DEFAULT_CERT_DIR)
+                                     cert_dir=OpenSSL::X509::DEFAULT_CERT_DIR,
+                                     env=ENV)
+        # SSL_CERT_FILE and SSL_CERT_DIR replace OpenSSL's default store, often
+        # with a bundle meant only for internal services. The bundled file has
+        # always taken precedence over them, so keep it when either is set.
+        # SCOUT_SSL_CERT_FILE still selects any other file explicitly.
+        return BUNDLED_SSL_CERT_FILE if env.key?(OpenSSL::X509::DEFAULT_CERT_FILE_ENV) ||
+                                        env.key?(OpenSSL::X509::DEFAULT_CERT_DIR_ENV)
+
         # nil leaves Net::HTTP on OpenSSL's default trust store.
         return nil if (File.file?(cert_file) && File.readable?(cert_file)) ||
-                      (File.directory?(cert_dir) && File.readable?(cert_dir))
+                      hashed_cert_dir?(cert_dir)
 
         BUNDLED_SSL_CERT_FILE
+      end
+
+      # OpenSSL only finds CAs in a directory through hash links such as
+      # "5ad8a5d6.0". A directory without any, like the empty /etc/ssl/certs
+      # left by installing openssl without ca-certificates, has nothing to trust.
+      # Names are matched as binary because this runs at require time, and a
+      # name that is invalid in the locale's encoding would raise ArgumentError.
+      def self.hashed_cert_dir?(cert_dir)
+        File.directory?(cert_dir) &&
+          Dir.entries(cert_dir).any? { |name| name.b =~ /\A\h{8}\.\d+\z/n }
+      rescue SystemCallError
+        false
       end
 
       DEFAULTS = {
