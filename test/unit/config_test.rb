@@ -27,13 +27,33 @@ class ConfigTest < Minitest::Test
       cert_file = File.join(dir, 'cert.pem')
       File.write(cert_file, 'certificate')
 
-      assert_nil ScoutApm::Config::ConfigDefaults.default_ssl_cert_file(cert_file, File.join(dir, 'missing'))
+      assert_nil ScoutApm::Config::ConfigDefaults.default_ssl_cert_file(cert_file, File.join(dir, 'missing'), {})
     end
   end
 
-  def test_ssl_cert_file_defaults_to_os_store_when_only_cert_dir_exists
+  def test_ssl_cert_file_defaults_to_os_store_when_only_cert_dir_has_hashed_certs
     Dir.mktmpdir do |dir|
-      assert_nil ScoutApm::Config::ConfigDefaults.default_ssl_cert_file(File.join(dir, 'missing'), dir)
+      File.write(File.join(dir, '5ad8a5d6.0'), 'certificate')
+
+      assert_nil ScoutApm::Config::ConfigDefaults.default_ssl_cert_file(File.join(dir, 'missing'), dir, {})
+    end
+  end
+
+  def test_ssl_cert_file_falls_back_to_bundled_file_when_cert_dir_is_empty
+    Dir.mktmpdir do |dir|
+      defaults = ScoutApm::Config::ConfigDefaults
+      assert_equal defaults::BUNDLED_SSL_CERT_FILE,
+                   defaults.default_ssl_cert_file(File.join(dir, 'missing'), dir, {})
+    end
+  end
+
+  def test_ssl_cert_file_falls_back_to_bundled_file_when_cert_dir_has_no_hashed_certs
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, 'README'), 'not a certificate')
+
+      defaults = ScoutApm::Config::ConfigDefaults
+      assert_equal defaults::BUNDLED_SSL_CERT_FILE,
+                   defaults.default_ssl_cert_file(File.join(dir, 'missing'), dir, {})
     end
   end
 
@@ -41,8 +61,44 @@ class ConfigTest < Minitest::Test
     Dir.mktmpdir do |dir|
       defaults = ScoutApm::Config::ConfigDefaults
       assert_equal defaults::BUNDLED_SSL_CERT_FILE,
-                   defaults.default_ssl_cert_file(File.join(dir, 'missing.pem'), File.join(dir, 'missing-certs'))
+                   defaults.default_ssl_cert_file(File.join(dir, 'missing.pem'), File.join(dir, 'missing-certs'), {})
     end
+  end
+
+  def test_ssl_cert_file_keeps_bundled_file_when_ssl_cert_file_env_is_set
+    Dir.mktmpdir do |dir|
+      cert_file = File.join(dir, 'cert.pem')
+      File.write(cert_file, 'certificate')
+
+      defaults = ScoutApm::Config::ConfigDefaults
+      assert_equal defaults::BUNDLED_SSL_CERT_FILE,
+                   defaults.default_ssl_cert_file(cert_file, dir, 'SSL_CERT_FILE' => '/etc/internal-ca.pem')
+    end
+  end
+
+  def test_ssl_cert_file_keeps_bundled_file_when_ssl_cert_dir_env_is_set
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, '5ad8a5d6.0'), 'certificate')
+
+      defaults = ScoutApm::Config::ConfigDefaults
+      assert_equal defaults::BUNDLED_SSL_CERT_FILE,
+                   defaults.default_ssl_cert_file(File.join(dir, 'missing'), dir, 'SSL_CERT_DIR' => '/etc/internal-certs')
+    end
+  end
+
+  def test_ssl_trust_store_message_for_os_store
+    conf = make_fake_config('ssl_cert_file' => nil)
+    assert_match(/OpenSSL's default trust store/, conf.ssl_trust_store_message)
+  end
+
+  def test_ssl_trust_store_message_for_bundled_file
+    conf = make_fake_config('ssl_cert_file' => ScoutApm::Config::ConfigDefaults::BUNDLED_SSL_CERT_FILE)
+    assert_match(/bundled CA file/, conf.ssl_trust_store_message)
+  end
+
+  def test_ssl_trust_store_message_for_explicit_file
+    conf = make_fake_config('ssl_cert_file' => '/tmp/custom-ca.pem')
+    assert_equal 'HTTPS reporting verifies against ssl_cert_file /tmp/custom-ca.pem', conf.ssl_trust_store_message
   end
 
   def test_explicit_ssl_cert_file_overrides_default
