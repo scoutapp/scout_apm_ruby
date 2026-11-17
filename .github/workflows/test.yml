@@ -65,6 +65,8 @@ jobs:
             test_features: "instruments"
     env:
       BUNDLE_GEMFILE: ${{ matrix.gemfile }}
+      # bson 3.x uses -std=c99, which hides gethostname on newer glibc without this feature macro.
+      BUNDLE_BUILD__BSON: --with-cflags=-D_DEFAULT_SOURCE
       SCOUT_TEST_FEATURES: ${{ matrix.test_features }}
       SCOUT_USE_PREPEND: ${{ matrix.prepend }}
 
