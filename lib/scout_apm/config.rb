@@ -396,9 +396,11 @@ module ScoutApm
       # OpenSSL only finds CAs in a directory through hash links such as
       # "5ad8a5d6.0". A directory without any, like the empty /etc/ssl/certs
       # left by installing openssl without ca-certificates, has nothing to trust.
+      # Names are matched as binary because this runs at require time, and a
+      # name that is invalid in the locale's encoding would raise ArgumentError.
       def self.hashed_cert_dir?(cert_dir)
         File.directory?(cert_dir) &&
-          Dir.entries(cert_dir).any? { |name| name =~ /\A\h{8}\.\d+\z/ }
+          Dir.entries(cert_dir).any? { |name| name.b =~ /\A\h{8}\.\d+\z/n }
       rescue SystemCallError
         false
       end
