@@ -210,6 +210,19 @@ module ScoutApm
       @recorder = recorder
     end
 
+    # On the fork() path: stop the current recorder (kills the async recorder
+    # thread, if any) and drop the memo so the child lazily builds a fresh one.
+    def reset_recorder_for_fork!
+      if @recorder && @recorder.respond_to?(:stop)
+        begin
+          @recorder.stop
+        rescue => e
+          logger.debug("Error stopping recorder for fork: #{e.message}")
+        end
+      end
+      @recorder = nil
+    end
+
     # I believe this is only useful for testing?
     def environment=(env)
       @environment = env

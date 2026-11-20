@@ -28,6 +28,13 @@ module ScoutApm
       logger.debug("Failed Startup Info - #{e.message} \n\t#{e.backtrace.join("\t\n")}")
     end
 
+    # Stops the reporting thread immediately. Used on the fork() path so a
+    # blocked startup-info report is never alive when the process forks.
+    def stop
+      @thread.kill if @thread && @thread.alive?
+      @thread = nil
+    end
+
     def data
       { 
         :language           => 'ruby',
