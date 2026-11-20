@@ -26,6 +26,17 @@ Kernel.module_eval do
     $VERBOSE = warn_level
     result
   end
+
+  # Returns any deprecation warnings (eg. mutating a string literal on Ruby 3.4+) emitted by the block.
+  def capture_deprecation_warnings(&block)
+    return "" unless Warning.respond_to?(:[]=)
+    deprecated = Warning[:deprecated]
+    Warning[:deprecated] = true
+    _out, err = capture_io(&block)
+    err
+  ensure
+    Warning[:deprecated] = deprecated if Warning.respond_to?(:[]=)
+  end
 end
 
 # A test helper class to create a temporary "configuration" we can control entirely purposes

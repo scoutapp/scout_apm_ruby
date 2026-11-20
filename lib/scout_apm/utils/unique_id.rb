@@ -4,7 +4,7 @@ module ScoutApm
       ALPHABET = ('a'..'z').to_a.freeze
 
       def self.simple(length=16)
-        s = ""
+        s = +""
         length.times do
             s << ALPHABET[rand(26)]
         end
