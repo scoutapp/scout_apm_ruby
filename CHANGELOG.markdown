@@ -1,6 +1,6 @@
 # Pending
 
-- DevTrace now injects its trace into HTML responses that another middleware, such as Hotwire::Spark, returns as a plain Array body (#562)
+- DevTrace now injects its trace into HTML responses that another middleware, such as Hotwire::Spark, returns as a plain Array body (#653)
 
 # 6.4.0
 
