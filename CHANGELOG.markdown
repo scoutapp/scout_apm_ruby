@@ -1,5 +1,7 @@
 # Pending
 
+- DevTrace now injects its trace into HTML responses that another middleware, such as Hotwire::Spark, returns as a plain Array body (#562)
+
 # 6.4.0
 
 HTTPS reporting now verifies Scout's certificates against the OS trust store by default instead of the CA file bundled with the gem. To keep using a specific CA file, set `SCOUT_SSL_CERT_FILE` (or `ssl_cert_file`) to its path.
