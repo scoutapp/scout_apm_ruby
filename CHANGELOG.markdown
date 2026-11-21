@@ -1,5 +1,7 @@
 # Pending
 
+- Set timeouts on the reporting HTTP connection so a slow or unreachable Scout host can no longer block the reporting thread indefinitely (previously fell back to Net::HTTP's 60s default). Configurable via `connect_timeout` / `read_timeout` (both default 5s).
+
 # 6.4.0
 
 HTTPS reporting now verifies Scout's certificates against the OS trust store by default instead of the CA file bundled with the gem. To keep using a specific CA file, set `SCOUT_SSL_CERT_FILE` (or `ssl_cert_file`) to its path.
