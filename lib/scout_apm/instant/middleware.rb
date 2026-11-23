@@ -138,6 +138,7 @@ module ScoutApm
         case true
         when older_rails_response? then adjust_older_rails_response
         when newer_rails_response? then adjust_newer_rails_response
+        when html_array_response? then  adjust_html_array_response
         when rack_proxy_response? then  adjust_rack_proxy_response
         else
           # No action taken, we only adjust if we know exactly what we have.
@@ -160,6 +161,12 @@ module ScoutApm
         rack_body.is_a?(::Rack::BodyProxy)
       end
 
+      # Some middleware (for example Hotwire::Spark) read the app's response
+      # body, rewrite the HTML and hand back a plain Array of strings.
+      def html_array_response?
+        rack_body.is_a?(Array) && content_type.to_s.include?("text/html")
+      end
+
       def adjust_older_rails_response
         logger.debug("DevTrace: in middleware, dev_trace is active, and response has a (older) body. This appears to be an HTML page and an ActionDispatch::Response. Path=#{path}; ContentType=#{content_type}")
         rack_body.body = [ html_manipulator.res ]
@@ -177,10 +184,21 @@ module ScoutApm
         @rack_headers.delete("Content-Length")
       end
 
+      def adjust_html_array_response
+        logger.debug("DevTrace: in middleware, dev_trace is active, and response has a body. This appears to be an HTML page in an Array body. Path=#{path}; ContentType=#{content_type}")
+        @rack_body = [ html_manipulator.res ]
+        delete_content_length
+      end
+
+      def delete_content_length
+        @rack_headers.delete("Content-Length")
+        @rack_headers.delete("content-length")
+      end
+
       def html_manipulator
         @html_manipulator ||=
           begin
-            page = ScoutApm::Instant::Page.new(rack_body.body)
+            page = ScoutApm::Instant::Page.new(html_array_response? ? rack_body : rack_body.body)
 
             # This monkey-patches XMLHttpRequest. It could possibly be part of the main scout_instant.js too. Putting it here so it runs as soon as possible.
             page.add_to_head(ScoutApm::Instant::Util.read_asset("xmlhttp_instrumentation.html"))
@@ -199,7 +217,7 @@ module ScoutApm
       end
 
       def development_asset?
-        !rack_body.respond_to?(:body)
+        !rack_body.respond_to?(:body) && !html_array_response?
       end
 
       def path
@@ -207,7 +225,7 @@ module ScoutApm
       end
 
       def content_type
-        rack_headers['Content-Type']
+        rack_headers['Content-Type'] || rack_headers['content-type']
       end
 
       ##############################
