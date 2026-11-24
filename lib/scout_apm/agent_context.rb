@@ -37,28 +37,48 @@ module ScoutApm
     #####################################
 
     def start_remote_server!(bind, port)
-      return if @remote_server && @remote_server.running?
+      return if @remote_server && @remote_server.started?
 
       logger.info("Starting Remote Agent Server")
 
-      # Start the listening web server only in parent process.
-      @remote_server = ScoutApm::Remote::Server.new(
-        bind,
-        port,
-        ScoutApm::Remote::Router.new(ScoutApm::SynchronousRecorder.new(self), logger),
-        logger
-      )
+      # Generated before forking, so every child inherits it and the server
+      # only accepts messages from its own children.
+      @remote_token ||= SecureRandom.hex(32)
 
-      @remote_server.start
+      # Start the listening web server only in parent process.
+      begin
+        @remote_server = build_remote_server(bind, port)
+        @remote_server.start
+      rescue Errno::EADDRINUSE
+        # Another process (e.g. a second Resque parent on this host) has the
+        # port. Bind a free port instead; children inherit it below.
+        logger.info("Remote Agent Server: port #{port} is in use, binding a free port instead")
+        @remote_server = build_remote_server(bind, 0)
+        @remote_server.start
+      end
     end
 
     # Execute this in the child process of a remote agent. The parent is
     # expected to have its accepting webserver up and running
     def become_remote_client!(host, port)
+      # Use the port the parent actually bound, which differs from the
+      # configured one if that was in use.
+      port = @remote_server.port if @remote_server && @remote_server.port
       logger.debug("Becoming Remote Agent (reporting to: #{host}:#{port})")
-      @recorder = ScoutApm::Remote::Recorder.new(host, port, logger)
+      @recorder = ScoutApm::Remote::Recorder.new(host, port, logger, @remote_token)
       @store = ScoutApm::FakeStore.new
     end
+
+    def build_remote_server(bind, port)
+      ScoutApm::Remote::Server.new(
+        bind,
+        port,
+        ScoutApm::Remote::Router.new(ScoutApm::SynchronousRecorder.new(self), logger),
+        logger,
+        @remote_token
+      )
+    end
+    private :build_remote_server
 
 
     ###############

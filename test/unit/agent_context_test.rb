@@ -35,4 +35,42 @@ class AgentContextTest < Minitest::Test
     context.slow_request_policy.add(TestPolicy.new)
     assert 5, context.slow_request_policy.policies
   end
+
+  def test_remote_client_uses_parent_token_and_port
+    context = ScoutApm::AgentContext.new
+    server = stub(:start => true, :port => 54321)
+    ScoutApm::Remote::Server.expects(:new).with { |_bind, port, _router, _logger, token|
+      port == 7721 && token.is_a?(String) && token.length == 64
+    }.returns(server)
+
+    context.start_remote_server!("127.0.0.1", 7721)
+    token = context.instance_variable_get(:@remote_token)
+
+    ScoutApm::Remote::Recorder.expects(:new).with("127.0.0.1", 54321, anything, token)
+    context.become_remote_client!("127.0.0.1", 7721)
+  end
+
+  def test_remote_server_binds_a_free_port_when_configured_port_is_in_use
+    context = ScoutApm::AgentContext.new
+    busy = stub(:port => 7721)
+    busy.stubs(:start).raises(Errno::EADDRINUSE)
+    free = stub(:start => true, :port => 54321)
+
+    ScoutApm::Remote::Server.expects(:new).with { |_b, port, *| port == 7721 }.returns(busy)
+    ScoutApm::Remote::Server.expects(:new).with { |_b, port, *| port == 0 }.returns(free)
+
+    context.start_remote_server!("127.0.0.1", 7721)
+
+    ScoutApm::Remote::Recorder.expects(:new).with("127.0.0.1", 54321, anything, anything)
+    context.become_remote_client!("127.0.0.1", 7721)
+  end
+
+  def test_remote_server_is_only_started_once
+    context = ScoutApm::AgentContext.new
+    server = stub(:start => true, :port => 7721, :started? => true)
+    ScoutApm::Remote::Server.expects(:new).once.returns(server)
+
+    context.start_remote_server!("127.0.0.1", 7721)
+    context.start_remote_server!("127.0.0.1", 7721)
+  end
 end
