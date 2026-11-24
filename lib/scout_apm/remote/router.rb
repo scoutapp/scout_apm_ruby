@@ -4,6 +4,12 @@ module ScoutApm
       attr_reader :logger
       attr_reader :routes
 
+      # The only commands each route accepts. Keys are types, values are
+      # command names.
+      ALLOWED_COMMANDS = {
+        'record' => ['record!'].freeze,
+      }.freeze
+
       # If/When we add different types, this signature should change to a hash
       # of {type => Object}, rather than building it in the initializer here.
       #
@@ -21,7 +27,7 @@ module ScoutApm
       #
       # Where
       #   type: ['recorder']
-      #   command: any function supported on that type of object
+      #   command: one of ALLOWED_COMMANDS for that type
       #   args: any array of arguments
       #
       # Raises on unknown message
@@ -39,10 +45,14 @@ module ScoutApm
         if ! routes.keys.include?(message.type.to_s)
           raise "Unknown type: #{message.type.to_s}"
         end
+
+        if ! ALLOWED_COMMANDS.fetch(message.type.to_s, []).include?(message.command.to_s)
+          raise "Unknown command: #{message.command.to_s}"
+        end
       end
 
       def call_route(message)
-        routes[message.type].send(message.command, *message.args)
+        routes[message.type.to_s].public_send(message.command.to_s, *message.args)
       end
     end
   end

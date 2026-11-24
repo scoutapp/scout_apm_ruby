@@ -8,11 +8,12 @@ module ScoutApm
       attr_reader :port
       attr_reader :logger
 
-      def initialize(bind, port, router, logger)
+      def initialize(bind, port, router, logger, token)
         @router = router
         @logger = logger
         @bind = bind
         @port = port
+        @token = token
         @server = nil
       end
 
@@ -37,12 +38,20 @@ module ScoutApm
           :AccessLog => [],
           :Logger => @logger
         )
+        # When asked for port 0, WEBrick binds a free port and records it here.
+        @port = @server.config[:Port]
 
         @server.mount_proc '/' do |request, response|
-          router.handle(request.body)
+          if authorized?(request)
+            router.handle(request.body)
 
-          # arbitrary response, client doesn't expect anything in particular
-          response.body = 'Ok'
+            # arbitrary response, client doesn't expect anything in particular
+            response.body = 'Ok'
+          else
+            logger.debug("Remote: Rejected a message without a valid #{TOKEN_HEADER} header")
+            response.status = 403
+            response.body = 'Forbidden'
+          end
         end
 
         @thread = Thread.new do
@@ -56,6 +65,19 @@ module ScoutApm
             logger.debug("Remote: Server Exception, #{e},\n#{e.backtrace.join("\n\t")}")
           end
         end
+      end
+
+      # Only accept messages from our own forked children, which inherit the
+      # token from the parent process.
+      def authorized?(request)
+        given = request[TOKEN_HEADER].to_s
+        !@token.to_s.empty? && Remote.secure_compare(given, @token)
+      end
+
+      # True from the moment the listening socket is bound until #stop, unlike
+      # #running?, which waits for the server thread to start.
+      def started?
+        !!@server && @server.status != :Shutdown
       end
 
       def running?

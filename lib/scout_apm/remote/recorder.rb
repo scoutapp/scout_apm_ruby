@@ -5,10 +5,11 @@ module ScoutApm
       attr_reader :remote_agent_host
       attr_reader :remote_agent_port
 
-      def initialize(remote_agent_host, remote_agent_port, logger)
+      def initialize(remote_agent_host, remote_agent_port, logger, token)
         @remote_agent_host = remote_agent_host
         @remote_agent_port = remote_agent_port
         @logger = logger
+        @token = token
       end
 
       def start
@@ -49,8 +50,13 @@ module ScoutApm
       def post(encoded_message)
         http = Net::HTTP.new(remote_agent_host, remote_agent_port)
         request = Net::HTTP::Post.new("/users")
+        request[ScoutApm::Remote::TOKEN_HEADER] = @token.to_s
         request.body = encoded_message
         response = http.request(request)
+        unless response.is_a?(Net::HTTPSuccess)
+          logger.debug "Remote: Server did not accept message: #{response.code}"
+        end
+        response
       end
     end
   end
