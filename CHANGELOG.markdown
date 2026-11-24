@@ -1,5 +1,11 @@
 # Pending
 
+# 7.0.0
+
+This release officially drops support for Ruby 2.1 through 2.4. The gem now requires Ruby 2.5 or newer.
+
+- Require Ruby 2.5 or newer (`required_ruby_version >= 2.5`); Ruby 2.1–2.4 are no longer supported
+- Avoid Ruby 3.4+ "literal string will be frozen" deprecation warnings in `UniqueId` and `LayawayFile` (#652)
 - DevTrace now injects its trace into HTML responses that another middleware, such as Hotwire::Spark, returns as a plain Array body (#653)
 - Resque: forked workers now send the parent's remote server a token it generates at startup, and a second Resque parent on the same host binds a free port if `remote_agent_port` is taken (#654)
 

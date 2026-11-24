@@ -25,7 +25,7 @@ Gem::Specification.new do |s|
   s.extensions << 'ext/allocations/extconf.rb'
   s.extensions << 'ext/rusage/extconf.rb'
 
-  s.required_ruby_version = '>= 2.1'
+  s.required_ruby_version = '>= 2.5'
 
 
   s.add_development_dependency "minitest"
