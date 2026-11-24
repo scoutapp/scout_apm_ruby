@@ -1,6 +1,7 @@
 # Pending
 
 - DevTrace now injects its trace into HTML responses that another middleware, such as Hotwire::Spark, returns as a plain Array body (#653)
+- Resque: forked workers now send the parent's remote server a token it generates at startup, and a second Resque parent on the same host binds a free port if `remote_agent_port` is taken (#654)
 
 # 6.4.0
 
